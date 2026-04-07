@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* HERO */
+.about-hero img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+/* CONTAINER */
+.about-container {
+  background: #f5f0eb;
+  padding: 60px 0 80px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* BANNER */
+.about-banner {
+  text-align: center;
+  margin-bottom: 52px;
+}
+
+.about-banner h1 {
+  font-family: 'Playfair Display', serif;
+  color: #f58220;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.about-banner p {
+  color: #888;
+  font-size: 15px;
+  font-style: italic;
+  letter-spacing: 2px;
+}
+
+/* GRID */
+.about-grid {
+  width: 80%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* CARD */
+.about-card {
+  background: white;
+  padding: 32px 28px;
+  border-radius: 16px;
+  border: 1px solid #e0d4c3;
+  transition: 0.2s;
+}
+
+.about-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
+}
+
+/* CARD HEADING */
+.about-card h2 {
+  font-family: 'Playfair Display', serif;
+  color: #f58220;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f5f0eb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* CARD TEXT */
+.about-card p {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.9;
+  margin-bottom: 10px;
+}
+
+.about-card p:last-child {
+  margin-bottom: 0;
+}
+
+/* CARD LIST */
+.about-card ul {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.about-card ul li {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.8;
+  padding-left: 18px;
+  position: relative;
+}
+
+.about-card ul li::before {
+  content: "•";
+  color: #f58220;
+  font-weight: 700;
+  position: absolute;
+  left: 0;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .about-grid {
+    grid-template-columns: 1fr;
+    width: 90%;
+  }
+
+  .about-banner h1 {
+    font-size: 26px;
+  }
+}

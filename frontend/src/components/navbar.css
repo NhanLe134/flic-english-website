@@ -1,0 +1,132 @@
+.navbar {
+  background: white;
+  padding: 12px 0;
+  border-bottom: 1px solid #e6dfd6;
+  position: relative;
+  z-index: 100;
+}
+
+.container {
+  width: 100%;
+  margin: auto;
+  box-sizing: border-box;
+}
+
+.nav-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px 0 20px;
+}
+
+/* LOGO */
+.logo {
+  display: flex;
+  align-items: center;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.logo-img {
+  width: 70px;
+  height: auto;
+  display: block;
+}
+
+/* MENU */
+.navv-menu {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.navv-menu a {
+  text-decoration: none;
+  color: #A33C3E;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.navv-menu a:hover { color: #f28c28; }
+
+/* ---- Dropdown ---- */
+.nav-dropdown-wrap {
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+}
+
+.nav-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: #A33C3E;
+  transition: color 0.2s;
+  white-space: nowrap;
+  font-size: inherit;
+}
+
+.nav-dropdown-trigger:hover { color: #f28c28; }
+.navv-menu .nav-dropdown-trigger { color: #A33C3E; }
+
+.nav-chevron {
+  font-size: 11px;
+  transition: transform 0.2s;
+}
+
+.nav-chevron.open { transform: rotate(180deg); }
+
+.nav-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 8px;
+  min-width: 180px;
+  z-index: 1000;
+  border: 1px solid #f0e4d4;
+  animation: dropFadeIn 0.15s ease;
+}
+
+@keyframes dropFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.nav-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-left: 1px solid #f0e4d4;
+  border-top: 1px solid #f0e4d4;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.nav-dropdown a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a2010;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.nav-dropdown a:hover {
+  background: #fff3e0;
+  color: #e07b2e;
+}

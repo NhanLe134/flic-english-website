@@ -1,0 +1,111 @@
+/* EditUser.css */
+
+/* overlay */
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+/* modal box */
+
+.modal{
+  background:white;
+  width:420px;
+  border-radius:10px;
+  padding:24px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* header */
+
+.modal-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.modal-top h3{
+  margin:0;
+  font-size:18px;
+}
+
+.modal-close{
+  border:none;
+  background:none;
+  font-size:20px;
+  cursor:pointer;
+}
+
+/* subtitle */
+
+.modal-sub{
+  font-size:13px;
+  color:#777;
+  margin-bottom:16px;
+}
+
+/* form */
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:14px;
+}
+
+.form-group label{
+  font-size:13px;
+  margin-bottom:6px;
+  color:#555;
+}
+
+.form-group input,
+.form-group select{
+  padding:8px 10px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  font-size:14px;
+}
+
+/* buttons */
+
+.form-actions{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.btn{
+  padding:8px 14px;
+  border-radius:6px;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.btn-primary{
+  background:#1677ff;
+  border:none;
+  color:white;
+}
+
+.btn-outline{
+  background:white;
+  border:1px solid #ccc;
+}
+
+.btn-danger{
+  background:#ff4d4f;
+  border:none;
+  color:white;
+}
+
+.btn-sm{
+  padding:6px 10px;
+  font-size:13px;
+}

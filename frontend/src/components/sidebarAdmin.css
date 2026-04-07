@@ -1,0 +1,74 @@
+.sidebar-admin {
+  width: 240px;
+  height: 100%;        
+  background: white;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #f0f0f0;
+  box-sizing: border-box;
+}
+
+/* LOGO */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ADMIN INFO */
+.admin-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-avatar {
+  width: 42px;
+  height: 42px;
+  background: #b7d9b7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: #2e7d32;
+  flex-shrink: 0;
+}
+
+/* MENU */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px;
+  gap: 4px;
+}
+
+.menu-item {
+  display: block;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #444;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.15s;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+  color: #222;
+}
+
+.menu-item.active {
+  background: #ff7a00;
+  color: white;
+  font-weight: 600;
+}

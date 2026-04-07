@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.courses-container {
+  background: #f5f0eb;
+  padding: 60px 10%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* TITLE */
+.courses-title {
+  font-family: 'Playfair Display', serif;
+  text-align: center;
+  font-size: 38px;
+  font-weight: 800;
+  color: #f58220;
+  margin-bottom: 52px;
+  letter-spacing: 1px;
+}
+
+/* COURSE ITEM */
+.course-item {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 32px;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #e0d4c3;
+  transition: 0.2s;
+}
+
+.course-item:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
+}
+
+/* đảo hình bên phải cho item chẵn */
+.course-item:nth-child(even) {
+  flex-direction: row-reverse;
+}
+
+.course-item img {
+  width: 360px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* CONTENT */
+.course-content {
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.course-content h2 {
+  font-family: 'Playfair Display', serif;
+  color: #333;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  line-height: 1.3;
+}
+
+.course-content p {
+  font-family: 'Inter', sans-serif;
+  color: #666;
+  line-height: 1.9;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* BUTTONS */
+.course-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.course-buttons a {
+  color: #f58220;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.course-buttons a:hover {
+  text-decoration: underline;
+}
+
+.course-buttons button {
+  background: #f58220;
+  color: white;
+  border: none;
+  padding: 11px 24px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 3px 0 #c85d0f;
+  transition: 0.2s;
+}
+
+.course-buttons button:hover {
+  background: #e46d10;
+  transform: translateY(-1px);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .course-item,
+  .course-item:nth-child(even) {
+    flex-direction: column;
+  }
+
+  .course-item img {
+    width: 100%;
+    height: 220px;
+  }
+
+  .course-content {
+    padding: 24px 20px;
+  }
+}

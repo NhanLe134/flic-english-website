@@ -1,0 +1,91 @@
+.teachers{
+  padding:80px 60px;
+  text-align:center;
+}
+
+.teachers h2{
+  font-size:34px;
+  margin-bottom:10px;
+}
+
+.teachers-subtitle{
+  color:#666;
+  margin-bottom:50px;
+}
+
+.teachers-container{
+  display:flex;
+  justify-content:center;
+  gap:40px;
+}
+
+/* CARD */
+
+.teacher-card{
+  width:280px;
+  background:#f3e6d5;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* HEADER COLOR */
+
+.teacher-card.orange{
+  background:linear-gradient(#f28a2e,#f3e6d5);
+}
+
+.teacher-card.green{
+  background:linear-gradient(#6c8f3f,#f3e6d5);
+}
+
+.teacher-card.red{
+  background:linear-gradient(#c4572a,#f3e6d5);
+}
+
+/* IMAGE */
+
+.teacher-img{
+  display:flex;
+  justify-content:center;
+  margin-top:30px;
+}
+
+.teacher-img img{
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  object-fit:cover;
+  border:5px solid white;
+}
+
+/* INFO */
+
+.teacher-info{
+  padding:20px;
+}
+
+.teacher-info h3{
+  margin-top:10px;
+}
+
+.teacher-info span{
+  color:#ff7a00;
+  font-size:14px;
+}
+
+.teacher-highlight{
+  background:white;
+  padding:10px;
+  border-radius:8px;
+  margin:15px 0;
+}
+
+.teacher-skill{
+  text-align:left;
+  font-size:14px;
+}
+
+.teacher-skill ul{
+  padding-left:18px;
+}

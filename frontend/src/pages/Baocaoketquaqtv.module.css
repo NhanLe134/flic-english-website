@@ -1,0 +1,394 @@
+/* ── Container ── */
+.container {
+  padding: 30px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+
+/* ── Top bar ── */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+
+.exportBtn {
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background .2s;
+}
+
+
+.exportBtn:hover {
+  background: #333;
+}
+
+
+/* ── Stats ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+
+.statBox {
+  padding: 22px 24px;
+  border-radius: 14px;
+}
+
+
+.statBox p {
+  font-size: 14px;
+  color: #444;
+  margin: 0 0 10px;
+  font-weight: 500;
+}
+
+
+.statBox h2 {
+  font-size: 34px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+
+.s1 { background: #a9c8c1; }
+.s2 { background: #a8c9a8; }
+.s3 { background: #b8cfe0; }
+.s4 { background: #f0e6a0; }
+
+
+/* ── Filter bar ── */
+.filterBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+.searchWrap {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+}
+
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #aaa;
+}
+
+
+.searchInput {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+
+.searchInput:focus {
+  border-color: #e87722;
+}
+
+
+.select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+  color: #333;
+}
+
+
+.select:focus {
+  border-color: #e87722;
+}
+
+
+/* ── Table wrap ── */
+.tableWrap {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.07);
+  overflow-x: auto;
+}
+
+
+/* ── Table ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+
+.table thead tr {
+  background: #fafafa;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+
+.table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+}
+
+
+.thArrow {
+  width: 36px;
+}
+
+
+.table td {
+  padding: 14px;
+  border-bottom: 1px solid #f3f3f3;
+  font-size: 13px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+
+.row {
+  cursor: pointer;
+  transition: background .15s;
+}
+
+
+.row:hover {
+  background: #fdf8f3;
+}
+
+
+/* ── Arrow toggle ── */
+.arrowCell {
+  text-align: center;
+}
+
+
+.arrow {
+  display: inline-block;
+  font-size: 10px;
+  color: #bbb;
+  transition: transform .2s;
+}
+
+
+.arrowDown {
+  transform: rotate(90deg);
+  color: #e87722;
+}
+
+
+/* ── Mã HV ── */
+.maHV {
+  font-weight: 600;
+  color: #333;
+  font-size: 12.5px;
+}
+
+
+/* ── Tên HV ── */
+.tenHV {
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 2px;
+}
+
+
+.subInfo {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+
+/* ── Lớp / khóa ── */
+.tenLop {
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 2px;
+}
+
+
+/* ── Trạng thái badge ── */
+.trangThai {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+.ttDangHoc {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+
+.ttHoanThanh {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+
+.ttTamDung {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+/* ── Điểm badge ── */
+.diemBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.diemXanh {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+
+.diemVang {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+.diemDo {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* ── Chưa nộp ── */
+.chuaNop {
+  font-size: 12.5px;
+  color: #bbb;
+}
+
+
+/* ── Empty ── */
+.empty {
+  text-align: center;
+  padding: 48px;
+  color: #bbb;
+  font-size: 14px;
+}
+
+
+/* ── Expanded row ── */
+.expandRow td {
+  padding: 0 !important;
+  border-bottom: 2px solid #f0e4d4 !important;
+}
+
+
+.expandContent {
+  background: #fdf8f3;
+  padding: 18px 20px;
+  border-left: 4px solid #e87722;
+}
+
+
+.expandTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #e87722;
+  margin: 0 0 14px;
+}
+
+
+.expandGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+
+.expandCard {
+  background: #fff;
+  border: 1px solid #ede4d8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 140px;
+}
+
+
+.expandTB {
+  border-color: #e87722;
+  background: #fff8f2;
+}
+
+
+.expandBaiTen {
+  font-size: 12px;
+  color: #777;
+  margin: 0;
+  font-weight: 500;
+}
+

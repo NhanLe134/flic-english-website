@@ -1,0 +1,163 @@
+/* ===========================
+   VocabularyDetail Page
+   =========================== */
+
+.vd-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f0eb;
+}
+
+.vd-body {
+  display: flex;
+  flex: 1;
+}
+
+.vd-content {
+  flex: 1;
+  padding: 20px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 760px;
+}
+
+/* ---- Back ---- */
+.vd-back {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  width: fit-content;
+  transition: color 0.2s;
+}
+
+.vd-back:hover {
+  color: #8b3a1a;
+}
+
+/* ---- Card ---- */
+.vd-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vd-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+/* ---- Table ---- */
+.vd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.vd-table thead tr {
+  background-color: #4caf7d;
+  color: #fff;
+}
+
+.vd-table th {
+  padding: 12px 18px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.vd-table td {
+  padding: 11px 18px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #444;
+}
+
+.vd-table tbody tr:hover {
+  background-color: #f9fdf9;
+}
+
+/* ---- Examples ---- */
+.vd-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.vd-examples-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin: 0 0 4px;
+}
+
+.vd-example-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vd-example-word {
+  font-size: 13.5px;
+  color: #444;
+  font-weight: 600;
+  margin: 0;
+}
+
+.vd-example-sentence {
+  font-size: 13.5px;
+  color: #555;
+  margin: 0;
+  padding-left: 4px;
+}
+
+/* ---- Footer ---- */
+.vd-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.vd-practice-btn {
+  background-color: #e07b2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 36px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+}
+
+.vd-practice-btn:hover {
+  background-color: #c5651a;
+  transform: translateY(-1px);
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 640px) {
+  .vd-content {
+    padding: 16px;
+  }
+
+  .vd-card {
+    padding: 18px 16px;
+  }
+
+  .vd-table th,
+  .vd-table td {
+    padding: 10px 12px;
+  }
+}

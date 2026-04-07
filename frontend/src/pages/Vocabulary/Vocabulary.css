@@ -1,0 +1,159 @@
+/* ===========================
+   Vocabulary Page
+   =========================== */
+
+.vocab-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f0eb;
+}
+
+.vocab-body {
+  display: flex;
+  flex: 1;
+}
+
+.vocab-content {
+  flex: 1;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---- Search ---- */
+.vocab-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+
+.vocab-search-icon {
+  font-size: 15px;
+  color: #aaa;
+}
+
+.vocab-search input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #333;
+  width: 100%;
+  background: transparent;
+}
+
+.vocab-search input::placeholder {
+  color: #bbb;
+}
+
+/* ---- List ---- */
+.vocab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- Item ---- */
+.vocab-item {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.vocab-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.vocab-item-info {
+  flex: 1;
+}
+
+.vocab-item-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 4px;
+}
+
+.vocab-item-info p {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+  font-style: italic;
+}
+
+.vocab-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vocab-date {
+  font-size: 12px;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+/* ---- Button ---- */
+.vocab-btn {
+  background-color: #e07b2e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.vocab-btn:hover {
+  background-color: #c5651a;
+  transform: translateY(-1px);
+}
+
+.vocab-btn:active {
+  transform: translateY(0);
+}
+
+.vocab-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 32px;
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 640px) {
+  .vocab-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .vocab-item-right {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .vocab-content {
+    padding: 16px;
+  }
+}

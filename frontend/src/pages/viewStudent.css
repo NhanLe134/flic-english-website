@@ -1,0 +1,66 @@
+.vs-wrapper {
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+}
+
+/* HEADER ROW */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-row h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  color: #333;
+  letter-spacing: 1px;
+}
+
+.back-btn {
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
+}
+
+/* FORM BOX */
+.form-box {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  max-width: 800px;
+  border: 1px solid #e0d4c3;
+}
+
+.form-box h3 {
+  margin: 0 0 20px;
+  font-size: 17px;
+  color: #333;
+}
+
+.form-box label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #888;
+}
+
+.form-box input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid #e0d4c3;
+  background: #f5f0eb;
+  font-size: 14px;
+  color: #444;
+  box-sizing: border-box;
+  cursor: not-allowed;
+}

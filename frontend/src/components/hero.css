@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.hero {
+  background-color: white;
+  padding: 100px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.hero-container {
+  max-width: 1250px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.hero-left {
+  width: 52%;
+}
+
+/* EYEBROW */
+.hero-subtitle {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #f28c28;
+  background: #fff4ec;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid #fcd9b0;
+  margin-bottom: 4px;
+}
+
+/* HEADING */
+.hero-left h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 20px 0 18px;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
+}
+
+/* DESCRIPTION */
+.hero-left p {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 36px;
+  line-height: 1.8;
+  max-width: 460px;
+}
+
+/* STATS */
+.hero-stats {
+  display: flex;
+  gap: 36px;
+}
+
+.hero-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-stats h3 {
+  font-family: 'Playfair Display', serif;
+  color: #f28c28;
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1;
+}
+
+.hero-stats span {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+}
+
+/* IMAGE */
+.hero-right img {
+  width: 480px;
+  height: auto;
+  display: block;
+}
