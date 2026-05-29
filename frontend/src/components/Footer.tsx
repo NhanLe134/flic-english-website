@@ -1,4 +1,5 @@
 import "./cta-footer.css"
+import { FiFacebook, FiYoutube, FiMessageSquare, FiMapPin, FiPhone, FiMail } from "react-icons/fi"
 
 export default function Footer() {
   // Ẩn footer khi đã đăng nhập
@@ -13,43 +14,46 @@ export default function Footer() {
 
           {/* Cột 1 */}
           <div>
-            <h3>Trung tâm Ngoại ngữ - Tin học FLIC</h3>
+            <h3>TRUNG TÂM NGOẠI NGỮ – TIN HỌC FLIC</h3>
             <p>
               Xây dựng kỹ năng tiếng Anh từ nền tảng. Đối tác đáng tin cậy
               của bạn cho thành công trong kỳ thi TOEIC, IELTS & VSTEP.
             </p>
             <div className="socials">
-              <span>f</span>
-              <span>▶</span>
-              <span>💬</span>
+              <a href="https://www.facebook.com/FLIC.DUE.UDN.VN" target="_blank" rel="noopener noreferrer" className="social-link">
+                <FiFacebook />
+              </a>
+              <a href="https://www.youtube.com/@FLIC-DUE" target="_blank" rel="noopener noreferrer" className="social-link">
+                <FiYoutube />
+              </a>
+              <a href="https://zalo.me/flicdue" target="_blank" rel="noopener noreferrer" className="social-link">
+                <FiMessageSquare />
+              </a>
             </div>
           </div>
-
-          {/* Cột 2 */}
-          <div>
-            <h4>Liên kết</h4>
-            <ul>
-              <li>Các khóa học</li>
-              <li>Lịch học</li>
-              <li>Giáo viên</li>
-              <li>Q&A</li>
-            </ul>
-          </div>
-
           {/* Cột 3 */}
           <div>
-            <h4>Thông tin liên hệ</h4>
+            <h4>THÔNG TIN LIÊN HỆ</h4>
             <ul className="contact-info">
-              <li>📍 71 Ngũ Hành Sơn, TP. Đà Nẵng</li>
-              <li>📞 0901 95 16 16</li>
-              <li>✉ flic@due.udn.vn</li>
+              <li>
+                <FiMapPin className="contact-icon" />
+                <span>71 Ngũ Hành Sơn, TP. Đà Nẵng</span>
+              </li>
+              <li>
+                <FiPhone className="contact-icon" />
+                <span>0901 95 16 16</span>
+              </li>
+              <li>
+                <FiMail className="contact-icon" />
+                <a href="mailto:flic@due.udn.vn">flic@due.udn.vn</a>
+              </li>
             </ul>
           </div>
 
         </div>
 
         <div className="footer-bottom">
-          <p>Designed ©2020 by Foreign Languages – Informatics Centre (FLIC)</p>
+          <p>Designed &copy;2020 by Foreign Languages – Informatics Centre (FLIC)</p>
           <p>The University Of Danang - University Of Economics</p>
         </div>
 

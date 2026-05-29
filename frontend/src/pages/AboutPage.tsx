@@ -1,17 +1,18 @@
 import "./about.css";
 import Footer from "../components/Footer";
 import NavbarAuto from "../components/NavbarAuto";
+import { FiEye, FiTarget, FiAward, FiCheckCircle, FiThumbsUp } from "react-icons/fi";
 
 const cards = [
   {
-    icon: "🔭",
+    icon: <FiEye className="about-card-icon" />,
     title: "TẦM NHÌN",
     content: (
       <p>FLIC hướng tới việc trở thành trung tâm đào tạo tiếng Anh chất lượng, đáp ứng nhu cầu học tập đa dạng của học viên và người đi làm. Trung tâm mong muốn xây dựng một hệ sinh thái học tập hiện đại, nơi người học có thể phát triển toàn diện các kỹ năng tiếng Anh và tự tin ứng dụng vào học tập, công việc cũng như giao tiếp trong môi trường hội nhập quốc tế.</p>
     ),
   },
   {
-    icon: "🎯",
+    icon: <FiTarget className="about-card-icon" />,
     title: "SỨ MỆNH",
     content: (
       <>
@@ -21,7 +22,7 @@ const cards = [
     ),
   },
   {
-    icon: "💎",
+    icon: <FiAward className="about-card-icon" />,
     title: "GIÁ TRỊ CỐT LÕI",
     content: (
       <ul>
@@ -33,14 +34,14 @@ const cards = [
     ),
   },
   {
-    icon: "🤝",
+    icon: <FiCheckCircle className="about-card-icon" />,
     title: "CAM KẾT",
     content: (
       <p>Chúng tôi cam kết cung cấp chương trình đào tạo có định hướng rõ ràng, phù hợp với từng học viên. Trung tâm không ngừng cải tiến nội dung, phương pháp giảng dạy và hệ thống học tập nhằm nâng cao chất lượng đào tạo. Đồng thời, FLIC cam kết tạo ra môi trường học tập thân thiện, khuyến khích sự chủ động, tự tin và tiến bộ bền vững của người học.</p>
     ),
   },
   {
-    icon: "⭐",
+    icon: <FiThumbsUp className="about-card-icon" />,
     title: "TẠI SAO CHỌN CHÚNG TÔI?",
     content: (
       <>
@@ -61,11 +62,6 @@ const AboutPage = () => {
       </div>
 
       <div className="about-container">
-
-        <div className="about-banner">
-          <h1>TRUNG TÂM NGOẠI NGỮ - TIN HỌC</h1>
-          <p>Foreign Languages - Informatics Centre</p>
-        </div>
 
         <div className="about-grid">
           {cards.map((card, i) => (

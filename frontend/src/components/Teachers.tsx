@@ -1,8 +1,5 @@
 import "./teachers.css";
-
-import teacher1 from "../assets/teacher1.jpg";
-import teacher2 from "../assets/teacher2.jpg";
-import teacher3 from "../assets/teacher3.jpg";
+import { FiAward, FiStar, FiBookOpen } from "react-icons/fi";
 
 function Teachers() {
   return (
@@ -11,29 +8,37 @@ function Teachers() {
       <h2>GẶP GỠ GIÁO VIÊN CỦA CHÚNG TÔI</h2>
       <p className="teachers-subtitle">
         Học hỏi từ các nhà giáo dục được chứng nhận, tận tâm,
-        tận tuỵ vì sự thành công của bạn
+        tận tụy vì sự thành công của bạn
       </p>
 
       <div className="teachers-container">
 
-        {/* Teacher 1 */}
-        <div className="teacher-card orange">
-
-          <div className="teacher-img">
-            <img src={teacher1} alt="teacher" />
+        {/* Ms. Linh */}
+        <div className="teacher-card">
+          <div className="teacher-card-top gradient-orange">
+            <div className="teacher-circle-img">
+              <img src="/image.png" alt="Ms. Linh" />
+            </div>
           </div>
-
-          <div className="teacher-info">
+          <div className="teacher-card-bottom">
             <h3>Ms. Linh</h3>
-            <span>Chuyên gia TOEIC</span>
+            <span className="teacher-role">Chuyên gia TOEIC</span>
 
-            <div className="teacher-highlight">
-              <p>🏅 TOEIC 990/990</p>
-              <p>⭐ 5 năm kinh nghiệm</p>
+            <div className="teacher-highlights-box">
+              <div className="highlight-item">
+                <FiAward className="teacher-icon" />
+                <span className="highlight-text">TOEIC 990/990</span>
+              </div>
+              <div className="highlight-item">
+                <FiStar className="teacher-icon" />
+                <span className="highlight-text">5 năm kinh nghiệm</span>
+              </div>
             </div>
 
-            <div className="teacher-skill">
-              <b>Chuyên ngành:</b>
+            <div className="teacher-specialty">
+              <h4>
+                <FiBookOpen className="teacher-icon" /> Chuyên ngành:
+              </h4>
               <ul>
                 <li>Chiến lược TOEIC</li>
                 <li>Kỹ năng làm bài kiểm tra</li>
@@ -43,24 +48,32 @@ function Teachers() {
           </div>
         </div>
 
-        {/* Teacher 2 */}
-        <div className="teacher-card green">
-
-          <div className="teacher-img">
-            <img src={teacher2} alt="teacher" />
+        {/* Mr. David */}
+        <div className="teacher-card">
+          <div className="teacher-card-top gradient-green">
+            <div className="teacher-circle-img">
+              <img src="/image.png" alt="Mr. David" />
+            </div>
           </div>
-
-          <div className="teacher-info">
+          <div className="teacher-card-bottom">
             <h3>Mr. David</h3>
-            <span>Communication Specialist</span>
+            <span className="teacher-role">Communication Specialist</span>
 
-            <div className="teacher-highlight">
-              <p>🏅 Giáo viên bản ngữ</p>
-              <p>⭐ Chuyên gia giao tiếp</p>
+            <div className="teacher-highlights-box">
+              <div className="highlight-item">
+                <FiAward className="teacher-icon" />
+                <span className="highlight-text">Giáo viên tiếng Anh bản ngữ</span>
+              </div>
+              <div className="highlight-item">
+                <FiStar className="teacher-icon" />
+                <span className="highlight-text">Chuyên gia về kỹ năng giao tiếp</span>
+              </div>
             </div>
 
-            <div className="teacher-skill">
-              <b>Chuyên ngành:</b>
+            <div className="teacher-specialty">
+              <h4>
+                <FiBookOpen className="teacher-icon" /> Chuyên ngành:
+              </h4>
               <ul>
                 <li>Nói lưu loát</li>
                 <li>Cách phát âm</li>
@@ -70,24 +83,32 @@ function Teachers() {
           </div>
         </div>
 
-        {/* Teacher 3 */}
-        <div className="teacher-card red">
-
-          <div className="teacher-img">
-            <img src={teacher3} alt="teacher" />
+        {/* Ms. Hương */}
+        <div className="teacher-card">
+          <div className="teacher-card-top gradient-red">
+            <div className="teacher-circle-img">
+              <img src="/image.png" alt="Ms. Hương" />
+            </div>
           </div>
-
-          <div className="teacher-info">
+          <div className="teacher-card-bottom">
             <h3>Ms. Hương</h3>
-            <span>Chuyên gia VSTEP</span>
+            <span className="teacher-role">Chuyên gia VSTEP</span>
 
-            <div className="teacher-highlight">
-              <p>🏅 Chứng nhận VSTEP C1</p>
-              <p>⭐ 7 năm kinh nghiệm</p>
+            <div className="teacher-highlights-box">
+              <div className="highlight-item">
+                <FiAward className="teacher-icon" />
+                <span className="highlight-text">Chứng nhận VSTEP C1</span>
+              </div>
+              <div className="highlight-item">
+                <FiStar className="teacher-icon" />
+                <span className="highlight-text">7 năm kinh nghiệm giảng dạy</span>
+              </div>
             </div>
 
-            <div className="teacher-skill">
-              <b>Chuyên ngành:</b>
+            <div className="teacher-specialty">
+              <h4>
+                <FiBookOpen className="teacher-icon" /> Chuyên ngành:
+              </h4>
               <ul>
                 <li>Chuẩn bị VSTEP</li>
                 <li>Viết học thuật</li>

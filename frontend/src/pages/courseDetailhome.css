@@ -11,7 +11,7 @@
 /* ---- Breadcrumb ---- */
 .toeic-breadcrumb {
   padding: 14px 40px;
-  font-size: 13px;
+  font-size: 16px;
   color: #777;
   display: flex;
   align-items: center;
@@ -25,7 +25,7 @@
 }
 
 .toeic-breadcrumb a:hover {
-  color: #8b3a1a;
+  color: #F95800;
   text-decoration: underline;
 }
 
@@ -34,7 +34,7 @@
 }
 
 .toeic-breadcrumb .active {
-  color: #8b3a1a;
+  color: #F95800;
   font-weight: 600;
 }
 

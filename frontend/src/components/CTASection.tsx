@@ -5,17 +5,15 @@ export default function CTASection() {
     <section className="cta-section">
       <div className="cta-container">
 
-        <p className="cta-eyebrow">Bắt đầu hành trình của bạn</p>
-
         <h2>
-          Bạn đã sẵn sàng đạt được
+          BẠN ĐÃ SẴN SÀNG ĐẠT ĐƯỢC
           <br />
-          <span>mục tiêu tiếng Anh</span> của mình chưa?
+          MỤC TIÊU TIẾNG ANH CỦA MÌNH CHƯA?
         </h2>
 
         <p className="cta-desc">
-          Tham gia cùng hàng ngàn học viên thành công đã thay đổi
-          kỹ năng tiếng Anh của mình với Trung tâm Ngoại ngữ - Tin học FLIC
+          Tham gia cùng hàng ngàn học viên thành công đã thay đổi <br></br>
+          kỹ năng tiếng Anh của mình với Trung tâm Anh ngữ Flic
         </p>
 
       </div>

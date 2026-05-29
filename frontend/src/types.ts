@@ -18,7 +18,7 @@ export interface LessonRoadmap {
   order: number
   type: 'Video' | 'PDF' | 'Quiz' | 'Assignment'
   duration: string
-  date: string
+  date?: string
   status: 'published' | 'draft'
 }
 

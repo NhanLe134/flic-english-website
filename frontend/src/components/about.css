@@ -1,120 +1,162 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 .about {
   padding: 100px 0;
-  background-color: #fff;
+  background-color: #ffffff !important;
 }
 
-.container {
+.about-inner-container {
   max-width: 1250px;
   margin: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 60px;
+  gap: 80px;
   padding: 0 40px;
 }
 
 .about-left {
   width: 45%;
+  display: flex;
+  justify-content: center;
 }
 
-.about-left img {
+/* GRADIENT CARD */
+.about-left-card {
   width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 20px;
+  max-width: 480px;
+  aspect-ratio: 1.5;
+  background: linear-gradient(135deg, #3d7d44 0%, #e9be47 100%);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
+.card-icon {
+  margin-bottom: 20px;
+}
+
+.cap-svg {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+}
+
+.card-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.card-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+/* RIGHT SECTION */
 .about-right {
   width: 50%;
   font-family: 'Inter', sans-serif;
 }
 
-/* LABEL */
-.about-right .about-label {
-  display: inline-block;
-  background: #fff4ec;
-  color: #f58220;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 6px 16px;
-  border-radius: 20px;
-  margin-bottom: 16px;
-}
-
-/* HEADING */
 .about-right h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: 42px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 48px;
   font-weight: 800;
-  line-height: 1.2;
-  color: #1a1a1a;
-  margin-bottom: 20px;
+  color: #111111;
+  margin: 0 0 12px;
+  letter-spacing: -1px;
 }
 
-.about-right h2 span {
-  color: #f58220;
+/* ORANGE THICK UNDERLINE */
+.about-title-underline {
+  width: 60px;
+  height: 5px;
+  background-color: #F95800;
+  border-radius: 2px;
+  margin-bottom: 24px;
 }
 
-/* PARAGRAPH */
 .about-right p {
-  font-size: 15px;
-  color: #666;
-  line-height: 1.9;
+  font-size: 16px;
+  color: #333333;
+  line-height: 1.7;
   margin-bottom: 32px;
+  font-weight: 400;
 }
 
-/* STATS */
+/* STAT BOXES */
 .about-stats {
   display: flex;
   gap: 24px;
-  margin-bottom: 36px;
+  margin-bottom: 40px;
 }
 
 .about-stat-item {
-  background: #fdf8f3;
-  border: 1px solid #f0e4d4;
-  border-radius: 14px;
-  padding: 18px 24px;
-  text-align: center;
+  background: #FFF2EB;
+  border: none;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
 }
 
 .about-stat-item .stat-number {
-  font-family: 'Playfair Display', serif;
-  font-size: 28px;
+  font-family: 'Inter', sans-serif;
+  font-size: 32px;
   font-weight: 800;
-  color: #f58220;
-  display: block;
+  color: #F95800;
   line-height: 1;
-  margin-bottom: 6px;
+  margin: 0;
 }
 
 .about-stat-item .stat-label {
-  font-size: 13px;
-  color: #888;
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #111111;
+  font-weight: 700;
+  margin: 0;
+  text-transform: none;
+  /* keep lowercase as written in html */
 }
 
 /* BUTTON */
-.about-right button {
-  padding: 14px 32px;
-  border: none;
-  background: #f58220;
-  color: white;
-  border-radius: 30px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 0 #c85d0f;
-  transition: 0.2s;
+.btn-about {
   font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 40px;
+  background-color: #F95800;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: 0 10px 20px rgba(249, 88, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.about-right button:hover {
-  background: #e46d10;
+.btn-about:hover {
+  background-color: #d64c00;
   transform: translateY(-2px);
+  box-shadow: 0 15px 25px rgba(249, 88, 0, 0.3);
 }

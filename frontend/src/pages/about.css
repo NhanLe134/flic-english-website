@@ -1,124 +1,161 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* HERO */
+/* HERO BANNER */
 .about-hero img {
   width: 100%;
-  max-height: 400px;
+  height: 475px;
   object-fit: cover;
+  object-position: top;
   display: block;
 }
 
-/* CONTAINER */
+/* MAIN CONTAINER */
 .about-container {
-  background: #f5f0eb;
-  padding: 60px 0 80px;
+  background-color: #FDF9F6;
+  padding: 60px 0 100px;
   font-family: 'Inter', sans-serif;
 }
 
-/* BANNER */
+/* PAGE HEADER BANNER */
 .about-banner {
   text-align: center;
   margin-bottom: 52px;
 }
 
 .about-banner h1 {
-  font-family: 'Playfair Display', serif;
-  color: #f58220;
-  font-size: 36px;
+  font-family: 'Inter', sans-serif;
+  color: #8A1E14;
+  font-size: 42px;
   font-weight: 800;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
 }
 
 .about-banner p {
-  color: #888;
-  font-size: 15px;
+  color: #666666;
+  font-size: 18px;
   font-style: italic;
   letter-spacing: 2px;
+  margin: 0;
 }
 
-/* GRID */
+/* GRID LAYOUT */
 .about-grid {
-  width: 80%;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 32px;
+  padding: 0 40px;
+  box-sizing: border-box;
 }
 
-/* CARD */
+/* CARDS */
 .about-card {
-  background: white;
-  padding: 32px 28px;
-  border-radius: 16px;
-  border: 1px solid #e0d4c3;
-  transition: 0.2s;
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 15px 35px rgba(138, 30, 20, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .about-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
-  transform: translateY(-2px);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(138, 30, 20, 0.08);
 }
 
-/* CARD HEADING */
+/* CARD HEADING & ICON */
 .about-card h2 {
-  font-family: 'Playfair Display', serif;
-  color: #f58220;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #f5f0eb;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #8A1E14;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #FFF3EB;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-/* CARD TEXT */
+.about-card-icon {
+  color: #F37324;
+  font-size: 24px;
+  stroke-width: 2px;
+  flex-shrink: 0;
+}
+
+/* CARD PARAGRAPHS */
 .about-card p {
-  font-size: 14px;
-  color: #555;
-  line-height: 1.9;
-  margin-bottom: 10px;
+  font-size: 15px;
+  color: #4a4a4a;
+  line-height: 1.7;
+  margin: 0 0 16px;
 }
 
 .about-card p:last-child {
   margin-bottom: 0;
 }
 
-/* CARD LIST */
+/* FEATURED CORE VALUES CARD (span 2 columns) */
+.about-card:nth-child(3) {
+  grid-column: span 2;
+}
+
+/* CORE VALUES LIST (2 columns layout inside the card) */
 .about-card ul {
-  padding-left: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
 }
 
 .about-card ul li {
+  background: #FFF9F5;
+  padding: 20px;
+  border-radius: 16px;
+  border-left: 4px solid #F37324;
   font-size: 14px;
-  color: #555;
-  line-height: 1.8;
-  padding-left: 18px;
-  position: relative;
+  color: #4a4a4a;
+  line-height: 1.6;
+  font-family: 'Inter', sans-serif;
 }
 
-.about-card ul li::before {
-  content: "•";
-  color: #f58220;
-  font-weight: 700;
-  position: absolute;
-  left: 0;
+.about-card ul li strong {
+  color: #8A1E14;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
 }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 992px) {
   .about-grid {
     grid-template-columns: 1fr;
-    width: 90%;
+    gap: 24px;
+    padding: 0 20px;
+  }
+
+  .about-card:nth-child(3) {
+    grid-column: span 1;
+  }
+
+  .about-card ul {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .about-banner h1 {
-    font-size: 26px;
+    font-size: 32px;
+  }
+
+  .about-banner p {
+    font-size: 15px;
   }
 }

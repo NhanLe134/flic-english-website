@@ -5,13 +5,17 @@ import logo from "../assets/logo.png";
 import user from "../assets/user.png";
 
 function NavbarLogin() {
-  const [showSkills, setShowSkills] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
   const navigate = useNavigate();
 
-  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
-  const hoTen = currentUser.HoTen || "Học Viên";
+  let currentUser: any = {};
+  try {
+    currentUser = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
+  } catch (e) {
+    console.error("Error parsing user from sessionStorage", e);
+  }
+  const hoTen = currentUser?.HoTen || "Học Viên";
   const tenNgan = hoTen.split(" ").pop() || hoTen;
 
   const handleLogout = () => {
@@ -28,25 +32,10 @@ function NavbarLogin() {
       </div>
 
       <ul className="nav-menu">
+        <li><Link to="/">Trang chủ</Link></li>
         <li><Link to="/about">Về Chúng Tôi</Link></li>
-        <li><Link to="/courses-home">Các Khóa Học</Link></li>
-
-        <li className="nav-dropdown-wrap">
-          <span className="nav-dropdown-trigger" onClick={() => setShowSkills(!showSkills)}>
-            Kỹ Năng <span className={`nav-chevron ${showSkills ? "open" : ""}`}>▾</span>
-          </span>
-          {showSkills && (
-            <div className="nav-dropdown">
-              <Link to="/skills/listening" onClick={() => setShowSkills(false)}>🎧 Listening</Link>
-              <Link to="/skills/speaking"  onClick={() => setShowSkills(false)}>🎤 Speaking</Link>
-              <Link to="/skills/writing"   onClick={() => setShowSkills(false)}>✍️ Writing</Link>
-              <Link to="/skills/reading"   onClick={() => setShowSkills(false)}>📖 Reading</Link>
-            </div>
-          )}
-        </li>
-
-        <li><Link to="/grammar">Ngữ Pháp</Link></li>
-        <li><Link to="/vocabulary">Từ Vựng</Link></li>
+        <li><Link to="/courses">Các Khóa Học</Link></li>
+        <li><Link to="/hoc-thu">Học thử</Link></li>
       </ul>
 
       {/* User box với dropdown */}

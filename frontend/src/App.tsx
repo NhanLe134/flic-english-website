@@ -3,6 +3,7 @@ import TeacherLayout from "./layout/TeacherLayout"
 import Home from "./pages/Home"
 import AboutPage from "./pages/AboutPage"
 import CoursesPageHome from "./pages/CoursesPageHome"
+import CoursesCategoryPage from "./pages/CoursesCategoryPage"
 import CourseDetailHome from "./pages/CourseDetailHome"
 import Register from "./pages/Register"
 import RegisterSuccess from "./pages/RegisterSuccess"
@@ -37,6 +38,7 @@ import KetQuaHocTapHocVien from "./pages/KetQuaHocTapHocVien"
 import SuaKetQuaHocTapHocVien from "./pages/SuaKetQuaHocTapHocVien"
 import CaiDatTaiKhoan from "./pages/CaiDatTaiKhoan"
 import DoiMatKhau from "./pages/DoiMatKhau"
+import HocThu from "./pages/HocThu"
 
 /* ADMIN */
 import AdminLayout from "./layout/AdminLayout"
@@ -58,23 +60,6 @@ import CourseDetailSV from "./pages/CourseDetail/CourseDetailSV"
 import ClassDetailSV from "./pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./pages/DocDetail/DocDetail"
 import LessonDetailSV from "./pages/LessonDetail/LessonDetailSV"
-import Grammar from "./pages/Grammar/Grammar"
-import Grammardetail from "./pages/Grammardetail/Grammardetail"
-import GrammarPractice from "./pages/GrammarPractice/GrammarPractice"
-import VocabularyPractice from "./pages/VocabularyPractice/VocabularyPractice"
-import Vocabulary from "./pages/Vocabulary/Vocabulary"
-import VocabularyDetail from "./pages/VocabularyDetail/VocabularyDetail"
-import Listening from "./pages/Listening/Listening"
-import ListeningDetail from "./pages/ListeningDetail/ListeningDetail"
-import Speaking from "./pages/Speaking/Speaking"
-import SpeakingPractice from "./pages/SpeakingPractice/SpeakingPractice"
-import PhoneticPractice from "./pages/PhoneticPractice/PhoneticPractice"
-import Writing from "./pages/Writing/Writing"
-import WritingDetail from "./pages/WritingDetail/WritingDetail"
-import WritingPractice from "./pages/WritingPractice/WritingPractice"
-import ReadingSkill from "./pages/ReadingSkill/ReadingSkill"
-import ReadingDetail from "./pages/ReadingDetail/ReadingDetail"
-import ReadingSubmit from "./pages/ReadingSubmit/ReadingSubmit"
 import Progress from "./pages/Progress/Progress"
 import Settings from "./pages/Settings/Settings"
 import Assignments from "./pages/Assignments/Assignments"
@@ -95,10 +80,12 @@ function App() {
         {/* PUBLIC */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/courses-home" element={<CoursesPageHome />} />
+        <Route path="/courses" element={<CoursesPageHome />} />
+        <Route path="/courses-category/:categoryKey" element={<CoursesCategoryPage />} />
         <Route path="/coursehome/:id" element={<CourseDetailHome />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register-success" element={<RegisterSuccess />} />
+        <Route path="/hoc-thu" element={<HocThu />} />
 
         {/* LOGIN */}
         <Route path="/login" element={<Login />} />
@@ -177,23 +164,6 @@ function App() {
           <Route path="/lesson-detail/:maLopHoc/:maLesson" element={<LessonDetailSV />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
-          <Route path="/grammar" element={<Grammar />} />
-          <Route path="/grammar/detail/:id" element={<Grammardetail />} />
-          <Route path="/grammar/practice/:id" element={<GrammarPractice />} />
-          <Route path="/vocabulary" element={<Vocabulary />} />
-          <Route path="/vocabulary/detail/:id" element={<VocabularyDetail />} />
-          <Route path="/vocabulary/practice/:id" element={<VocabularyPractice />} />
-          <Route path="/skills/listening" element={<Listening />} />
-          <Route path="/skills/listening/detail/:id" element={<ListeningDetail />} />
-          <Route path="/skills/speaking" element={<Speaking />} />
-          <Route path="/skills/speaking/detail/:id" element={<SpeakingPractice />} />
-          <Route path="/skills/speaking/phonetic" element={<PhoneticPractice />} />
-          <Route path="/skills/writing" element={<Writing />} />
-          <Route path="/skills/writing/detail/:id" element={<WritingDetail />} />
-          <Route path="/skills/writing/practice/:id" element={<WritingPractice />} />
-          <Route path="/skills/reading" element={<ReadingSkill />} />
-          <Route path="/skills/reading/detail/:id" element={<ReadingDetail />} />
-          <Route path="/skills/reading/submit-result" element={<ReadingSubmit />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/assignments" element={<Assignments />} />

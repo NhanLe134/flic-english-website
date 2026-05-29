@@ -4,7 +4,6 @@ import "./SidebarSV.css";
 
 function SidebarSV() {
   const [showMore, setShowMore]         = useState(false);
-  const [showSkills, setShowSkills]     = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
   const navigate = useNavigate();
 
@@ -22,27 +21,7 @@ function SidebarSV() {
           <Link to="/MyCourses">📚 Khóa học</Link>
         </li>
 
-        <li>
-          <Link to="/grammar">📖 Ngữ pháp</Link>
-        </li>
 
-        <li>
-          <Link to="/vocabulary">📝 Từ vựng</Link>
-        </li>
-
-        <li className="sidebar-more-wrapper">
-          <div className="sidebar-more-trigger" onClick={() => setShowSkills(!showSkills)}>
-            🎧 Kỹ năng
-          </div>
-          {showSkills && (
-            <div className="sidebar-dropdown">
-              <Link to="/skills/listening" onClick={() => setShowSkills(false)}>Listening</Link>
-              <Link to="/skills/speaking"  onClick={() => setShowSkills(false)}>Speaking</Link>
-              <Link to="/skills/writing"   onClick={() => setShowSkills(false)}>Writing</Link>
-              <Link to="/skills/reading"   onClick={() => setShowSkills(false)}>Reading</Link>
-            </div>
-          )}
-        </li>
 
         <li>
           <Link to="/progress">📊 Tiến độ</Link>

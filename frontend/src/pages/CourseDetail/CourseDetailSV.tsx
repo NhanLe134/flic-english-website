@@ -67,7 +67,7 @@ function CourseDetailSV() {
 
   const hienTai   = new Date()
   const buoiDaHoc = lessons.filter(l => l.NgayKetThuc && new Date(l.NgayKetThuc) < hienTai).length
-  const tienDo    = lopInfo?.TienDo ?? (lessons.length > 0 ? Math.round(buoiDaHoc / lessons.length * 100) : 0)
+  // const tienDo    = lopInfo?.TienDo ?? (lessons.length > 0 ? Math.round(buoiDaHoc / lessons.length * 100) : 0)
 
   const diemList  = baiNops.filter((b: any) => b.Diem !== null)
   const diemTB    = diemList.length > 0

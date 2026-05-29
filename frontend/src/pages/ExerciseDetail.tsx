@@ -18,7 +18,6 @@ const ExerciseDetail = () => {
 
   // Edit states — giống CreateExercise
   const [editTitle,       setEditTitle]       = useState("");
-  const [editType,        setEditType]        = useState("");
   const [editContent,     setEditContent]     = useState("");
   const [editQuestions,   setEditQuestions]   = useState<Question[]>([]);
   const [editPairs,       setEditPairs]       = useState<Pair[]>([]);
@@ -114,7 +113,6 @@ const ExerciseDetail = () => {
   /* ===== INIT EDIT STATE ===== */
   const openEdit = () => {
     setEditTitle(exercise.Title || "");
-    setEditType(exercise.Type || "");
     setEditContent(mainContent);
     setEditSpeakingAns(normalizedType === "speaking" ? (exercise.Questions || "") : "");
 

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
+
 .results-section {
   background: #f3f3f3;
   padding: 100px 0;
@@ -10,6 +12,7 @@
 }
 
 .results-title {
+  font-family: 'Oswald', sans-serif;
   font-size: 42px;
   font-weight: 800;
 }
@@ -17,7 +20,7 @@
 .results-underline {
   width: 70px;
   height: 4px;
-  background: #f58220;
+  background: #F95800;
   margin: 20px auto;
 }
 

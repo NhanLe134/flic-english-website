@@ -1,6 +1,9 @@
 import "./hero.css"
+import { useNavigate } from "react-router-dom"
 
 const Hero = () => {
+  const navigate = useNavigate()
+
   return (
     <section className="hero">
       <div className="hero-container">
@@ -17,23 +20,32 @@ const Hero = () => {
           </h1>
 
           <p>
-            Học tiếng Anh bài bản với lộ trình rõ ràng,
-            giúp bạn đạt mục tiêu nhanh chóng.
+            Học thông minh hơn với các bài học được cá nhân hóa và tiến bộ thực sự.
+            Tham gia cùng hơn 10.000 học viên thành công đã thay đổi kỹ năng tiếng Anh của mình.
           </p>
 
           <div className="hero-stats">
             <div>
               <h3>10,000+</h3>
-              <span>Học viên tin tưởng</span>
+              <span>Người học thành công</span>
             </div>
             <div>
               <h3>15+</h3>
-              <span>Giảng viên kinh nghiệm</span>
+              <span>Giáo viên chuyên gia</span>
             </div>
             <div>
               <h3>98%</h3>
-              <span>Tỷ lệ đạt mục tiêu</span>
+              <span>Tỷ lệ thành công</span>
             </div>
+          </div>
+
+          <div className="hero-buttons">
+            <button className="btn-login" onClick={() => navigate("/login")}>
+              Đăng nhập
+            </button>
+            <button className="btn-register" onClick={() => navigate("/register")}>
+              Đăng ký
+            </button>
           </div>
         </div>
 

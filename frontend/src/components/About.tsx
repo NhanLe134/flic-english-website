@@ -1,18 +1,30 @@
 import "./about.css";
+import { useNavigate } from "react-router-dom";
 
 const About = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="about">
-      <div className="container">
+      <div className="about-inner-container">
 
         <div className="about-left">
-          <img src="/image(1).png" alt="FLIC" />
+          <div className="about-left-card">
+            <div className="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="cap-svg">
+                <path d="M12 2L1 8l11 6 11-6-11-6z" fill="#1e293b" />
+                <path d="M5 11.5v3.5c0 3.3 3.1 6 7 6s7-2.7 7-6v-3.5l-7 3.8-7-3.8z" fill="#1e293b" />
+                <path d="M19 9v7.5c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5V9l-3 0z" fill="#F95800" />
+              </svg>
+            </div>
+            <h3 className="card-title">Expert-Led Learning</h3>
+            <p className="card-subtitle">Personalized for Your Success</p>
+          </div>
         </div>
 
         <div className="about-right">
-          <h2>
-            Trung tâm Anh ngữ <span>FLIC</span>
-          </h2>
+          <h2>Về FLIC</h2>
+          <div className="about-title-underline"></div>
 
           <p>
             FLIC là trung tâm Anh ngữ chuyên đào tạo tiếng Anh cho học viên và người đi làm,
@@ -26,19 +38,17 @@ const About = () => {
           <div className="about-stats">
             <div className="about-stat-item">
               <span className="stat-number">7+</span>
-              <span className="stat-label">Năm kinh nghiệm</span>
+              <span className="stat-label">năm kinh nghiệm</span>
             </div>
             <div className="about-stat-item">
-              <span className="stat-number">500+</span>
-              <span className="stat-label">Khóa học thành công</span>
-            </div>
-            <div className="about-stat-item">
-              <span className="stat-number">98%</span>
-              <span className="stat-label">Học viên hài lòng</span>
+              <span className="stat-number">500</span>
+              <span className="stat-label">khóa học thành công</span>
             </div>
           </div>
 
-          <button>Về chúng tôi →</button>
+          <button className="btn-about" onClick={() => navigate("/about")}>
+            VỀ CHÚNG TÔI &rarr;
+          </button>
         </div>
 
       </div>

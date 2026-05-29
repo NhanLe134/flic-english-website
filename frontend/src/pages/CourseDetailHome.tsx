@@ -44,10 +44,15 @@ function CourseDetail() {
   }, [id])
 
   const handleRegister = async () => {
-    const user = JSON.parse(sessionStorage.getItem("user") || "{}")
+    let user: any = {}
+    try {
+      user = JSON.parse(sessionStorage.getItem("user") || "{}") || {}
+    } catch (e) {
+      console.error(e)
+    }
 
     // Chưa đăng nhập → chuyển sang trang đăng ký tài khoản
-    if (!user.MaNguoiDung) {
+    if (!user?.MaNguoiDung) {
       navigate("/course-register")
       return
     }
