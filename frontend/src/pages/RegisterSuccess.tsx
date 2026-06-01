@@ -1,4 +1,4 @@
-import "./RegisterSuccess.css";
+import "./registerSuccess.css";
 import { Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 

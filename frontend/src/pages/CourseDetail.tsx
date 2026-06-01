@@ -1,4 +1,4 @@
-import "./CourseDetail.css";
+import "./courseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 

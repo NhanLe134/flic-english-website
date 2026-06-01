@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { FiTrendingUp, FiCheckSquare, FiUsers, FiFileText, FiLogOut, FiShield } from "react-icons/fi"
 import "./sidebarAdmin.css"
 
 export default function SidebarAdmin() {
@@ -15,8 +16,7 @@ export default function SidebarAdmin() {
   return (
     <div className="sidebar-admin">
       <div className="sidebar-logo">
-        <img src="/image.png" width="35" alt="logo" />
-        <span>WEBSITE FLIC</span>
+        <img src="/flic_logo_full.png" width="200" alt="logo" />
       </div>
 
       <div className="admin-info">
@@ -25,24 +25,49 @@ export default function SidebarAdmin() {
       </div>
 
       <div className="sidebar-menu">
-        <NavLink to="/admin/admin-dashboard" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
-          🏠 Thống kê
+        <NavLink
+          to="/admin/admin-dashboard"
+          className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
+        >
+          <FiTrendingUp className="menu-icon" />
+          <span>Thống kê</span>
         </NavLink>
-        <NavLink to="/admin/approve" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
-          ✔ Kiểm duyệt
+        <NavLink
+          to="/admin/approve"
+          className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
+        >
+          <FiCheckSquare className="menu-icon" />
+          <span>Kiểm duyệt</span>
         </NavLink>
-        <NavLink to="/admin/account" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
-          👤 Tài khoản
+        <NavLink
+          to="/admin/account"
+          className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
+        >
+          <FiUsers className="menu-icon" />
+          <span>Tài khoản</span>
         </NavLink>
-        <NavLink to="/admin/bao-cao-ket-qua" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
-          📊 Báo cáo kết quả
+        <NavLink
+          to="/admin/permissions"
+          className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
+        >
+          <FiShield className="menu-icon" />
+          <span>Phân quyền</span>
         </NavLink>
+        <NavLink
+          to="/admin/bao-cao-ket-qua"
+          className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
+        >
+          <FiFileText className="menu-icon" />
+          <span>Báo cáo kết quả</span>
+        </NavLink>
+
         <span
-          className="menu-item"
+          className="menu-item menu-item-logout"
           style={{ cursor: "pointer" }}
           onClick={() => setShowLogoutModal(true)}
         >
-          🚪 Đăng xuất
+          <FiLogOut className="menu-icon" />
+          <span>Đăng xuất</span>
         </span>
       </div>
 
