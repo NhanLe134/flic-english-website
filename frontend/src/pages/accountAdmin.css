@@ -1,22 +1,26 @@
 .account-page {
   width: 100%;
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+  box-sizing: border-box;
 }
 
 .account-page h1 {
+  font-family: 'Inter', "Segoe UI", Arial, sans-serif; /* Đổi kiểu chữ tiêu đề thành Inter */
   font-size: 26px;
   font-weight: 700;
-  color: #333;
+  color: #000080; /* Màu xanh đen */
+  margin-top: 0;
   margin-bottom: 6px;
+  letter-spacing: -0.2px;
 }
 
 .sub-title {
-  color: #888;
-  margin-bottom: 24px;
+  color: #64748b;
+  margin-bottom: 28px;
   font-size: 14px;
 }
 
-/* TOP */
+/* TOP AREA (SEARCH + FILTER + ADD BUTTON) */
 .account-top {
   display: flex;
   justify-content: space-between;
@@ -24,37 +28,73 @@
   margin-bottom: 24px;
 }
 
-.account-top input {
-  width: 320px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #e0d4c3;
-  background: #fdf8f3;
-  font-size: 14px;
-  outline: none;
+.search-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.account-top input:focus {
-  border-color: #f58220;
+.search-filter-group input {
+  width: 320px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.search-filter-group input:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.15);
+}
+
+.search-filter-group select {
+  padding: 11px 44px 11px 20px; /* Symmetrical 20px left padding, 44px right padding for arrow spacing */
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
+  background-position: right 20px center; /* Symmetrical 20px right margin for the chevron */
+  background-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  text-align: left;
+  text-align-last: left;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.search-filter-group select:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.15);
 }
 
 .add-btn {
-  background: #f58220;
+  background: #F95800; /* Màu cam chủ đạo */
   color: white;
   border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 11px 22px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(249, 88, 0, 0.15);
 }
 
 .add-btn:hover {
-  background: #e46d10;
+  background: #d64c00;
+  box-shadow: 0 6px 12px -1px rgba(249, 88, 0, 0.25);
+  transform: translateY(-1px);
 }
 
-/* STATS */
+/* STATS CARDS */
 .account-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -64,102 +104,95 @@
 
 .box {
   background: white;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e0d4c3;
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
 }
 
 .box p {
-  color: #888;
-  font-size: 13px;
-  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .box h3 {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
-  color: #333;
+  color: #000080; /* Màu xanh đen */
   margin: 0;
 }
 
-/* TABLE */
+/* MODERN TABLE */
 .account-table {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
+  margin-top: 12px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-}
-
-th, td {
-  padding: 13px 16px;
   text-align: left;
-  font-size: 14px;
-}
-
-thead {
-  background: #fdf8f3;
 }
 
 th {
+  background: #f8fafc;
+  padding: 12px 16px; /* Giảm padding tiêu đề bảng */
   font-weight: 600;
-  color: #555;
-  border-bottom: 2px solid #e0d4c3;
+  color: #475569;
+  font-size: 11px; /* Giảm kích thước chữ tiêu đề của bảng */
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 td {
-  border-bottom: 1px solid #f0e8de;
-  color: #333;
+  padding: 12px 16px; /* Giảm padding ô dữ liệu */
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
 }
 
 tr:hover td {
-  background: #fdf8f3;
+  background: #f8fafc;
 }
 
-/* BUTTONS */
-.edit {
-  border: 2px solid #f58220;
-  background: white;
-  color: #f58220;
-  padding: 6px 14px;
-  border-radius: 6px;
-  margin-right: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.2s;
-}
-
-.edit:hover {
-  background: #f58220;
-  color: white;
-}
-
-.delete {
-  border: 2px solid #f87171;
-  background: white;
-  color: #f87171;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.2s;
-}
-
-.delete:hover {
-  background: #f87171;
-  color: white;
+/* ROLE BADGE */
+.role-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap; /* Chặn xuống dòng cột vai trò */
 }
 
 /* STATUS BADGE */
 .status-badge {
-  padding: 4px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  display: inline-block;
+  white-space: nowrap; /* Chặn xuống dòng cột trạng thái */
 }
 
 .status-badge.active {
@@ -172,119 +205,304 @@ tr:hover td {
   color: #dc2626;
 }
 
-/* MODAL */
+/* ACTION BUTTONS AS ICONS */
+.action-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.btn-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  border: 1.5px solid transparent;
+  background: #f8fafc;
+  outline: none;
+}
+
+.btn-edit {
+  color: #F95800; /* Màu cam chủ đạo */
+  border-color: rgba(249, 88, 0, 0.2);
+}
+
+.btn-edit:hover {
+  background: #F95800;
+  color: white;
+  border-color: #F95800;
+}
+
+.btn-lock {
+  color: #e28743; /* Cam đất/vàng đậm cảnh báo */
+  border-color: rgba(226, 135, 67, 0.2);
+}
+
+.btn-lock:hover {
+  background: #e28743;
+  color: white;
+  border-color: #e28743;
+}
+
+.btn-unlock {
+  color: #16a34a; /* Xanh lá hoạt động */
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.btn-unlock:hover {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+.btn-delete {
+  color: #ef4444; /* Đỏ hủy */
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-delete:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* MODALS */
 .admin-modal-overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.6); /* Slate backdrop */
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
 }
 
-.modal {
+.admin-modal-overlay .modal {
   background: white;
-  padding: 28px;
-  border-radius: 16px;
-  width: 440px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  padding: 32px;
+  border-radius: 20px;
+  width: 460px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  text-align: left; /* Enforce left-alignment inside modal */
 }
 
-.modal-header {
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.admin-modal-overlay .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  text-align: left;
 }
 
-.modal-header h3 {
-  font-size: 17px;
+.admin-modal-overlay .modal-header h3 {
+  font-size: 20px;
   font-weight: 700;
-  color: #333;
+  color: #0f172a;
   margin: 0;
+  text-align: left;
 }
 
-.close {
+.admin-modal-overlay .close {
   cursor: pointer;
-  font-size: 22px;
-  color: #888;
+  font-size: 26px;
+  color: #94a3b8;
   line-height: 1;
+  transition: color 0.15s;
+  user-select: none;
 }
 
-.close:hover {
-  color: #333;
+.admin-modal-overlay .close:hover {
+  color: #334155;
 }
 
-.modal-sub {
+.admin-modal-overlay .modal-sub {
   font-size: 13px;
-  color: #888;
-  margin-bottom: 16px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+  text-align: left;
 }
 
-.modal label {
+.admin-modal-overlay .modal label {
   display: block;
-  margin-top: 12px;
+  margin-top: 14px;
   margin-bottom: 6px;
   font-weight: 600;
   font-size: 13px;
-  color: #555;
+  color: #475569;
+  text-align: left;
 }
 
-.modal input,
-.modal select {
+.admin-modal-overlay .modal input {
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #e0d4c3;
-  background: #fdf8f3;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
   font-size: 14px;
   outline: none;
   box-sizing: border-box;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  text-align: left;
 }
 
-.modal input:focus,
-.modal select:focus {
-  border-color: #f58220;
+.admin-modal-overlay .modal select {
+  width: 100%;
+  padding: 11px 44px 11px 20px; /* Symmetrical 20px left padding, 44px right padding for arrow spacing */
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
+  background-position: right 20px center; /* Symmetrical 20px right margin for the chevron */
+  background-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  text-align: left;
+  text-align-last: left;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.admin-modal-overlay .modal input:focus,
+.admin-modal-overlay .modal select:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.15);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 24px;
-  gap: 10px;
+  margin-top: 28px;
+  gap: 12px;
 }
 
 .cancel {
-  padding: 9px 20px;
-  border: 2px solid #f58220;
+  padding: 10px 22px;
+  border: 1.5px solid #cbd5e1;
   background: white;
-  color: #f58220;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s;
-}
-
-.cancel:hover {
-  background: #fff4ec;
-}
-
-.save {
-  padding: 9px 20px;
-  border: none;
-  background: #f58220;
-  color: white;
-  border-radius: 8px;
+  color: #475569;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.cancel:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.save {
+  padding: 10px 24px;
+  border: none;
+  background: #F95800;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(249, 88, 0, 0.15);
+  outline: none;
 }
 
 .save:hover {
-  background: #e46d10;
+  background: #d64c00;
+  box-shadow: 0 6px 12px -1px rgba(249, 88, 0, 0.2);
+}
+
+/* Static read-only display values */
+.admin-modal-overlay .modal .info-value {
+  padding: 11px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Permissions Section */
+.permissions-section {
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
+}
+
+.permissions-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 24px;
+}
+
+.permissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-modal-overlay .modal .permission-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  user-select: none;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  font-weight: 500 !important;
+}
+
+.admin-modal-overlay .modal .permission-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #cbd5e1;
+  cursor: pointer;
+  accent-color: #F95800; /* Use orange color for checkboxes */
+  margin: 0 !important; /* Reset browser margin to align vertically */
+}
+
+.admin-modal-overlay .modal .permission-info-text {
+  font-size: 13.5px;
+  color: #64748b;
+  font-style: italic;
 }

@@ -7,6 +7,7 @@ uploads/
 backend/node_modules/
 backend/uploads/
 backend/.env
+backend/config/db.js
 
 # Frontend-specific ignore
 frontend/node_modules/

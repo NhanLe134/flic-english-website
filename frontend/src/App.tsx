@@ -45,6 +45,7 @@ import AdminLayout from "./layout/AdminLayout"
 import StatisticsAdmin from "./pages/StatisticsAdmin"
 import ApproveAdmin from "./pages/ApproveAdmin"
 import AccountAdmin from "./pages/AccountAdmin"
+import PermissionsAdmin from "./pages/PermissionsAdmin"
 import BaoCaoKetQua from "./pages/BaoCaoKetQua"
 
 /* QTV nội dung */
@@ -141,6 +142,7 @@ function App() {
           <Route path="admin-dashboard" element={<StatisticsAdmin />} />
           <Route path="approve" element={<ApproveAdmin />} />
           <Route path="account" element={<AccountAdmin />} />
+          <Route path="permissions" element={<PermissionsAdmin />} />
           <Route path="bao-cao-ket-qua" element={<BaoCaoKetQua />} />
         </Route>
 
