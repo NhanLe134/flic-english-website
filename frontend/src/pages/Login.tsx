@@ -35,7 +35,7 @@ const Login = () => {
 
       if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
       else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
-      else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/dashboard")
+      else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/khoahoc")
       else                                       navigate("/profile")
 
     } catch (err) {

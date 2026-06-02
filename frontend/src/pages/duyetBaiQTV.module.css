@@ -1,0 +1,505 @@
+/* duyetBaiQTV.module.css */
+
+.page {
+  background: #faf5ec;
+  min-height: 100vh;
+}
+
+.pageHeader {
+  padding: 24px 32px 10px;
+}
+
+.pageHeader h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.pageHeader p {
+  font-size: 13px;
+  color: #777;
+}
+
+.content {
+  padding: 12px 32px 32px;
+}
+
+/* Stats Row */
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.statCard {
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+
+.statMint {
+  background: #c8eae0;
+}
+
+.statYellow {
+  background: #fbf0c2;
+}
+
+.statGreen {
+  background: #c8eacc;
+}
+
+.statRed {
+  background: #f5d4d4;
+}
+
+.statLabel {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.statValue {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* Search Bar */
+.searchWrap {
+  margin-bottom: 20px;
+}
+
+.searchBox {
+  display: flex;
+  max-width: 380px;
+}
+
+.searchBox input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px 0 0 8px;
+  border: 1.5px solid #e0d8cc;
+  border-right: none;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.searchBox input:focus {
+  border-color: #e87722;
+}
+
+.searchBtn {
+  width: 44px;
+  background: #e87722;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.searchBtn:hover {
+  background: #cf6415;
+}
+
+/* Tab Container */
+.tabContainer {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tabBtn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  background: #fff;
+  border: 1.5px solid #e0d8cc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.tabBtn:hover {
+  color: #e87722;
+  border-color: #e87722;
+}
+
+.tabBtnActive {
+  background: #e87722;
+  color: #fff;
+  border-color: #e87722;
+}
+
+.tabBtnActive:hover {
+  color: #fff;
+}
+
+/* Table Card */
+.tableCard {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px 14px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tableHeader h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.tableHeader p {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+/* Filter pills */
+.pillsContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pillBtn {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1.5px solid #e0d8cc;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.pillBtn:hover {
+  border-color: #e87722;
+  color: #e87722;
+}
+
+.pillBtnActive {
+  background: #e87722;
+  color: #fff;
+  border-color: #e87722;
+}
+
+.pillBadge {
+  margin-left: 6px;
+  font-size: 11px;
+  background: #f0f0f0;
+  color: #666;
+  padding: 1px 6px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.pillBtnActive .pillBadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  border-bottom: 1.5px solid #f0eae0;
+  background: #fdfcf9;
+}
+
+.table td {
+  padding: 14px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #f5f0e8;
+  color: #333;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.clickableRow {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clickableRow:hover td {
+  background: #fffbf5;
+}
+
+.itemTitle {
+  color: #1a1a1a;
+  max-width: 320px;
+}
+
+.courseSubtitleText {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.emptyCell {
+  text-align: center;
+  padding: 40px;
+  color: #aaa;
+  font-style: italic;
+}
+
+.loadingText {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusApproved {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.statusPending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.statusRejected {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Modal Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Box */
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 520px;
+  max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.22s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.modalHeader h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #111;
+}
+
+.modalSubtitle {
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+}
+
+.closeBtn {
+  cursor: pointer;
+  color: #999;
+  font-size: 24px;
+  background: none;
+  border: none;
+  line-height: 1;
+  padding: 0;
+}
+
+.closeBtn:hover {
+  color: #333;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Forms layout */
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formRowThree {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroupFull {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label,
+.formGroupFull label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #444;
+}
+
+.formGroup input,
+.formGroupFull textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e0d8cc;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  background: #fdfdfd;
+  color: #333;
+}
+
+.formGroup input:disabled,
+.formGroupFull textarea:disabled {
+  background: #f5f5f5;
+  border-color: #ddd;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.formGroupFull textarea {
+  resize: none;
+}
+
+/* Modal Footer Action Buttons */
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.approveBtn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.approveBtn:hover {
+  background: #15803d;
+}
+
+.rejectBtn {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.rejectBtn:hover {
+  background: #b91c1c;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: #16a34a;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  animation: toastIn 0.3s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

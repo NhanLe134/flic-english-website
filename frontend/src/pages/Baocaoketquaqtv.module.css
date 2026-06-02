@@ -1,7 +1,21 @@
-/* ── Container ── */
-.container {
-  padding: 30px;
+/* ── Page & Layout ── */
+.page {
+  background: #faf5ec;
+  min-height: 100vh;
+  padding: 32px 40px;
   font-family: 'Segoe UI', sans-serif;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
 }
 
 
@@ -83,10 +97,10 @@
 }
 
 
-.s1 { background: #a9c8c1; }
-.s2 { background: #a8c9a8; }
-.s3 { background: #b8cfe0; }
-.s4 { background: #f0e6a0; }
+.s1 { background: #c8eae0; }
+.s2 { background: #c8eacc; }
+.s3 { background: #d4e5f5; }
+.s4 { background: #fbf0c2; }
 
 
 /* ── Filter bar ── */
@@ -100,43 +114,52 @@
 
 
 .searchWrap {
+  margin-bottom: 0;
+}
+
+.searchBox {
+  display: flex;
+  max-width: 380px;
+}
+
+.searchBox input {
   flex: 1;
-  min-width: 260px;
-  position: relative;
-}
-
-
-.searchIcon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  color: #aaa;
-}
-
-
-.searchInput {
-  width: 100%;
-  padding: 10px 12px 10px 36px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font-size: 13.5px;
-  font-family: inherit;
+  padding: 10px 14px;
+  border-radius: 8px 0 0 8px;
+  border: 1.5px solid #e0d8cc;
+  border-right: none;
   outline: none;
-  box-sizing: border-box;
+  font-size: 13px;
+  font-family: inherit;
   background: #fff;
 }
 
-
-.searchInput:focus {
+.searchBox input:focus {
   border-color: #e87722;
+}
+
+.searchBtn {
+  width: 44px;
+  background: #e87722;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.searchBtn:hover {
+  background: #cf6415;
 }
 
 
 .select {
   padding: 10px 12px;
-  border: 1px solid #ddd;
+  border: 1.5px solid #e0d8cc;
   border-radius: 10px;
   font-size: 13px;
   font-family: inherit;
@@ -178,9 +201,9 @@
 .table th {
   padding: 12px 14px;
   text-align: left;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
   white-space: nowrap;
 }
 
@@ -265,7 +288,7 @@
 .trangThai {
   display: inline-block;
   padding: 5px 12px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
@@ -297,7 +320,7 @@
   justify-content: center;
   width: 42px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 700;
 }
@@ -339,56 +362,75 @@
 
 /* ── Expanded row ── */
 .expandRow td {
-  padding: 0 !important;
+  padding: 12px 14px !important;
   border-bottom: 2px solid #f0e4d4 !important;
-}
-
-
-.expandContent {
   background: #fdf8f3;
-  padding: 18px 20px;
-  border-left: 4px solid #e87722;
 }
 
-
-.expandTitle {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #e87722;
-  margin: 0 0 14px;
-}
-
-
-.expandGrid {
+/* Card hiển thị bài tập trong ô expanded */
+.buoiExList {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
 }
 
-
-.expandCard {
+.exCard {
   background: #fff;
-  border: 1px solid #ede4d8;
-  border-radius: 10px;
-  padding: 10px 14px;
+  border: 1.5px solid #f0eae0;
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  min-width: 140px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
 
-
-.expandTB {
-  border-color: #e87722;
-  background: #fff8f2;
+.exCardContent {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
+.exCardTitle {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.expandBaiTen {
+.exCardSub {
+  font-size: 10.5px;
+  color: #888;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+.exCardBadge {
+  flex-shrink: 0;
+}
+
+.diemBadgeMini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
   font-size: 12px;
-  color: #777;
-  margin: 0;
-  font-weight: 500;
+  font-weight: 700;
 }
 
+.chuaNopMini {
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
+}
+
+.emptyVal {
+  color: #bbb;
+  font-style: italic;
+}

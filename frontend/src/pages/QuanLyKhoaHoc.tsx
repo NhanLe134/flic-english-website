@@ -68,17 +68,6 @@ const QuanLyKhoaHoc = () => {
           <h3>{filteredCourses.reduce((t, c) => t + c.students, 0)}</h3>
         </div>
         <div className="stat-box">
-          <p>Tiến độ trung bình</p>
-          <h3 className="green">
-            {filteredCourses.length > 0
-              ? Math.round(
-                  filteredCourses.reduce((t, c) => t + c.progress, 0) /
-                    filteredCourses.length
-                )
-              : 0}%
-          </h3>
-        </div>
-        <div className="stat-box">
           <p>Cấp độ hiện có</p>
           <h3>4 Levels</h3>
         </div>
@@ -95,12 +84,6 @@ const QuanLyKhoaHoc = () => {
               <p className="code">{c.code}</p>
               <p className="schedule">📅 {c.schedule}</p>
               <p>👥 {c.students} Học viên</p>
-              <p className="progress-text">
-                Tiến độ khóa học <span>{c.progress}%</span>
-              </p>
-              <div className="progress">
-                <div className="progress-bar" style={{ width: c.progress + "%" }} />
-              </div>
               <button onClick={() => navigate(`/khoa-hoc/${c.code}`, { state: { tenKhoaHoc: c.name } })}>
                 📖 Xem chi tiết
               </button>

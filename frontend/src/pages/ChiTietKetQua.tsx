@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { FiSearch } from "react-icons/fi";
 import "./chitietketqua.css";
 
 const ChiTietKetQua = () => {
@@ -105,14 +106,18 @@ const ChiTietKetQua = () => {
       )}
 
       <div className="table-container">
-        <div className="search-bar">
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-          />
-          <button>🔍</button>
+        <div className="search-box-wrap">
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên hoặc mã sinh viên..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            />
+            <button type="button">
+              <FiSearch />
+            </button>
+          </div>
         </div>
 
         {loading ? (

@@ -153,3 +153,38 @@
 .lrp-btn:hover {
   background: #e46d10;
 }
+
+.lrp-active-tag {
+  background: #e6f4ea;
+  color: #137333;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lrp-btn-secondary {
+  width: 100%;
+  background: #fff;
+  color: #555;
+  border: 1.5px solid #ddd;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.lrp-btn-secondary:hover {
+  border-color: #e87722;
+  color: #e87722;
+  background: #fff8f4;
+}
+
+.lrp-lesson-card-active {
+  border-color: #2e7d32 !important;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.1);
+}

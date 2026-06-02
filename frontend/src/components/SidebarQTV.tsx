@@ -29,11 +29,6 @@ const SidebarQTV = () => {
 
       <ul className={styles.menu}>
         <li>
-          <NavLink to="/QTV/dashboard" className={({ isActive }) => isActive ? styles.active : ""}>
-            Kỹ năng TA
-          </NavLink>
-        </li>
-        <li>
           <NavLink to="/QTV/khoahoc" className={({ isActive }) => isActive ? styles.active : ""}>
             Khóa học
           </NavLink>
@@ -41,6 +36,11 @@ const SidebarQTV = () => {
         <li>
           <NavLink to="/QTV/baocao" className={({ isActive }) => isActive ? styles.active : ""}>
             Báo cáo kết quả
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/QTV/duyet-bai" className={({ isActive }) => isActive ? styles.active : ""}>
+            Duyệt bài
           </NavLink>
         </li>
         <li>
