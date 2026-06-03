@@ -6,7 +6,7 @@ const ResetSuccess = () => {
 
   return (
     <div className="success-container">
-      <img src="/image.png" alt="FLIC Logo" className="success-logo" />
+      <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC Logo" className="success-logo" />
 
       <h2>QUÊN MẬT KHẨU</h2>
 

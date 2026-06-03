@@ -43,7 +43,7 @@ const ForgotPassword = () => {
     <div className="forgot-page">
       <div className="forgot-card">
 
-        <img src="/image.png" alt="FLIC Logo" className="forgot-logo" />
+        <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC Logo" className="forgot-logo" />
 
         <h2 className="forgot-title">QUÊN MẬT KHẨU</h2>
         <p className="forgot-text">Nhập email của bạn để nhận mật khẩu mới</p>

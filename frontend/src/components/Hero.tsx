@@ -50,7 +50,7 @@ const Hero = () => {
         </div>
 
         <div className="hero-right">
-          <img src="/image.png" alt="FLIC" />
+          <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC" />
         </div>
       </div>
     </section>

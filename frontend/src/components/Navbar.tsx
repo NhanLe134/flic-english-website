@@ -9,7 +9,7 @@ function Navbar() {
 
         {/* Logo */}
         <Link to="/" className="logo">
-          <img src="/flic_logo_full.png" alt="FLIC" className="logo-img" />
+          <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} alt="FLIC" className="logo-img" />
         </Link>
 
         {/* Menu */}

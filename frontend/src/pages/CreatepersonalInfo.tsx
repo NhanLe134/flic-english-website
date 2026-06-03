@@ -69,7 +69,7 @@ const PersonalInfo: React.FC = () => {
     <div className="page-container">
       {/* TOPBAR */}
       <div className="topbar">
-        <img src="/image.png" className="logo" />
+        <img src={`${import.meta.env.BASE_URL}image.png`} className="logo" />
         <div className="avatar">👩‍🏫</div>
       </div>
 

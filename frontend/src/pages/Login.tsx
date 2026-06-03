@@ -49,7 +49,7 @@ const Login = () => {
   return (
     <div className="login-page">
       <div className="login-card">
-        <img src="/image.png" alt="FLIC Logo" className="login-logo" />
+        <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC Logo" className="login-logo" />
         <h2 className="login-title">Đăng nhập</h2>
         <div className="form-wrapper">
 

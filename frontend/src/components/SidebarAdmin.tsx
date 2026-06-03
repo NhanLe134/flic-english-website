@@ -16,7 +16,7 @@ export default function SidebarAdmin() {
   return (
     <div className="sidebar-admin">
       <div className="sidebar-logo">
-        <img src="/flic_logo_full.png" width="200" alt="logo" />
+        <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} width="200" alt="logo" />
       </div>
 
       <div className="admin-info">

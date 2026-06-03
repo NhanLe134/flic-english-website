@@ -25,7 +25,7 @@ const Header = () => {
 
   return (
     <header className="teacher-header">
-      <img src="/image.png" alt="logo" className="teacher-logo" />
+      <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="teacher-logo" />
 
       <label className="avatar-wrapper header-avatar-wrapper" title="Đổi ảnh">
         <input type="file" accept="image/*" onChange={handleUpload} hidden />

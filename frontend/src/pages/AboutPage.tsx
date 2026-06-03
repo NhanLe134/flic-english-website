@@ -58,7 +58,7 @@ const AboutPage = () => {
       <NavbarAuto />
 
       <div className="about-hero">
-        <img src="/image(16).png" alt="FLIC Banner" />
+        <img src={`${import.meta.env.BASE_URL}image(16).png`} alt="FLIC Banner" />
       </div>
 
       <div className="about-container">

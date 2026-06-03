@@ -15,7 +15,7 @@ const SidebarQTV = () => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logo}>
-        <img src="/image.png" alt="logo" />
+        <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" />
         <h3>WEBSITE FLIC</h3>
       </div>
 
