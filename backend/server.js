@@ -1767,7 +1767,8 @@ app.get("/baocao/baitap-headers", async (req, res) => {
         l.MaLopHoc AS MaLopHoc,
         lh.TenLop AS TenLop
       FROM EXERCISE e
-      LEFT JOIN LESSON l ON e.MaLesson = l.MaLesson
+      LEFT JOIN BAIHOCKHOAHOC b ON e.MaBaiHoc = b.MaBaiHoc
+      LEFT JOIN LESSON l ON b.MaLesson = l.MaLesson
       LEFT JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
       ORDER BY e.MaExercise
     `)
@@ -1801,18 +1802,17 @@ app.get("/baocao/hocvien", async (req, res) => {
       WHERE b.Diem IS NOT NULL
     `)
 
-    // Gom điểm theo MaNguoiDung
-    // Sửa lại gom điểm dùng MaSinhVien từ BAINOP = MaNguoiDung
+    // Gom điểm theo MaSinhVien từ BAINOP
     const diemMap = {}
     for (const row of diemResult.recordset) {
       if (!diemMap[row.MaSinhVien]) diemMap[row.MaSinhVien] = {}
       diemMap[row.MaSinhVien][row.MaExercise] = row.Diem
     }
 
-    // Lookup đúng theo MaNguoiDung
+    // Lookup đúng theo MaSinhVien
     const result = svResult.recordset.map((sinhVien) => ({
       ...sinhVien,
-      baiTaps: diemMap[sinhVien.MaNguoiDung] || {}
+      baiTaps: diemMap[sinhVien.MaSinhVien] || {}
     }))
 
     res.json(result)
