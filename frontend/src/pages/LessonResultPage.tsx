@@ -125,17 +125,6 @@ const LessonResultPage = () => {
               <div className="lrp-info">
                 👥 {studentCount} Học viên
               </div>
-              <div className="lrp-progress-row">
-                <span>📈 Tiến độ</span>
-                <span className="lrp-percent">{tienDo}%</span>
-              </div>
-              <div className="lrp-progress-bar">
-                <div
-                  className="lrp-progress-orange"
-                  style={{ width: `${Math.max(tienDo - 10, 0)}%` }}
-                />
-                <div className="lrp-progress-green" style={{ width: "10%" }} />
-              </div>
               
               {lesson.MaLesson !== activeLessonId && (
                 <button

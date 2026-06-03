@@ -18,8 +18,8 @@ function Navbar() {
           <li><Link to="/about">Về Chúng Tôi</Link></li>
           <li><Link to="/courses">Các Khóa Học</Link></li>
           <li><Link to="/hoc-thu">Học thử</Link></li>
-          <li><Link to="/register">Đăng ký</Link></li>
-          <li><Link to="/login">Đăng nhập</Link></li>
+          <li><Link to="?auth=register">Đăng ký</Link></li>
+          <li><Link to="?auth=login">Đăng nhập</Link></li>
         </ul>
 
       </div>

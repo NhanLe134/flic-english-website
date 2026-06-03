@@ -5,11 +5,9 @@ import AboutPage from "./pages/AboutPage"
 import CoursesPageHome from "./pages/CoursesPageHome"
 import CoursesCategoryPage from "./pages/CoursesCategoryPage"
 import CourseDetailHome from "./pages/CourseDetailHome"
-import Register from "./pages/Register"
 import RegisterSuccess from "./pages/RegisterSuccess"
-import Login from "./pages/Login"
+import AuthModal from "./components/AuthModal"
 import QuanLyKhoaHoc from "./pages/QuanLyKhoaHoc"
-import ForgotPassword from "./pages/ForgotPassword"
 import ResetSuccess from "./pages/ResetSuccess"
 import CourseDetail from "./pages/CourseDetail"
 import LessonList from "./pages/LessonList"
@@ -84,13 +82,13 @@ function App() {
         <Route path="/courses" element={<CoursesPageHome />} />
         <Route path="/courses-category/:categoryKey" element={<CoursesCategoryPage />} />
         <Route path="/coursehome/:id" element={<CourseDetailHome />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
         <Route path="/register-success" element={<RegisterSuccess />} />
         <Route path="/hoc-thu" element={<HocThu />} />
 
         {/* LOGIN */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
+        <Route path="/forgot-password" element={<Navigate to="/?auth=forgot" replace />} />
         <Route path="/reset-success" element={<ResetSuccess />} />
 
         {/* GIẢNG VIÊN */}
@@ -176,6 +174,7 @@ function App() {
           <Route path="/essay-detail" element={<EssayDetail />} />
         </Route>
       </Routes>
+      <AuthModal />
     </BrowserRouter>
   )
 }
