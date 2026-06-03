@@ -50,7 +50,7 @@ import BaoCaoKetQua from "./pages/BaoCaoKetQua"
 
 /* QTV nội dung */
 import QTVLayout from "./layout/QTVLayout"
-import KyNangQTVPage from "./pages/KyNangTAPageQTV"
+import DuyetBaiQTV from "./pages/DuyetBaiQTV"
 import CoursePageQTV from "./pages/CoursePageQTV"
 /* Sinh viên */
 import CourseRegister from "./pages/CourseRegister/CourseRegister"
@@ -76,7 +76,7 @@ import StudentLayout from "./layout/StudentLayout"
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/flic-english-website">
       <Routes>
         {/* PUBLIC */}
         <Route path="/" element={<Home />} />
@@ -148,9 +148,10 @@ function App() {
 
         {/* QTV nội dung */}
         <Route path="/QTV" element={<QTVLayout />}>
-          <Route path="dashboard" element={<KyNangQTVPage />} />
+          <Route index element={<Navigate to="khoahoc" />} />
           <Route path="khoahoc" element={<CoursePageQTV />} />
           <Route path="baocao" element={<BaoCaoKetQuaQTV />} />
+          <Route path="duyet-bai" element={<DuyetBaiQTV />} />
         </Route>
 
         {/*Sinh viên*/}

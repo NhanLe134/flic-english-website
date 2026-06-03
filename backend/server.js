@@ -163,15 +163,80 @@ app.post("/qtv/khoahoc", async (req, res) => {
   }
 })
 
-// Tạo lớp học
+// Tạo lớp học và sao chép lộ trình
 app.post("/qtv/lophoc", async (req, res) => {
-  const { TenLop, MaLop, LichHoc, SoLuongHocVien } = req.body
-  const pool = await poolPromise
-  await pool.request()
-    .input("TenLop", TenLop).input("MaLop", MaLop)
-    .input("LichHoc", LichHoc).input("SoLuongHocVien", SoLuongHocVien||30)
-    .query(`INSERT INTO LOPHOC (TenLop,MaLop,LichHoc,SoLuongHocVien,TienDo) VALUES (@TenLop,@MaLop,@LichHoc,@SoLuongHocVien,0)`)
-  res.json({ message: "Tạo lớp thành công" })
+  const { TenLop, MaLop, LichHoc, SoLuongHocVien, CopyFromClassId } = req.body
+  try {
+    const pool = await poolPromise
+    
+    // 1. Tạo lớp học mới và lấy ID vừa tạo
+    const classResult = await pool.request()
+      .input("TenLop", TenLop)
+      .input("MaLop", MaLop)
+      .input("LichHoc", LichHoc)
+      .input("SoLuongHocVien", SoLuongHocVien || 30)
+      .query(`
+        INSERT INTO LOPHOC (TenLop, MaLop, LichHoc, SoLuongHocVien, TienDo) 
+        VALUES (@TenLop, @MaLop, @LichHoc, @SoLuongHocVien, 0);
+        SELECT SCOPE_IDENTITY() AS MaLopHoc;
+      `)
+    
+    const newMaLopHoc = classResult.recordset[0].MaLopHoc
+
+    // 2. Nếu có yêu cầu sao chép lộ trình từ lớp cũ
+    if (CopyFromClassId) {
+      // Lấy toàn bộ các buổi học của lớp cũ
+      const oldLessonsResult = await pool.request()
+        .input("CopyFromClassId", CopyFromClassId)
+        .query(`SELECT * FROM LESSON WHERE MaLopHoc = @CopyFromClassId`)
+
+      for (const oldLesson of oldLessonsResult.recordset) {
+        // Tạo buổi học mới cho lớp mới
+        const newLessonResult = await pool.request()
+          .input("TenLesson", oldLesson.TenLesson)
+          .input("NewMaLopHoc", newMaLopHoc)
+          .input("MoTa", oldLesson.MoTa || "")
+          .input("NgayBatDau", oldLesson.NgayBatDau || null)
+          .input("NgayKetThuc", oldLesson.NgayKetThuc || null)
+          .input("ThuTu", oldLesson.ThuTu || 1)
+          .query(`
+            INSERT INTO LESSON (TenLesson, MaLopHoc, MoTa, NgayBatDau, NgayKetThuc, ThuTu)
+            VALUES (@TenLesson, @NewMaLopHoc, @MoTa, @NgayBatDau, @NgayKetThuc, @ThuTu);
+            SELECT SCOPE_IDENTITY() AS MaLesson;
+          `)
+        
+        const newMaLesson = newLessonResult.recordset[0].MaLesson
+
+        // Lấy tất cả bài tập thuộc buổi học cũ
+        const oldExercisesResult = await pool.request()
+          .input("OldMaLesson", oldLesson.MaLesson)
+          .query(`SELECT * FROM EXERCISE WHERE MaLesson = @OldMaLesson`)
+
+        for (const oldEx of oldExercisesResult.recordset) {
+          // Tạo bài tập mới liên kết với buổi học mới
+          await pool.request()
+            .input("Title", oldEx.Title)
+            .input("Type", oldEx.Type)
+            .input("CreatedDate", oldEx.CreatedDate)
+            .input("NewMaLesson", newMaLesson)
+            .input("Content", oldEx.Content)
+            .input("Questions", oldEx.Questions)
+            .input("Vocabulary", oldEx.Vocabulary)
+            .input("AudioUrl", oldEx.AudioUrl)
+            .input("ShowAnswer", oldEx.ShowAnswer)
+            .query(`
+              INSERT INTO EXERCISE (Title, Type, CreatedDate, MaLesson, Content, Questions, Vocabulary, AudioUrl, ShowAnswer)
+              VALUES (@Title, @Type, @CreatedDate, @NewMaLesson, @Content, @Questions, @Vocabulary, @AudioUrl, @ShowAnswer)
+            `)
+        }
+      }
+    }
+
+    res.json({ message: "Tạo lớp thành công", MaLopHoc: newMaLopHoc })
+  } catch (err) {
+    console.error("Lỗi khi tạo và sao chép lớp học:", err)
+    res.status(500).send(err.message)
+  }
 })
 
 // Tạo buổi học
@@ -185,6 +250,22 @@ app.post("/qtv/lesson", async (req, res) => {
     .query(`INSERT INTO LESSON (TenLesson,MaLopHoc,MoTa,NgayBatDau,NgayKetThuc,ThuTu) VALUES (@TenLesson,@MaLopHoc,@MoTa,@NgayBatDau,@NgayKetThuc,@ThuTu)`)
   res.json({ message: "Thêm buổi thành công" })
 })
+// Lấy toàn bộ bài giảng (BAIHOCKHOAHOC) kèm thông tin giáo viên và khóa học phục vụ duyệt bài
+app.get("/qtv/baigiang", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.NoiDung, b.FileUrl, b.MaKhoaHoc, b.MaGiangVien, b.MaLesson,
+             n.HoTen AS TenGiangVien, k.TenKhoaHoc, k.TrinhDo AS CapDo,
+             k.NgayTao AS NgayGui
+      FROM BAIHOCKHOAHOC b
+      LEFT JOIN NGUOIDUNG n ON b.MaGiangVien = n.MaNguoiDung
+      LEFT JOIN KHOAHOC k ON b.MaKhoaHoc = k.MaKhoaHoc
+      ORDER BY b.MaBaiHoc DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) { res.status(500).send(err.message); }
+});
 app.get("/my-courses/:maSinhVien", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -336,7 +417,16 @@ app.get("/course-detail/:id/classes", async (req, res) => {
       .input("id", req.params.id)
       .query(`
         SELECT 
-          l.MaLopHoc, l.TenLop, l.LichHoc, l.TienDo,
+          l.MaLopHoc, l.TenLop, l.LichHoc,
+          COALESCE((
+            SELECT TOP 1 
+              CASE 
+                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+              END
+            FROM LESSON active_ls 
+            WHERE active_ls.MaLesson = l.ActiveLessonId
+          ), 0) AS TienDo,
           l.MaGiangVien, n.HoTen AS TenGiangVien,
           COUNT(DISTINCT ls.MaLesson) AS SoBuoiHoc,
           (
@@ -350,7 +440,7 @@ app.get("/course-detail/:id/classes", async (req, res) => {
         LEFT JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc,
-                 l.TienDo, l.MaGiangVien, n.HoTen
+                 l.ActiveLessonId, l.MaGiangVien, n.HoTen
       `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -364,7 +454,16 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
       .input("maNguoiDung", req.params.maNguoiDung)
       .query(`
         SELECT 
-          l.MaLopHoc, l.TenLop, l.LichHoc, l.TienDo,
+          l.MaLopHoc, l.TenLop, l.LichHoc,
+          COALESCE((
+            SELECT TOP 1 
+              CASE 
+                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+              END
+            FROM LESSON active_ls 
+            WHERE active_ls.MaLesson = l.ActiveLessonId
+          ), 0) AS TienDo,
           l.MaGiangVien, n.HoTen AS TenGiangVien,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
@@ -823,10 +922,20 @@ app.get("/classes/:id/info", async (req, res) => {
       .input("id", req.params.id)
       .query(`
         SELECT 
-          l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien, l.TienDo,
+          l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien,
+          COALESCE((
+            SELECT TOP 1 
+              CASE 
+                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+              END
+            FROM LESSON active_ls 
+            WHERE active_ls.MaLesson = l.ActiveLessonId
+          ), 0) AS TienDo,
           l.MaLop, kc.MoTa,
           k.TenKhoaHoc,
-          n.HoTen AS TenGiangVien
+          n.HoTen AS TenGiangVien,
+          l.ActiveLessonId AS ActiveLessonId
         FROM LOPHOC l
         LEFT JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
         LEFT JOIN KHOAHOC k ON kc.MaKhoaHoc = k.MaKhoaHoc
@@ -1378,7 +1487,16 @@ app.get("/teacher/classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          l.SoLuongHocVien, l.TienDo,
+          l.SoLuongHocVien,
+          COALESCE((
+            SELECT TOP 1 
+              CASE 
+                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+              END
+            FROM LESSON active_ls 
+            WHERE active_ls.MaLesson = l.ActiveLessonId
+          ), 0) AS TienDo,
           k.TenKhoaHoc
         FROM LOPHOC l
         JOIN GIANGVIEN g ON l.MaGiangVien = g.MaGiangVien
@@ -1636,16 +1754,21 @@ app.get("/baocao/diem-all", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 
-// Cập nhật baitap-headers để kèm tên lesson
+// Cập nhật baitap-headers để kèm tên lesson, ThuTu và MaLesson
 app.get("/baocao/baitap-headers", async (req, res) => {
   try {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
         e.MaExercise, e.Title AS TenBai,
-        l.TenLesson AS TenLesson
+        l.TenLesson AS TenLesson,
+        l.ThuTu AS ThuTu,
+        l.MaLesson AS MaLesson,
+        l.MaLopHoc AS MaLopHoc,
+        lh.TenLop AS TenLop
       FROM EXERCISE e
       LEFT JOIN LESSON l ON e.MaLesson = l.MaLesson
+      LEFT JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
       ORDER BY e.MaExercise
     `)
     res.json(result.recordset)
@@ -1964,7 +2087,16 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
       .input("id", req.params.maNguoiDung)
       .query(`
         SELECT 
-          l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien, l.TienDo,
+          l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien,
+          COALESCE((
+            SELECT TOP 1 
+              CASE 
+                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+              END
+            FROM LESSON active_ls 
+            WHERE active_ls.MaLesson = l.ActiveLessonId
+          ), 0) AS TienDo,
           k.TenKhoaHoc,
           sl.TrangThai, sl.NgayGhiDanh
         FROM SINHVIEN_LOPHOC sl
@@ -2103,4 +2235,57 @@ app.post("/forgot-password", async (req, res) => {
     res.status(500).json({ message: "Lỗi khi gửi email. Vui lòng thử lại!" })
   }
 })
-app.listen(5000, () => console.log("Server running on port 5000"));
+
+// Cập nhật buổi học đang học của lớp
+app.put("/classes/:id/active-lesson", async (req, res) => {
+  const { activeLessonId } = req.body
+  try {
+    const pool = await poolPromise
+    await pool.request()
+      .input("classId", req.params.id)
+      .input("activeLessonId", activeLessonId || null)
+      .query(`
+        UPDATE LOPHOC 
+        SET ActiveLessonId = @activeLessonId 
+        WHERE MaLopHoc = @classId
+      `)
+    res.json({ message: "Cập nhật buổi học đang học thành công" })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// Lấy tất cả lộ trình buổi học cho báo cáo kết quả QTV
+app.get("/baocao/lessons", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    const result = await pool.request().query(`
+      SELECT 
+        l.MaLesson, l.TenLesson, l.ThuTu, l.MaLopHoc, lh.TenLop, lh.ActiveLessonId
+      FROM LESSON l
+      LEFT JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
+      ORDER BY l.ThuTu
+    `)
+    res.json(result.recordset)
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+const initDb = async () => {
+  try {
+    const pool = await poolPromise
+    await pool.request().query(`
+      IF NOT EXISTS (
+          SELECT * FROM sys.columns 
+          WHERE object_id = OBJECT_ID('dbo.LOPHOC') AND name = 'ActiveLessonId'
+      )
+      BEGIN
+          ALTER TABLE dbo.LOPHOC ADD ActiveLessonId INT NULL;
+      END
+    `)
+    console.log("Database initialized successfully (ActiveLessonId checked/added).")
+  } catch (err) {
+    console.error("Database initialization error:", err.message)
+  }
+}
+
+initDb().then(() => {
+  app.listen(5000, () => console.log("Server running on port 5000"))
+})

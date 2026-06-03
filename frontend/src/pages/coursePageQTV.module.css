@@ -6,7 +6,7 @@
 .pageHeader p  { font-size: 13px; color: #777; }
 
 /* ── Search ── */
-.searchWrap { padding: 0 32px; margin-bottom: 8px; }
+.searchWrap { padding: 0; margin-bottom: 20px; }
 .searchBox  { display: flex; max-width: 380px; }
 .searchBox input {
   flex: 1; padding: 10px 14px; border-radius: 8px 0 0 8px;
@@ -62,7 +62,7 @@
 .empty       { text-align: center; padding: 40px; color: #aaa; font-size: 13px; }
 
 /* ── Badges ── */
-.badge       { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge       { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
 .badgeGreen  { background: #c8eacc; color: #1e6b30; }
 .badgeYellow { background: #fbf0c2; color: #7a5800; }
 .badgeBlue   { background: #d4e5f5; color: #1055a0; }
@@ -72,7 +72,7 @@
 /* Class badge button */
 .classBadgeBtn {
   background: #d4e5f5; color: #1055a0; border: none;
-  padding: 4px 12px; border-radius: 20px; font-size: 12px;
+  padding: 4px 12px; border-radius: 6px; font-size: 12px;
   font-weight: 600; cursor: pointer; font-family: inherit;
 }
 .classBadgeBtn:hover { background: #b8d5ef; }
@@ -100,7 +100,44 @@
 }
 .btnDanger:hover { background: #f0bfbf; }
 
-.actionBtns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+/* ── Class Detail Modal specific button styles ── */
+.detailBtnPrimary {
+  background: #e87722; color: #fff; border: 1.5px solid transparent;
+  height: 36px; padding: 0 16px; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+  line-height: 1;
+  vertical-align: middle;
+}
+.detailBtnPrimary:hover { background: #cf6415; border-color: #cf6415; }
+.detailBtnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.detailBtnOutline {
+  background: #fff; color: #e87722; border: 1.5px solid #e87722;
+  height: 36px; padding: 0 16px; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+  line-height: 1;
+  vertical-align: middle;
+}
+.detailBtnOutline:hover { background: #fff4ee; }
+
+.detailBtnDanger {
+  background: #dc2626; color: #fff; border: 1.5px solid #dc2626;
+  padding: 0 12px; height: 30px; border-radius: 6px; font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  line-height: 1;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.15);
+}
+.detailBtnDanger:hover { background: #b91c1c; border-color: #b91c1c; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25); }
+
+.actionBtns { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; }
 
 /* ── Modal Overlay ── */
 .overlay {
@@ -216,7 +253,7 @@
 .enrollSearchRow   { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .enrollSearchInput { flex: 1; padding: 9px 14px; border: 1.5px solid #e0d8cc; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
 .enrollSearchInput:focus { border-color: #e87722; }
-.selectedBadge { background: #e87722; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.selectedBadge { background: #e87722; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .enrollTableWrap { flex: 1; overflow-y: auto; max-height: 360px; border: 1px solid #f0eae0; border-radius: 10px; margin-bottom: 4px; }
 
 /* ── Toast ── */
@@ -536,7 +573,7 @@
   background: #fff;
   border-radius: 16px;
   padding: 28px;
-  width: 900px;
+  width: 1150px;
   max-width: 96vw;
   max-height: 88vh;
   overflow: hidden;
@@ -574,7 +611,7 @@
 
 .regStatPill {
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -630,7 +667,101 @@
   transition: 0.2s;
   white-space: nowrap;
 }
-
 .importBtn:hover {
   background: #fff4ec;
+}
+
+.detailImportBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1.5px solid #e87722;
+  color: #e87722;
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+  box-sizing: border-box;
+  margin: 0;
+  line-height: 1;
+  vertical-align: middle;
+  font-family: inherit;
+}
+.detailImportBtn:hover {
+  background: #fff4ec;
+}
+
+/* Style Table cụ thể cho Modal Đăng ký */
+.regModal table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.regModal th {
+  padding: 14px 16px;
+  background: #faf8f5;
+  font-size: 12px;
+  font-weight: 700;
+  color: #777;
+  border-bottom: 2px solid #f0eae0;
+  text-transform: uppercase;
+}
+.regModal td {
+  padding: 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #fcfaf7;
+  vertical-align: middle;
+}
+.regModal tr:hover td {
+  background: #fff9f2;
+}
+.regModal tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Weekday Selector ── */
+.weekdaySelector {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.weekdayBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid #e0d8cc;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.weekdayBtn:hover {
+  border-color: #e87722;
+  color: #e87722;
+  background: #fffdfb;
+}
+
+.weekdayBtnActive {
+  background: #e87722;
+  color: #fff;
+  border-color: #e87722;
+}
+
+.weekdayBtnActive:hover {
+  background: #cf6415;
+  color: #fff;
 }

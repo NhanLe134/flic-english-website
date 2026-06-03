@@ -8,25 +8,52 @@ const LessonResultPage = () => {
 
   const [lessons, setLessons] = useState<any[]>([]);
   const [classInfo, setClassInfo] = useState<any>(null);
-  const [studentCount, setStudentCount] = useState<number>(0); // ← thêm
+  const [studentCount, setStudentCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
+    // Đọc buổi học hiện tại từ localStorage làm dự phòng
+    const stored = localStorage.getItem(`active_lesson_${id}`);
+    if (stored) {
+      setActiveLessonId(Number(stored));
+    }
+
     Promise.all([
       fetch(`http://localhost:5000/classes/${id}/info`).then(r => r.json()),
       fetch(`http://localhost:5000/classes/${id}/lessons`).then(r => r.json()),
-      fetch(`http://localhost:5000/lophoc/${id}/students/count`).then(r => r.json()), // ← thêm
+      fetch(`http://localhost:5000/lophoc/${id}/students/count`).then(r => r.json()),
     ])
       .then(([info, lessonData, countData]) => {
         setClassInfo(info);
-        setStudentCount(countData?.SoLuongHocVien ?? 0); // ← thêm
+        setStudentCount(countData?.SoLuongHocVien ?? 0);
         setLessons(Array.isArray(lessonData) ? lessonData.sort((a: any, b: any) => a.ThuTu - b.ThuTu) : []);
+        if (info && info.ActiveLessonId) {
+          setActiveLessonId(info.ActiveLessonId);
+        }
       })
       .catch(err => console.log(err))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleSetActiveLesson = (lessonId: number) => {
+    fetch(`http://localhost:5000/classes/${id}/active-lesson`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activeLessonId: lessonId }),
+    })
+      .then(res => {
+        if (res.ok) {
+          localStorage.setItem(`active_lesson_${id}`, lessonId.toString());
+          setActiveLessonId(lessonId);
+        } else {
+          alert("Lỗi cập nhật buổi học đang học");
+        }
+      })
+      .catch(err => console.error("Lỗi set active lesson:", err));
+  };
 
   const formatDate = (d: string) => {
     if (!d) return "—";
@@ -80,9 +107,14 @@ const LessonResultPage = () => {
       ) : (
         <div className="lrp-lesson-grid">
           {lessons.map((lesson, idx) => (
-            <div key={lesson.MaLesson} className="lrp-lesson-card">
-              <div style={{ fontSize:12, color:"#e87722", fontWeight:600, marginBottom:4 }}>
-                Buổi {lesson.ThuTu || idx + 1}
+            <div key={lesson.MaLesson} className={`lrp-lesson-card ${lesson.MaLesson === activeLessonId ? "lrp-lesson-card-active" : ""}`}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div style={{ fontSize:12, color:"#e87722", fontWeight:600 }}>
+                  Buổi {lesson.ThuTu || idx + 1}
+                </div>
+                {lesson.MaLesson === activeLessonId && (
+                  <span className="lrp-active-tag">🟢 Đang học</span>
+                )}
               </div>
               <h3>{lesson.TenLesson}</h3>
               {lesson.MoTa && <p className="lrp-class">{lesson.MoTa}</p>}
@@ -91,7 +123,7 @@ const LessonResultPage = () => {
                 {lesson.NgayKetThuc ? ` → ${formatDate(lesson.NgayKetThuc)}` : ""}
               </div>
               <div className="lrp-info">
-                👥 {studentCount} Học viên {/* ← đổi */}
+                👥 {studentCount} Học viên
               </div>
               <div className="lrp-progress-row">
                 <span>📈 Tiến độ</span>
@@ -104,6 +136,16 @@ const LessonResultPage = () => {
                 />
                 <div className="lrp-progress-green" style={{ width: "10%" }} />
               </div>
+              
+              {lesson.MaLesson !== activeLessonId && (
+                <button
+                  className="lrp-btn-secondary"
+                  onClick={() => handleSetActiveLesson(lesson.MaLesson)}
+                >
+                  Đánh dấu buổi đang học
+                </button>
+              )}
+              
               <button
                 className="lrp-btn"
                 onClick={() => navigate(`/ketqua/${lesson.MaLesson}`)}
