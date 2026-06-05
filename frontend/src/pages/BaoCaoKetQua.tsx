@@ -59,7 +59,7 @@ export default function BaoCaoKetQua() {
         })) : []
         setExercises(exList)
 
-        // Map diem theo MaNguoiDung → MaExercise
+        // Map diem theo MaSinhVien → MaExercise
         const diemMap: Record<number, Record<number, { diem: number; ngayNop: string }>> = {}
         if (Array.isArray(diemData)) {
           for (const d of diemData) {
@@ -70,7 +70,7 @@ export default function BaoCaoKetQua() {
 
         // Build StudentResult list
         const mapped: StudentResult[] = (Array.isArray(svData) ? svData : []).map((sv: any) => {
-          const svDiem = diemMap[sv.MaNguoiDung] || {}
+          const svDiem = diemMap[sv.MaSinhVien] || {}
           const exerciseScores: ExerciseScore[] = exList.map(ex => ({
             exerciseId: ex.id,
             exerciseName: ex.name,

@@ -11,8 +11,10 @@
 .login-card {
   background: white;
   border-radius: 24px;
-  padding: 52px 52px 44px;
-  width: 500px;
+  padding: 44px 52px;
+  width: 400px;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -29,6 +31,7 @@
   font-size: 22px;
   font-weight: 700;
   color: #f58220;
+  margin-top: 0;
   margin-bottom: 24px;
   letter-spacing: 0.5px;
 }
@@ -66,6 +69,16 @@
 
 .form-wrapper input:focus {
   border-color: #f58220;
+}
+
+/* Ghi đè màu nền autofill xanh/vàng mặc định của trình duyệt */
+.form-wrapper input:-webkit-autofill,
+.form-wrapper input:-webkit-autofill:hover, 
+.form-wrapper input:-webkit-autofill:focus, 
+.form-wrapper input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #fdf8f3 inset !important;
+  -webkit-text-fill-color: #333 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Nút đăng nhập — chỉ áp dụng cho button không phải icon mắt */
@@ -136,12 +149,28 @@
   margin-top: 16px;
   text-align: center;
   font-size: 14px;
-  color: #888;
+  color: #000080;
   text-decoration: none;
   transition: 0.2s;
+  font-weight: 600;
 }
 
 .forgot:hover {
-  color: #f58220;
+  color: #0000b3;
   text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .login-page {
+    padding: 20px 10px;
+  }
+  .login-card {
+    padding: 30px 24px 28px;
+    border-radius: 16px;
+  }
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
 }

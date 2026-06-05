@@ -51,34 +51,47 @@
 }
 
 /* SEARCH */
+.search-box-wrap {
+  margin-bottom: 20px;
+}
+
 .search-bar {
   display: flex;
-  margin-bottom: 20px;
+  max-width: 380px;
 }
 
 .search-bar input {
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid #e0d4c3;
+  border: 1.5px solid #e0d8cc;
   border-right: none;
   border-radius: 8px 0 0 8px;
-  background: #fdf8f3;
-  font-size: 14px;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
   outline: none;
 }
 
 .search-bar input:focus {
-  border-color: #f58220;
+  border-color: #e87722;
 }
 
 .search-bar button {
-  background: #f58220;
-  color: white;
+  width: 44px;
+  background: #e87722;
   border: none;
-  padding: 10px 16px;
   border-radius: 0 8px 8px 0;
+  color: white;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.search-bar button:hover {
+  background: #cf6415;
 }
 
 /* TABLE */

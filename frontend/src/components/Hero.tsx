@@ -40,17 +40,17 @@ const Hero = () => {
           </div>
 
           <div className="hero-buttons">
-            <button className="btn-login" onClick={() => navigate("/login")}>
+            <button className="btn-login" onClick={() => navigate("?auth=login")}>
               Đăng nhập
             </button>
-            <button className="btn-register" onClick={() => navigate("/register")}>
+            <button className="btn-register" onClick={() => navigate("?auth=register")}>
               Đăng ký
             </button>
           </div>
         </div>
 
         <div className="hero-right">
-          <img src="/image.png" alt="FLIC" />
+          <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC" />
         </div>
       </div>
     </section>

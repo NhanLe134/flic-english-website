@@ -95,7 +95,7 @@ const QuanLyKetQuaHocTap = () => {
                 </div>
 
                 <div className="progress-row">
-                  <span>📈 Tiến độ khóa học</span>
+                  <span>📈 Tiến độ lớp học</span>
                   <span className="percent">{c.TienDo || 0}%</span>
                 </div>
                 <div className="progress-bar">
