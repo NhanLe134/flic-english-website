@@ -3,6 +3,36 @@ import { useState, useEffect } from "react";
 
 const API = "http://localhost:5000";
 
+const GV_PERMISSIONS = [
+  { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
+  { code: "EXERCISE_CREATE", label: "Đăng bài tập" },
+  { code: "QUIZ_CREATE", label: "Đăng bài kiểm tra" },
+  { code: "EXTRA_PRACTICE_CREATE", label: "Đăng bài luyện tập thêm" },
+  { code: "DOCUMENT_CREATE_PENDING", label: "Đăng tài liệu" },
+  { code: "STUDENT_GRADE", label: "Chấm điểm bài tập" },
+  { code: "GRADEBOOK_VIEW_CLASS", label: "Xem điểm lớp phụ trách" },
+  { code: "SUBMISSION_VIEW", label: "Xem bài làm của SV" }
+];
+
+const QTND_PERMISSIONS = [
+  { code: "CLASS_MANAGE", label: "Tạo & quản lý lớp" },
+  { code: "STUDENT_ASSIGN", label: "Xếp lớp cho SV" },
+  { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
+  { code: "EXERCISE_CREATE", label: "Đăng bài tập" },
+  { code: "QUIZ_CREATE", label: "Đăng bài kiểm tra" },
+  { code: "EXTRA_PRACTICE_CREATE", label: "Đăng bài luyện tập thêm" },
+  { code: "DOCUMENT_CREATE_DIRECT", label: "Đăng tài liệu" },
+  { code: "CONTENT_APPROVE", label: "Duyệt bài & tài liệu của GV" },
+  { code: "STUDENT_GRADE", label: "Chấm điểm bài tập" },
+  { code: "GRADEBOOK_VIEW_ALL", label: "Xem điểm toàn hệ thống" },
+  { code: "SUBMISSION_VIEW", label: "Xem bài làm của SV" }
+];
+
+const getPermissionLabel = (permCode: string) => {
+  const found = [...GV_PERMISSIONS, ...QTND_PERMISSIONS].find(p => p.code === permCode);
+  return found ? found.label : permCode;
+};
+
 type User = {
   MaNguoiDung: number;
   TenDangNhap: string;
@@ -48,7 +78,7 @@ export default function PermissionsAdmin() {
     loadUsers();
   }, []);
 
-  const getUserPermissions = (userId: number): string[] => {
+  const getUserPermissions = (userId: number, role: string): string[] => {
     const saved = localStorage.getItem(`user_perms_${userId}`);
     if (saved) {
       try {
@@ -56,6 +86,13 @@ export default function PermissionsAdmin() {
       } catch {
         return [];
       }
+    }
+    // Fallback if not saved yet
+    if (role === "Giảng Viên") {
+      return GV_PERMISSIONS.map(p => p.code);
+    }
+    if (role === "Quản Trị Nội Dung") {
+      return QTND_PERMISSIONS.map(p => p.code);
     }
     return [];
   };
@@ -72,25 +109,14 @@ export default function PermissionsAdmin() {
   const confirmChange = () => {
     if (!pendingChange) return;
     const { user, perm, nextVal } = pendingChange;
-    let newPerms = getUserPermissions(user.MaNguoiDung);
+    let newPerms = getUserPermissions(user.MaNguoiDung, user.VaiTro);
 
-    if (user.VaiTro === "Quản Trị Nội Dung") {
-      if (nextVal) {
+    if (nextVal) {
+      if (!newPerms.includes(perm)) {
         newPerms.push(perm);
-        const hasOthers = ["Kiểm duyệt", "Xem báo cáo kết quả", "Quản lý các khoá học"].every(p => newPerms.includes(p));
-        if (hasOthers) {
-          newPerms.push("Tất cả");
-        }
-      } else {
-        newPerms = newPerms.filter(p => p !== perm && p !== "Tất cả");
       }
-    } else if (user.VaiTro === "Giảng Viên") {
-      if (nextVal) {
-        // Teachers have mutually exclusive permissions
-        newPerms = [perm];
-      } else {
-        newPerms = newPerms.filter(p => p !== perm);
-      }
+    } else {
+      newPerms = newPerms.filter(p => p !== perm);
     }
 
     localStorage.setItem(`user_perms_${user.MaNguoiDung}`, JSON.stringify(newPerms));
@@ -107,11 +133,7 @@ export default function PermissionsAdmin() {
   // Filter users by activeRole and active status (locked users shouldn't have permissions displayed/managed)
   const filteredUsers = users.filter(u => u.VaiTro === activeRole && u.TrangThai !== "Khóa");
 
-  // Columns for each role (excluding 'Tất cả' according to user instructions)
-  const qtvndColumns = ["Kiểm duyệt", "Xem báo cáo kết quả", "Quản lý các khoá học"];
-  const gvColumns = ["Có tất cả quyền nhưng không có quyền đăng tải", "Có tất cả quyền"];
-
-  const activeColumns = activeRole === "Quản Trị Nội Dung" ? qtvndColumns : gvColumns;
+  const activeColumns = activeRole === "Quản Trị Nội Dung" ? QTND_PERMISSIONS : GV_PERMISSIONS;
 
   return (
     <div className="permissions-page">
@@ -146,26 +168,26 @@ export default function PermissionsAdmin() {
           <table className="permissions-table">
             <thead>
               <tr>
-                <th style={{ width: "250px" }}>Tên người dùng</th>
+                <th>Tên người dùng</th>
                 {activeColumns.map(col => (
-                  <th key={col}>{col}</th>
+                  <th key={col.code}>{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map(u => {
-                const userPerms = getUserPermissions(u.MaNguoiDung);
+                const userPerms = getUserPermissions(u.MaNguoiDung, u.VaiTro);
                 return (
                   <tr key={u.MaNguoiDung}>
                     <td style={{ fontWeight: 600, color: "#0f172a" }}>{u.HoTen}</td>
                     {activeColumns.map(col => {
-                      const isChecked = userPerms.includes(col);
+                      const isChecked = userPerms.includes(col.code);
                       return (
-                        <td key={col} className="checkbox-cell">
+                        <td key={col.code} className="checkbox-cell">
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => handleCheckboxClick(u, col, isChecked)}
+                            onChange={() => handleCheckboxClick(u, col.code, isChecked)}
                           />
                         </td>
                       );
@@ -185,9 +207,9 @@ export default function PermissionsAdmin() {
             <h3>Xác nhận thay đổi quyền</h3>
             <p>
               {pendingChange.nextVal ? (
-                <>Bạn muốn bổ sung quyền <strong>"{pendingChange.perm}"</strong> cho <strong>"{pendingChange.user.HoTen}"</strong>?</>
+                <>Bạn muốn bổ sung quyền <strong>"{getPermissionLabel(pendingChange.perm)}"</strong> cho <strong>"{pendingChange.user.HoTen}"</strong>?</>
               ) : (
-                <>Bạn muốn xóa quyền <strong>"{pendingChange.perm}"</strong> của <strong>"{pendingChange.user.HoTen}"</strong>?</>
+                <>Bạn muốn xóa quyền <strong>"{getPermissionLabel(pendingChange.perm)}"</strong> của <strong>"{pendingChange.user.HoTen}"</strong>?</>
               )}
             </p>
             <div className="modal-actions">

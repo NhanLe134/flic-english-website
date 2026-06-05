@@ -182,30 +182,30 @@
 }
 
 .sub {
-  font-style: italic;
+  font-style: normal;
   margin-bottom: 15px;
   color: #666;
 }
 
 /* TABLE */
-table {
+.ed-wrapper table {
   width: 100%;
   border-collapse: collapse;
 }
 
-th {
+.ed-wrapper th {
   background: #4c8c4a;
   color: white;
   padding: 10px;
   text-align: left;
 }
 
-td {
+.ed-wrapper td {
   border: 1px solid #e0d4c3;
   padding: 10px;
 }
 
-tr:nth-child(even) td {
+.ed-wrapper tr:nth-child(even) td {
   background: #fdf8f3;
 }
 

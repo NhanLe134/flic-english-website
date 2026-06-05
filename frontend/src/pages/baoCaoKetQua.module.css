@@ -1,8 +1,8 @@
 /* ── Page ── */
-.page { padding: 28px 32px; background: #f5f0eb; min-height: 100%; }
+.page { padding: 28px 32px; background: #ffffff; min-height: 100%; }
 
 .pageHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-.pageHeader h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.pageHeader h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; color: #000080; }
 .pageHeader p  { font-size: 13px; color: #777; }
 
 /* Export */
@@ -43,14 +43,22 @@
 .tableWrap { background: #fff; border-radius: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); overflow-x: auto; margin-bottom: 10px; }
 .table     { width: 100%; border-collapse: collapse; min-width: 700px; }
 .table thead th {
-  padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600;
-  color: #999; background: #fff; border-bottom: 1px solid #f0eae0; white-space: nowrap;
+  padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 700;
+  color: #ffffff; background: #000080; border-bottom: 1px solid #cbd5e1; white-space: nowrap;
 }
 .exCol { max-width: 130px; overflow: hidden; text-overflow: ellipsis; color: #666; }
 .avgCol { background: #faf5ec; color: #e87722; font-weight: 700; text-align: center; }
 
-.dataRow td { padding: 12px 14px; border-bottom: 1px solid #f5f0e8; font-size: 13px; color: #333; cursor: pointer; }
-.dataRow:hover td { background: #fffbf5; }
+.dataRow td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #333; cursor: pointer; }
+.table tbody tr:nth-child(even) td {
+  background-color: #f4f7fb !important;
+}
+.table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
+}
+.dataRow:hover td {
+  background-color: #e8f0f8 !important;
+}
 .dataRowOpen td   { background: #fff8f2; }
 .dataRow td:last-child { background: #fefaf5; }
 

@@ -414,7 +414,8 @@ app.get("/course-detail/:id/classes", async (req, res) => {
       .input("id", req.params.id)
       .query(`
         SELECT 
-          l.MaLopHoc, l.TenLop, l.LichHoc,
+          l.MaLopHoc, l.TenLop, l.LichHoc, l.HoanThanh, l.TrangThai,
+          l.SoLuongHocVien AS SiSoToiDa,
           COALESCE((
             SELECT TOP 1 
               CASE 
@@ -437,7 +438,7 @@ app.get("/course-detail/:id/classes", async (req, res) => {
         LEFT JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
         LEFT JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
-        GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc,
+        GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc, l.HoanThanh, l.TrangThai, l.SoLuongHocVien,
                  l.ActiveLessonId, pc.MaGiangVien, n.HoTen
       `)
     res.json(result.recordset)
@@ -556,16 +557,42 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
 // Cập nhật lớp học
 app.put("/qtv/lophoc/:id", async (req, res) => {
   try {
-    const { TenLop, LichHoc, SoLuongHocVien } = req.body
+    const { TenLop, LichHoc, SoLuongHocVien, HoanThanh, TrangThai } = req.body
     const pool = await poolPromise
+    
+    // Nếu chỉ truyền HoanThanh (chế độ toggle nhanh)
+    if (TenLop === undefined && HoanThanh !== undefined) {
+      const statusStr = HoanThanh ? "Đã hoàn thành" : "Đang diễn ra";
+      await pool.request()
+        .input("id", req.params.id)
+        .input("HoanThanh", HoanThanh ? 1 : 0)
+        .input("TrangThai", statusStr)
+        .query(`
+          UPDATE LOPHOC 
+          SET HoanThanh=@HoanThanh, TrangThai=@TrangThai
+          WHERE MaLopHoc=@id
+        `)
+      return res.json({ message: "Cập nhật trạng thái hoàn thành thành công" })
+    }
+
+    let finalHoanThanh = HoanThanh !== undefined ? (HoanThanh ? 1 : 0) : 0;
+    let finalTrangThai = TrangThai;
+    if (TrangThai !== undefined) {
+      finalHoanThanh = (TrangThai === "Đã hoàn thành") ? 1 : 0;
+    } else if (HoanThanh !== undefined) {
+      finalTrangThai = HoanThanh ? "Đã hoàn thành" : "Đang diễn ra";
+    }
+
     await pool.request()
       .input("id", req.params.id)
       .input("TenLop", TenLop)
       .input("LichHoc", LichHoc || "")
       .input("SoLuongHocVien", SoLuongHocVien || 30)
+      .input("HoanThanh", finalHoanThanh)
+      .input("TrangThai", finalTrangThai || "Chưa bắt đầu")
       .query(`
         UPDATE LOPHOC 
-        SET TenLop=@TenLop, LichHoc=@LichHoc, SoLuongHocVien=@SoLuongHocVien 
+        SET TenLop=@TenLop, LichHoc=@LichHoc, SoLuongHocVien=@SoLuongHocVien, HoanThanh=@HoanThanh, TrangThai=@TrangThai 
         WHERE MaLopHoc=@id
       `)
     res.json({ message: "Cập nhật lớp học thành công" })
