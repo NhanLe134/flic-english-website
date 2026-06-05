@@ -1,7 +1,7 @@
 html, body, #root {
   height: 100%;
   margin: 0;
-  background: #f5f0eb;
+  background: #ffffff;
 }
 
 .admin-layout {
@@ -14,7 +14,7 @@ html, body, #root {
   flex: 1;
   min-width: 0;          /* ← quan trọng nhất, cho phép co lại trong flex */
   padding: 32px 40px;
-  background: #f5f0e8;
+  background: #ffffff;
   box-sizing: border-box;
   overflow-x: hidden;    /* ← chặn scroll ngang ở content */
   overflow-y: auto;     /* ← thêm dòng này */

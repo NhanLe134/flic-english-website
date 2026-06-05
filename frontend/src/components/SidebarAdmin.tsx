@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { FiTrendingUp, FiCheckSquare, FiUsers, FiFileText, FiLogOut, FiShield } from "react-icons/fi"
+import { FiTrendingUp, FiBookOpen, FiUsers, FiFileText, FiLogOut, FiShield } from "react-icons/fi"
 import "./sidebarAdmin.css"
 
 export default function SidebarAdmin() {
@@ -36,8 +36,8 @@ export default function SidebarAdmin() {
           to="/admin/approve"
           className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
         >
-          <FiCheckSquare className="menu-icon" />
-          <span>Kiểm duyệt</span>
+          <FiBookOpen className="menu-icon" />
+          <span>Quản lý khóa học</span>
         </NavLink>
         <NavLink
           to="/admin/account"

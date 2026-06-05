@@ -136,7 +136,7 @@ app.post("/register-course", async (req, res) => {
 });
 // Tạo khóa học mới
 app.post("/qtv/khoahoc", async (req, res) => {
-  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, MaGiaoVien } = req.body
+  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung } = req.body
   try {
     const pool = await poolPromise
     const result = await pool.request()
@@ -144,19 +144,16 @@ app.post("/qtv/khoahoc", async (req, res) => {
       .input("MoTa", MoTa || "")
       .input("TrinhDo", TrinhDo || "")
       .input("MaNguoiDung", MaNguoiDung)
-      .input("MaGiaoVien", MaGiaoVien || null)
       .query(`
-        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, TrangThai, MaNguoiDung, NgayTao, MaGiaoVien)
+        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, TrangThai, MaNguoiDung, NgayTao)
         OUTPUT INSERTED.MaKhoaHoc
-        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, 'Pending', @MaNguoiDung, GETDATE(), @MaGiaoVien)
+        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, 'Pending', @MaNguoiDung, GETDATE())
       `)
     const newId = result.recordset[0].MaKhoaHoc
     res.json({
       message: "Tạo thành công",
       MaKhoaHoc: newId
     })
-
-
   } catch (err) {
     console.error("❌ Lỗi tạo khóa học:", err)
     res.status(500).json({ message: "Lỗi server" })
@@ -427,7 +424,7 @@ app.get("/course-detail/:id/classes", async (req, res) => {
             FROM LESSON active_ls 
             WHERE active_ls.MaLesson = l.ActiveLessonId
           ), 0) AS TienDo,
-          l.MaGiangVien, n.HoTen AS TenGiangVien,
+          pc.MaGiangVien, n.HoTen AS TenGiangVien,
           COUNT(DISTINCT ls.MaLesson) AS SoBuoiHoc,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
@@ -435,12 +432,13 @@ app.get("/course-detail/:id/classes", async (req, res) => {
           ) AS SoLuongHocVien
         FROM LOPHOC l
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
-        LEFT JOIN GIANGVIEN g ON l.MaGiangVien = g.MaGiangVien
+        LEFT JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
+        LEFT JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
         LEFT JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
         LEFT JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc,
-                 l.ActiveLessonId, l.MaGiangVien, n.HoTen
+                 l.ActiveLessonId, pc.MaGiangVien, n.HoTen
       `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -464,14 +462,15 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
             FROM LESSON active_ls 
             WHERE active_ls.MaLesson = l.ActiveLessonId
           ), 0) AS TienDo,
-          l.MaGiangVien, n.HoTen AS TenGiangVien,
+          pc.MaGiangVien, n.HoTen AS TenGiangVien,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
             WHERE sl.MaLopHoc = l.MaLopHoc
           ) AS SoLuongHocVien
         FROM LOPHOC l
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
-        JOIN GIANGVIEN g ON l.MaGiangVien = g.MaGiangVien
+        JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
+        JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
         JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
         WHERE kc.MaKhoaHoc = @id
           AND g.MaNguoiDung = @maNguoiDung
@@ -485,8 +484,91 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
     const pool = await poolPromise
     await pool.request()
       .input("id", req.params.id)
-      .query(`DELETE FROM LOPHOC WHERE MaLopHoc = @id`)
+      .query(`
+        -- 1. Xóa phân công giảng viên
+        DELETE FROM PHANCONGGIANGVIEN WHERE MaLopHoc = @id;
+
+        -- 2. Xóa ghi danh học viên lớp học
+        DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc = @id;
+
+        -- 3. Xóa bài nộp của học viên trong lớp
+        DELETE FROM BAINOP 
+        WHERE MaExercise IN (
+          SELECT MaExercise FROM EXERCISE 
+          WHERE MaLesson IN (
+            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 4. Xóa bài tập
+        DELETE FROM EXERCISE 
+        WHERE MaLesson IN (
+          SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+        );
+
+        -- 5. Xóa đáp án bài kiểm tra thuộc lesson trong lớp
+        DELETE FROM DAPAN WHERE MaCauHoi IN (
+          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
+              SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+            )
+          )
+        );
+
+        -- 6. Xóa câu hỏi bài kiểm tra thuộc lesson trong lớp
+        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
+            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 7. Xóa kết quả bài kiểm tra thuộc lesson trong lớp
+        DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
+            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 8. Xóa bài kiểm tra thuộc lesson trong lớp
+        DELETE FROM BAIKIEMTRA WHERE MaLesson IN (
+          SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+        );
+
+        -- 9. Nullify ActiveLessonId in LOPHOC
+        UPDATE LOPHOC SET ActiveLessonId = NULL WHERE MaLopHoc = @id;
+
+        -- 10. Nullify MaLesson in BAIHOCKHOAHOC
+        UPDATE BAIHOCKHOAHOC SET MaLesson = NULL 
+        WHERE MaLesson IN (
+          SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+        );
+
+        -- 11. Xóa các buổi học (LESSON)
+        DELETE FROM LESSON WHERE MaLopHoc = @id;
+
+        -- 12. Xóa chính lớp học (LOPHOC)
+        DELETE FROM LOPHOC WHERE MaLopHoc = @id;
+      `)
     res.json({ message: "Đã xóa lớp học" })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// Cập nhật lớp học
+app.put("/qtv/lophoc/:id", async (req, res) => {
+  try {
+    const { TenLop, LichHoc, SoLuongHocVien } = req.body
+    const pool = await poolPromise
+    await pool.request()
+      .input("id", req.params.id)
+      .input("TenLop", TenLop)
+      .input("LichHoc", LichHoc || "")
+      .input("SoLuongHocVien", SoLuongHocVien || 30)
+      .query(`
+        UPDATE LOPHOC 
+        SET TenLop=@TenLop, LichHoc=@LichHoc, SoLuongHocVien=@SoLuongHocVien 
+        WHERE MaLopHoc=@id
+      `)
+    res.json({ message: "Cập nhật lớp học thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
 
@@ -1255,9 +1337,23 @@ app.get("/admin/khoahoc", async (req, res) => {
         kh.TrangThai,
         kh.NgayTao,
         kh.NgayDuyet,
-        gv.HoTen AS HoTen  -- tên giáo viên
-      FROM KhoaHoc kh
-      LEFT JOIN NguoiDung gv ON kh.MaGiaoVien = gv.MaNguoiDung
+        kh.TrangThaiDuyet,
+        (
+          SELECT TOP 1 nd.HoTen
+          FROM KHOAHOCCHITIET khct
+          JOIN LOPHOC lh ON khct.MaLop = lh.MaLop
+          JOIN PHANCONGGIANGVIEN pcgv ON lh.MaLopHoc = pcgv.MaLopHoc
+          JOIN GIANGVIEN gv ON pcgv.MaGiangVien = gv.MaGiangVien
+          JOIN NGUOIDUNG nd ON gv.MaNguoiDung = nd.MaNguoiDung
+          WHERE khct.MaKhoaHoc = kh.MaKhoaHoc
+        ) AS HoTen,
+        (
+          SELECT COUNT(*)
+          FROM LOPHOC lh
+          JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+          WHERE khct.MaKhoaHoc = kh.MaKhoaHoc
+        ) AS SoLop
+      FROM KHOAHOC kh
     `);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
@@ -1425,15 +1521,14 @@ app.get("/lophoc/:id/students/count", async (req, res) => {
 // ── Sửa khóa học ──
 app.put("/admin/khoahoc/:id", async (req, res) => {
   try {
-    const { TenKhoaHoc, MoTa, TrinhDo, MaGiaoVien } = req.body
+    const { TenKhoaHoc, MoTa, TrinhDo } = req.body
     const pool = await poolPromise
     await pool.request()
       .input("id", req.params.id)
       .input("TenKhoaHoc", TenKhoaHoc)
       .input("MoTa", MoTa || "")
       .input("TrinhDo", TrinhDo || "")
-      .input("MaGiaoVien", MaGiaoVien || null)
-      .query(`UPDATE KHOAHOC SET TenKhoaHoc=@TenKhoaHoc, MoTa=@MoTa, TrinhDo=@TrinhDo, MaGiaoVien=@MaGiaoVien WHERE MaKhoaHoc=@id`)
+      .query(`UPDATE KHOAHOC SET TenKhoaHoc=@TenKhoaHoc, MoTa=@MoTa, TrinhDo=@TrinhDo WHERE MaKhoaHoc=@id`)
     res.json({ message: "Đã cập nhật" })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -1565,29 +1660,131 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
   try {
     const pool = await poolPromise
     await pool.request().input("id", req.params.id)
-      .query(`DELETE FROM PHANCONGGIANGVIEN WHERE MaKhoaHoc = @id`)
-    await pool.request().input("id", req.params.id)
-      .query(`DELETE FROM DANGKYKHOAHOC WHERE MaKhoaHoc = @id`)
-    await pool.request().input("id", req.params.id)
-      .query(`DELETE FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id`)
-    await pool.request().input("id", req.params.id)
       .query(`
-        DELETE FROM LESSON WHERE MaLopHoc IN (
-          SELECT l.MaLopHoc FROM LOPHOC l
+        -- 1. Xóa phân công giảng viên
+        DELETE FROM PHANCONGGIANGVIEN 
+        WHERE MaLopHoc IN (
+          SELECT l.MaLopHoc 
+          FROM LOPHOC l
           JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
           WHERE kc.MaKhoaHoc = @id
-        )
-      `)
-    await pool.request().input("id", req.params.id)
-      .query(`
-        DELETE FROM LOPHOC WHERE MaLop IN (
+        );
+
+        -- 2. Xóa ghi danh học viên lớp học
+        DELETE FROM SINHVIEN_LOPHOC 
+        WHERE MaLopHoc IN (
+          SELECT l.MaLopHoc 
+          FROM LOPHOC l
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 3. Xóa bài nộp học viên
+        DELETE FROM BAINOP 
+        WHERE MaExercise IN (
+          SELECT e.MaExercise 
+          FROM EXERCISE e 
+          JOIN LESSON ls ON e.MaLesson = ls.MaLesson 
+          JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc 
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 4. Xóa bài tập
+        DELETE FROM EXERCISE 
+        WHERE MaLesson IN (
+          SELECT ls.MaLesson 
+          FROM LESSON ls 
+          JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc 
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 5. Nullify ActiveLessonId in LOPHOC
+        UPDATE LOPHOC 
+        SET ActiveLessonId = NULL 
+        WHERE MaLop IN (
           SELECT MaLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id
-        )
+        );
+
+        -- 6. Nullify MaLesson in BAIHOCKHOAHOC
+        UPDATE BAIHOCKHOAHOC 
+        SET MaLesson = NULL 
+        WHERE MaLesson IN (
+          SELECT ls.MaLesson 
+          FROM LESSON ls 
+          JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc 
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 7. Xóa các buổi học (LESSON)
+        DELETE FROM LESSON 
+        WHERE MaLopHoc IN (
+          SELECT l.MaLopHoc 
+          FROM LOPHOC l
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 8. Xóa đăng ký khóa học
+        DELETE FROM DANGKYKHOAHOC WHERE MaKhoaHoc = @id;
+
+        -- 9. Xóa tổng kết khóa học
+        DELETE FROM TONGKETKHOAHOC WHERE MaKhoaHoc = @id;
+
+        -- 10. Xóa các bảng liên quan đến bài thi/bài học trong khóa học
+        DELETE FROM DAPAN WHERE MaCauHoi IN (
+          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
+              SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+                SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+              )
+            )
+          )
+        );
+
+        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
+            SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
+            SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        DELETE FROM BAIKIEMTRA WHERE MaLesson IN (
+          SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+            SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+          )
+        );
+
+        DELETE FROM TIENDOHOCTAP WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
+        );
+
+        -- 11. Xóa bài học khóa học
+        DELETE FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id;
+
+        -- 12. Xóa các lớp học (LOPHOC)
+        DELETE FROM LOPHOC 
+        WHERE MaLop IN (
+          SELECT MaLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id
+        );
+
+        -- 13. Xóa chi tiết khóa học (KHOAHOCCHITIET)
+        DELETE FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id;
+
+        -- 14. Xóa chính khóa học (KHOAHOC)
+        DELETE FROM KHOAHOC WHERE MaKhoaHoc = @id;
       `)
-    await pool.request().input("id", req.params.id)
-      .query(`DELETE FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id`)
-    await pool.request().input("id", req.params.id)
-      .query(`DELETE FROM KHOAHOC WHERE MaKhoaHoc = @id`)
     res.json({ message: "Đã xóa khóa học" })
   } catch (err) {
     console.error("Lỗi xóa khóa học:", err.message)
@@ -1964,9 +2161,16 @@ app.get("/courses/public", async (req, res) => {
     const result = await pool.request().query(`
       SELECT 
         k.MaKhoaHoc, k.TenKhoaHoc, k.MoTa, k.TrinhDo,
-        n.HoTen
+        (
+          SELECT TOP 1 nd.HoTen
+          FROM KHOAHOCCHITIET khct
+          JOIN LOPHOC lh ON khct.MaLop = lh.MaLop
+          JOIN PHANCONGGIANGVIEN pcgv ON lh.MaLopHoc = pcgv.MaLopHoc
+          JOIN GIANGVIEN gv ON pcgv.MaGiangVien = gv.MaGiangVien
+          JOIN NGUOIDUNG nd ON gv.MaNguoiDung = nd.MaNguoiDung
+          WHERE khct.MaKhoaHoc = k.MaKhoaHoc
+        ) AS HoTen
       FROM KHOAHOC k
-      LEFT JOIN NGUOIDUNG n ON k.MaGiaoVien = n.MaNguoiDung
       WHERE k.TrangThai = N'Đã duyệt'
       ORDER BY k.NgayTao DESC
     `)
@@ -1993,9 +2197,16 @@ app.get("/courses/:id/detail", async (req, res) => {
       .query(`
         SELECT 
           k.MaKhoaHoc, k.TenKhoaHoc, k.MoTa, k.TrinhDo, k.TrangThai,
-          n.HoTen
+          (
+            SELECT TOP 1 nd.HoTen
+            FROM KHOAHOCCHITIET khct
+            JOIN LOPHOC lh ON khct.MaLop = lh.MaLop
+            JOIN PHANCONGGIANGVIEN pcgv ON lh.MaLopHoc = pcgv.MaLopHoc
+            JOIN GIANGVIEN gv ON pcgv.MaGiangVien = gv.MaGiangVien
+            JOIN NGUOIDUNG nd ON gv.MaNguoiDung = nd.MaNguoiDung
+            WHERE khct.MaKhoaHoc = k.MaKhoaHoc
+          ) AS HoTen
         FROM KHOAHOC k
-        LEFT JOIN NGUOIDUNG n ON k.MaGiaoVien = n.MaNguoiDung
         WHERE k.MaKhoaHoc = @id AND k.TrangThai = N'Đã duyệt'
       `)
     res.json(result.recordset[0] || null)
