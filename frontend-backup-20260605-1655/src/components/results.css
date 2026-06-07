@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
+
+.results-section {
+  background: #f3f3f3;
+  padding: 100px 0;
+}
+
+.results-container {
+  width: 1300px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.results-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.results-underline {
+  width: 70px;
+  height: 4px;
+  background: #F95800;
+  margin: 20px auto;
+}
+
+.results-subtitle {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 60px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 5 ảnh 1 hàng giống ảnh em gửi */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 30px;
+}
+
+.result-card {
+  border-radius: 20px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.result-card img {
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+}
+
+.result-card:hover {
+  transform: translateY(-6px);
+}

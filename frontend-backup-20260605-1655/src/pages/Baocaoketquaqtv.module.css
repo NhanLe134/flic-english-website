@@ -1,0 +1,436 @@
+/* ── Page & Layout ── */
+.page {
+  background: #faf5ec;
+  min-height: 100vh;
+  padding: 32px 40px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ── Top bar ── */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+
+.exportBtn {
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background .2s;
+}
+
+
+.exportBtn:hover {
+  background: #333;
+}
+
+
+/* ── Stats ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+
+.statBox {
+  padding: 22px 24px;
+  border-radius: 14px;
+}
+
+
+.statBox p {
+  font-size: 14px;
+  color: #444;
+  margin: 0 0 10px;
+  font-weight: 500;
+}
+
+
+.statBox h2 {
+  font-size: 34px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+
+.s1 { background: #c8eae0; }
+.s2 { background: #c8eacc; }
+.s3 { background: #d4e5f5; }
+.s4 { background: #fbf0c2; }
+
+
+/* ── Filter bar ── */
+.filterBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+.searchWrap {
+  margin-bottom: 0;
+}
+
+.searchBox {
+  display: flex;
+  max-width: 380px;
+}
+
+.searchBox input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px 0 0 8px;
+  border: 1.5px solid #e0d8cc;
+  border-right: none;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.searchBox input:focus {
+  border-color: #e87722;
+}
+
+.searchBtn {
+  width: 44px;
+  background: #e87722;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.searchBtn:hover {
+  background: #cf6415;
+}
+
+
+.select {
+  padding: 10px 12px;
+  border: 1.5px solid #e0d8cc;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+  color: #333;
+}
+
+
+.select:focus {
+  border-color: #e87722;
+}
+
+
+/* ── Table wrap ── */
+.tableWrap {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.07);
+  overflow-x: auto;
+}
+
+
+/* ── Table ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+
+.table thead tr {
+  background: #fafafa;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+
+.table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  white-space: nowrap;
+}
+
+
+.thArrow {
+  width: 36px;
+}
+
+
+.table td {
+  padding: 14px;
+  border-bottom: 1px solid #f3f3f3;
+  font-size: 13px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+
+.row {
+  cursor: pointer;
+  transition: background .15s;
+}
+
+
+.row:hover {
+  background: #fdf8f3;
+}
+
+
+/* ── Arrow toggle ── */
+.arrowCell {
+  text-align: center;
+}
+
+
+.arrow {
+  display: inline-block;
+  font-size: 10px;
+  color: #bbb;
+  transition: transform .2s;
+}
+
+
+.arrowDown {
+  transform: rotate(90deg);
+  color: #e87722;
+}
+
+
+/* ── Mã HV ── */
+.maHV {
+  font-weight: 600;
+  color: #333;
+  font-size: 12.5px;
+}
+
+
+/* ── Tên HV ── */
+.tenHV {
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 2px;
+}
+
+
+.subInfo {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+
+/* ── Lớp / khóa ── */
+.tenLop {
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 2px;
+}
+
+
+/* ── Trạng thái badge ── */
+.trangThai {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+.ttDangHoc {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+
+.ttHoanThanh {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+
+.ttTamDung {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+/* ── Điểm badge ── */
+.diemBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.diemXanh {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+
+.diemVang {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+.diemDo {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* ── Chưa nộp ── */
+.chuaNop {
+  font-size: 12.5px;
+  color: #bbb;
+}
+
+
+/* ── Empty ── */
+.empty {
+  text-align: center;
+  padding: 48px;
+  color: #bbb;
+  font-size: 14px;
+}
+
+
+/* ── Expanded row ── */
+.expandRow td {
+  padding: 12px 14px !important;
+  border-bottom: 2px solid #f0e4d4 !important;
+  background: #fdf8f3;
+}
+
+/* Card hiển thị bài tập trong ô expanded */
+.buoiExList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.exCard {
+  background: #fff;
+  border: 1.5px solid #f0eae0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.exCardContent {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.exCardTitle {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exCardSub {
+  font-size: 10.5px;
+  color: #888;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+.exCardBadge {
+  flex-shrink: 0;
+}
+
+.diemBadgeMini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chuaNopMini {
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
+}
+
+.emptyVal {
+  color: #bbb;
+  font-style: italic;
+}

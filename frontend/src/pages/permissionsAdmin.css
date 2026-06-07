@@ -58,10 +58,11 @@
 .table-card {
   background: white;
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
   margin-top: 12px;
+  max-width: 100%;
 }
 
 .permissions-table {
@@ -71,35 +72,62 @@
 }
 
 .permissions-table th {
-  background: #f8fafc;
-  padding: 14px 20px;
-  font-weight: 600;
-  color: #475569;
-  font-size: 11px;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: #000080;
+  padding: 16px 20px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 12px;
+  border-bottom: 1px solid #cbd5e1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .permissions-table td {
-  padding: 14px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   font-size: 14px;
   vertical-align: middle;
 }
 
+.permissions-table th:first-child,
+.permissions-table td:first-child {
+  white-space: nowrap;
+  min-width: 170px;
+  width: 170px;
+  text-align: left;
+}
+
+.permissions-table th:not(:first-child),
+.permissions-table td:not(:first-child) {
+  min-width: 115px;
+  width: 115px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .permissions-table tr:last-child td {
   border-bottom: none;
 }
 
-.permissions-table tr:hover td {
-  background: #f8fafc;
+/* Zebra alternating rows */
+.permissions-table tbody tr:nth-child(even) td {
+  background-color: #f4f7fb !important;
 }
+
+.permissions-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
+}
+
+/* Hover style matching the cool blue theme */
+.permissions-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
 
 /* CHECKBOX LAYOUT IN CELLS */
 .checkbox-cell {
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 }
 
@@ -111,8 +139,8 @@
   cursor: pointer;
   accent-color: #F95800; /* Màu cam chủ đạo */
   transition: transform 0.1s ease;
-  margin: 0;
-  display: block;
+  margin: 0 auto;
+  display: inline-block;
 }
 
 .checkbox-cell input[type="checkbox"]:hover {
