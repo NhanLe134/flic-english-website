@@ -52,7 +52,6 @@ type PendingChange = {
 
 export default function PermissionsAdmin() {
   const [users, setUsers] = useState<User[]>([]);
-  const [permissionsMap, setPermissionsMap] = useState<Record<number, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [activeRole, setActiveRole] = useState<"Quản Trị Nội Dung" | "Giảng Viên">("Quản Trị Nội Dung");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -64,46 +63,38 @@ export default function PermissionsAdmin() {
     setTimeout(() => setToast(""), 2500);
   };
 
-  const loadUsers = async () => {
+  const loadUsers = () => {
     setLoading(true);
-    try {
-      const r = await fetch(`${API}/admin/users`);
-      const data = await r.json();
-      const userList: User[] = Array.isArray(data) ? data : [];
-      setUsers(userList);
-
-      // Fetch permissions for each relevant user concurrently
-      const permsData: Record<number, string[]> = {};
-      const relevantUsers = userList.filter(u => 
-        (u.VaiTro === "Giảng Viên" || u.VaiTro === "Quản Trị Nội Dung") && u.TrangThai !== "Khóa"
-      );
-
-      await Promise.all(
-        relevantUsers.map(async (u) => {
-          try {
-            const permRes = await fetch(`${API}/admin/users/${u.MaNguoiDung}/permissions`);
-            const permJson = await permRes.json();
-            permsData[u.MaNguoiDung] = permJson.permissions || [];
-          } catch (e) {
-            permsData[u.MaNguoiDung] = [];
-          }
-        })
-      );
-      
-      setPermissionsMap(permsData);
-    } catch (err) {
-      showToast("Lỗi tải dữ liệu");
-    } finally {
-      setLoading(false);
-    }
+    fetch(`${API}/admin/users`)
+      .then(r => r.json())
+      .then(data => {
+        setUsers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => showToast("Lỗi tải danh sách người dùng"))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadUsers();
   }, []);
 
-  const getUserPermissions = (userId: number): string[] => {
-    return permissionsMap[userId] || [];
+  const getUserPermissions = (userId: number, role: string): string[] => {
+    const saved = localStorage.getItem(`user_perms_${userId}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    // Fallback if not saved yet
+    if (role === "Giảng Viên") {
+      return GV_PERMISSIONS.map(p => p.code);
+    }
+    if (role === "Quản Trị Nội Dung") {
+      return QTND_PERMISSIONS.map(p => p.code);
+    }
+    return [];
   };
 
   const handleCheckboxClick = (user: User, perm: string, currentVal: boolean) => {
@@ -115,10 +106,10 @@ export default function PermissionsAdmin() {
     setShowConfirmModal(true);
   };
 
-  const confirmChange = async () => {
+  const confirmChange = () => {
     if (!pendingChange) return;
     const { user, perm, nextVal } = pendingChange;
-    let newPerms = [...getUserPermissions(user.MaNguoiDung)];
+    let newPerms = getUserPermissions(user.MaNguoiDung, user.VaiTro);
 
     if (nextVal) {
       if (!newPerms.includes(perm)) {
@@ -128,27 +119,8 @@ export default function PermissionsAdmin() {
       newPerms = newPerms.filter(p => p !== perm);
     }
 
-    try {
-      // Call backend to save permissions
-      const response = await fetch(`${API}/admin/users/${user.MaNguoiDung}/permissions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ permissions: newPerms })
-      });
-
-      if (response.ok) {
-        setPermissionsMap(prev => ({
-          ...prev,
-          [user.MaNguoiDung]: newPerms
-        }));
-        showToast("Cập nhật quyền thành công!");
-      } else {
-        showToast("Lưu thất bại trên máy chủ.");
-      }
-    } catch (err) {
-      showToast("Lỗi kết nối đến máy chủ.");
-    }
-
+    localStorage.setItem(`user_perms_${user.MaNguoiDung}`, JSON.stringify(newPerms));
+    showToast("Cập nhật quyền thành công!");
     setShowConfirmModal(false);
     setPendingChange(null);
   };
@@ -158,8 +130,9 @@ export default function PermissionsAdmin() {
     setPendingChange(null);
   };
 
-  // Filter users by activeRole and active status
+  // Filter users by activeRole and active status (locked users shouldn't have permissions displayed/managed)
   const filteredUsers = users.filter(u => u.VaiTro === activeRole && u.TrangThai !== "Khóa");
+
   const activeColumns = activeRole === "Quản Trị Nội Dung" ? QTND_PERMISSIONS : GV_PERMISSIONS;
 
   return (
@@ -186,7 +159,7 @@ export default function PermissionsAdmin() {
       {/* TABLE */}
       <div className="table-card">
         {loading ? (
-          <p style={{ padding: "20px", color: "#64748b" }}>Đang tải dữ liệu...</p>
+          <p style={{ padding: "20px", color: "#64748b" }}>Đang tải...</p>
         ) : filteredUsers.length === 0 ? (
           <p style={{ padding: "24px", color: "#64748b", fontStyle: "italic" }}>
             Không tìm thấy tài khoản hoạt động nào cho vai trò này.
@@ -203,7 +176,7 @@ export default function PermissionsAdmin() {
             </thead>
             <tbody>
               {filteredUsers.map(u => {
-                const userPerms = getUserPermissions(u.MaNguoiDung);
+                const userPerms = getUserPermissions(u.MaNguoiDung, u.VaiTro);
                 return (
                   <tr key={u.MaNguoiDung}>
                     <td style={{ fontWeight: 600, color: "#0f172a" }}>{u.HoTen}</td>

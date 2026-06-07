@@ -1,0 +1,43 @@
+.success-container {
+  background-color: #e5d8c5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 60px;
+  text-align: center;
+}
+
+.success-logo {
+  width: 180px;
+  margin-bottom: 30px;
+}
+
+.success-container h2 {
+  color: #e87722;
+  margin-bottom: 20px;
+}
+
+.success-container p {
+  font-size: 26px;
+  max-width: 800px;
+  margin-bottom: 40px;
+}
+
+.success-container button {
+  background-color: #e87722;
+  color: white;
+  border: none;
+  padding: 14px 35px;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: 0.3s;
+}
+
+.success-container button:hover {
+  background-color: #cf651a;
+  transform: translateY(-2px);
+}

@@ -1,0 +1,151 @@
+.qlkq-wrapper {
+  font-family: "Segoe UI", Arial, sans-serif;
+  width: 100%;
+}
+
+.qlkq-wrapper h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #333;
+}
+
+.qlkq-sub {
+  color: #777;
+  margin-bottom: 28px;
+  font-size: 14px;
+}
+
+/* STATS */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e0d4c3;
+  text-align: center;
+}
+
+.stat-card p {
+  color: #888;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.stat-card h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+/* CLASS CARDS */
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.class-card {
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px solid #e0d4c3;
+  transition: 0.2s;
+}
+
+.class-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.class-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #222;
+}
+
+.class-code {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f58220;
+  margin-bottom: 16px;
+}
+
+.class-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.class-info p {
+  margin: 0;
+}
+
+/* PROGRESS */
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.percent {
+  font-weight: 700;
+  color: #f58220;
+}
+
+.progress-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #eee;
+  margin-bottom: 20px;
+}
+
+.progress-orange {
+  background: #f58220;
+  height: 100%;
+}
+
+.progress-green {
+  background: #2e7d32;
+  height: 100%;
+}
+
+.progress-bg {
+  background: #eee;
+  height: 100%;
+}
+
+/* BUTTON */
+.result-btn {
+  width: 100%;
+  background: #f58220;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.result-btn:hover {
+  background: #e46d10;
+}

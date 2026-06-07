@@ -496,15 +496,19 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
         DELETE FROM BAINOP 
         WHERE MaExercise IN (
           SELECT MaExercise FROM EXERCISE 
-          WHERE MaLesson IN (
-            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          WHERE MaBaiHoc IN (
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaLesson IN (
+              SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+            )
           )
         );
 
         -- 4. Xóa bài tập
         DELETE FROM EXERCISE 
-        WHERE MaLesson IN (
-          SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaLesson IN (
+            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          )
         );
 
         -- 5. Xóa đáp án bài kiểm tra thuộc lesson trong lớp
@@ -1711,20 +1715,15 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
         WHERE MaExercise IN (
           SELECT e.MaExercise 
           FROM EXERCISE e 
-          JOIN LESSON ls ON e.MaLesson = ls.MaLesson 
-          JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc 
-          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
-          WHERE kc.MaKhoaHoc = @id
+          WHERE e.MaBaiHoc IN (
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
+          )
         );
 
         -- 4. Xóa bài tập
         DELETE FROM EXERCISE 
-        WHERE MaLesson IN (
-          SELECT ls.MaLesson 
-          FROM LESSON ls 
-          JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc 
-          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
-          WHERE kc.MaKhoaHoc = @id
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
         );
 
         -- 5. Nullify ActiveLessonId in LOPHOC
@@ -2504,6 +2503,100 @@ app.get("/baocao/lessons", async (req, res) => {
     `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
+})
+
+/* ========== PHÂN QUYỀN - QUẢN LÝ QUYỀN CHI TIẾT ========== */
+// Lấy quyền của người dùng từ database
+app.get("/admin/users/:id/permissions", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    const result = await pool.request()
+      .input("id", req.params.id)
+      .query(`
+        SELECT DISTINCT nq.MaQuyenHan, q.TenQuyenHan
+        FROM NGUOIDUNG_QUYENHAN nq
+        JOIN QUYENHAN q ON nq.MaQuyenHan = q.MaQuyenHan
+        WHERE nq.MaNguoiDung = @id
+        ORDER BY q.TenQuyenHan
+      `)
+    // Chuyển đổi sang format mà frontend cần
+    const permissionCodes = result.recordset.map(r => {
+      const name = r.TenQuyenHan
+      // Chuyển tên quyền thành code
+      const codeMap = {
+        'Đăng bài giảng': 'LECTURE_CREATE',
+        'Đăng bài tập': 'EXERCISE_CREATE',
+        'Đăng bài kiểm tra': 'QUIZ_CREATE',
+        'Đăng bài luyện tập thêm': 'EXTRA_PRACTICE_CREATE',
+        'Đăng tài liệu': 'DOCUMENT_CREATE_PENDING',
+        'Chấm điểm': 'STUDENT_GRADE',
+        'Xem điểm': 'GRADEBOOK_VIEW_ALL',
+        'Xem bài làm học viên': 'SUBMISSION_VIEW',
+        'Tạo lớp trong khóa': 'CLASS_MANAGE',
+        'Phân lớp sinh viên': 'STUDENT_ASSIGN',
+        'Duyệt bài đăng giáo viên': 'CONTENT_APPROVE'
+      }
+      return codeMap[name] || name
+    })
+    res.json({ permissions: permissionCodes })
+  } catch (err) { 
+    res.json({ permissions: [] })
+  }
+})
+
+// Lưu quyền cho người dùng vào database
+app.post("/admin/users/:id/permissions", async (req, res) => {
+  try {
+    const { permissions } = req.body // Mảng các TenQuyenHan
+    const maNguoiDung = req.params.id
+    const pool = await poolPromise
+    
+    // Xóa các quyền cũ của NGUOIDUNG này
+    await pool.request()
+      .input("maNguoiDung", maNguoiDung)
+      .query(`DELETE FROM NGUOIDUNG_QUYENHAN WHERE MaNguoiDung = @maNguoiDung`)
+    
+    // Thêm quyền mới
+    if (permissions && permissions.length > 0) {
+      // Chuyển code sang TenQuyenHan
+      const codeToNameMap = {
+        'LECTURE_CREATE': 'Đăng bài giảng',
+        'EXERCISE_CREATE': 'Đăng bài tập',
+        'QUIZ_CREATE': 'Đăng bài kiểm tra',
+        'EXTRA_PRACTICE_CREATE': 'Đăng bài luyện tập thêm',
+        'DOCUMENT_CREATE_PENDING': 'Đăng tài liệu',
+        'STUDENT_GRADE': 'Chấm điểm',
+        'GRADEBOOK_VIEW_CLASS': 'Xem điểm',
+        'GRADEBOOK_VIEW_ALL': 'Xem điểm',
+        'SUBMISSION_VIEW': 'Xem bài làm học viên',
+        'CLASS_MANAGE': 'Tạo lớp trong khóa',
+        'STUDENT_ASSIGN': 'Phân lớp sinh viên',
+        'CONTENT_APPROVE': 'Duyệt bài đăng giáo viên'
+      }
+      
+      for (const permCode of permissions) {
+        const tenQuyen = codeToNameMap[permCode] || permCode
+        const quyenResult = await pool.request()
+          .input("ten", tenQuyen)
+          .query(`SELECT MaQuyenHan FROM QUYENHAN WHERE TenQuyenHan = @ten`)
+        
+        if (quyenResult.recordset.length > 0) {
+          const maQuyen = quyenResult.recordset[0].MaQuyenHan
+          await pool.request()
+            .input("maNguoiDung", maNguoiDung)
+            .input("maQuyen", maQuyen)
+            .query(`
+              INSERT INTO NGUOIDUNG_QUYENHAN (MaNguoiDung, MaQuyenHan)
+              VALUES (@maNguoiDung, @maQuyen)
+            `)
+        }
+      }
+    }
+    
+    res.json({ message: "Đã cập nhật quyền thành công" })
+  } catch (err) { 
+    res.status(500).json({ message: "Lỗi: " + err.message }) 
+  }
 })
 
 const initDb = async () => {

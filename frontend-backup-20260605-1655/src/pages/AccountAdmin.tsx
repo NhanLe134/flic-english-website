@@ -1,5 +1,6 @@
 import "./accountAdmin.css";
 import { useState, useEffect } from "react";
+import { FiEdit2, FiLock, FiUnlock, FiTrash2 } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
@@ -49,31 +50,31 @@ export default function AccountAdmin() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [toast, setToast] = useState("");
 
-  // State cho modal chi tiết
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  // ← thêm state cho modal xóa
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedUser) {
-      // Fetch quyền từ backend
-      fetch(`${API}/admin/users/${selectedUser.MaNguoiDung}/permissions`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.permissions && Array.isArray(data.permissions)) {
-            setPermissions(data.permissions);
-          } else {
-            // Nếu chưa có quyền, gán mặc định
-            if (selectedUser.VaiTro === "Giảng Viên") {
-              setPermissions(GV_PERMISSIONS.map(p => p.code));
-            } else if (selectedUser.VaiTro === "Quản Trị Nội Dung") {
-              setPermissions(QTND_PERMISSIONS.map(p => p.code));
-            } else {
-              setPermissions([]);
-            }
-          }
-        })
-        .catch(() => setPermissions([]));
+      const saved = localStorage.getItem(`user_perms_${selectedUser.MaNguoiDung}`);
+      if (saved) {
+        try {
+          setPermissions(JSON.parse(saved));
+        } catch {
+          setPermissions([]);
+        }
+      } else {
+        // Fallback to all permissions if never set
+        if (selectedUser.VaiTro === "Giảng Viên") {
+          setPermissions(GV_PERMISSIONS.map(p => p.code));
+        } else if (selectedUser.VaiTro === "Quản Trị Nội Dung") {
+          setPermissions(QTND_PERMISSIONS.map(p => p.code));
+        } else {
+          setPermissions([]);
+        }
+      }
     } else {
       setPermissions([]);
     }
@@ -135,7 +136,7 @@ export default function AccountAdmin() {
   const handleSave = async () => {
     if (!selectedUser) return;
     try {
-      // Cập nhật thông tin cơ bản
+      localStorage.setItem(`user_perms_${selectedUser.MaNguoiDung}`, JSON.stringify(permissions));
       await fetch(`${API}/admin/users/${selectedUser.MaNguoiDung}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -146,24 +147,40 @@ export default function AccountAdmin() {
           GioiTinh: selectedUser.GioiTinh,
         })
       });
-      
-      // Cập nhật quyền (nếu không phải Học Viên)
-      if (selectedUser.VaiTro !== "Học Viên") {
-        await fetch(`${API}/admin/users/${selectedUser.MaNguoiDung}/permissions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ permissions })
-        });
-      }
-      
-      showToast("Đã lưu thay đổi!"); 
-      setShowModal(false); 
-      loadUsers();
+      showToast("Đã lưu thay đổi!"); setShowModal(false); loadUsers();
     } catch { showToast("Lỗi khi lưu"); }
   };
 
+  // ← sửa handleDelete — mở modal thay vì confirm
+  const handleDelete = (user: User) => {
+    setDeleteTarget(user);
+    setShowDeleteModal(true);
+  };
 
+  // ← thêm confirmDelete
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`${API}/admin/users/${deleteTarget.MaNguoiDung}`, { method: "DELETE" });
+      showToast("Đã xóa tài khoản!");
+      loadUsers();
+    } catch { showToast("Lỗi khi xóa"); }
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+  };
 
+  const handleToggleStatus = async (user: User) => {
+    const next = isActive(user.TrangThai) ? "Khóa" : "Active"; // giữ "Active"
+    try {
+      await fetch(`${API}/admin/users/${user.MaNguoiDung}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ TrangThai: next }) // chỉ gửi TrangThai, không cần gửi thêm
+      });
+      showToast(`Đã ${next === "Khóa" ? "khóa" : "mở khóa"} tài khoản!`);
+      loadUsers();
+    } catch { showToast("Lỗi"); }
+  };
 
   const handleCreateUser = async () => {
     if (!newUser.username.trim() || !newUser.email.trim()) {
@@ -184,14 +201,7 @@ export default function AccountAdmin() {
       });
       const data = await response.json();
       if (data && data.MaNguoiDung) {
-        // Gửi quyền lên API nếu không phải Học Viên
-        if (newUser.role !== "Học Viên" && newPermissions.length > 0) {
-          await fetch(`${API}/admin/users/${data.MaNguoiDung}/permissions`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ permissions: newPermissions })
-          });
-        }
+        localStorage.setItem(`user_perms_${data.MaNguoiDung}`, JSON.stringify(newPermissions));
       }
       showToast("Đã tạo tài khoản!");
       setShowAddModal(false);
@@ -251,7 +261,7 @@ export default function AccountAdmin() {
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Đang tải...</div>
         ) : (
-          <table className="accounts-table">
+          <table>
             <thead>
               <tr>
                 <th>Tên người dùng</th>
@@ -260,13 +270,14 @@ export default function AccountAdmin() {
                 <th>Vai trò</th>
                 <th>Trạng thái</th>
                 <th>Ngày tạo</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: "center", padding: 20, color: "#999" }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: "center", padding: 20, color: "#999" }}>Không có dữ liệu</td></tr>
               ) : filteredUsers.map(u => (
-                <tr key={u.MaNguoiDung} onClick={() => { setSelectedUser({ ...u }); setShowDetailModal(true); }}>
+                <tr key={u.MaNguoiDung}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{u.HoTen}</div>
                   </td>
@@ -291,6 +302,29 @@ export default function AccountAdmin() {
                   <td style={{ fontSize: 13 }}>
                     {u.NgayTao ? new Date(u.NgayTao).toLocaleDateString("vi-VN") : "—"}
                   </td>
+                  <td className="action-cell">
+                    <button
+                      className="btn-action btn-edit"
+                      title="Sửa"
+                      onClick={() => { setSelectedUser({ ...u }); setShowModal(true); }}
+                    >
+                      <FiEdit2 />
+                    </button>
+                    <button
+                      className={`btn-action ${isActive(u.TrangThai) ? "btn-lock" : "btn-unlock"}`}
+                      title={isActive(u.TrangThai) ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                      onClick={() => handleToggleStatus(u)}
+                    >
+                      {isActive(u.TrangThai) ? <FiLock /> : <FiUnlock />}
+                    </button>
+                    <button
+                      className="btn-action btn-delete"
+                      title="Xóa tài khoản"
+                      onClick={() => handleDelete(u)}
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -301,36 +335,36 @@ export default function AccountAdmin() {
       {/* EDIT MODAL */}
       {showModal && selectedUser && (
         <div className="admin-modal-overlay">
-          <div className="modal">
+          <div className="modal" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh', padding: 0 }}>
             <div className="modal-header-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '32px 32px 0 32px', flexShrink: 0 }}>
               <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
-                <h3 style={{ margin: 0, color: '#000080' }}>Chỉnh sửa tài khoản</h3>
+                <h3 style={{ margin: 0 }}>Chỉnh sửa tài khoản</h3>
                 <span className="close" style={{ margin: 0 }} onClick={() => setShowModal(false)}>×</span>
               </div>
               <p className="modal-sub" style={{ margin: 0, padding: 0 }}>Cập nhật thông tin người dùng</p>
             </div>
-
+            
             <div className="modal-scrollable-body" style={{ overflowY: 'auto', flex: 1, padding: '0 32px 24px 32px', margin: '16px 0 0 0' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Họ và tên</label>
                 <div className="info-value">{selectedUser.HoTen}</div>
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Giới tính</label>
                 <div className="info-value">{selectedUser.GioiTinh || "Nam"}</div>
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Vai trò</label>
                 <div className="info-value">{selectedUser.VaiTro}</div>
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Email</label>
                 <input value={selectedUser.Email} onChange={e => setSelectedUser({ ...selectedUser, Email: e.target.value })} />
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Trạng thái</label>
                 <select value={selectedUser.TrangThai} onChange={e => setSelectedUser({ ...selectedUser, TrangThai: e.target.value })}>
@@ -404,33 +438,33 @@ export default function AccountAdmin() {
           <div className="modal" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh', padding: 0 }}>
             <div className="modal-header-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '32px 32px 0 32px', flexShrink: 0 }}>
               <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
-                <h3 style={{ margin: 0, color: '#000080' }}>Thêm người dùng mới</h3>
+                <h3 style={{ margin: 0 }}>Thêm người dùng mới</h3>
                 <span className="close" style={{ margin: 0 }} onClick={() => setShowAddModal(false)}>×</span>
               </div>
               <p className="modal-sub" style={{ margin: 0, padding: 0 }}>Điền thông tin để tạo tài khoản mới</p>
             </div>
-
+            
             <div className="modal-scrollable-body" style={{ overflowY: 'auto', flex: 1, padding: '0 32px 24px 32px', margin: '16px 0 0 0' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Tên đăng nhập <span style={{ color: "red" }}>*</span></label>
                 <input placeholder="VD: nguyenvana" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Họ và tên</label>
                 <input placeholder="Nguyễn Văn A" value={newUser.fullname} onChange={e => setNewUser({ ...newUser, fullname: e.target.value })} />
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Email <span style={{ color: "red" }}>*</span></label>
                 <input placeholder="example@email.com" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Mật khẩu</label>
                 <input type="password" placeholder="Mặc định: 123456" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Giới tính</label>
                 <select value={newUser.gioiTinh} onChange={e => setNewUser({ ...newUser, gioiTinh: e.target.value })}>
@@ -438,7 +472,7 @@ export default function AccountAdmin() {
                   <option value="Nữ">Nữ</option>
                 </select>
               </div>
-
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ margin: 0 }}>Vai trò</label>
                 <select
@@ -517,124 +551,58 @@ export default function AccountAdmin() {
         </div>
       )}
 
-
-
-      {/* DETAIL MODAL */}
-      {showDetailModal && selectedUser && (
-        <div className="admin-modal-overlay">
-          <div className="modal" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh', padding: 0 }}>
-            <div className="modal-header-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '32px 32px 0 32px', flexShrink: 0 }}>
-              <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
-                <h3 style={{ margin: 0, color: '#000080' }}>Chi tiết tài khoản</h3>
-                <span className="close" style={{ margin: 0 }} onClick={() => { setShowDetailModal(false); setSelectedUser(null); }}>×</span>
-              </div>
-              <p className="modal-sub" style={{ margin: 0, padding: 0 }}>Thông tin chi tiết tài khoản người dùng</p>
+      {/* DELETE MODAL */}
+      {showDeleteModal && deleteTarget && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999
+          }}
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            style={{
+              background: "#fff", borderRadius: 16, padding: "36px 32px",
+              minWidth: 340, textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.15)"
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Icon ! */}
+            <div style={{
+              width: 52, height: 52, borderRadius: "50%",
+              border: "2px solid #e57373", display: "flex",
+              alignItems: "center", justifyContent: "center",
+              margin: "0 auto 16px", color: "#e57373", fontSize: 24, fontWeight: 700
+            }}>
+              !
             </div>
-
-            <div className="modal-scrollable-body" style={{ overflowY: 'auto', flex: 1, padding: '0 32px 24px 32px', margin: '16px 0 0 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Họ và tên</label>
-                <div className="info-value">{selectedUser.HoTen || "—"}</div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Tên đăng nhập</label>
-                <div className="info-value">{selectedUser.TenDangNhap}</div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Email</label>
-                <div className="info-value">{selectedUser.Email || "—"}</div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Giới tính</label>
-                <div className="info-value">{selectedUser.GioiTinh || "Nam"}</div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Vai trò</label>
-                <div className="info-value">{selectedUser.VaiTro}</div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Trạng thái</label>
-                <div className="info-value" style={{ background: 'transparent', border: 'none', padding: 0 }}>
-                  <span className={`status-badge ${isActive(selectedUser.TrangThai) ? "active" : "locked"}`}>
-                    {isActive(selectedUser.TrangThai) ? "Hoạt động" : "Khóa"}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Ngày tạo</label>
-                <div className="info-value">
-                  {selectedUser.NgayTao ? new Date(selectedUser.NgayTao).toLocaleDateString("vi-VN") : "—"}
-                </div>
-              </div>
-
-              {/* PHÂN QUYỀN */}
-              {selectedUser.TrangThai !== "Khóa" && (
-                <>
-                  {selectedUser.VaiTro === "Quản Trị Nội Dung" && (
-                    <div className="permissions-section">
-                      <div className="permissions-title">Phân quyền</div>
-                      <div className="permissions-grid">
-                        {QTND_PERMISSIONS.map(p => (
-                          <label key={p.code} className="permission-item" style={{ cursor: 'default' }}>
-                            <input
-                              type="checkbox"
-                              checked={permissions.includes(p.code)}
-                              disabled
-                              style={{ cursor: 'default' }}
-                            />
-                            {p.label}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedUser.VaiTro === "Giảng Viên" && (
-                    <div className="permissions-section">
-                      <div className="permissions-title">Phân quyền</div>
-                      <div className="permissions-grid">
-                        {GV_PERMISSIONS.map(p => (
-                          <label key={p.code} className="permission-item" style={{ cursor: 'default' }}>
-                            <input
-                              type="checkbox"
-                              checked={permissions.includes(p.code)}
-                              disabled
-                              style={{ cursor: 'default' }}
-                            />
-                            {p.label}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedUser.VaiTro === "Quản Trị Viên" && (
-                    <div className="permissions-section">
-                      <div className="permissions-title">Phân quyền</div>
-                      <div className="permission-info-text">
-                        Có tất cả quyền của Quản trị viên hệ thống.
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            <div className="modal-actions" style={{ flexShrink: 0, borderTop: '1px solid #e2e8f0', padding: '16px 32px 32px 32px', margin: 0, justifyContent: 'flex-end', display: 'flex', gap: '12px' }}>
+            <h3 style={{ marginBottom: 8, fontSize: 18, fontWeight: 700, color: "#222" }}>
+              Xác nhận Xóa
+            </h3>
+            <p style={{ color: "#777", marginBottom: 24, fontSize: 14 }}>
+              Bạn có chắc chắn muốn xóa tài khoản <b>{deleteTarget.HoTen}</b> không?
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
-                className="save"
-                onClick={() => {
-                  setShowModal(true);
-                  setShowDetailModal(false);
+                onClick={confirmDelete}
+                style={{
+                  padding: "12px", borderRadius: 8,
+                  border: "none", background: "#ef9a9a",
+                  color: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 15
                 }}
               >
-                Chỉnh sửa
+                Xác nhận
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  padding: "12px", borderRadius: 8,
+                  border: "none", background: "#f5f5f5",
+                  color: "#555", cursor: "pointer", fontWeight: 500, fontSize: 15
+                }}
+              >
+                Không
               </button>
             </div>
           </div>

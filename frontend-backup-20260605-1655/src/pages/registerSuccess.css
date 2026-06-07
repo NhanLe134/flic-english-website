@@ -1,0 +1,191 @@
+/* ===========================
+   RegisterSuccess Page
+   =========================== */
+
+.rs-page {
+  background-color: #f5f0eb;
+  min-height: 100vh;
+  padding-bottom: 64px;
+}
+
+/* ---- Breadcrumb ---- */
+.rs-breadcrumb {
+  padding: 14px 40px;
+  font-size: 13px;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rs-breadcrumb a {
+  color: #777;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.rs-breadcrumb a:hover {
+  color: #8b3a1a;
+  text-decoration: underline;
+}
+
+.rs-breadcrumb .sep {
+  color: #aaa;
+}
+
+.rs-breadcrumb .active {
+  color: #8b3a1a;
+  font-weight: 600;
+}
+
+/* ---- Container ---- */
+.rs-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 24px;
+}
+
+/* ---- Card ---- */
+.rs-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 48px 56px;
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+/* ---- Icon ---- */
+.rs-icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 4px;
+  animation: pop 0.4s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ---- Title ---- */
+.rs-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #8b3a1a;
+  font-family: "Georgia", serif;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ---- Subtitle ---- */
+.rs-subtitle {
+  font-size: 14px;
+  color: #8b3a1a;
+  margin: 0;
+}
+
+/* ---- Info box ---- */
+.rs-info {
+  background: #fdf6f0;
+  border: 1px solid #e8d5c4;
+  border-radius: 10px;
+  padding: 14px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rs-info p {
+  font-size: 13.5px;
+  color: #555;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Actions ---- */
+.rs-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.rs-btn {
+  padding: 11px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  display: inline-block;
+}
+
+.rs-btn:hover {
+  transform: translateY(-1px);
+}
+
+.rs-btn:active {
+  transform: translateY(0);
+}
+
+.rs-btn-primary {
+  background-color: #8b3a1a;
+  color: #fff;
+  border: none;
+}
+
+.rs-btn-primary:hover {
+  background-color: #6e2d13;
+}
+
+.rs-btn-outline {
+  background-color: transparent;
+  color: #8b3a1a;
+  border: 2px solid #8b3a1a;
+}
+
+.rs-btn-outline:hover {
+  background-color: #8b3a1a;
+  color: #fff;
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 560px) {
+  .rs-card {
+    padding: 36px 24px;
+  }
+
+  .rs-title {
+    font-size: 19px;
+  }
+
+  .rs-breadcrumb {
+    padding: 12px 16px;
+  }
+
+  .rs-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .rs-btn {
+    text-align: center;
+  }
+}

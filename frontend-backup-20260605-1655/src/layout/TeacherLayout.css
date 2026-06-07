@@ -1,0 +1,20 @@
+.teacher-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* ← đổi min-height thành height */
+  overflow: hidden; /* ← thêm dòng này */
+}
+
+.teacher-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden; /* ← thêm dòng này */
+}
+
+.teacher-content {
+  flex: 1;
+  padding: 32px;
+  background: #f5f0e8;
+  overflow-y: auto; /* ← chỉ content mới scroll */
+  isolation: isolate; /* ← ngăn màu nền cha ảnh hưởng */
+}
