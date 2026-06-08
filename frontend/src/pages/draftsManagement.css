@@ -1,0 +1,249 @@
+.dm-wrapper {
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+}
+
+.dm-back {
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-block;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.dm-back:hover {
+  color: #F95800;
+  text-decoration: underline;
+}
+
+.dm-header {
+  margin-bottom: 24px;
+}
+
+.dm-header h1 {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #222;
+}
+
+.dm-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+.dm-tabs {
+  display: flex;
+  gap: 12px;
+  border-bottom: 2px solid #eef2f6;
+  margin-bottom: 20px;
+  padding-bottom: 0;
+}
+
+.dm-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: #777;
+  cursor: pointer;
+  position: relative;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.dm-tab:hover {
+  color: #F95800;
+}
+
+.dm-tab.active {
+  color: #F95800;
+}
+
+.dm-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #F95800;
+  border-radius: 2px;
+}
+
+/* SEARCH CONTAINER */
+.dm-search-container {
+  display: flex;
+  align-items: center;
+  max-width: 420px;
+  height: 40px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.dm-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  height: 100%;
+}
+
+.dm-search-input::placeholder {
+  color: #9c8e83;
+}
+
+.dm-search-button {
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 0 16px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.dm-search-button:hover {
+  background: #e04f00;
+}
+
+.dm-search-button svg {
+  stroke: white;
+}
+
+/* LIST & CARDS */
+.dm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dm-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 18px 24px;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dm-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.dm-card-info {
+  flex: 1;
+  text-align: left;
+}
+
+.dm-card-info h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+.dm-card-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #666;
+}
+
+.dm-meta-tag {
+  background: #fff4ec;
+  color: #F95800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.dm-meta-course {
+  color: #999;
+}
+
+.dm-card-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.dm-action-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #ffccd5;
+  color: #d9383a;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 13px;
+}
+
+.dm-action-delete:hover {
+  background: #fff5f5;
+  border-color: #ffb3bf;
+}
+
+.dm-action-submit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 13px;
+}
+
+.dm-action-submit:hover {
+  background: #e04f00;
+}
+
+.dm-empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  font-size: 14px;
+}
+
+.dm-loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 14px;
+}

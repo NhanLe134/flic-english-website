@@ -1,58 +1,183 @@
 import "./viewStudent.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { FiArrowLeft } from "react-icons/fi";
 
 const ViewStudent = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  
   const [student, setStudent] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/students/${id}`)
-      .then(res => res.json())
-      .then(data => setStudent(data))
-      .catch(err => console.log(err));
+
+    const trimmedId = id.trim();
+    // Fetch student data
+    const fetchStudent = fetch(`http://localhost:5000/students/${trimmedId}`).then(res => res.json());
+    // Fetch courses data
+    const fetchCourses = fetch("http://localhost:5000/khoahoc").then(res => res.json());
+
+    Promise.all([fetchStudent, fetchCourses])
+      .then(([studentData, coursesData]) => {
+        setStudent(studentData);
+        setCourses(coursesData || []);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   }, [id]);
 
-  if (!student) return <p>Đang tải...</p>;
+  const handleChange = (field: string, value: any) => {
+    setStudent((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!student.HoTen?.trim()) {
+      alert("Vui lòng nhập tên học viên");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const trimmedId = id.trim();
+      const res = await fetch(`http://localhost:5000/students/${trimmedId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          HoTen: student.HoTen,
+          Email: student.Email,
+          GioiTinh: student.GioiTinh,
+          NgaySinh: student.NgaySinh,
+          Lop: student.Lop,
+          MaKhoaHoc: student.MaKhoaHoc
+        })
+      });
+
+      if (res.ok) {
+        setShowPopup(true);
+        setTimeout(() => {
+          setShowPopup(false);
+          navigate("/danh-sach-hoc-vien");
+        }, 1500);
+      } else {
+        alert("Lưu thông tin thất bại!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi kết nối đến server");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div style={{ textAlign: "center", padding: "50px", color: "#666" }}>Đang tải dữ liệu học viên...</div>;
+  if (!student) return <div style={{ textAlign: "center", padding: "50px", color: "#666" }}>Không tìm thấy học viên!</div>;
+
+  // Format date for type="date"
+  const formattedBirthDate = student.NgaySinh ? student.NgaySinh.split("T")[0] : "";
 
   return (
     <div className="vs-wrapper">
-
       <div className="header-row">
-        <h1>XEM HỌC VIÊN</h1>
         <span className="back-btn" onClick={() => navigate("/danh-sach-hoc-vien")}>
-          ← Quay lại
+          <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
+          Quay lại
         </span>
+        <h1>Chi tiết học viên</h1>
       </div>
 
-      <div className="form-box">
-        <h3>Thông tin học viên</h3>
+      <form className="form-box" onSubmit={handleSave}>
+        <h3>Chỉnh sửa thông tin học viên</h3>
 
-        <label>Mã sinh viên</label>
-        <input value={student.MaSinhVien || "—"} disabled />
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Mã sinh viên</label>
+            <input value={student.MaSinhVien || ""} disabled className="input-disabled" />
+          </div>
 
-        <label>Tên học viên</label>
-        <input value={student.HoTen || "—"} disabled />
+          <div className="form-group">
+            <label>Tên học viên *</label>
+            <input
+              value={student.HoTen || ""}
+              onChange={(e) => handleChange("HoTen", e.target.value)}
+              placeholder="Nhập tên học viên"
+            />
+          </div>
 
-        <label>Khóa học</label>
-        <input value={student.TenKhoaHoc || "—"} disabled />
+          <div className="form-group">
+            <label>Khóa học</label>
+            <select
+              value={student.MaKhoaHoc || ""}
+              onChange={(e) => handleChange("MaKhoaHoc", e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">Chọn khóa học</option>
+              {courses.map((c) => (
+                <option key={c.MaKhoaHoc} value={c.MaKhoaHoc}>
+                  {c.TenKhoaHoc}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label>Lớp</label>
-        <input value={student.Lop || "—"} disabled />
+          <div className="form-group">
+            <label>Lớp</label>
+            <input
+              value={student.Lop || ""}
+              onChange={(e) => handleChange("Lop", e.target.value)}
+              placeholder="Ví dụ: TOEIC-01"
+            />
+          </div>
 
-        <label>Giới tính</label>
-        <input value={student.GioiTinh || "—"} disabled />
+          <div className="form-group">
+            <label>Giới tính</label>
+            <select
+              value={student.GioiTinh || ""}
+              onChange={(e) => handleChange("GioiTinh", e.target.value)}
+            >
+              <option value="">Chọn giới tính</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
 
-        <label>Email</label>
-        <input value={student.Email || "—"} disabled />
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={student.Email || ""}
+              onChange={(e) => handleChange("Email", e.target.value)}
+              placeholder="example@flic.edu.vn"
+            />
+          </div>
 
-        <label>Ngày sinh</label>
-        <input value={student.NgaySinh ? new Date(student.NgaySinh).toLocaleDateString("vi-VN") : "—"} disabled />
+          <div className="form-group">
+            <label>Ngày sinh</label>
+            <input
+              type="date"
+              value={formattedBirthDate}
+              onChange={(e) => handleChange("NgaySinh", e.target.value)}
+            />
+          </div>
+        </div>
 
-      </div>
+        <button type="submit" className="save-btn" disabled={saving}>
+          {saving ? "Đang lưu..." : "Lưu thông tin"}
+        </button>
+      </form>
 
+      {showPopup && (
+        <div className="popup-overlay">
+          <div className="popup-box">
+            <div className="popup-icon">✓</div>
+            <p>Lưu kết quả thành công</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

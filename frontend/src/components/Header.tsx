@@ -25,7 +25,11 @@ const Header = () => {
 
   return (
     <header className="teacher-header">
+<<<<<<< Updated upstream
       <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="teacher-logo" />
+=======
+      <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="teacher-logo" />
+>>>>>>> Stashed changes
 
       <label className="avatar-wrapper header-avatar-wrapper" title="Đổi ảnh">
         <input type="file" accept="image/*" onChange={handleUpload} hidden />

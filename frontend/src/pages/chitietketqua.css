@@ -73,12 +73,12 @@
 }
 
 .search-bar input:focus {
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 .search-bar button {
   width: 44px;
-  background: #e87722;
+  background: #F95800;
   border: none;
   border-radius: 0 8px 8px 0;
   color: white;
@@ -91,7 +91,7 @@
 }
 
 .search-bar button:hover {
-  background: #cf6415;
+  background: #e04f00;
 }
 
 /* TABLE */
@@ -122,7 +122,7 @@ tbody tr:hover td {
 
 /* VIEW BUTTON */
 .view-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   padding: 7px 18px;
@@ -134,7 +134,7 @@ tbody tr:hover td {
 }
 
 .view-btn:hover {
-  background: #e46d10;
+  background: #e04f00;
 }
 
 /* FOOTER */

@@ -26,7 +26,11 @@ useEffect(() => {
 
       {/* HEADER */}
       <header className="top-header">
+<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="logo" />
+=======
+        <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="logo" />
+>>>>>>> Stashed changes
         <div className="top-avatar">👨‍🏫</div>
       </header>
 
@@ -70,7 +74,6 @@ useEffect(() => {
               Quản lý kết quả học tập
             </div>
 
-            <div onClick={() => navigate("/cai-dat")} className="sidebar-item">Cài đặt</div>
             <div onClick={() => navigate("/")} className="sidebar-item">Đăng xuất</div>
 
           </div>

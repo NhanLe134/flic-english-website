@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import styles from './baoCaoKetQua.module.css'
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const API = 'http://localhost:5000'
 

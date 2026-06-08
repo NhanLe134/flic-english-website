@@ -586,15 +586,7 @@ function AssignmentDetail() {
                       <span className="ad-meta-val">Đang học</span>
                     </div>
                   </div>
-                  {lopInfo.TienDo > 0 && (
-                    <div className="ad-progress-row">
-                      <span className="ad-progress-label">Tiến độ khóa học</span>
-                      <div className="ad-progress-bar">
-                        <div style={{ width:`${lopInfo.TienDo}%` }} />
-                      </div>
-                      <span className="ad-progress-pct">{lopInfo.TienDo}%</span>
-                    </div>
-                  )}
+
                 </div>
               )}
 

@@ -35,8 +35,15 @@ const AddDocument = () => {
 
   const handleDragLeave = () => setIsDragging(false);
 
+  const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
+
   const handleSave = async () => {
     if (!title) { alert("Vui lòng nhập tên tài liệu"); return; }
+
+    const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+    const user = JSON.parse(userStr || "{}");
+    const isTeacher = user.VaiTro === "Giảng Viên";
+    const status = isTeacher ? "pending" : "published";
 
     try {
       setUploading(true);
@@ -55,17 +62,20 @@ const AddDocument = () => {
       }
 
       await fetch("http://localhost:5000/tailieu", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        TieuDe: title,
-        MoTa: description || "Tài liệu mới",
-        NoiDung: content,
-        FileUrl: fileUrl,        // ← lưu riêng vào FileUrl
-        MaLesson: Number(lessonId)
-      })
-    });
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          TieuDe: title,
+          MoTa: description || "Tài liệu mới",
+          NoiDung: content,
+          FileUrl: fileUrl,
+          MaLesson: Number(lessonId),
+          TrangThai: status,
+          MaGiangVien: user.MaNguoiDung || null
+        })
+      });
 
+      setSuccessMessage(isTeacher ? "Đã gửi yêu cầu duyệt tài liệu đến QTV" : "Thêm tài liệu thành công");
       setShowSuccess(true);
       setTimeout(() => navigate(-1), 1500);
 
@@ -163,7 +173,7 @@ const AddDocument = () => {
         <div className="success-overlay">
           <div className="success-popup">
             <div className="success-icon">✓</div>
-            <p>Lưu kết quả thành công</p>
+            <p>{successMessage}</p>
           </div>
         </div>
       )}

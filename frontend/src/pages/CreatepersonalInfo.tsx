@@ -69,7 +69,11 @@ const PersonalInfo: React.FC = () => {
     <div className="page-container">
       {/* TOPBAR */}
       <div className="topbar">
+<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} className="logo" />
+=======
+        <img src={import.meta.env.BASE_URL + "image.png"} className="logo" />
+>>>>>>> Stashed changes
         <div className="avatar">👩‍🏫</div>
       </div>
 
@@ -107,7 +111,6 @@ const PersonalInfo: React.FC = () => {
             <div onClick={() => navigate("/quan-ly-ket-qua")} className="sidebar-item">
               Quản lý kết quả học tập
             </div>
-            <div onClick={() => navigate("/cai-dat")} className="sidebar-item">Cài đặt</div>
             <div onClick={() => navigate("/")} className="sidebar-item">Đăng xuất</div>
           </div>
         </aside>
@@ -163,7 +166,7 @@ const PersonalInfo: React.FC = () => {
               {/* FORM RIGHT */}
               <div className="profile-right">
 
-                <div className="info-item">
+                <div className="cpi-info-item">
                   <label>Họ và tên</label>
                   <input
                     name="name"
@@ -172,7 +175,7 @@ const PersonalInfo: React.FC = () => {
                   />
                 </div>
 
-                <div className="info-item">
+                <div className="cpi-info-item">
                   <label>Chức danh</label>
                   <input
                     name="title"
@@ -201,7 +204,7 @@ const PersonalInfo: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="info-item">
+                <div className="cpi-info-item">
                   <label>Chuyên môn</label>
                   <input
                     name="specialty"
@@ -210,7 +213,7 @@ const PersonalInfo: React.FC = () => {
                   />
                 </div>
 
-                <div className="info-item">
+                <div className="cpi-info-item">
                   <label>Kinh nghiệm giảng dạy</label>
                   <input
                     name="experience"
@@ -219,7 +222,7 @@ const PersonalInfo: React.FC = () => {
                   />
                 </div>
 
-                <div className="info-item">
+                <div className="cpi-info-item">
                   <label>Giới thiệu</label>
                   <textarea
                     name="bio"

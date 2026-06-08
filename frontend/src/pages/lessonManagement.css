@@ -24,20 +24,19 @@
   font-size: 14px;
 }
 
-.back-btn {
-  background: #e0d4c3;
-  border: none;
-  padding: 8px 18px;
+.back-btn-span {
   font-size: 14px;
-  border-radius: 8px;
+  color: #555;
   cursor: pointer;
-  transition: 0.2s;
   white-space: nowrap;
-  margin-top: 4px;
+  display: inline-block;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
 }
 
-.back-btn:hover {
-  background: #d4c4b0;
+.back-btn-span:hover {
+  color: #F95800;
+  text-decoration: underline;
 }
 
 /* TOOLBAR */
@@ -49,35 +48,71 @@
   border-radius: 14px;
   align-items: center;
   margin-bottom: 24px;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #eef2f6;
+}
+
+/* SEARCH CONTAINER (Joined input + orange button) */
+.search-container {
+  display: flex;
+  align-items: center;
+  max-width: 420px;
+  width: 100%;
+  height: 40px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .search-input {
   flex: 1;
-  padding: 10px 15px;
-  border-radius: 10px;
-  border: 1px solid #e0d4c3;
-  background: #fdf8f3;
-  font-size: 14px;
+  border: none;
   outline: none;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  height: 100%;
 }
 
-.search-input:focus {
-  border-color: #f58220;
+.search-input::placeholder {
+  color: #9c8e83;
+}
+
+.search-button {
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 0 16px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.search-button:hover {
+  background: #e04f00;
+}
+
+.search-button svg {
+  stroke: white;
 }
 
 .filter-select {
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid #e0d4c3;
-  background: #fdf8f3;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
   font-size: 14px;
   outline: none;
   cursor: pointer;
 }
 
 .add-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -98,7 +133,7 @@
   background: white;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #eef2f6;
 }
 
 table {
@@ -107,7 +142,7 @@ table {
 }
 
 thead {
-  background: #fdf8f3;
+  background: #fafafa;
 }
 
 th {
@@ -115,7 +150,7 @@ th {
   text-align: left;
   font-size: 14px;
   color: #555;
-  border-bottom: 2px solid #e0d4c3;
+  border-bottom: 2px solid #eef2f6;
 }
 
 td {
@@ -125,11 +160,11 @@ td {
 }
 
 tr:not(:last-child) td {
-  border-bottom: 1px solid #f0e8de;
+  border-bottom: 1px solid #eef2f6;
 }
 
 tr:hover td {
-  background: #fdf8f3;
+  background: #fafafa;
 }
 
 /* STATUS */
@@ -173,17 +208,17 @@ tr:hover td {
 
 .discuss-btn {
   background: #fff4ec;
-  color: #f58220;
-  border: 2px solid #f58220;
+  color: #F95800;
+  border: 2px solid #F95800;
 }
 
 .discuss-btn:hover {
-  background: #f58220;
+  background: #F95800;
   color: white;
 }
 
 .detaill-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
 }

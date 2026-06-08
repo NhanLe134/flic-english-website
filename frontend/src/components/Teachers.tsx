@@ -17,7 +17,11 @@ function Teachers() {
         <div className="teacher-card">
           <div className="teacher-card-top gradient-orange">
             <div className="teacher-circle-img">
+<<<<<<< Updated upstream
               <img src={`${import.meta.env.BASE_URL}image.png`} alt="Ms. Linh" />
+=======
+              <img src={import.meta.env.BASE_URL + "image.png"} alt="Ms. Linh" />
+>>>>>>> Stashed changes
             </div>
           </div>
           <div className="teacher-card-bottom">
@@ -52,7 +56,11 @@ function Teachers() {
         <div className="teacher-card">
           <div className="teacher-card-top gradient-green">
             <div className="teacher-circle-img">
+<<<<<<< Updated upstream
               <img src={`${import.meta.env.BASE_URL}image.png`} alt="Mr. David" />
+=======
+              <img src={import.meta.env.BASE_URL + "image.png"} alt="Mr. David" />
+>>>>>>> Stashed changes
             </div>
           </div>
           <div className="teacher-card-bottom">
@@ -87,7 +95,11 @@ function Teachers() {
         <div className="teacher-card">
           <div className="teacher-card-top gradient-red">
             <div className="teacher-circle-img">
+<<<<<<< Updated upstream
               <img src={`${import.meta.env.BASE_URL}image.png`} alt="Ms. Hương" />
+=======
+              <img src={import.meta.env.BASE_URL + "image.png"} alt="Ms. Hương" />
+>>>>>>> Stashed changes
             </div>
           </div>
           <div className="teacher-card-bottom">

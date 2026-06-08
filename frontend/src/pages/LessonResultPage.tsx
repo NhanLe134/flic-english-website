@@ -1,104 +1,223 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import "./lessonResultPage.css";
+import BaoCaoKetQuaQTV from "./Baocaoketquaqtv";
+
+interface Student {
+  MaSinhVien: string;
+  HoTen: string;
+  GioiTinh: string;
+  NgayGhiDanh: string;
+  TrangThai: string;
+  MaNguoiDung: number;
+  scores: Record<number, number | null>; // MaExercise -> Diem
+  diemTB: number | null;
+}
+
+interface Exercise {
+  MaExercise: number;
+  TenBai: string;
+  TenLesson: string | null;
+  ThuTu: number | null;
+  MaLesson: number | null;
+  MaLopHoc: number | null;
+  TenLop: string | null;
+}
 
 const LessonResultPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [lessons, setLessons] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [classExercises, setClassExercises] = useState<Exercise[]>([]);
   const [classInfo, setClassInfo] = useState<any>(null);
-  const [studentCount, setStudentCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeLessonId, setActiveLessonId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-
-    // Đọc buổi học hiện tại từ localStorage làm dự phòng
-    const stored = localStorage.getItem(`active_lesson_${id}`);
-    if (stored) {
-      setActiveLessonId(Number(stored));
-    }
+    setLoading(true);
 
     Promise.all([
       fetch(`http://localhost:5000/classes/${id}/info`).then(r => r.json()),
-      fetch(`http://localhost:5000/classes/${id}/lessons`).then(r => r.json()),
-      fetch(`http://localhost:5000/lophoc/${id}/students/count`).then(r => r.json()),
+      fetch(`http://localhost:5000/lophoc/${id}/sinhvien`).then(r => r.json()),
+      fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
+      fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
     ])
-      .then(([info, lessonData, countData]) => {
+      .then(([info, sinhVienList, headers, grades]) => {
         setClassInfo(info);
-        setStudentCount(countData?.SoLuongHocVien ?? 0);
-        setLessons(Array.isArray(lessonData) ? lessonData.sort((a: any, b: any) => a.ThuTu - b.ThuTu) : []);
-        if (info && info.ActiveLessonId) {
-          setActiveLessonId(info.ActiveLessonId);
+
+        // Filter and sort exercises for this class by lesson order (ThuTu) and then MaExercise
+        const classExs = (Array.isArray(headers) ? headers : [])
+          .filter((h: any) => Number(h.MaLopHoc) === Number(id))
+          .sort((a: any, b: any) => {
+            if (a.ThuTu !== b.ThuTu) {
+              return (a.ThuTu ?? 0) - (b.ThuTu ?? 0);
+            }
+            return a.MaExercise - b.MaExercise;
+          });
+        setClassExercises(classExs);
+
+        // Map grades to a lookup map (MaNguoiDung -> MaExercise -> Diem)
+        const gradesMap: Record<number, Record<number, number>> = {};
+        if (Array.isArray(grades)) {
+          grades.forEach((g: any) => {
+            const userId = Number(g.MaSinhVien); // MaSinhVien field in BAINOP stores MaNguoiDung
+            const exId = Number(g.MaExercise);
+            const score = Number(g.Diem);
+            if (!gradesMap[userId]) {
+              gradesMap[userId] = {};
+            }
+            gradesMap[userId][exId] = score;
+          });
         }
+
+        // Map students with their grades and average score
+        const mappedStudents: Student[] = (Array.isArray(sinhVienList) ? sinhVienList : []).map((sv: any) => {
+          const studentScores: Record<number, number | null> = {};
+          classExs.forEach(ex => {
+            const userId = Number(sv.MaNguoiDung);
+            const exId = ex.MaExercise;
+            studentScores[exId] = (gradesMap[userId] && gradesMap[userId][exId] !== undefined)
+              ? gradesMap[userId][exId]
+              : null;
+          });
+
+          // Calculate average score for submitted exercises
+          const submittedScores = Object.values(studentScores).filter((s): s is number => s !== null);
+          const diemTB = submittedScores.length > 0
+            ? Math.round((submittedScores.reduce((a, b) => a + b, 0) / submittedScores.length) * 100) / 100
+            : null;
+
+          return {
+            MaSinhVien: sv.MaSinhVien ? sv.MaSinhVien.trim() : "",
+            HoTen: sv.HoTen || "—",
+            GioiTinh: sv.GioiTinh || "—",
+            NgayGhiDanh: sv.NgayGhiDanh || "",
+            TrangThai: sv.TrangThai || "—",
+            MaNguoiDung: sv.MaNguoiDung,
+            scores: studentScores,
+            diemTB
+          };
+        });
+
+        setStudents(mappedStudents);
       })
-      .catch(err => console.log(err))
+      .catch(err => console.error("Lỗi tải dữ liệu kết quả học tập:", err))
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleSetActiveLesson = (lessonId: number) => {
-    fetch(`http://localhost:5000/classes/${id}/active-lesson`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ activeLessonId: lessonId }),
-    })
-      .then(res => {
-        if (res.ok) {
-          localStorage.setItem(`active_lesson_${id}`, lessonId.toString());
-          setActiveLessonId(lessonId);
-        } else {
-          alert("Lỗi cập nhật buổi học đang học");
-        }
-      })
-      .catch(err => console.error("Lỗi set active lesson:", err));
+  // Filter students based on search input
+  const filteredStudents = useMemo(() => {
+    return students.filter(s =>
+      s.HoTen.toLowerCase().includes(search.toLowerCase()) ||
+      s.MaSinhVien.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [students, search]);
+
+  // Calculate stats for the class
+  const stats = useMemo(() => {
+    const totalCount = filteredStudents.length;
+    const exerciseCount = classExercises.length;
+    const studentsWithAvg = filteredStudents.filter(s => s.diemTB !== null);
+    const classAvg = studentsWithAvg.length > 0
+      ? (studentsWithAvg.reduce((sum, s) => sum + (s.diemTB ?? 0), 0) / studentsWithAvg.length).toFixed(1)
+      : "—";
+
+    return {
+      totalCount,
+      exerciseCount,
+      classAvg
+    };
+  }, [filteredStudents, classExercises]);
+
+  const handleExportExcel = () => {
+    if (filteredStudents.length === 0) {
+      alert("Không có học viên nào để xuất!");
+      return;
+    }
+
+    const headers = [
+      "Mã sinh viên",
+      "Họ tên",
+      "Giới tính",
+      "Trạng thái",
+      ...classExercises.map(ex => `Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`),
+      "Điểm trung bình"
+    ];
+
+    const rows = filteredStudents.map(s => {
+      const rowData: Record<string, any> = {
+        "Mã sinh viên": s.MaSinhVien,
+        "Họ tên": s.HoTen,
+        "Giới tính": s.GioiTinh || "—",
+        "Trạng thái": s.TrangThai || "—",
+      };
+      classExercises.forEach(ex => {
+        const score = s.scores[ex.MaExercise];
+        rowData[`Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`] = score !== null ? score : "Chưa nộp";
+      });
+      rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
+      return rowData;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng điểm");
+
+    const colWidths = [
+      { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 15 },
+      ...classExercises.map(() => ({ wch: 25 })),
+      { wch: 18 }
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, `BangDiem_${classInfo?.TenLop || "Lop"}_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xlsx`);
+
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
-  const formatDate = (d: string) => {
-    if (!d) return "—";
-    const date = new Date(d);
-    if (isNaN(date.getTime())) return "—";
-    return `${date.getDate().toString().padStart(2,"0")}/${(date.getMonth()+1).toString().padStart(2,"0")}/${date.getFullYear()}`;
+  const getDiemClass = (d: number | null) => {
+    if (d === null) return "lrp-diem-chuanop";
+    if (d >= 8) return "lrp-diem-xanh";
+    if (d >= 6) return "lrp-diem-vang";
+    return "lrp-diem-do";
   };
-
-  const tienDo = classInfo?.TienDo || 0;
 
   return (
     <div className="lrp-wrapper">
-
-      <div className="lrp-top">
-        <div>
+      <div className="lrp-header-row">
+        <span className="lrp-back" onClick={() => navigate("/quan-ly-ket-qua")}>
+          ← Quay lại
+        </span>
+        <div className="lrp-header-info">
           <h1>{loading ? "Đang tải..." : classInfo?.TenLop || "—"}</h1>
-          <p>Quản lý tiến độ học tập của lớp</p>
         </div>
-        <span className="lrp-back" onClick={() => navigate(-1)}>← Quay lại</span>
       </div>
 
       {/* STATS */}
-      <div className="lrp-stats">
-        <div className="lrp-card">
-          <p>Tổng số buổi học</p>
-          <h2>{lessons.length}</h2>
-          <p>Trong lớp này</p>
+      <div className="lrp-stats-row">
+        <div className="lrp-stat-card">
+          <span className="lrp-stat-label">Tổng học viên</span>
+          <span className="lrp-stat-value">{stats.totalCount}</span>
         </div>
-        <div className="lrp-card">
-          <p>Tổng số học viên</p>
-          <h2>{studentCount}</h2> {/* ← đổi */}
-          <p>Đang hoạt động</p>
+        <div className="lrp-stat-card">
+          <span className="lrp-stat-label">Tổng số bài tập</span>
+          <span className="lrp-stat-value">{stats.exerciseCount}</span>
         </div>
-        <div className="lrp-card">
-          <p>Tiến độ lớp</p>
-          <h2>{tienDo}%</h2>
-          <p>Toàn bộ khóa học</p>
-        </div>
-        <div className="lrp-card">
-          <p>Lịch học</p>
-          <h2 style={{ fontSize: 16 }}>{classInfo?.LichHoc || "—"}</h2>
-          <p>Thời khóa biểu</p>
+        <div className="lrp-stat-card">
+          <span className="lrp-stat-label">Điểm trung bình lớp</span>
+          <span className="lrp-stat-value">{stats.classAvg}</span>
         </div>
       </div>
 
+<<<<<<< Updated upstream
       {/* LESSON GRID */}
       {loading ? (
         <div style={{ textAlign:"center", padding:40, color:"#999" }}>Đang tải...</div>
@@ -141,11 +260,127 @@ const LessonResultPage = () => {
               >
                 Xem kết quả học tập
               </button>
+=======
+      {/* SEARCH & EXPORT */}
+      <div className="lrp-search-export-row">
+        <form className="lrp-search-container" onSubmit={(e) => e.preventDefault()}>
+          <input
+            className="lrp-search-input"
+            type="text"
+            placeholder="Tìm theo tên hoặc mã sinh viên..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button className="lrp-search-button" type="button">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+        </form>
+
+        <button className="lrp-export-btn" onClick={handleExportExcel}>
+          Xuất Excel
+        </button>
+      </div>
+
+      {/* TABLE */}
+      <div className="lrp-table-container">
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Đang tải bảng điểm...</div>
+        ) : (
+          id === "101" ? (
+            <BaoCaoKetQuaQTV showCsvButton={false} />
+          ) : (
+            <div className="lrp-table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã sinh viên</th>
+                    <th>Họ tên</th>
+                    <th>Giới tính</th>
+                    <th>Trạng thái</th>
+                    {classExercises.map(ex => (
+                      <th key={ex.MaExercise} title={ex.TenBai}>
+                        B{ex.ThuTu ?? 0}: {ex.TenBai}
+                      </th>
+                    ))}
+                    <th>Điểm TB</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan={5 + classExercises.length} style={{ textAlign: "center", padding: "30px", color: "#999" }}>
+                        Không tìm thấy dữ liệu học viên
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStudents.map((s, index) => (
+                      <tr key={index}>
+                        <td className="lrp-code-cell">{s.MaSinhVien}</td>
+                        <td>
+                          <span className="lrp-name-text">{s.HoTen}</span>
+                        </td>
+                        <td>{s.GioiTinh}</td>
+                        <td>
+                          <span className={`lrp-status-badge ${s.TrangThai === "Đang học" ? "active" : ""}`}>
+                            {s.TrangThai}
+                          </span>
+                        </td>
+                        {classExercises.map(ex => {
+                          const score = s.scores[ex.MaExercise];
+                          return (
+                            <td key={ex.MaExercise}>
+                              {score !== null ? (
+                                <span className={`lrp-score-badge ${getDiemClass(score)}`}>
+                                  {score}
+                                </span>
+                              ) : (
+                                <span className="lrp-score-chuanop">Chưa nộp</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td>
+                          {s.diemTB !== null ? (
+                            <span className={`lrp-score-badge ${getDiemClass(s.diemTB)}`} style={{ fontWeight: 700 }}>
+                              {s.diemTB}
+                            </span>
+                          ) : (
+                            <span className="lrp-score-chuanop">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+>>>>>>> Stashed changes
             </div>
-          ))}
+          )
+        )}
+      </div>
+
+      {showSuccess && (
+        <div className="lrp-success-overlay">
+          <div className="lrp-success-modal">
+            <div className="lrp-check-circle">
+              <span style={{ fontSize: 28, color: "#2ecc71" }}>✔</span>
+            </div>
+            <p>Tải file báo cáo thành công</p>
+          </div>
         </div>
       )}
-
     </div>
   );
 };

@@ -58,7 +58,11 @@ const AboutPage = () => {
       <Navbar />
 
       <div className="about-hero">
+<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image(16).png`} alt="FLIC Banner" />
+=======
+        <img src={import.meta.env.BASE_URL + "image(16).png"} alt="FLIC Banner" />
+>>>>>>> Stashed changes
       </div>
 
       <div className="about-container">

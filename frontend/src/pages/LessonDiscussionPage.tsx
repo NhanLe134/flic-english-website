@@ -1,6 +1,7 @@
 import "./lessonDiscussion.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { FiArrowLeft, FiMessageSquare, FiTrash2, FiSend, FiThumbsUp, FiUser } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
@@ -102,14 +103,16 @@ const LessonDiscussionPage = () => {
   return (
     <div className="ldp-wrapper">
 
+      <span className="discussion-back" onClick={() => navigate(-1)}>
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        Quay lại
+      </span>
+
       {/* PAGE HEADER */}
       <div className="discussion-header">
         <div className="header-left">
           <h1>{lesson.TieuDe}</h1>
           <p>Loại: {lesson.LoaiBaiHoc} • Thời lượng: {lesson.ThoiLuong}</p>
-        </div>
-        <div className="header-right">
-          <div className="back-btn" onClick={() => navigate(-1)}>← Quay lại</div>
         </div>
       </div>
 
@@ -143,11 +146,15 @@ const LessonDiscussionPage = () => {
 
       {/* DISCUSSION */}
       <div className="discussion-section">
-        <h3>💬 Thảo luận bài giảng ({rootComments.length})</h3>
+        <h3>
+          <FiMessageSquare size={18} style={{ marginRight: 8, verticalAlign: 'middle', color: '#F95800' }} />
+          Thảo luận bài giảng ({rootComments.length})
+        </h3>
 
         {/* Ô nhập bình luận mới */}
         <div className="discussion-card">
           <div className="discussion-user">
+            <FiUser size={16} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
             <strong>{initials}</strong>
             <span> {user.HoTen || "Giảng viên"}</span>
           </div>
@@ -159,7 +166,9 @@ const LessonDiscussionPage = () => {
               onChange={e => setNewComment(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handlePostComment()}
             />
-            <button className="send-btn" onClick={handlePostComment}>➤</button>
+            <button className="send-btn" onClick={handlePostComment} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiSend size={16} />
+            </button>
           </div>
         </div>
 
@@ -171,13 +180,14 @@ const LessonDiscussionPage = () => {
         ) : rootComments.map(c => (
           <div className="discussion-card" key={c.MaBinhLuan}>
             <div className="discussion-user">
+              <FiUser size={16} style={{ marginRight: 6, verticalAlign: 'middle', color: '#888' }} />
               <strong>
-                {c.VaiTro === "Giảng Viên" ? "👩‍🏫" : "👨‍🎓"} {c.HoTen}
+                {c.HoTen}
               </strong>
               <span>
                 {" "}
                 {c.VaiTro === "Giảng Viên"
-                  ? <span style={{ color: "#f97316", fontWeight: 600 }}>Giảng viên</span>
+                  ? <span style={{ color: "#F95800", fontWeight: 600 }}>Giảng viên</span>
                   : "Sinh viên"
                 }
                 {" • "}
@@ -188,20 +198,23 @@ const LessonDiscussionPage = () => {
             <p style={{ margin: "8px 0", whiteSpace: "pre-line" }}>{c.NoiDung}</p>
 
             <div className="discussion-actions">
-              👍
+              <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <FiThumbsUp size={14} /> Thích
+              </span>
               <button
                 className="reply-btn"
                 onClick={() => setReplyTo(replyTo === c.MaBinhLuan ? null : c.MaBinhLuan)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
               >
-                💬 Trả lời
+                <FiMessageSquare size={14} /> Trả lời
               </button>
               {user.MaNguoiDung === c.MaNguoiDung && (
                 <button
                   className="reply-btn"
-                  style={{ color: "red", marginLeft: 8 }}
+                  style={{ color: "red", marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                   onClick={() => { setDeleteId(c.MaBinhLuan); setShowModal(true); }}
                 >
-                  🗑 Xóa
+                  <FiTrash2 size={14} /> Xóa
                 </button>
               )}
             </div>
@@ -216,7 +229,9 @@ const LessonDiscussionPage = () => {
                   onChange={e => setReplyText(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleReply(c.MaBinhLuan)}
                 />
-                <button className="send-btn" onClick={() => handleReply(c.MaBinhLuan)}>➤</button>
+                <button className="send-btn" onClick={() => handleReply(c.MaBinhLuan)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FiSend size={16} />
+                </button>
               </div>
             )}
 
@@ -225,23 +240,26 @@ const LessonDiscussionPage = () => {
               <div className="reply-list">
                 {getReplies(c.MaBinhLuan).map(r => (
                   <div key={r.MaBinhLuan} className="reply-item">
-                    <strong>
-                      {r.VaiTro === "Giảng Viên" ? "👩‍🏫" : "👨‍🎓"} {r.HoTen}
-                      {r.VaiTro === "Giảng Viên" && (
-                        <span style={{ color: "#f97316", marginLeft: 6 }}>Giảng viên</span>
-                      )}
-                    </strong>
-                    <span style={{ marginLeft: 8, color: "#999", fontSize: 12 }}>
-                      {new Date(r.ThoiGian).toLocaleDateString("vi-VN")}
-                    </span>
+                    <div style={{ marginBottom: 4 }}>
+                      <FiUser size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#999' }} />
+                      <strong>
+                        {r.HoTen}
+                        {r.VaiTro === "Giảng Viên" && (
+                          <span style={{ color: "#F95800", marginLeft: 6, fontWeight: 600 }}>Giảng viên</span>
+                        )}
+                      </strong>
+                      <span style={{ marginLeft: 8, color: "#999", fontSize: 12 }}>
+                        {new Date(r.ThoiGian).toLocaleDateString("vi-VN")}
+                      </span>
+                    </div>
                     <p style={{ margin: "4px 0 0 0", whiteSpace: "pre-line" }}>{r.NoiDung}</p>
                     {user.MaNguoiDung === r.MaNguoiDung && (
                       <button
                         className="reply-btn"
-                        style={{ color: "red", fontSize: 12 }}
+                        style={{ color: "red", fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: 4 }}
                         onClick={() => { setDeleteId(r.MaBinhLuan); setShowModal(true); }}
                       >
-                        🗑 Xóa
+                        <FiTrash2 size={12} /> Xóa
                       </button>
                     )}
                   </div>

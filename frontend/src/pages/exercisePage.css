@@ -4,14 +4,18 @@
 }
 
 /* BACK */
-.back {
-  margin-bottom: 18px;
-  cursor: pointer;
-  color: #555;
+.cd2-back-btn {
   font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-block;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
 }
 
-.back:hover {
+.cd2-back-btn:hover {
+  color: #F95800;
   text-decoration: underline;
 }
 
@@ -21,8 +25,8 @@
   padding: 28px;
   border-radius: 16px;
   position: relative;
-  border: 1px solid #e0d4c3;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .header-top {
@@ -51,12 +55,40 @@
 
 .info-item {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: 8px;
 }
 
-.info-item span {
-  font-size: 20px;
+.cd2-icon-wrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cd2-icon-wrapper.teacher-icon {
+  background: rgba(249, 88, 0, 0.08);
+  color: #f95800;
+}
+
+.cd2-icon-wrapper.calendar-icon {
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+}
+
+.cd2-icon-wrapper.students-icon {
+  background: rgba(16, 117, 68, 0.08);
+  color: #107544;
+}
+
+.cd2-icon-wrapper.status-icon {
+  background: rgba(0, 0, 128, 0.08);
+  color: #000080;
 }
 
 .label {
@@ -87,7 +119,7 @@
 }
 
 .percent {
-  color: #f58220;
+  color: #F95800;
   font-weight: bold;
 }
 
@@ -100,7 +132,7 @@
 
 .progress-fill {
   height: 100%;
-  background: #f58220;
+  background: #F95800;
   border-radius: 20px;
 }
 
@@ -113,21 +145,24 @@
 
 .tab {
   padding: 8px 20px;
-  border: none;
-  background: #e0d4c3;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
   border-radius: 20px;
   cursor: pointer;
   font-size: 14px;
+  color: #4a5568;
   transition: 0.2s;
 }
 
 .tab:hover {
-  background: #d4c4b0;
+  background: #f8fafc;
+  border-color: #cbd5e0;
 }
 
 .tab.active {
-  background: #f58220;
+  background: #F95800;
   color: white;
+  border-color: #F95800;
   font-weight: 600;
 }
 
@@ -152,27 +187,60 @@
   height: 42px;
 }
 
-.ep-search {
-  height: 42px;
-  width: 200px;
-  padding: 0 14px;
-  box-sizing: border-box;
+/* SEARCH CONTAINER (Joined input + orange button) */
+.search-container {
+  display: flex;
+  align-items: center;
+  width: 260px;
+  height: 40px;
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  border: 1px solid #cdbda9;
-  background: #efe3d1;
-  font-size: 14px;
-  outline: none;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
-.ep-search:focus {
-  border-color: #f58220;
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  height: 100%;
+}
+
+.search-input::placeholder {
+  color: #9c8e83;
+}
+
+.search-button {
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 0 16px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.search-button:hover {
+  background: #e04f00;
+}
+
+.search-button svg {
+  stroke: white;
 }
 
 .ep-add-btn {
-  height: 42px;
+  height: 40px;
   padding: 0 18px;
   box-sizing: border-box;
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   border-radius: 8px;
@@ -202,7 +270,7 @@
 
 .ep-total-box b {
   font-size: 20px;
-  color: #f58220;
+  color: #F95800;
 }
 
 /* EXERCISE GRID */
@@ -216,7 +284,9 @@
   background: white;
   padding: 20px;
   border-radius: 12px;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #eef2f6;
+  display: flex;
+  flex-direction: column;
 }
 
 .exercise-card h4 {
@@ -229,7 +299,8 @@
 }
 
 .btn-group {
-  margin-top: 15px;
+  margin-top: auto;
+  padding-top: 15px;
   display: flex;
   gap: 10px;
 }
@@ -248,9 +319,9 @@
 }
 
 .outline-btn {
-  border: 2px solid #f58220;
+  border: 2px solid #F95800;
   background: transparent;
-  color: #f58220;
+  color: #F95800;
 }
 
 .outline-btn:hover {
@@ -258,8 +329,8 @@
 }
 
 .delete-btn {
-  border: 2px solid #f58220;
-  background: #f58220;
+  border: 2px solid #F95800;
+  background: #F95800;
   color: white;
 }
 

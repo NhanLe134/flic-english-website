@@ -44,7 +44,7 @@
 
 .cb-status.pending {
   background: #fff4ec;
-  color: #f58220;
+  color: #F95800;
 }
 
 .cb-card {
@@ -118,7 +118,7 @@
 
 .cb-q-num {
   font-weight: 600;
-  color: #f58220;
+  color: #F95800;
 }
 
 .cb-answer {
@@ -172,14 +172,14 @@
   border: 1px solid #e0d4c3;
   font-size: 20px;
   font-weight: 600;
-  color: #f58220;
+  color: #F95800;
   text-align: center;
   outline: none;
   box-sizing: border-box;
 }
 
 .cb-score-input input:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .cb-card label {
@@ -204,7 +204,7 @@
 }
 
 .cb-nhanxet:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .cb-actions {
@@ -228,7 +228,7 @@
 }
 
 .cb-submit-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   padding: 12px 28px;

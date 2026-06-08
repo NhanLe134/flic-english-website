@@ -90,7 +90,7 @@ const DoiMatKhau = () => {
       const data = await res.json();
       if (!res.ok) { setError(data.message || "Có lỗi xảy ra"); return; }
       setShowPopup(true);
-      setTimeout(() => navigate("/cai-dat"), 2000);
+      setTimeout(() => navigate("/thong-tin-ca-nhan"), 2000);
     } catch {
       setError("Không kết nối được server");
     } finally {
@@ -101,7 +101,11 @@ const DoiMatKhau = () => {
   return (
     <div className="password-page">
       <div className="password-card">
+<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="password-logo" />
+=======
+        <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="password-logo" />
+>>>>>>> Stashed changes
         <h2 className="password-title">ĐỔI MẬT KHẨU</h2>
 
         <div className="password-form">
@@ -146,7 +150,7 @@ const DoiMatKhau = () => {
             {loading ? "Đang lưu..." : "Lưu"}
           </button>
 
-          <button className="password-back-btn" onClick={() => navigate("/cai-dat")}>
+<button className="password-back-btn" onClick={() => navigate("/thong-tin-ca-nhan")}> 
             ← Quay lại
           </button>
 

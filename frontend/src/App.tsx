@@ -34,9 +34,9 @@ import LessonResultPage from "./pages/LessonResultPage"
 import ChiTietKetQua from "./pages/ChiTietKetQua"
 import KetQuaHocTapHocVien from "./pages/KetQuaHocTapHocVien"
 import SuaKetQuaHocTapHocVien from "./pages/SuaKetQuaHocTapHocVien"
-import CaiDatTaiKhoan from "./pages/CaiDatTaiKhoan"
 import DoiMatKhau from "./pages/DoiMatKhau"
 import HocThu from "./pages/HocThu"
+import DraftsManagement from "./pages/DraftsManagement"
 
 /* ADMIN */
 import AdminLayout from "./layout/AdminLayout"
@@ -113,9 +113,8 @@ function App() {
           <Route path="/personal-info-view" element={<CreatepersonalInfo />} />
           <Route path="/thong-tin-ca-nhan" element={<PersonalInfoView />} />
           <Route path="/edit-personal-info" element={<EditPersonalInfo />} />
-          {/* CÀI ĐẶT */}
-          <Route path="/cai-dat" element={<CaiDatTaiKhoan />} />
           <Route path="/doi-mat-khau" element={<DoiMatKhau />} />
+          <Route path="/quan-ly-ban-nhap" element={<DraftsManagement />} />
           {/* BÀI TẬP */}
           <Route path="/bai-tap/:id" element={<ExercisePage />} />
           <Route path="/lesson-discussion/:id" element={<LessonDiscussionPage />} />

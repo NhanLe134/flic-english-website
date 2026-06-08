@@ -45,14 +45,14 @@
   border-radius: 50%;
   object-fit: cover;
   display: block;
-  border: 2px solid #f97316;
+  border: 2px solid #F95800;
 }
 
 .avatar-placeholder {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f97316, #fb923c);
+  background: linear-gradient(135deg, #F95800, #fb923c);
   color: #fff;
   display: flex;
   align-items: center;
@@ -60,7 +60,7 @@
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.5px;
-  border: 2px solid #f97316;
+  border: 2px solid #F95800;
 }
 
 .avatar-overlay {

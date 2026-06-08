@@ -34,6 +34,8 @@ const AddLesson: React.FC = () => {
   const [level, setLevel] = useState("Beginner");
   const [link, setLink] = useState("");
 
+  const [isFree, setIsFree] = useState(false);
+
   const handleChooseFile = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,17 +78,21 @@ const AddLesson: React.FC = () => {
 
       if (link && !fileUrl) fileUrl = link;
 
+      const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+      const isTeacher = user.VaiTro === "Giảng Viên";
+
       const newLesson = {
         TieuDe: name,
         LoaiBaiHoc: type,
-        ThoiLuong: duration + " phút",
-        TrangThai: status,
+        ThoiLuong: duration ? duration + " phút" : "0 phút",
+        TrangThai: isTeacher ? (status === "draft" ? "draft" : "pending") : status,
         NoiDung: moTa, // ← lưu Markdown
         FileUrl: fileUrl,
         ThuTu: 1,
         MaKhoaHoc: 1,
-        MaGiangVien: 1,
-        MaLesson: Number(lessonId)
+        MaGiangVien: user.MaNguoiDung || 1,
+        MaLesson: Number(lessonId),
+        IsFree: isFree ? 1 : 0
       };
 
       await fetch("http://localhost:5000/baigiang", {
@@ -95,7 +101,11 @@ const AddLesson: React.FC = () => {
         body: JSON.stringify(newLesson)
       });
 
-      alert("Thêm bài giảng thành công!");
+      if (isTeacher) {
+        alert("Gửi yêu cầu duyệt bài giảng thành công! Bài giảng sẽ hiển thị sau khi được phê duyệt.");
+      } else {
+        alert("Thêm bài giảng thành công!");
+      }
       navigate(-1);
 
     } catch (err) {
@@ -186,6 +196,18 @@ const AddLesson: React.FC = () => {
               </select>
             </div>
           </div>
+          
+          <div style={{ marginTop: 16 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: '500', color: '#5a3e2b' }}>
+              <input
+                type="checkbox"
+                checked={isFree}
+                onChange={e => setIsFree(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: '#F95800', cursor: 'pointer' }}
+              />
+              <span>Cho phép học thử miễn phí (Free)</span>
+            </label>
+          </div>
         </div>
 
         {/* RIGHT */}
@@ -237,20 +259,44 @@ const AddLesson: React.FC = () => {
 
           <div className="right-card">
             <h3>Hành động</h3>
-            <button
-              className="draft-btn"
-              disabled={uploading}
-              onClick={() => handleAddLesson("draft")}
-            >
-              {uploading ? "Đang lưu..." : "Lưu nháp"}
-            </button>
-            <button
-              className="publish-btn"
-              disabled={uploading}
-              onClick={() => handleAddLesson("published")}
-            >
-              {uploading ? "Đang lưu..." : "Xuất bản ngay"}
-            </button>
+            {JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}").VaiTro === "Giảng Viên" ? (
+              <>
+                <button
+                  className="draft-btn"
+                  disabled={uploading}
+                  onClick={() => handleAddLesson("draft")}
+                  style={{ width: "100%", marginBottom: "10px" }}
+                >
+                  {uploading ? "Đang lưu..." : "Lưu nháp"}
+                </button>
+                <button
+                  className="publish-btn"
+                  disabled={uploading}
+                  onClick={() => handleAddLesson("published")}
+                  style={{ width: "100%", background: "#F95800" }}
+                >
+                  {uploading ? "Đang gửi..." : "Gửi yêu cầu phê duyệt"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="draft-btn"
+                  disabled={uploading}
+                  onClick={() => handleAddLesson("draft")}
+                >
+                  {uploading ? "Đang lưu..." : "Lưu nháp"}
+                </button>
+                <button
+                  className="publish-btn"
+                  disabled={uploading}
+                  onClick={() => handleAddLesson("published")}
+                  style={{ background: "#F95800" }}
+                >
+                  {uploading ? "Đang lưu..." : "Xuất bản ngay"}
+                </button>
+              </>
+            )}
           </div>
 
         </div>

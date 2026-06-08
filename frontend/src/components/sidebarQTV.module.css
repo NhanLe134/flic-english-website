@@ -12,28 +12,28 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0ebe4;
 }
 
-.logo img { width: 36px; }
-
-.logo h3 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
+.logo img {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  display: block;
 }
 
 .adminInfo {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  padding: 14px 0;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #faf6f0; /* Màu nền kem sữa nhẹ */
+  border: 1px solid #f0ebe4;
+  border-radius: 12px;
 }
 
 .avatar {
@@ -50,11 +50,37 @@
   flex-shrink: 0;
 }
 
-.userText { display: flex; flex-direction: column; gap: 2px; }
+.userText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
 
-.name { font-weight: 600; font-size: 14px; color: #333; margin: 0; }
+.name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f1915;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.role { font-size: 12px; color: #999; }
+.role {
+  font-size: 11px;
+  color: #8c7e74;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .menu {
   list-style: none;
@@ -63,10 +89,21 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1; /* Chiếm trọn chiều cao còn lại */
+}
+
+.menu li {
+  display: block;
+}
+
+.menu li:last-child {
+  margin-top: auto; /* Đẩy Đăng xuất xuống dưới cùng */
 }
 
 .menu a {
-  display: block;
+  display: flex; /* Thay từ block sang flex */
+  align-items: center;
+  gap: 12px; /* Khoảng cách giữa icon và chữ */
   padding: 12px 14px;
   border-radius: 10px;
   text-decoration: none;
@@ -82,4 +119,9 @@
   background: #F95800 !important;
   color: white !important;
   font-weight: 600 !important;
+}
+
+.menu svg {
+  font-size: 18px;
+  flex-shrink: 0;
 }

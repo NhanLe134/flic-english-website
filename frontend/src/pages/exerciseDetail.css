@@ -51,8 +51,10 @@
 
 .info-item {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: 8px;
 }
 
 .info-item span {
@@ -87,7 +89,7 @@
 }
 
 .percent {
-  color: #f58220;
+  color: #F95800;
   font-weight: bold;
 }
 
@@ -100,7 +102,7 @@
 
 .progress-fill {
   height: 100%;
-  background: #f58220;
+  background: #F95800;
   border-radius: 20px;
 }
 
@@ -127,7 +129,7 @@
 }
 
 .tab.active {
-  background: #f58220;
+  background: #F95800;
   color: white;
   font-weight: 600;
 }
@@ -148,9 +150,9 @@
 }
 
 .edit-btn {
-  border: 2px solid #f58220;
+  border: 2px solid #F95800;
   background: transparent;
-  color: #f58220;
+  color: #F95800;
   padding: 8px 20px;
   border-radius: 8px;
   cursor: pointer;
@@ -260,7 +262,7 @@
 
 .edit-textarea:focus,
 .edit-answer:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 /* UPDATE BTN */
@@ -271,7 +273,7 @@
 }
 
 .update-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   padding: 12px 48px;
   border: none;

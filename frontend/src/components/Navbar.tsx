@@ -9,7 +9,11 @@ function Navbar() {
 
         {/* Logo */}
         <Link to="/" className="logo">
+<<<<<<< Updated upstream
           <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} alt="FLIC" className="logo-img" />
+=======
+          <img src={import.meta.env.BASE_URL + "flic_logo_full.png"} alt="FLIC" className="logo-img" />
+>>>>>>> Stashed changes
         </Link>
 
         {/* Menu */}

@@ -1,5 +1,5 @@
 import "./createExercise.css";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 interface Question {
@@ -8,18 +8,47 @@ interface Question {
   correct: string;
 }
 
+const getDangBaiOptions = (kn: string): string[] => {
+  if (kn === "Nghe") return ["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"];
+  if (kn === "Noi") return ["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"];
+  if (kn === "Doc") return ["Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Bài tập từ vựng"];
+  if (kn === "Viet") return ["Sắp xếp từ thành câu", "Trắc nghiệm xác định thì", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"];
+  return [];
+};
+
+const mapDangBaiToType = (db: string): string => {
+  if (db === "Nghe audio trắc nghiệm" || db === "Hình ảnh chọn đáp án") return "listening";
+  if (db === "Nghe chép chính tả" || db === "Điền từ vào đoạn văn") return "essay";
+  if (db === "Luyện phát âm (check phát âm tự động)" || db === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking";
+  if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "multiple";
+  if (db === "Bài tập từ vựng") return "essay";
+  if (db === "Sắp xếp từ thành câu") return "ordering";
+  if (db === "Trắc nghiệm xác định thì") return "multiple";
+  if (db === "Viết đoạn văn ngắn") return "essay";
+  if (db === "Sắp xếp câu thành đoạn văn") return "ordering";
+  return "multiple";
+};
+
 const CreateExercise = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const isPractice = searchParams.get("isPractice") === "true";
 
   const [lesson, setLesson] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("multiple");
+  const [type, setType] = useState("listening");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [extraContents, setExtraContents] = useState<string[]>([]);
+  
+  const [kyNang, setKyNang] = useState("Nghe");
+  const [dangBai, setDangBai] = useState("Nghe audio trắc nghiệm");
+  const [isFree, setIsFree] = useState(false);
+  const [isExam, setIsExam] = useState(false);
 
   const [questions, setQuestions] = useState<Question[]>([
     { question: "", answers: ["", "", "", ""], correct: "A" }
@@ -30,6 +59,28 @@ const CreateExercise = () => {
   const [connectPairs,   setConnectPairs]   = useState([{ left: "", right: "" }]);
   const [matchingPairs,  setMatchingPairs]  = useState([{ left: "", right: "" }]);
   const [vocabPairs,     setVocabPairs]     = useState([{ word: "", meaning: "" }]);
+
+  const handleKyNangChange = (kn: string) => {
+    setKyNang(kn);
+    const opts = getDangBaiOptions(kn);
+    if (opts.length > 0) {
+      handleDangBaiChange(opts[0]);
+    }
+  };
+
+  const handleDangBaiChange = (db: string) => {
+    setDangBai(db);
+    const targetType = mapDangBaiToType(db);
+    setType(targetType);
+    setQuestions([{ question: "", answers: ["", "", "", ""], correct: "A" }]);
+    setSingleQuestion("");
+    setExtraContents([]);
+    setAudioFile(null);
+    setConnectPairs([{ left: "", right: "" }]);
+    setMatchingPairs([{ left: "", right: "" }]);
+    setVocabPairs([{ word: "", meaning: "" }]);
+    setSpeakingAnswer("");
+  };
 
   /* ===== LOAD LESSON ===== */
   useEffect(() => {
@@ -127,8 +178,13 @@ const CreateExercise = () => {
   };
 
   /* ===== CREATE ===== */
-  const handleCreate = async () => {
+  const handleCreate = async (statusOverride?: "draft" | "pending" | "published" | "practice") => {
     if (!title) { alert("Vui lòng nhập tiêu đề"); return; }
+
+    const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+    const user = JSON.parse(userStr || "{}");
+    const isTeacher = user.VaiTro === "Giảng Viên";
+    const status = statusOverride || (isPractice ? "practice" : (isTeacher ? "pending" : "published"));
 
     const today = new Date().toISOString().split("T")[0];
     let content       = "";
@@ -213,10 +269,25 @@ const CreateExercise = () => {
           CreatedDate: today,
           MaLesson:    Number(id),
           AudioUrl:    audioUrl,
-          ShowAnswer:  showAnswer ? 1 : 0,  // ← thêm dòng này
+          ShowAnswer:  showAnswer ? 1 : 0,
+          IsFree:      isFree ? 1 : 0,
+          IsExam:      isExam ? 1 : 0,
+          TrangThai:   status,
+          KyNang:      kyNang,
+          DangBai:     dangBai,
+          MaGiangVien: user.MaNguoiDung || null
         })
       });
 
+      setSuccessMessage(
+        status === "draft"
+          ? "Đã lưu bản nháp thành công"
+          : status === "practice"
+          ? "Tạo bài luyện tập thêm thành công"
+          : isTeacher
+          ? "Đã gửi yêu cầu duyệt bài tập đến QTV"
+          : "Tạo bài tập thành công"
+      );
       setShowSuccess(true);
       setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
     } catch (err) {
@@ -252,34 +323,79 @@ const CreateExercise = () => {
 
         <input
           className="exercise-title"
-          placeholder="Tiêu đề bài tập"
+          placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập"}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
-        <select
-          className="exercise-type"
-          value={type}
-          onChange={(e) => {
-            setType(e.target.value);
-            setQuestions([{ question: "", answers: ["", "", "", ""], correct: "A" }]);
-            setSingleQuestion("");
-            setExtraContents([]);
-            setAudioFile(null);
-            setConnectPairs([{ left: "", right: "" }]);
-            setMatchingPairs([{ left: "", right: "" }]);
-            setVocabPairs([{ word: "", meaning: "" }]);
-            setSpeakingAnswer("");
-          }}
-        >
-          <option value="multiple">Trắc nghiệm</option>
-          <option value="essay">Tự luận</option>
-          <option value="matching">Ghép từ</option>
-          <option value="connect">Nối</option>
-          <option value="ordering">Sắp xếp từ</option>
-          <option value="listening">Nghe</option>
-          <option value="speaking">Nói</option>
-        </select>
+        <div style={{ display: 'flex', gap: 15, marginBottom: 15 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Kỹ năng</label>
+            <select
+              className="exercise-type"
+              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+              value={kyNang}
+              onChange={(e) => handleKyNangChange(e.target.value)}
+            >
+              <option value="Nghe">Nghe (Listening)</option>
+              <option value="Noi">Nói (Speaking)</option>
+              <option value="Doc">Đọc (Reading)</option>
+              <option value="Viet">Viết (Writing)</option>
+            </select>
+          </div>
+          <div style={{ flex: 2 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Dạng bài tập</label>
+            <select
+              className="exercise-type"
+              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+              value={dangBai}
+              onChange={(e) => handleDangBaiChange(e.target.value)}
+            >
+              {getDangBaiOptions(kyNang).map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Checkboxes: Học thử miễn phí & Đặt làm bài kiểm tra */}
+        <div style={{ display: "flex", gap: "24px", marginTop: "15px", marginBottom: "15px" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={isFree}
+              onChange={(e) => setIsFree(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>
+              Học thử miễn phí (Free)
+            </span>
+          </label>
+
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={isExam}
+              onChange={(e) => setIsExam(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>
+              Đặt làm bài kiểm tra (Exam)
+            </span>
+          </label>
+        </div>
+
+        <div style={{ marginBottom: "20px", fontSize: "13px", color: "#666" }}>
+          Định dạng trình soạn thảo: <strong>{
+            type === "listening" ? "Nghe / Audio Trắc nghiệm" :
+            type === "multiple" ? "Trắc nghiệm" :
+            type === "essay" ? "Tự luận / Đọc hiểu" :
+            type === "speaking" ? "Nói / Ghi âm" :
+            type === "ordering" ? "Sắp xếp từ" :
+            type === "connect" ? "Nối từ" :
+            type === "matching" ? "Ghép từ" : type
+          }</strong>
+        </div>
 
         {/* ── TRẮC NGHIỆM ── */}
         {type === "multiple" && (
@@ -597,7 +713,7 @@ const CreateExercise = () => {
               type="checkbox"
               checked={showAnswer}
               onChange={(e) => setShowAnswer(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: "#e87722", cursor: "pointer" }}
+              style={{ width: 16, height: 16, accentColor: "#F95800", cursor: "pointer" }}
             />
             <span style={{ fontSize: 14, color: "#5a3e2b" }}>
               Hiển thị đáp án cho học viên sau khi nộp bài
@@ -605,7 +721,57 @@ const CreateExercise = () => {
           </label>
         </div>
 
-        <button className="save-btn" onClick={handleCreate}>Lưu</button>
+        {(() => {
+          const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+          const user = JSON.parse(userStr || "{}");
+          const isTeacher = user.VaiTro === "Giảng Viên";
+
+          return (
+            <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
+              {isPractice ? (
+                <button
+                  type="button"
+                  className="save-btn"
+                  style={{ flex: 1, marginTop: 0 }}
+                  onClick={() => handleCreate("practice")}
+                >
+                  Tạo bài luyện tập
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="draft-btn"
+                    style={{
+                      flex: 1,
+                      padding: "12px",
+                      borderRadius: "10px",
+                      background: "#fff",
+                      border: "1.5px solid #F95800",
+                      color: "#F95800",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      transition: "background 0.2s"
+                    }}
+                    onClick={() => handleCreate("draft")}
+                    onMouseOver={(e) => (e.currentTarget.style.background = "#fff4ec")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
+                  >
+                    Lưu nháp
+                  </button>
+                  <button
+                    type="button"
+                    className="save-btn"
+                    style={{ flex: 1, marginTop: 0 }}
+                    onClick={() => handleCreate(isTeacher ? "pending" : "published")}
+                  >
+                    {isTeacher ? "Gửi yêu cầu phê duyệt" : "Lưu & Xuất bản"}
+                  </button>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
       </div>
 
@@ -614,7 +780,7 @@ const CreateExercise = () => {
         <div className="success-overlay">
           <div className="success-popup">
             <div className="check-icon">✓</div>
-            <p>Lưu kết quả thành công</p>
+            <p>{successMessage}</p>
           </div>
         </div>
       )}

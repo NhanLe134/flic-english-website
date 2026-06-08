@@ -55,7 +55,11 @@ const AddStudent: React.FC = () => {
 
       {/* HEADER */}
       <header className="top-header">
+<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="logo" />
+=======
+        <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="logo" />
+>>>>>>> Stashed changes
         <div className="top-avatar">👨‍🏫</div>
       </header>
 
@@ -85,7 +89,6 @@ const AddStudent: React.FC = () => {
             </div>
 
             <div onClick={() => navigate("/quan-ly-ket-qua")} className="sidebar-item">Quản lý kết quả học tập</div>
-            <div onClick={() => navigate("/cai-dat")} className="sidebar-item">Cài đặt</div>
             <div onClick={() => navigate("/")} className="sidebar-item">Đăng xuất</div>
           </div>
         </aside>
