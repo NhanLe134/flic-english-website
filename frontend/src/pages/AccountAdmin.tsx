@@ -146,7 +146,7 @@ export default function AccountAdmin() {
           GioiTinh: selectedUser.GioiTinh,
         })
       });
-      
+
       // Cập nhật quyền (nếu không phải Học Viên)
       if (selectedUser.VaiTro !== "Học Viên") {
         await fetch(`${API}/admin/users/${selectedUser.MaNguoiDung}/permissions`, {
@@ -155,9 +155,9 @@ export default function AccountAdmin() {
           body: JSON.stringify({ permissions })
         });
       }
-      
-      showToast("Đã lưu thay đổi!"); 
-      setShowModal(false); 
+
+      showToast("Đã lưu thay đổi!");
+      setShowModal(false);
       loadUsers();
     } catch { showToast("Lỗi khi lưu"); }
   };
@@ -249,7 +249,7 @@ export default function AccountAdmin() {
       {/* TABLE */}
       <div className="account-table">
         {loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Đang tải...</div>
+          <div className="table-loading">Đang tải...</div>
         ) : (
           <table className="accounts-table">
             <thead>
@@ -264,14 +264,14 @@ export default function AccountAdmin() {
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: "center", padding: 20, color: "#999" }}>Không có dữ liệu</td></tr>
+                <tr><td colSpan={6} className="table-empty">Không có dữ liệu</td></tr>
               ) : filteredUsers.map(u => (
                 <tr key={u.MaNguoiDung} onClick={() => { setSelectedUser({ ...u }); setShowDetailModal(true); }}>
                   <td>
-                    <div style={{ fontWeight: 600 }}>{u.HoTen}</div>
+                    <div className="user-name">{u.HoTen}</div>
                   </td>
-                  <td style={{ fontSize: 13, color: "#555" }}>{u.TenDangNhap}</td>
-                  <td style={{ fontSize: 13 }}>{u.Email}</td>
+                  <td className="user-username">{u.TenDangNhap}</td>
+                  <td className="user-email">{u.Email}</td>
                   <td>
                     <span
                       className="role-badge"
@@ -288,7 +288,7 @@ export default function AccountAdmin() {
                       {isActive(u.TrangThai) ? "Hoạt động" : "Khóa"}
                     </span>
                   </td>
-                  <td style={{ fontSize: 13 }}>
+                  <td className="user-created">
                     {u.NgayTao ? new Date(u.NgayTao).toLocaleDateString("vi-VN") : "—"}
                   </td>
                 </tr>
@@ -301,38 +301,38 @@ export default function AccountAdmin() {
       {/* EDIT MODAL */}
       {showModal && selectedUser && (
         <div className="admin-modal-overlay">
-          <div className="modal">
-            <div className="modal-header-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '32px 32px 0 32px', flexShrink: 0 }}>
-              <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
-                <h3 style={{ margin: 0, color: '#000080' }}>Chỉnh sửa tài khoản</h3>
-                <span className="close" style={{ margin: 0 }} onClick={() => setShowModal(false)}>×</span>
+          <div className="modal account-modal">
+            <div className="modal-header-container">
+              <div className="modal-header">
+                <h3>Chỉnh sửa tài khoản</h3>
+                <span className="close" onClick={() => setShowModal(false)}>×</span>
               </div>
-              <p className="modal-sub" style={{ margin: 0, padding: 0 }}>Cập nhật thông tin người dùng</p>
+              <p className="modal-sub">Cập nhật thông tin người dùng</p>
             </div>
 
-            <div className="modal-scrollable-body" style={{ overflowY: 'auto', flex: 1, padding: '0 32px 24px 32px', margin: '16px 0 0 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Họ và tên</label>
+            <div className="modal-scrollable-body">
+              <div className="form-field">
+                <label>Họ và tên</label>
                 <div className="info-value">{selectedUser.HoTen}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Giới tính</label>
+              <div className="form-field">
+                <label>Giới tính</label>
                 <div className="info-value">{selectedUser.GioiTinh || "Nam"}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Vai trò</label>
+              <div className="form-field">
+                <label>Vai trò</label>
                 <div className="info-value">{selectedUser.VaiTro}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Email</label>
+              <div className="form-field">
+                <label>Email</label>
                 <input value={selectedUser.Email} onChange={e => setSelectedUser({ ...selectedUser, Email: e.target.value })} />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Trạng thái</label>
+              <div className="form-field">
+                <label>Trạng thái</label>
                 <select value={selectedUser.TrangThai} onChange={e => setSelectedUser({ ...selectedUser, TrangThai: e.target.value })}>
                   <option value="Active">Hoạt động</option>
                   <option value="Khóa">Khóa</option>
@@ -390,7 +390,7 @@ export default function AccountAdmin() {
               )}
             </div>
 
-            <div className="modal-actions" style={{ flexShrink: 0, borderTop: '1px solid #e2e8f0', padding: '16px 32px 32px 32px', margin: 0 }}>
+            <div className="modal-actions">
               <button className="cancel" onClick={() => setShowModal(false)}>Hủy</button>
               <button className="save" onClick={handleSave}>Lưu thay đổi</button>
             </div>
@@ -401,46 +401,46 @@ export default function AccountAdmin() {
       {/* ADD USER MODAL */}
       {showAddModal && (
         <div className="admin-modal-overlay">
-          <div className="modal" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh', padding: 0 }}>
-            <div className="modal-header-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '32px 32px 0 32px', flexShrink: 0 }}>
-              <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
-                <h3 style={{ margin: 0, color: '#000080' }}>Thêm người dùng mới</h3>
-                <span className="close" style={{ margin: 0 }} onClick={() => setShowAddModal(false)}>×</span>
+          <div className="modal account-modal">
+            <div className="modal-header-container">
+              <div className="modal-header">
+                <h3>Thêm người dùng mới</h3>
+                <span className="close" onClick={() => setShowAddModal(false)}>×</span>
               </div>
-              <p className="modal-sub" style={{ margin: 0, padding: 0 }}>Điền thông tin để tạo tài khoản mới</p>
+              <p className="modal-sub">Điền thông tin để tạo tài khoản mới</p>
             </div>
 
-            <div className="modal-scrollable-body" style={{ overflowY: 'auto', flex: 1, padding: '0 32px 24px 32px', margin: '16px 0 0 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Tên đăng nhập <span style={{ color: "red" }}>*</span></label>
+            <div className="modal-scrollable-body">
+              <div className="form-field">
+                <label>Tên đăng nhập <span className="required-star">*</span></label>
                 <input placeholder="VD: nguyenvana" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Họ và tên</label>
+              <div className="form-field">
+                <label>Họ và tên</label>
                 <input placeholder="Nguyễn Văn A" value={newUser.fullname} onChange={e => setNewUser({ ...newUser, fullname: e.target.value })} />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Email <span style={{ color: "red" }}>*</span></label>
+              <div className="form-field">
+                <label>Email <span className="required-star">*</span></label>
                 <input placeholder="example@email.com" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Mật khẩu</label>
+              <div className="form-field">
+                <label>Mật khẩu</label>
                 <input type="password" placeholder="Mặc định: 123456" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Giới tính</label>
+              <div className="form-field">
+                <label>Giới tính</label>
                 <select value={newUser.gioiTinh} onChange={e => setNewUser({ ...newUser, gioiTinh: e.target.value })}>
                   <option value="Nam">Nam</option>
                   <option value="Nữ">Nữ</option>
                 </select>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Vai trò</label>
+              <div className="form-field">
+                <label>Vai trò</label>
                 <select
                   value={newUser.role}
                   onChange={e => {
@@ -509,7 +509,7 @@ export default function AccountAdmin() {
               )}
             </div>
 
-            <div className="modal-actions" style={{ flexShrink: 0, borderTop: '1px solid #e2e8f0', padding: '16px 32px 32px 32px', margin: 0 }}>
+            <div className="modal-actions">
               <button className="cancel" onClick={() => setShowAddModal(false)}>Hủy</button>
               <button className="save" onClick={handleCreateUser}>Tạo tài khoản</button>
             </div>
@@ -522,52 +522,52 @@ export default function AccountAdmin() {
       {/* DETAIL MODAL */}
       {showDetailModal && selectedUser && (
         <div className="admin-modal-overlay">
-          <div className="modal" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh', padding: 0 }}>
-            <div className="modal-header-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '32px 32px 0 32px', flexShrink: 0 }}>
-              <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0, padding: 0 }}>
-                <h3 style={{ margin: 0, color: '#000080' }}>Chi tiết tài khoản</h3>
-                <span className="close" style={{ margin: 0 }} onClick={() => { setShowDetailModal(false); setSelectedUser(null); }}>×</span>
+          <div className="modal account-modal">
+            <div className="modal-header-container">
+              <div className="modal-header">
+                <h3>Chi tiết tài khoản</h3>
+                <span className="close" onClick={() => { setShowDetailModal(false); setSelectedUser(null); }}>×</span>
               </div>
-              <p className="modal-sub" style={{ margin: 0, padding: 0 }}>Thông tin chi tiết tài khoản người dùng</p>
+              <p className="modal-sub">Thông tin chi tiết tài khoản người dùng</p>
             </div>
 
-            <div className="modal-scrollable-body" style={{ overflowY: 'auto', flex: 1, padding: '0 32px 24px 32px', margin: '16px 0 0 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Họ và tên</label>
+            <div className="modal-scrollable-body">
+              <div className="form-field">
+                <label>Họ và tên</label>
                 <div className="info-value">{selectedUser.HoTen || "—"}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Tên đăng nhập</label>
+              <div className="form-field">
+                <label>Tên đăng nhập</label>
                 <div className="info-value">{selectedUser.TenDangNhap}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Email</label>
+              <div className="form-field">
+                <label>Email</label>
                 <div className="info-value">{selectedUser.Email || "—"}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Giới tính</label>
+              <div className="form-field">
+                <label>Giới tính</label>
                 <div className="info-value">{selectedUser.GioiTinh || "Nam"}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Vai trò</label>
+              <div className="form-field">
+                <label>Vai trò</label>
                 <div className="info-value">{selectedUser.VaiTro}</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Trạng thái</label>
-                <div className="info-value" style={{ background: 'transparent', border: 'none', padding: 0 }}>
-                  <span className={`status-badge ${isActive(selectedUser.TrangThai) ? "active" : "locked"}`}>
+              <div className="form-field">
+                <label>Trạng thái</label>
+                <div className="info-value status-wrapper">
+                  <span className={` ${isActive(selectedUser.TrangThai) ? "active" : "locked"}`}>
                     {isActive(selectedUser.TrangThai) ? "Hoạt động" : "Khóa"}
                   </span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label style={{ margin: 0 }}>Ngày tạo</label>
+              <div className="form-field">
+                <label>Ngày tạo</label>
                 <div className="info-value">
                   {selectedUser.NgayTao ? new Date(selectedUser.NgayTao).toLocaleDateString("vi-VN") : "—"}
                 </div>
@@ -581,12 +581,11 @@ export default function AccountAdmin() {
                       <div className="permissions-title">Phân quyền</div>
                       <div className="permissions-grid">
                         {QTND_PERMISSIONS.map(p => (
-                          <label key={p.code} className="permission-item" style={{ cursor: 'default' }}>
+                          <label key={p.code} className="permission-item disabled">
                             <input
                               type="checkbox"
                               checked={permissions.includes(p.code)}
                               disabled
-                              style={{ cursor: 'default' }}
                             />
                             {p.label}
                           </label>
@@ -600,12 +599,11 @@ export default function AccountAdmin() {
                       <div className="permissions-title">Phân quyền</div>
                       <div className="permissions-grid">
                         {GV_PERMISSIONS.map(p => (
-                          <label key={p.code} className="permission-item" style={{ cursor: 'default' }}>
+                          <label key={p.code} className="permission-item disabled">
                             <input
                               type="checkbox"
                               checked={permissions.includes(p.code)}
                               disabled
-                              style={{ cursor: 'default' }}
                             />
                             {p.label}
                           </label>
@@ -626,7 +624,7 @@ export default function AccountAdmin() {
               )}
             </div>
 
-            <div className="modal-actions" style={{ flexShrink: 0, borderTop: '1px solid #e2e8f0', padding: '16px 32px 32px 32px', margin: 0, justifyContent: 'flex-end', display: 'flex', gap: '12px' }}>
+            <div className="modal-actions">
               <button
                 className="save"
                 onClick={() => {
@@ -642,11 +640,7 @@ export default function AccountAdmin() {
       )}
 
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 24, right: 24, background: "#333", color: "#fff",
-          padding: "12px 20px", borderRadius: 10, fontSize: 14, zIndex: 9999,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
-        }}>
+        <div className="toast-notification">
           ✓ {toast}
         </div>
       )}

@@ -98,6 +98,15 @@ const toggleDayInSchedule = (day: string, currentSchedule: string) => {
   }
   return formatSchedule(newDays);
 };
+const getSkillId = (skillName: string): number => {
+  switch (skillName.toLowerCase()) {
+    case 'listening': return 1;
+    case 'reading': return 2;
+    case 'speaking': return 3;
+    case 'writing': return 4;
+    default: return 0;
+  }
+};
 
 interface Course {
   id: number;
@@ -108,6 +117,10 @@ interface Course {
   created: string;
   category: string;
   classCount: number;
+  Listening: boolean;
+  Reading: boolean;
+  Speaking: boolean;
+  Writing: boolean;
 }
 
 interface LopHoc {
@@ -120,9 +133,14 @@ interface LopHoc {
   lessonCount: number;
   completed: boolean;
   status: string;
+  maLop?: number;
 }
 
-
+interface Teacher {
+  MaGiangVien: number;
+  MaNguoiDung: number;
+  HoTen: string;
+}
 
 function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
   useEffect(() => {
@@ -148,10 +166,16 @@ export default function ApproveAdmin() {
   const [cForm, setCForm] = useState({ title: '', desc: '', level: 'TOEIC', category: 'Luyện thi' });
   const [formLevels, setFormLevels] = useState<string[]>([]);
   const [formNewLevelInput, setFormNewLevelInput] = useState("");
-  const [courseFormErrors, setCourseFormErrors] = useState({ title: '', levels: '', levelInput: '' });
+  const [courseFormErrors, setCourseFormErrors] = useState({ title: '', levels: '', levelInput: '', skills: '' });
 
-  // Bản đồ lưu MaLop theo MaKhoaHoc
-  const [courseDetailsMap, setCourseDetailsMap] = useState<Record<number, { maLop: number }>>({});
+  // Bản đồ lưu danh sách trình độ theo MaKhoaHoc
+  const [courseDetailsMap, setCourseDetailsMap] = useState<Record<number, Array<{ MaLop: number; TenLop: string }>>>({});
+
+  // Kỹ năng của khóa học trong modal
+  const [courseSkills, setCourseSkills] = useState<string[]>([]);
+
+  // Danh sách giảng viên từ cơ sở dữ liệu
+  const [teachersList, setTeachersList] = useState<Teacher[]>([]);
 
   // Modal Thêm lớp học mới từ danh sách mở rộng
   const [showAddClassModal, setShowAddClassModal] = useState(false);
@@ -161,7 +185,9 @@ export default function ApproveAdmin() {
     days: '',
     startTime: '07:00',
     endTime: '08:30',
-    maxStudents: 30
+    maxStudents: 30,
+    maLop: 0,
+    teachers: {} as Record<number, number>
   });
   const [addClassErrors, setAddClassErrors] = useState({ name: '' });
 
@@ -182,13 +208,16 @@ export default function ApproveAdmin() {
     startTime: '07:00',
     endTime: '08:30',
     maxStudents: 30,
-    status: 'Chưa bắt đầu'
+    status: 'Chưa bắt đầu',
+    maLop: 0,
+    teachers: {} as Record<number, number>
   });
   const [editClassErrors, setEditClassErrors] = useState({ name: '' });
 
   // Modal Chi tiết lớp học
   const [showClassDetailModal, setShowClassDetailModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<LopHoc | null>(null);
+  const [selectedClassAssignments, setSelectedClassAssignments] = useState<any[]>([]);
 
   // Modal Xác nhận xóa lớp học
   const [deletingClass, setDeletingClass] = useState<LopHoc | null>(null);
@@ -214,7 +243,11 @@ export default function ApproveAdmin() {
           status: c.TrangThai || 'Pending',
           created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
           category: c.DanhMuc || 'Luyện thi',
-          classCount: c.SoLop || 0
+          classCount: c.SoLop || 0,
+          Listening: !!c.Listening,
+          Reading: !!c.Reading,
+          Speaking: !!c.Speaking,
+          Writing: !!c.Writing
         })));
       })
       .catch(() => setToast('Lỗi tải danh sách khóa học'))
@@ -223,7 +256,33 @@ export default function ApproveAdmin() {
 
   useEffect(() => {
     loadCourses();
+    // Tải danh sách giảng viên
+    fetch(`${API}/qtv/giangvien`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTeachersList(data);
+        }
+      })
+      .catch(() => { });
   }, []);
+
+  useEffect(() => {
+    if (selectedClass) {
+      fetch(`${API}/qtv/lophoc/${selectedClass.id}/giangvien`)
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setSelectedClassAssignments(data);
+          } else {
+            setSelectedClassAssignments([]);
+          }
+        })
+        .catch(() => setSelectedClassAssignments([]));
+    } else {
+      setSelectedClassAssignments([]);
+    }
+  }, [selectedClass]);
 
   const loadClassesForCourse = (courseId: number) => {
     fetch(`${API}/course-detail/${courseId}/classes`)
@@ -238,7 +297,8 @@ export default function ApproveAdmin() {
           progress: c.TienDo || 0,
           lessonCount: c.SoBuoiHoc || 0,
           completed: !!c.HoanThanh,
-          status: c.TrangThai || 'Chưa bắt đầu'
+          status: c.TrangThai || 'Chưa bắt đầu',
+          maLop: c.MaLop
         }));
         // Sắp xếp lớp mới nhất lên đầu
         mapped.sort((a, b) => b.id - a.id);
@@ -251,12 +311,11 @@ export default function ApproveAdmin() {
     fetch(`${API}/courses/${courseId}/details`)
       .then(r => r.json())
       .then(data => {
-        if (data && data.length > 0) {
-          const maLop = data[0].MaLop;
-          setCourseDetailsMap(prev => ({ ...prev, [courseId]: { maLop } }));
+        if (data && Array.isArray(data)) {
+          setCourseDetailsMap(prev => ({ ...prev, [courseId]: data }));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   const toggleExpandCourse = (courseId: number) => {
@@ -291,7 +350,8 @@ export default function ApproveAdmin() {
     setEditCourse(null);
     setFormLevels([]);
     setFormNewLevelInput("");
-    setCourseFormErrors({ title: '', levels: '', levelInput: '' });
+    setCourseSkills([]);
+    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '' });
     setShowCourseModal(true);
   };
 
@@ -301,27 +361,40 @@ export default function ApproveAdmin() {
     setEditCourse(c);
     setFormLevels(list);
     setFormNewLevelInput("");
-    setCourseFormErrors({ title: '', levels: '', levelInput: '' });
+    const skillsList = [];
+    if (c.Listening) skillsList.push('Listening');
+    if (c.Reading) skillsList.push('Reading');
+    if (c.Speaking) skillsList.push('Speaking');
+    if (c.Writing) skillsList.push('Writing');
+    setCourseSkills(skillsList);
+    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '' });
     setShowCourseModal(true);
   };
 
 
 
   const saveCourse = async () => {
-    const errors = { title: '', levels: '', levelInput: '' };
+    const errors = { title: '', levels: '', levelInput: '', skills: '' };
     if (!cForm.title.trim()) {
       errors.title = 'Vui lòng nhập tên khóa học!';
     }
     if (formLevels.length === 0) {
       errors.levels = 'Vui lòng thêm ít nhất một trình độ!';
     }
-    if (errors.title || errors.levels) {
+    if (courseSkills.length === 0) {
+      errors.skills = 'Vui lòng chọn ít nhất một kỹ năng!';
+    }
+    if (errors.title || errors.levels || errors.skills) {
       setCourseFormErrors(errors);
       return;
     }
-    setCourseFormErrors({ title: '', levels: '', levelInput: '' });
+    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '' });
 
     const finalLevel = formLevels.join(', ');
+    const listeningVal = courseSkills.includes('Listening') ? 1 : 0;
+    const readingVal = courseSkills.includes('Reading') ? 1 : 0;
+    const speakingVal = courseSkills.includes('Speaking') ? 1 : 0;
+    const writingVal = courseSkills.includes('Writing') ? 1 : 0;
     const user = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
 
     try {
@@ -331,7 +404,15 @@ export default function ApproveAdmin() {
         await fetch(`${API}/admin/khoahoc/${editCourse.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TenKhoaHoc: cForm.title, MoTa: cForm.desc, TrinhDo: finalLevel })
+          body: JSON.stringify({
+            TenKhoaHoc: cForm.title,
+            MoTa: cForm.desc,
+            TrinhDo: finalLevel,
+            Listening: listeningVal,
+            Reading: readingVal,
+            Speaking: speakingVal,
+            Writing: writingVal
+          })
         });
         setToast('Đã cập nhật thông tin khóa học!');
       } else {
@@ -343,7 +424,11 @@ export default function ApproveAdmin() {
             TenKhoaHoc: cForm.title,
             MoTa: cForm.desc,
             TrinhDo: finalLevel,
-            MaNguoiDung: user.MaNguoiDung || 6
+            MaNguoiDung: user.MaNguoiDung || 6,
+            Listening: listeningVal,
+            Reading: readingVal,
+            Speaking: speakingVal,
+            Writing: writingVal
           })
         });
         const data = await res.json();
@@ -391,38 +476,12 @@ export default function ApproveAdmin() {
     }
   };
 
-  const handleToggleClassCompleted = (cls: LopHoc, courseId: number) => {
-    const updatedStatus = !cls.completed;
-    fetch(`${API}/qtv/lophoc/${cls.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ HoanThanh: updatedStatus })
-    })
-    .then(r => r.json())
-    .then(() => {
-      setClassesMap(prev => {
-        const list = prev[courseId] || [];
-        const updatedList = list.map(item => {
-          if (item.id === cls.id) {
-            return { ...item, completed: updatedStatus };
-          }
-          return item;
-        });
-        return { ...prev, [courseId]: updatedList };
-      });
-      setToast(updatedStatus ? "Đã đánh dấu hoàn thành lớp học!" : "Đã hủy đánh dấu hoàn thành!");
-    })
-    .catch(() => {
-      alert("Lỗi khi cập nhật trạng thái!");
-    });
-  };
+
 
   // ── Sửa lớp học trực tiếp ──
   const openEditClass = (cls: LopHoc) => {
     setEditingClass(cls);
-    
+
     // Parse schedule
     let days = '';
     let startTime = '07:00';
@@ -444,8 +503,28 @@ export default function ApproveAdmin() {
       startTime: startTime,
       endTime: endTime,
       maxStudents: cls.maxStudents,
-      status: cls.status
+      status: cls.status,
+      maLop: cls.maLop || 0,
+      teachers: {}
     });
+
+    // Tải thông tin phân công giáo viên
+    fetch(`${API}/qtv/lophoc/${cls.id}/giangvien`)
+      .then(r => r.json())
+      .then(data => {
+        const teacherMap: Record<number, number> = {};
+        if (Array.isArray(data)) {
+          data.forEach((item: any) => {
+            teacherMap[item.MaKyNang] = item.MaGiangVien;
+          });
+        }
+        setClassEditForm(p => ({
+          ...p,
+          teachers: teacherMap
+        }));
+      })
+      .catch(() => { });
+
     setEditClassErrors({ name: '' });
     setShowClassEditModal(true);
   };
@@ -457,9 +536,13 @@ export default function ApproveAdmin() {
     }
     setEditClassErrors({ name: '' });
     if (!editingClass) return;
+    if (!classEditForm.maLop) {
+      alert("Vui lòng chọn trình độ cho lớp học!");
+      return;
+    }
     try {
-      const finalSchedule = classEditForm.days 
-        ? `${classEditForm.days} · ${classEditForm.startTime}-${classEditForm.endTime}` 
+      const finalSchedule = classEditForm.days
+        ? `${classEditForm.days} · ${classEditForm.startTime}-${classEditForm.endTime}`
         : `${classEditForm.startTime}-${classEditForm.endTime}`;
 
       await fetch(`${API}/qtv/lophoc/${editingClass.id}`, {
@@ -469,7 +552,9 @@ export default function ApproveAdmin() {
           TenLop: classEditForm.name,
           LichHoc: finalSchedule,
           SoLuongHocVien: classEditForm.maxStudents,
-          TrangThai: classEditForm.status
+          TrangThai: classEditForm.status,
+          MaLop: classEditForm.maLop,
+          teachers: classEditForm.teachers
         })
       });
       setToast("Đã cập nhật lớp học thành công!");
@@ -514,14 +599,13 @@ export default function ApproveAdmin() {
       return;
     }
     setAddClassErrors({ name: "" });
-    const details = courseDetailsMap[expandedCourse || 0];
-    if (!details || !details.maLop) {
-      alert("Đang tải chi tiết khóa học, vui lòng đợi vài giây và thử lại!");
+    if (!newClassForm.maLop) {
+      alert("Vui lòng chọn trình độ cho lớp học!");
       return;
     }
     try {
-      const finalSchedule = newClassForm.days 
-        ? `${newClassForm.days} · ${newClassForm.startTime}-${newClassForm.endTime}` 
+      const finalSchedule = newClassForm.days
+        ? `${newClassForm.days} · ${newClassForm.startTime}-${newClassForm.endTime}`
         : `${newClassForm.startTime}-${newClassForm.endTime}`;
 
       await fetch(`${API}/qtv/lophoc`, {
@@ -529,9 +613,10 @@ export default function ApproveAdmin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           TenLop: newClassForm.name,
-          MaLop: details.maLop,
+          MaLop: newClassForm.maLop,
           LichHoc: finalSchedule,
-          SoLuongHocVien: newClassForm.maxStudents
+          SoLuongHocVien: newClassForm.maxStudents,
+          teachers: newClassForm.teachers
         })
       });
       setToast("Đã tạo lớp học mới thành công!");
@@ -542,7 +627,9 @@ export default function ApproveAdmin() {
         days: '',
         startTime: '07:00',
         endTime: '08:30',
-        maxStudents: 30
+        maxStudents: 30,
+        maLop: 0,
+        teachers: {}
       });
       if (expandedCourse) {
         loadClassesForCourse(expandedCourse);
@@ -631,7 +718,7 @@ export default function ApproveAdmin() {
           <p>Thêm mới, chỉnh sửa thông tin, xóa và quản lý các lớp học trực thuộc của các khóa học</p>
         </div>
         <button className="add-course-btn-primary" onClick={openAddCourse}>
-          <FiPlus size={16} style={{ marginRight: 6 }} /> Thêm khóa học mới
+          <FiPlus size={16} className="mr-6" /> Thêm khóa học mới
         </button>
       </div>
 
@@ -661,7 +748,7 @@ export default function ApproveAdmin() {
             <tbody>
               {filteredCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "30px", color: "#888" }}>
+                  <td colSpan={5} className="table-empty-message">
                     Không tìm thấy khóa học nào phù hợp.
                   </td>
                 </tr>
@@ -675,8 +762,8 @@ export default function ApproveAdmin() {
                     <React.Fragment key={course.id}>
                       <tr className={`course-row ${index % 2 === 0 ? "even-row" : "odd-row"}`} onClick={() => toggleExpandCourse(course.id)}>
                         <td>
-                          <div className="course-title-flex-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                            <span className="course-title-cell" style={{ marginBottom: 0 }}>{course.title}</span>
+                          <div className="course-title-flex-row">
+                            <span className="course-title-cell">{course.title}</span>
                           </div>
                           <div className="course-desc-cell">{course.desc.slice(0, 85)}{course.desc.length > 85 ? '...' : ''}</div>
                         </td>
@@ -714,7 +801,7 @@ export default function ApproveAdmin() {
                               {/* Cột 1: Quản lý Trình độ */}
                               <div className="course-level-management-box">
                                 <h4>QUẢN LÝ TRÌNH ĐỘ</h4>
-                                
+
                                 <div className="course-levels-editable-list">
                                   {(() => {
                                     const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -726,17 +813,17 @@ export default function ApproveAdmin() {
                                         {currentLevels.map((lvl, index) => {
                                           const isEditingThis = editingLevelIndex === index;
                                           return (
-                                            <div 
-                                              key={index} 
-                                              ref={isEditingThis ? editLevelWrapperRef : null} 
+                                            <div
+                                              key={index}
+                                              ref={isEditingThis ? editLevelWrapperRef : null}
                                               className={`level-item-row ${isEditingThis ? 'is-editing' : ''}`}
                                             >
                                               {isEditingThis ? (
                                                 <>
-                                                  <input 
-                                                    type="text" 
-                                                    value={editingLevelValue} 
-                                                    onChange={e => setEditingLevelValue(e.target.value)} 
+                                                  <input
+                                                    type="text"
+                                                    value={editingLevelValue}
+                                                    onChange={e => setEditingLevelValue(e.target.value)}
                                                     className="level-edit-input"
                                                     onKeyDown={e => {
                                                       if (e.key === 'Enter') {
@@ -752,7 +839,7 @@ export default function ApproveAdmin() {
                                                     }}
                                                     autoFocus
                                                   />
-                                                  <button 
+                                                  <button
                                                     onClick={() => {
                                                       const val = editingLevelValue.trim();
                                                       if (val) {
@@ -771,7 +858,7 @@ export default function ApproveAdmin() {
                                                 <>
                                                   <span className="level-item-text">{lvl}</span>
                                                   <div className="level-item-actions">
-                                                    <button 
+                                                    <button
                                                       onClick={() => {
                                                         setEditingLevelIndex(index);
                                                         setEditingLevelValue(lvl);
@@ -781,7 +868,7 @@ export default function ApproveAdmin() {
                                                     >
                                                       <FiEdit2 size={13} />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                       onClick={() => {
                                                         setDeletingLevelInfo({ course, levelName: lvl, index });
                                                       }}
@@ -799,18 +886,18 @@ export default function ApproveAdmin() {
                                       </div>
                                     );
                                   })()}
-                                  
+
                                   <div className="add-level-section">
                                     <h5 className="add-level-section-title">THÊM TRÌNH ĐỘ MỚI</h5>
                                     <div className="add-level-input-group">
-                                      <input 
-                                        type="text" 
-                                        value={newLevelInput} 
+                                      <input
+                                        type="text"
+                                        value={newLevelInput}
                                         onChange={e => {
                                           setNewLevelInput(e.target.value);
                                           setAddLevelError("");
-                                        }} 
-                                        placeholder="Nhập tên trình độ mới" 
+                                        }}
+                                        placeholder="Nhập tên trình độ mới"
                                         className={`level-input-small-inline ${addLevelError ? 'has-error' : ''}`}
                                         onKeyDown={e => {
                                           if (e.key === 'Enter') {
@@ -832,7 +919,7 @@ export default function ApproveAdmin() {
                                           }
                                         }}
                                       />
-                                      <button 
+                                      <button
                                         onClick={() => {
                                           const trimmed = newLevelInput.trim();
                                           if (!trimmed) {
@@ -855,7 +942,7 @@ export default function ApproveAdmin() {
                                       </button>
                                     </div>
                                     {addLevelError && (
-                                      <div className="form-field-error-text" style={{ marginTop: '6px', textAlign: 'left' }}>
+                                      <div className="form-field-error-text mt-6">
                                         {addLevelError}
                                       </div>
                                     )}
@@ -867,16 +954,20 @@ export default function ApproveAdmin() {
                               <div className="course-classes-management-box">
                                 <div className="classes-management-header">
                                   <h4>DANH SÁCH LỚP HỌC</h4>
-                                  <button 
-                                    className="add-class-btn-inline" 
+                                  <button
+                                    className="add-class-btn-inline"
                                     onClick={() => {
+                                      const details = courseDetailsMap[course.id] || [];
+                                      const defaultMaLop = details.length > 0 ? details[0].MaLop : 0;
                                       setNewClassForm({
                                         name: '',
                                         schedule: '',
                                         days: '',
                                         startTime: '07:00',
                                         endTime: '08:30',
-                                        maxStudents: 30
+                                        maxStudents: 30,
+                                        maLop: defaultMaLop,
+                                        teachers: {}
                                       });
                                       setAddClassErrors({ name: '' });
                                       setShowAddClassModal(true);
@@ -894,12 +985,12 @@ export default function ApproveAdmin() {
                                       <div className="class-header-name">TÊN LỚP HỌC</div>
                                       <div className="class-header-schedule">LỊCH HỌC</div>
                                       <div className="class-header-students">SĨ SỐ</div>
-                                      <div className="class-header-completed">HOÀN THÀNH</div>
+                                      <div className="class-header-completed">TRẠNG THÁI</div>
                                     </div>
-                                    
+
                                     {classes.map(cls => (
-                                      <div 
-                                        key={cls.id} 
+                                      <div
+                                        key={cls.id}
                                         className="classes-list-item-row"
                                         onClick={() => {
                                           setSelectedClass(cls);
@@ -912,17 +1003,9 @@ export default function ApproveAdmin() {
                                           <FiUsers className="class-row-icon" />
                                           <span>{cls.students}</span>
                                         </div>
-                                        <div className="class-item-completed" onClick={(e) => e.stopPropagation()}>
-                                          <label className="switch-toggle-completed">
-                                            <input 
-                                              type="checkbox" 
-                                              checked={cls.completed} 
-                                              onChange={() => handleToggleClassCompleted(cls, course.id)} 
-                                            />
-                                            <span className="switch-slider-completed rounded"></span>
-                                          </label>
-                                          <span className={`completed-text ${cls.completed ? 'is-completed' : ''}`}>
-                                            {cls.completed ? "Xong" : "Chưa"}
+                                        <div className="class-item-completed">
+                                          <span className={`completed-text ${cls.status === 'Đã hoàn thành' ? 'is-completed' : ''}`}>
+                                            {cls.status || 'Chưa bắt đầu'}
                                           </span>
                                         </div>
                                       </div>
@@ -957,14 +1040,14 @@ export default function ApproveAdmin() {
             <div className="modal-scrollable-body">
               <div className="form-field-group">
                 <label>Tên khóa học <span className="required-star">*</span></label>
-                <input 
-                  className={courseFormErrors.title ? "has-error" : ""} 
-                  value={cForm.title} 
+                <input
+                  className={courseFormErrors.title ? "has-error" : ""}
+                  value={cForm.title}
                   onChange={e => {
                     setCForm(p => ({ ...p, title: e.target.value }));
                     setCourseFormErrors(p => ({ ...p, title: '' }));
-                  }} 
-                  placeholder="VD: Luyện thi IELTS 6.5+ mục tiêu" 
+                  }}
+                  placeholder="VD: Luyện thi IELTS 6.5+ mục tiêu"
                 />
                 {courseFormErrors.title && (
                   <span className="form-field-error-text">{courseFormErrors.title}</span>
@@ -973,16 +1056,16 @@ export default function ApproveAdmin() {
 
               <div className="form-field-group">
                 <label>Trình độ của khóa học <span className="required-star">*</span></label>
-                
+
                 {formLevels.length > 0 && (
-                  <div className="selected-levels-preview-row" style={{ marginTop: '4px' }}>
+                  <div className="selected-levels-preview-row">
                     <span className="preview-label">Danh sách trình độ:</span>
                     <div className="preview-pills-list">
                       {formLevels.map(l => (
                         <span key={l} className="selected-level-badge">
                           {l}
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             className="remove-level-badge-btn"
                             onClick={() => setFormLevels(prev => prev.filter(x => x !== l))}
                           >
@@ -994,15 +1077,15 @@ export default function ApproveAdmin() {
                   </div>
                 )}
 
-                <div className="custom-level-add-input-row" style={{ marginTop: '8px' }}>
-                  <input 
-                    type="text" 
-                    value={formNewLevelInput} 
+                <div className="custom-level-add-input-row">
+                  <input
+                    type="text"
+                    value={formNewLevelInput}
                     onChange={(e) => {
                       setFormNewLevelInput(e.target.value);
                       setCourseFormErrors(p => ({ ...p, levelInput: '' }));
-                    }} 
-                    placeholder="Nhập tên trình độ mới (VD: IELTS 5.5, Beginner, ...)" 
+                    }}
+                    placeholder="Nhập tên trình độ mới (VD: IELTS 5.5, Beginner, ...)"
                     className={`level-input-small-inline ${courseFormErrors.levelInput ? 'has-error' : ''}`}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -1025,7 +1108,7 @@ export default function ApproveAdmin() {
                       }
                     }}
                   />
-                  <button 
+                  <button
                     type="button"
                     className="add-custom-level-btn"
                     onClick={() => {
@@ -1045,16 +1128,58 @@ export default function ApproveAdmin() {
                       });
                       setFormNewLevelInput("");
                     }}
-                    style={{ background: '#F95800', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
                   >
                     Thêm
                   </button>
                 </div>
                 {courseFormErrors.levelInput && (
-                  <span className="form-field-error-text" style={{ marginTop: '4px' }}>{courseFormErrors.levelInput}</span>
+                  <span className="form-field-error-text mt-4">{courseFormErrors.levelInput}</span>
                 )}
                 {courseFormErrors.levels && (
-                  <span className="form-field-error-text" style={{ marginTop: '4px' }}>{courseFormErrors.levels}</span>
+                  <span className="form-field-error-text mt-4">{courseFormErrors.levels}</span>
+                )}
+              </div>
+
+              <div className="form-field-group">
+                <label>Kỹ năng <span className="required-star">*</span></label>
+                <div className="skills-checkbox-row">
+                  {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
+                    const checked = courseSkills.includes(skill);
+                    const isSkillsDisabled = editCourse ? (editCourse.classCount > 0) : false;
+                    return (
+                      <label key={skill} className="skill-checkbox-label" style={{ cursor: isSkillsDisabled ? 'not-allowed' : 'pointer', opacity: isSkillsDisabled ? 0.7 : 1 }}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={isSkillsDisabled}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setCourseSkills(prev => [...prev, skill]);
+                              setCourseFormErrors(p => ({ ...p, skills: '' }));
+                            } else {
+                              const updated = courseSkills.filter(s => s !== skill);
+                              setCourseSkills(updated);
+                              if (updated.length === 0) {
+                                setCourseFormErrors(p => ({ ...p, skills: 'Vui lòng chọn ít nhất một kỹ năng!' }));
+                              }
+                            }
+                          }}
+                          className="skill-checkbox-input"
+                        />
+                        <span>{skill}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {courseFormErrors.skills && (
+                  <span className="form-field-error-text mt-4">
+                    {courseFormErrors.skills}
+                  </span>
+                )}
+                {editCourse && editCourse.classCount > 0 && (
+                  <span className="skills-disabled-warning">
+                    Không thể thay đổi kỹ năng của khóa học khi đã có lớp học trong khóa.
+                  </span>
                 )}
               </div>
 
@@ -1074,205 +1199,325 @@ export default function ApproveAdmin() {
       )}
 
       {/* ── MODAL: THÊM LỚP HỌC MỚI ── */}
-      {showAddClassModal && (
-        <div className="modal-backdrop-blur z-index-top">
-          <div className="course-form-modal" style={{ width: '520px' }}>
-            <div className="modal-header-section">
-              <h3>Thêm lớp học mới</h3>
-              <button className="modal-close-icon-btn" onClick={() => setShowAddClassModal(false)}>
-                <FiX size={20} />
-              </button>
-            </div>
+      {showAddClassModal && (() => {
+        const expandedCourseObj = courses.find(c => c.id === expandedCourse);
+        const courseSkillsList = [];
+        if (expandedCourseObj?.Listening) courseSkillsList.push('Listening');
+        if (expandedCourseObj?.Reading) courseSkillsList.push('Reading');
+        if (expandedCourseObj?.Speaking) courseSkillsList.push('Speaking');
+        if (expandedCourseObj?.Writing) courseSkillsList.push('Writing');
+        return (
+          <div className="modal-backdrop-blur z-index-top">
+            <div className="course-form-modal w-520">
+              <div className="modal-header-section">
+                <h3>Thêm lớp học mới</h3>
+                <button className="modal-close-icon-btn" onClick={() => setShowAddClassModal(false)}>
+                  <FiX size={20} />
+                </button>
+              </div>
 
-            <div className="modal-scrollable-body" style={{ maxHeight: '70vh' }}>
-              <div className="form-field-group">
-                <label>Tên lớp học <span className="required-star">*</span></label>
-                <input 
-                  className={addClassErrors.name ? "has-error" : ""} 
-                  value={newClassForm.name} 
-                  onChange={e => {
-                    setNewClassForm(p => ({ ...p, name: e.target.value }));
-                    setAddClassErrors({ name: '' });
-                  }} 
-                  placeholder="VD: Lớp IELTS-01" 
-                />
-                {addClassErrors.name && (
-                  <span className="form-field-error-text">{addClassErrors.name}</span>
-                )}
-              </div>
-              <div className="form-field-group">
-                <label>Sĩ số tối đa</label>
-                <input 
-                  type="number" 
-                  min={1} 
-                  value={newClassForm.maxStudents} 
-                  onChange={e => setNewClassForm(p => ({ ...p, maxStudents: Number(e.target.value) }))} 
-                />
-              </div>
-              <div className="form-field-group">
-                <label>Lịch học (Chọn các ngày học trong tuần)</label>
-                <div className="weekday-selection-row">
-                  {DAYS_OF_WEEK.map(d => {
-                    const isSelected = getSelectedDaysFromSchedule(newClassForm.days).includes(d.value);
-                    return (
-                      <button
-                        key={d.value}
-                        type="button"
-                        className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
-                        onClick={() => {
-                          const newDaysStr = toggleDayInSchedule(d.value, newClassForm.days);
-                          setNewClassForm(p => ({ ...p, days: newDaysStr }));
-                        }}
-                      >
-                        {d.label}
-                      </button>
-                    );
-                  })}
+              <div className="modal-scrollable-body max-h-70">
+                <div className="form-field-group">
+                  <label>Tên lớp học <span className="required-star">*</span></label>
+                  <input
+                    className={addClassErrors.name ? "has-error" : ""}
+                    value={newClassForm.name}
+                    onChange={e => {
+                      setNewClassForm(p => ({ ...p, name: e.target.value }));
+                      setAddClassErrors({ name: '' });
+                    }}
+                    placeholder="VD: Lớp IELTS-01"
+                  />
+                  {addClassErrors.name && (
+                    <span className="form-field-error-text">{addClassErrors.name}</span>
+                  )}
                 </div>
+
+                <div className="form-field-group">
+                  <label>Trình độ <span className="required-star">*</span></label>
+                  <select
+                    value={newClassForm.maLop || ''}
+                    onChange={e => setNewClassForm(p => ({ ...p, maLop: Number(e.target.value) }))}
+                  >
+                    <option value="">-- Chọn trình độ --</option>
+                    {(courseDetailsMap[expandedCourse || 0] || []).map(d => (
+                      <option key={d.MaLop} value={d.MaLop}>
+                        {d.TenLop}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-field-group">
+                  <label>Sĩ số tối đa</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newClassForm.maxStudents}
+                    onChange={e => setNewClassForm(p => ({ ...p, maxStudents: Number(e.target.value) }))}
+                  />
+                </div>
+                <div className="form-field-group">
+                  <label>Lịch học (Chọn các ngày học trong tuần)</label>
+                  <div className="weekday-selection-row">
+                    {DAYS_OF_WEEK.map(d => {
+                      const isSelected = getSelectedDaysFromSchedule(newClassForm.days).includes(d.value);
+                      return (
+                        <button
+                          key={d.value}
+                          type="button"
+                          className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
+                          onClick={() => {
+                            const newDaysStr = toggleDayInSchedule(d.value, newClassForm.days);
+                            setNewClassForm(p => ({ ...p, days: newDaysStr }));
+                          }}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="form-fields-inline-row">
+                  <div className="form-field-group flex-1">
+                    <label>Giờ bắt đầu</label>
+                    <select
+                      value={newClassForm.startTime}
+                      onChange={e => setNewClassForm(p => ({ ...p, startTime: e.target.value }))}
+                    >
+                      {START_TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field-group flex-1">
+                    <label>Giờ kết thúc</label>
+                    <select
+                      value={newClassForm.endTime}
+                      onChange={e => setNewClassForm(p => ({ ...p, endTime: e.target.value }))}
+                    >
+                      {END_TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 {(newClassForm.days || newClassForm.startTime) && (
-                  <div style={{ fontSize: '13px', color: '#F95800', fontWeight: 600, marginTop: '4px', textAlign: 'left' }}>
+                  <div className="modal-skills-info">
                     Đã chọn: {newClassForm.days ? `${newClassForm.days} · ` : ''}{newClassForm.startTime}-{newClassForm.endTime}
                   </div>
                 )}
+
+                <div className="form-field-group">
+                  <label className="skills-assignment-label">Phân công giáo viên theo kỹ năng</label>
+                  <div className="skills-assignment-container">
+                    {courseSkillsList.map(skill => {
+                      const skillId = getSkillId(skill);
+                      return (
+                        <div key={skill} className="skill-assignment-row">
+                          <span className="skill-assignment-name">{skill}:</span>
+                          <select
+                            value={newClassForm.teachers[skillId] || ''}
+                            onChange={e => {
+                              const val = e.target.value ? Number(e.target.value) : 0;
+                              setNewClassForm(prev => ({
+                                ...prev,
+                                teachers: {
+                                  ...prev.teachers,
+                                  [skillId]: val
+                                }
+                              }));
+                            }}
+                            className="skill-assignment-select"
+                          >
+                            <option value="">Chưa phân công</option>
+                            {teachersList.map(t => (
+                              <option key={t.MaGiangVien} value={t.MaGiangVien}>
+                                {t.HoTen}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              <div className="form-fields-inline-row">
-                <div className="form-field-group flex-1">
-                  <label>Giờ bắt đầu</label>
-                  <select 
-                    value={newClassForm.startTime} 
-                    onChange={e => setNewClassForm(p => ({ ...p, startTime: e.target.value }))}
-                  >
-                    {START_TIME_OPTIONS.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-field-group flex-1">
-                  <label>Giờ kết thúc</label>
-                  <select 
-                    value={newClassForm.endTime} 
-                    onChange={e => setNewClassForm(p => ({ ...p, endTime: e.target.value }))}
-                  >
-                    {END_TIME_OPTIONS.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="modal-footer-section">
+                <button className="footer-cancel-btn" onClick={() => setShowAddClassModal(false)}>Hủy bỏ</button>
+                <button className="footer-save-btn" onClick={saveNewClass}>Lưu lớp học</button>
               </div>
-            </div>
-
-            <div className="modal-footer-section">
-              <button className="footer-cancel-btn" onClick={() => setShowAddClassModal(false)}>Hủy bỏ</button>
-              <button className="footer-save-btn" onClick={saveNewClass}>Lưu lớp học</button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── MODAL: CHỈNH SỬA LỚP HỌC TRỰC TIẾP ── */}
-      {showClassEditModal && editingClass && (
-        <div className="modal-backdrop-blur z-index-top">
-          <div className="course-form-modal" style={{ width: '520px' }}>
-            <div className="modal-header-section">
-              <h3>Chỉnh sửa lớp học trực tiếp</h3>
-              <button className="modal-close-icon-btn" onClick={() => { setShowClassEditModal(false); setEditingClass(null); }}>
-                <FiX size={20} />
-              </button>
-            </div>
+      {showClassEditModal && editingClass && (() => {
+        const expandedCourseObj = courses.find(c => c.id === expandedCourse);
+        const courseSkillsList = [];
+        if (expandedCourseObj?.Listening) courseSkillsList.push('Listening');
+        if (expandedCourseObj?.Reading) courseSkillsList.push('Reading');
+        if (expandedCourseObj?.Speaking) courseSkillsList.push('Speaking');
+        if (expandedCourseObj?.Writing) courseSkillsList.push('Writing');
+        return (
+          <div className="modal-backdrop-blur z-index-top">
+            <div className="course-form-modal w-520">
+              <div className="modal-header-section">
+                <h3>Chỉnh sửa lớp học trực tiếp</h3>
+                <button className="modal-close-icon-btn" onClick={() => { setShowClassEditModal(false); setEditingClass(null); }}>
+                  <FiX size={20} />
+                </button>
+              </div>
 
-            <div className="modal-scrollable-body" style={{ maxHeight: '60vh' }}>
-              <div className="form-field-group">
-                <label>Tên lớp học <span className="required-star">*</span></label>
-                <input 
-                  className={editClassErrors.name ? "has-error" : ""} 
-                  value={classEditForm.name} 
-                  onChange={e => {
-                    setClassEditForm(p => ({ ...p, name: e.target.value }));
-                    setEditClassErrors({ name: '' });
-                  }} 
-                  placeholder="VD: Lớp IELTS-01" 
-                />
-                {editClassErrors.name && (
-                  <span className="form-field-error-text">{editClassErrors.name}</span>
-                )}
-              </div>
-              <div className="form-field-group">
-                <label>Sĩ số tối đa</label>
-                <input type="number" min={1} value={classEditForm.maxStudents} onChange={e => setClassEditForm(p => ({ ...p, maxStudents: Number(e.target.value) }))} />
-              </div>
-              <div className="form-field-group">
-                <label>Lịch học (Chọn các ngày học trong tuần)</label>
-                <div className="weekday-selection-row">
-                  {DAYS_OF_WEEK.map(d => {
-                    const isSelected = getSelectedDaysFromSchedule(classEditForm.days).includes(d.value);
-                    return (
-                      <button
-                        key={d.value}
-                        type="button"
-                        className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
-                        onClick={() => {
-                          const newDaysStr = toggleDayInSchedule(d.value, classEditForm.days);
-                          setClassEditForm(p => ({ ...p, days: newDaysStr }));
-                        }}
-                      >
-                        {d.label}
-                      </button>
-                    );
-                  })}
+              <div className="modal-scrollable-body max-h-60">
+                <div className="form-field-group">
+                  <label>Tên lớp học <span className="required-star">*</span></label>
+                  <input
+                    className={editClassErrors.name ? "has-error" : ""}
+                    value={classEditForm.name}
+                    onChange={e => {
+                      setClassEditForm(p => ({ ...p, name: e.target.value }));
+                      setEditClassErrors({ name: '' });
+                    }}
+                    placeholder="VD: Lớp IELTS-01"
+                  />
+                  {editClassErrors.name && (
+                    <span className="form-field-error-text">{editClassErrors.name}</span>
+                  )}
                 </div>
+
+                <div className="form-field-group">
+                  <label>Trình độ <span className="required-star">*</span></label>
+                  <select
+                    value={classEditForm.maLop || ''}
+                    onChange={e => setClassEditForm(p => ({ ...p, maLop: Number(e.target.value) }))}
+                  >
+                    <option value="">-- Chọn trình độ --</option>
+                    {(courseDetailsMap[expandedCourse || 0] || []).map(d => (
+                      <option key={d.MaLop} value={d.MaLop}>
+                        {d.TenLop}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-field-group">
+                  <label>Sĩ số tối đa</label>
+                  <input type="number" min={1} value={classEditForm.maxStudents} onChange={e => setClassEditForm(p => ({ ...p, maxStudents: Number(e.target.value) }))} />
+                </div>
+                <div className="form-field-group">
+                  <label>Lịch học (Chọn các ngày học trong tuần)</label>
+                  <div className="weekday-selection-row">
+                    {DAYS_OF_WEEK.map(d => {
+                      const isSelected = getSelectedDaysFromSchedule(classEditForm.days).includes(d.value);
+                      return (
+                        <button
+                          key={d.value}
+                          type="button"
+                          className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
+                          onClick={() => {
+                            const newDaysStr = toggleDayInSchedule(d.value, classEditForm.days);
+                            setClassEditForm(p => ({ ...p, days: newDaysStr }));
+                          }}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="form-fields-inline-row">
+                  <div className="form-field-group flex-1">
+                    <label>Giờ bắt đầu</label>
+                    <select
+                      value={classEditForm.startTime}
+                      onChange={e => setClassEditForm(p => ({ ...p, startTime: e.target.value }))}
+                    >
+                      {START_TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field-group flex-1">
+                    <label>Giờ kết thúc</label>
+                    <select
+                      value={classEditForm.endTime}
+                      onChange={e => setClassEditForm(p => ({ ...p, endTime: e.target.value }))}
+                    >
+                      {END_TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 {(classEditForm.days || classEditForm.startTime) && (
-                  <div style={{ fontSize: '13px', color: '#F95800', fontWeight: 600, marginTop: '4px', textAlign: 'left' }}>
+                  <div className="modal-skills-info">
                     Đã chọn: {classEditForm.days ? `${classEditForm.days} · ` : ''}{classEditForm.startTime}-{classEditForm.endTime}
                   </div>
                 )}
-              </div>
 
-              <div className="form-fields-inline-row">
-                <div className="form-field-group flex-1">
-                  <label>Giờ bắt đầu</label>
-                  <select 
-                    value={classEditForm.startTime} 
-                    onChange={e => setClassEditForm(p => ({ ...p, startTime: e.target.value }))}
+                <div className="form-field-group">
+                  <label>Trạng thái lớp học</label>
+                  <select
+                    value={classEditForm.status}
+                    onChange={e => setClassEditForm(p => ({ ...p, status: e.target.value }))}
                   >
-                    {START_TIME_OPTIONS.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
+                    <option value="Chưa bắt đầu">Chưa bắt đầu</option>
+                    <option value="Đang diễn ra">Đang diễn ra</option>
+                    <option value="Đã hoàn thành">Đã hoàn thành</option>
                   </select>
                 </div>
-                <div className="form-field-group flex-1">
-                  <label>Giờ kết thúc</label>
-                  <select 
-                    value={classEditForm.endTime} 
-                    onChange={e => setClassEditForm(p => ({ ...p, endTime: e.target.value }))}
-                  >
-                    {END_TIME_OPTIONS.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
+
+                <div className="form-field-group">
+                  <label className="skills-assignment-label">Phân công giáo viên theo kỹ năng</label>
+                  <div className="skills-assignment-container">
+                    {courseSkillsList.map(skill => {
+                      const skillId = getSkillId(skill);
+                      return (
+                        <div key={skill} className="skill-assignment-row">
+                          <span className="skill-assignment-name">{skill}:</span>
+                          <select
+                            value={classEditForm.teachers[skillId] || ''}
+                            onChange={e => {
+                              const val = e.target.value ? Number(e.target.value) : 0;
+                              setClassEditForm(prev => ({
+                                ...prev,
+                                teachers: {
+                                  ...prev.teachers,
+                                  [skillId]: val
+                                }
+                              }));
+                            }}
+                            className="skill-assignment-select"
+                          >
+                            <option value="">Chưa phân công</option>
+                            {teachersList.map(t => (
+                              <option key={t.MaGiangVien} value={t.MaGiangVien}>
+                                {t.HoTen}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <div className="form-field-group">
-                <label>Trạng thái lớp học</label>
-                <select
-                  value={classEditForm.status}
-                  onChange={e => setClassEditForm(p => ({ ...p, status: e.target.value }))}
-                >
-                  <option value="Chưa bắt đầu">Chưa bắt đầu</option>
-                  <option value="Đang diễn ra">Đang diễn ra</option>
-                  <option value="Đã hoàn thành">Đã hoàn thành</option>
-                </select>
+              <div className="modal-footer-section">
+                <button className="footer-cancel-btn" onClick={() => { setShowClassEditModal(false); setEditingClass(null); }}>Hủy bỏ</button>
+                <button className="footer-save-btn" onClick={saveEditedClass}>Lưu thay đổi</button>
               </div>
-            </div>
-
-            <div className="modal-footer-section">
-              <button className="footer-cancel-btn" onClick={() => { setShowClassEditModal(false); setEditingClass(null); }}>Hủy bỏ</button>
-              <button className="footer-save-btn" onClick={saveEditedClass}>Lưu thay đổi</button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── POPUP: XÓA ĐẾM NGƯỢC 5 GIÂY ── */}
       {deletingCourse && (
@@ -1312,77 +1557,103 @@ export default function ApproveAdmin() {
       )}
 
       {/* ── MODAL: CHI TIẾT LỚP HỌC ── */}
-      {showClassDetailModal && selectedClass && (
-        <div className="modal-backdrop-blur z-index-top">
-          <div className="course-form-modal" style={{ width: '480px' }}>
-            <div className="modal-header-section">
-              <h3>Chi tiết lớp học</h3>
-              <button className="modal-close-icon-btn" onClick={() => { setShowClassDetailModal(false); setSelectedClass(null); }}>
-                <FiX size={20} />
-              </button>
-            </div>
+      {showClassDetailModal && selectedClass && (() => {
+        const expandedCourseObj = courses.find(c => c.id === expandedCourse);
+        const courseSkillsList = [];
+        if (expandedCourseObj?.Listening) courseSkillsList.push('Listening');
+        if (expandedCourseObj?.Reading) courseSkillsList.push('Reading');
+        if (expandedCourseObj?.Speaking) courseSkillsList.push('Speaking');
+        if (expandedCourseObj?.Writing) courseSkillsList.push('Writing');
+        const classLevelObj = (courseDetailsMap[expandedCourse || 0] || []).find(d => d.MaLop === selectedClass.maLop);
+        const levelName = classLevelObj ? classLevelObj.TenLop : '';
 
-            <div className="modal-scrollable-body" style={{ maxHeight: '60vh' }}>
-              <div className="class-detail-field-item">
-                <span className="class-detail-label">Tên lớp học</span>
-                <div className="class-detail-value">{selectedClass.name}</div>
+        return (
+          <div className="modal-backdrop-blur z-index-top">
+            <div className="course-form-modal w-480">
+              <div className="modal-header-section">
+                <h3>Chi tiết lớp học</h3>
+                <button className="modal-close-icon-btn" onClick={() => { setShowClassDetailModal(false); setSelectedClass(null); }}>
+                  <FiX size={20} />
+                </button>
               </div>
-              <div className="class-detail-field-item">
-                <span className="class-detail-label">Sĩ số tối đa</span>
-                <div className="class-detail-value">{selectedClass.maxStudents} học viên</div>
-              </div>
-              <div className="class-detail-field-item">
-                <span className="class-detail-label">Sĩ số hiện tại</span>
-                <div className="class-detail-value">{selectedClass.students} học viên</div>
-              </div>
-              <div className="class-detail-field-item">
-                <span className="class-detail-label">Lịch học</span>
-                <div className="class-detail-value">{selectedClass.schedule || "Chưa thiết lập"}</div>
-              </div>
-              <div className="class-detail-field-item">
-                <span className="class-detail-label">Trạng thái</span>
-                <div className="class-detail-value">
-                  <span className={`status-badge-detail ${
-                    selectedClass.status === "Đã hoàn thành" ? "completed" :
-                    selectedClass.status === "Đang diễn ra" ? "active" : "not-started"
-                  }`}>
-                    {selectedClass.status}
-                  </span>
+
+              <div className="modal-scrollable-body max-h-60">
+                <div className="class-detail-field-item">
+                  <span className="class-detail-label">Tên lớp học</span>
+                  <div className="class-detail-value">{selectedClass.name}</div>
+                </div>
+                {levelName && (
+                  <div className="class-detail-field-item">
+                    <span className="class-detail-label">Trình độ</span>
+                    <div className="class-detail-value">{levelName}</div>
+                  </div>
+                )}
+                <div className="class-detail-field-item">
+                  <span className="class-detail-label">Sĩ số tối đa</span>
+                  <div className="class-detail-value">{selectedClass.maxStudents} học viên</div>
+                </div>
+                <div className="class-detail-field-item">
+                  <span className="class-detail-label">Sĩ số hiện tại</span>
+                  <div className="class-detail-value">{selectedClass.students} học viên</div>
+                </div>
+                <div className="class-detail-field-item">
+                  <span className="class-detail-label">Lịch học</span>
+                  <div className="class-detail-value">{selectedClass.schedule || "Chưa thiết lập"}</div>
+                </div>
+                <div className="class-detail-field-item">
+                  <span className="class-detail-label">Trạng thái</span>
+                  <div className="class-detail-value">
+                    <span className={`status-badge-detail ${selectedClass.status === "Đã hoàn thành" ? "completed" :
+                      selectedClass.status === "Đang diễn ra" ? "active" : "not-started"
+                      }`}>
+                      {selectedClass.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="class-detail-field-item">
+                  <span className="class-detail-label">Phân công giảng viên</span>
+                  <div className="class-detail-skills-list">
+                    {courseSkillsList.map(skill => {
+                      const skillId = getSkillId(skill);
+                      const assignment = selectedClassAssignments.find((a: any) => a.MaKyNang === skillId);
+                      return (
+                        <div key={skill} className="class-detail-skill-row">
+                          <span className="class-detail-skill-name">{skill}</span>
+                          <span style={{ color: assignment ? '#0f172a' : '#94a3b8', fontStyle: assignment ? 'normal' : 'italic' }}>
+                            {assignment ? assignment.HoTen : 'Chưa phân công'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="modal-footer-section">
-              <button 
-                className="delete-btn-confirm" 
-                style={{ 
-                  backgroundColor: '#ffffff', 
-                  color: '#ef4444', 
-                  border: '1px solid #ef4444',
-                  boxShadow: 'none'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fee2e2'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}
-                onClick={() => {
-                  setDeletingClass(selectedClass);
-                  setShowClassDetailModal(false);
-                }}
-              >
-                Xóa
-              </button>
-              <button 
-                className="footer-save-btn" 
-                onClick={() => {
-                  openEditClass(selectedClass);
-                  setShowClassDetailModal(false);
-                }}
-              >
-                Chỉnh sửa
-              </button>
+              <div className="modal-footer-section">
+                <button
+                  className="delete-btn-confirm delete-class-detail-btn"
+                  onClick={() => {
+                    setDeletingClass(selectedClass);
+                    setShowClassDetailModal(false);
+                  }}
+                >
+                  Xóa
+                </button>
+                <button
+                  className="footer-save-btn"
+                  onClick={() => {
+                    openEditClass(selectedClass);
+                    setShowClassDetailModal(false);
+                  }}
+                >
+                  Chỉnh sửa
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── POPUP: XÓA LỚP HỌC ── */}
       {deletingClass && (
@@ -1414,8 +1685,8 @@ export default function ApproveAdmin() {
             </p>
             <div className="delete-modal-actions">
               <button className="delete-btn-cancel" onClick={() => setDeletingLevelInfo(null)}>Hủy</button>
-              <button 
-                className="delete-btn-confirm" 
+              <button
+                className="delete-btn-confirm"
                 onClick={async () => {
                   const currentLevels = deletingLevelInfo.course.level ? deletingLevelInfo.course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
                   const updated = currentLevels.filter((_, i) => i !== deletingLevelInfo.index);

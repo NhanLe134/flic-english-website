@@ -25,19 +25,94 @@ const Register = ({ isModal = false }: RegisterProps) => {
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
+  const [errors, setErrors] = useState<{
+    username?: string;
+    name?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
+    setErrors(prev => ({ ...prev, [e.target.name]: undefined }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const val = value.trim();
+
+    if (name === "username") {
+      if (!val) {
+        setErrors(prev => ({ ...prev, username: "Vui lòng điền email hoặc số điện thoại!" }));
+      } else {
+        const isEmailAttempt = val.includes("@");
+        if (isEmailAttempt) {
+          const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+          if (!emailRegex.test(val)) {
+            setErrors(prev => ({ ...prev, username: "Vui lòng điền đúng định dạng email hoặc số điện thoại!" }));
+          } else {
+            setErrors(prev => ({ ...prev, username: undefined }));
+          }
+        } else {
+          const phoneRegex = /^0\d{9}$/;
+          if (!phoneRegex.test(val)) {
+            setErrors(prev => ({ ...prev, username: "Vui lòng điền đúng định dạng email hoặc số điện thoại!" }));
+          } else {
+            setErrors(prev => ({ ...prev, username: undefined }));
+          }
+        }
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate mật khẩu khớp nhau
-    if (form.password !== form.confirmPassword) {
-      setError("Mật khẩu nhập lại không khớp!");
-      return;
+    const newErrors: typeof errors = {};
+    let hasError = false;
+
+    const usernameVal = form.username.trim();
+    if (!usernameVal) {
+      newErrors.username = "Vui lòng điền email hoặc số điện thoại!";
+      hasError = true;
+    } else {
+      const isEmailAttempt = usernameVal.includes("@");
+      if (isEmailAttempt) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        if (!emailRegex.test(usernameVal)) {
+          newErrors.username = "Vui lòng điền đúng định dạng email hoặc số điện thoại!";
+          hasError = true;
+        }
+      } else {
+        const phoneRegex = /^0\d{9}$/;
+        if (!phoneRegex.test(usernameVal)) {
+          newErrors.username = "Vui lòng điền đúng định dạng email hoặc số điện thoại!";
+          hasError = true;
+        }
+      }
     }
+    if (!form.name.trim()) {
+      newErrors.name = "Vui lòng điền họ và tên!";
+      hasError = true;
+    }
+    if (!form.password.trim()) {
+      newErrors.password = "Vui lòng điền mật khẩu!";
+      hasError = true;
+    }
+    if (!form.confirmPassword.trim()) {
+      newErrors.confirmPassword = "Vui lòng điền lại mật khẩu!";
+      hasError = true;
+    } else if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = "Mật khẩu nhập lại không khớp!";
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+    setError("");
+    setSuccess("");
+
+    if (hasError) return;
 
     setLoading(true);
     try {
@@ -74,7 +149,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      <form onSubmit={handleSubmit} className="form-wrapper">
+      <form onSubmit={handleSubmit} className="form-wrapper" noValidate>
         <label>Email hoặc Số điện thoại <span>*</span></label>
         <input
           type="text"
@@ -82,8 +157,14 @@ const Register = ({ isModal = false }: RegisterProps) => {
           placeholder="Nhập email hoặc số điện thoại"
           value={form.username}
           onChange={handleChange}
-          required
+          onBlur={handleBlur}
+          style={{ borderColor: errors.username ? "#ef4444" : undefined }}
         />
+        {errors.username && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.username}
+          </span>
+        )}
 
         <label>Họ và tên <span>*</span></label>
         <input
@@ -92,8 +173,13 @@ const Register = ({ isModal = false }: RegisterProps) => {
           placeholder="Nhập họ và tên đầy đủ"
           value={form.name}
           onChange={handleChange}
-          required
+          style={{ borderColor: errors.name ? "#ef4444" : undefined }}
         />
+        {errors.name && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.name}
+          </span>
+        )}
 
         <label>Mật khẩu <span>*</span></label>
         <div style={{ position: "relative", width: "100%" }}>
@@ -103,8 +189,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
             placeholder="Nhập mật khẩu"
             value={form.password}
             onChange={handleChange}
-            required
-            style={{ paddingRight: 44 }}
+            style={{ paddingRight: 44, borderColor: errors.password ? "#ef4444" : undefined }}
           />
           <button
             type="button"
@@ -144,6 +229,11 @@ const Register = ({ isModal = false }: RegisterProps) => {
             )}
           </button>
         </div>
+        {errors.password && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.password}
+          </span>
+        )}
 
         <label>Nhập lại mật khẩu <span>*</span></label>
         <div style={{ position: "relative", width: "100%" }}>
@@ -153,8 +243,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
             placeholder="Nhập lại mật khẩu xác nhận"
             value={form.confirmPassword}
             onChange={handleChange}
-            required
-            style={{ paddingRight: 44 }}
+            style={{ paddingRight: 44, borderColor: errors.confirmPassword ? "#ef4444" : undefined }}
           />
           <button
             type="button"
@@ -194,6 +283,11 @@ const Register = ({ isModal = false }: RegisterProps) => {
             )}
           </button>
         </div>
+        {errors.confirmPassword && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.confirmPassword}
+          </span>
+        )}
 
         <button type="submit" className="register-submit-btn" disabled={loading}>
           {loading ? "Đang đăng ký..." : "Đăng ký"}

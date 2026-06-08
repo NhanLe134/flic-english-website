@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react"
 import styles from "./Baocaoketquaqtv.module.css"
-import { FiSearch } from "react-icons/fi"
+import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
 
 const API = 'http://localhost:5000'
 
@@ -54,11 +54,12 @@ const BaoCaoKetQuaQTV = () => {
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState("")
   const [filterKhoa, setFilterKhoa] = useState("Tất cả khóa học")
-  const [filterLop, setFilterLop]   = useState("Tất cả lớp")
+  const [filterLop, setFilterLop]   = useState("")
   const [filterTT, setFilterTT]     = useState("Tất cả trạng thái")
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     setLoading(true)
@@ -117,35 +118,18 @@ const BaoCaoKetQuaQTV = () => {
   // Chỉ hiển thị cột buổi học từ tiến độ thực tế (buổi đang học) trở về trước.
   // Khi chọn 'Tất cả lớp', lấy buổi học đang học lớn nhất trong số tất cả các lớp.
   const uniqueBuois = useMemo(() => {
-    if (filterLop !== "Tất cả lớp") {
-      const classLessons = allLessons.filter(l => l.TenLop === filterLop)
-      if (classLessons.length === 0) return []
+    if (!filterLop) return []
+    const classLessons = allLessons.filter(l => l.TenLop === filterLop)
+    if (classLessons.length === 0) return []
 
-      const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
-      const activeThuTu = activeLesson ? activeLesson.ThuTu : null
+    const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+    const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
-      if (activeThuTu === null) return [] // Chưa đánh dấu thì không hiện buổi học nào
+    if (activeThuTu === 0 || activeThuTu === -Infinity) return []
 
-      return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
-        .sort((a, b) => a - b)
-        .filter(b => b <= activeThuTu)
-    } else {
-      // Khi chọn "Tất cả lớp":
-      // Tìm buổi học đang học lớn nhất (maxActiveThuTu) trong số tất cả các lớp
-      const classActiveThuTus = Array.from(new Set(allLessons.map(l => l.MaLopHoc))).map(lopId => {
-        const classLessons = allLessons.filter(l => l.MaLopHoc === lopId)
-        const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
-        return activeLesson ? activeLesson.ThuTu : null
-      }).filter((t): t is number => t !== null)
-
-      if (classActiveThuTus.length === 0) return [] // Chưa lớp nào đánh dấu thì không hiện buổi nào
-
-      const maxActiveThuTu = Math.max(...classActiveThuTus)
-      
-      return Array.from(new Set(allLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
-        .sort((a, b) => a - b)
-        .filter(b => b <= maxActiveThuTu)
-    }
+    return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
+      .sort((a, b) => b - a)
+      .filter(b => b <= activeThuTu)
   }, [allLessons, filterLop])
 
   const getBuoiAvg = (hv: HocVien, buoiNum: number) => {
@@ -163,16 +147,43 @@ const BaoCaoKetQuaQTV = () => {
   }
 
   const khoaList = ["Tất cả khóa học", ...Array.from(new Set(data.map(h => h.tenKhoa)))]
-  const lopList  = ["Tất cả lớp",      ...Array.from(new Set(data.map(h => h.lopKhoaHoc)))]
+  const lopList = useMemo(() => {
+    const classIdMap: Record<string, number> = {}
+    allLessons.forEach((l: any) => {
+      if (l.TenLop && l.MaLopHoc) {
+        classIdMap[l.TenLop] = Math.max(classIdMap[l.TenLop] || 0, l.MaLopHoc)
+      }
+    })
+    return Array.from(new Set(data.map(h => h.lopKhoaHoc).filter(x => x && x !== '—')))
+      .sort((a, b) => (classIdMap[b] || 0) - (classIdMap[a] || 0))
+  }, [data, allLessons])
+
+  useEffect(() => {
+    if (lopList.length > 0 && !lopList.includes(filterLop)) {
+      setFilterLop(lopList[0])
+    }
+  }, [lopList, filterLop])
+
   const ttList   = ["Tất cả trạng thái", "Đang học", "Hoàn thành", "Tạm dừng"]
 
   const filtered = data.filter(h => {
     const ms  = h.hoTen.toLowerCase().includes(search.toLowerCase()) || h.maHV.toLowerCase().includes(search.toLowerCase())
     const mk  = filterKhoa === "Tất cả khóa học" || h.tenKhoa === filterKhoa
-    const ml  = filterLop  === "Tất cả lớp"      || h.lopKhoaHoc === filterLop
+    const ml  = h.lopKhoaHoc === filterLop
     const mtt = filterTT   === "Tất cả trạng thái" || h.trangThai === filterTT
     return ms && mk && ml && mtt
   })
+
+  // Reset về trang 1 khi thay đổi bộ lọc
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, filterKhoa, filterLop, filterTT])
+
+  // Lấy dữ liệu phân trang
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * 15
+    return filtered.slice(startIndex, startIndex + 15)
+  }, [filtered, currentPage])
 
   const tongHV    = filtered.length
   const dangHoc   = filtered.filter(h => h.trangThai === "Đang học").length
@@ -183,14 +194,13 @@ const BaoCaoKetQuaQTV = () => {
     : "—"
 
   const handleExportCSV = () => {
-    const headers = ["Mã HV", "Họ và tên", "Giới tính", "Lớp/Khóa học", "Trạng thái", ...uniqueBuois.map(b => `Buổi ${b}`), "Điểm TB"]
+    const headers = ["Họ và tên", "Mã HV", "Trạng thái", ...uniqueBuois.map(b => `Buổi ${b}`)]
     const rows = filtered.map(h => [
-      h.maHV, h.hoTen, h.gioiTinh, `${h.lopKhoaHoc} - ${h.tenKhoa}`, h.trangThai,
+      h.hoTen, h.maHV, h.trangThai,
       ...uniqueBuois.map(b => {
         const avg = getBuoiAvg(h, b)
         return avg !== null ? avg : "Chưa nộp"
-      }),
-      h.diemTB !== null ? h.diemTB : "—",
+      })
     ])
     const csv  = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n")
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
@@ -216,10 +226,49 @@ const BaoCaoKetQuaQTV = () => {
       <div className={styles.content}>
         {/* STATS */}
         <div className={styles.stats}>
-          <div className={`${styles.statBox} ${styles.s1}`}><p>Tổng học viên</p><h2>{tongHV}</h2></div>
-          <div className={`${styles.statBox} ${styles.s2}`}><p>Đang học</p><h2>{dangHoc}</h2></div>
-          <div className={`${styles.statBox} ${styles.s3}`}><p>Hoàn thành</p><h2>{hoanThanh}</h2></div>
-          <div className={`${styles.statBox} ${styles.s4}`}><p>Điểm TB chung</p><h2>{diemTBchung}</h2></div>
+          <div className={`${styles.card} ${styles.cardUsers}`}>
+            <div className={styles.cardIconContainer}>
+              <FiUsers size={22} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardLabel}>Tổng học viên</span>
+              <h2 className={styles.cardValue}>{tongHV}</h2>
+              <small className={styles.cardSubtext}>Học viên được hiển thị</small>
+            </div>
+          </div>
+
+          <div className={`${styles.card} ${styles.cardActive}`}>
+            <div className={styles.cardIconContainer}>
+              <FiUsers size={22} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardLabel}>Đang học</span>
+              <h2 className={styles.cardValue}>{dangHoc}</h2>
+              <small className={styles.cardSubtext}>Học viên đang học</small>
+            </div>
+          </div>
+
+          <div className={`${styles.card} ${styles.cardCompleted}`}>
+            <div className={styles.cardIconContainer}>
+              <FiCheckCircle size={22} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardLabel}>Hoàn thành</span>
+              <h2 className={styles.cardValue}>{hoanThanh}</h2>
+              <small className={styles.cardSubtext}>Học viên hoàn thành</small>
+            </div>
+          </div>
+
+          <div className={`${styles.card} ${styles.cardAverage}`}>
+            <div className={styles.cardIconContainer}>
+              <FiAward size={22} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardLabel}>Điểm TB chung</span>
+              <h2 className={styles.cardValue}>{diemTBchung}</h2>
+              <small className={styles.cardSubtext}>Điểm trung bình các buổi</small>
+            </div>
+          </div>
         </div>
 
         {/* FILTERS */}
@@ -255,127 +304,79 @@ const BaoCaoKetQuaQTV = () => {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th className={styles.thArrow}></th>
-                  <th>MÃ HV</th>
                   <th>HỌ VÀ TÊN</th>
-                  <th>LỚP / KHÓA HỌC</th>
+                  <th>MÃ HV</th>
                   <th>TRẠNG THÁI</th>
                   {uniqueBuois.map(b => (
-                    <th key={b}>BUỔI {b}</th>
+                    <th key={b}>ĐIỂM TB BUỔI {b}</th>
                   ))}
-                  <th>ĐIỂM TB</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6 + uniqueBuois.length} className={styles.empty}>Không có dữ liệu.</td></tr>
-                ) : filtered.map(hv => (
-                  <React.Fragment key={hv.id}>
-                    <tr
-                      className={styles.row}
-                      onClick={() => setExpandedId(expandedId === hv.id ? null : hv.id)}
-                    >
-                      <td className={styles.arrowCell}>
-                        <span className={`${styles.arrow} ${expandedId === hv.id ? styles.arrowDown : ""}`}>▶</span>
-                      </td>
-                      <td className={styles.maHV}>{hv.maHV}</td>
-                      <td>
-                        <p className={styles.tenHV}>{hv.hoTen}</p>
-                        <p className={styles.subInfo}>{hv.gioiTinh} · {hv.ngaySinh}</p>
-                      </td>
-                      <td>
-                        <p className={styles.tenLop}>{hv.lopKhoaHoc}</p>
-                        <p className={styles.subInfo}>{hv.tenKhoa}</p>
-                      </td>
-                      <td>
-                        <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
-                          {hv.trangThai}
-                        </span>
-                      </td>
-                      {uniqueBuois.map(b => {
-                        const hvLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
-                        const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
-                        const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : null
+                  <tr><td colSpan={3 + uniqueBuois.length} className={styles.empty}>Không có dữ liệu.</td></tr>
+                ) : paginatedData.map(hv => (
+                  <tr key={hv.id} className={styles.row}>
+                    <td>
+                      <p className={styles.tenHV}>{hv.hoTen}</p>
+                    </td>
+                    <td className={styles.maHV}>{hv.maHV}</td>
+                    <td>
+                      <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
+                        {hv.trangThai}
+                      </span>
+                    </td>
+                    {uniqueBuois.map(b => {
+                      const hvLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
+                      const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
+                      const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...hvLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
-                        // Nếu lớp của học viên này chưa học đến buổi b, hiển thị —
-                        if (hvActiveThuTu === null || b > hvActiveThuTu) {
-                          return <td key={b} className={styles.emptyVal}>—</td>
-                        }
+                      // Nếu lớp của học viên này chưa học đến buổi b, hiển thị —
+                      if (hvActiveThuTu === null || b > hvActiveThuTu) {
+                        return <td key={b} className={styles.emptyVal}>—</td>
+                      }
 
-                        const avg = getBuoiAvg(hv, b)
-                        const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
-                        if (!hasExs) {
-                          return <td key={b} className={styles.emptyVal}>—</td>
-                        }
-                        return (
-                          <td key={b}>
-                            {avg !== null
-                              ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
-                              : <span className={styles.chuaNop}>Chưa nộp</span>
-                            }
-                          </td>
-                        )
-                      })}
-                      <td>
-                        {hv.diemTB !== null
-                          ? <span className={`${styles.diemBadge} ${diemColor(hv.diemTB)}`}>{hv.diemTB}</span>
-                          : <span className={styles.chuaNop}>—</span>
-                        }
-                      </td>
-                    </tr>
-
-                    {expandedId === hv.id && (
-                      <tr className={styles.expandRow}>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        {uniqueBuois.map(b => {
-                          const hvLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
-                          const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
-                          const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : null
-
-                          // Nếu lớp của học viên này chưa học đến buổi b, hiển thị —
-                          if (hvActiveThuTu === null || b > hvActiveThuTu) {
-                            return <td key={b} style={{ verticalAlign: 'top', padding: '12px 14px' }} className={styles.emptyVal}>—</td>
+                      const avg = getBuoiAvg(hv, b)
+                      const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
+                      if (!hasExs) {
+                        return <td key={b} className={styles.emptyVal}>—</td>
+                      }
+                      return (
+                        <td key={b}>
+                          {avg !== null
+                            ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
+                            : <span className={styles.chuaNop}>Chưa nộp</span>
                           }
-
-                          const buoiExs = activeHeaders.filter(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
-                          return (
-                            <td key={b} style={{ verticalAlign: 'top', padding: '12px 14px' }}>
-                              <div className={styles.buoiExList}>
-                                {buoiExs.map(ex => {
-                                  const score = hv.rawScores[ex.MaExercise] ?? null
-                                  return (
-                                    <div key={ex.MaExercise} className={styles.exCard}>
-                                      <div className={styles.exCardContent}>
-                                        <div className={styles.exCardTitle} title={ex.TenBai}>{ex.TenBai}</div>
-                                        <div className={styles.exCardSub}>{hv.tenKhoa}</div>
-                                      </div>
-                                      <div className={styles.exCardBadge}>
-                                        {score !== null
-                                          ? <span className={`${styles.diemBadgeMini} ${diemColor(score)}`}>{score}</span>
-                                          : <span className={styles.chuaNopMini}>Chưa nộp</span>
-                                        }
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                                {buoiExs.length === 0 && <span className={styles.chuaNop}>—</span>}
-                              </div>
-                            </td>
-                          )
-                        })}
-                        <td></td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                        </td>
+                      )
+                    })}
+                  </tr>
                 ))}
               </tbody>
             </table>
           )}
         </div>
+        {filtered.length > 15 && (
+          <div className={styles.pagination}>
+            <button
+              className={styles.pageBtn}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              ◀
+            </button>
+            <span className={styles.pageInfo}>
+              Trang <strong>{currentPage}</strong> / {Math.ceil(filtered.length / 15)}
+            </span>
+            <button
+              className={styles.pageBtn}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filtered.length / 15)))}
+              disabled={currentPage === Math.ceil(filtered.length / 15)}
+            >
+              ▶
+            </button>
+          </div>
+        )}
       </div>
 
     </div>

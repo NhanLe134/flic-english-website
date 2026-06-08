@@ -85,12 +85,27 @@ const toggleDayInSchedule = (day: string, currentSchedule: string) => {
 };
 const CATS      = ['Cơ bản','Luyện thi','Giao tiếp','Ngữ pháp','Từ vựng','Kỹ năng']
 
-interface GiaoVien     { MaNguoiDung: number; HoTen: string }
+interface GiaoVien     { MaGiangVien: number; MaNguoiDung: number; HoTen: string }
 interface GiaoVienKhoa { MaGiangVien: number; HoTen: string }
+
+const getSkillId = (skillName: string): number => {
+  switch (skillName.toLowerCase()) {
+    case 'listening': return 1;
+    case 'speaking': return 2;
+    case 'reading': return 3;
+    case 'writing': return 4;
+    default: return 0;
+  }
+};
 
 interface Course {
   id: number; title: string; desc: string; level: string
   status: string; created: string; category: string
+  listening?: boolean;
+  reading?: boolean;
+  speaking?: boolean;
+  writing?: boolean;
+  classCount?: number;
 }
 
 interface LopHoc {
@@ -123,6 +138,7 @@ interface PendingReg {
 interface ClassInForm {
   name: string; schedule: string; maxStudents: number
   maGiangVien: string
+  teachers?: Record<number, number>
   lessons: { title: string; desc: string; startDate: string; endDate: string; order: number }[]
 }
 
@@ -150,11 +166,21 @@ export default function CoursePageQTV() {
 
   const [classesMap, setClassesMap]   = useState<Record<number, LopHoc[]>>({})
   const [gvKhoaMap, setGvKhoaMap]     = useState<Record<number, GiaoVienKhoa[]>>({})
+  const [classTeachersMap, setClassTeachersMap] = useState<Record<number, Record<number, { maGiangVien: number; tenGiangVien: string }>>>({})
 
   // Modal tạo/sửa khóa học
   const [showCourseModal, setShowCourseModal] = useState(false)
   const [editCourse, setEditCourse]           = useState<Course | null>(null)
-  const [cForm, setCForm] = useState({ title: '', desc: '', level: 'TOEIC', category: 'Luyện thi' })
+  const [cForm, setCForm] = useState({
+    title: '',
+    desc: '',
+    level: 'TOEIC',
+    category: 'Luyện thi',
+    listening: false,
+    reading: false,
+    speaking: false,
+    writing: false
+  })
   const [selectedGVsForCourse, setSelectedGVsForCourse] = useState<GiaoVienKhoa[]>([])
   const [addGVSelect, setAddGVSelect] = useState('')
 
@@ -184,7 +210,14 @@ export default function CoursePageQTV() {
   // Modal tạo lớp học
   const [showAddClass, setShowAddClass]       = useState(false)
   const [addingToCourse, setAddingToCourse]   = useState<Course | null>(null)
-  const [lForm, setLForm] = useState({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', copyFromClassId: '' })
+  const [lForm, setLForm] = useState({
+    name: '',
+    schedule: 'Thứ 2 & 4',
+    maxStudents: 30,
+    maGiangVien: '',
+    teachers: {} as Record<number, number>,
+    copyFromClassId: ''
+  })
 
   // Pending registrations
   const [pendingRegs, setPendingRegs]               = useState<PendingReg[]>([])
@@ -211,6 +244,7 @@ export default function CoursePageQTV() {
     setClassesInForm(prev => [...prev, {
       name: '', schedule: 'Thứ 2 & 4', maxStudents: 30,
       maGiangVien: '',
+      teachers: {},
       lessons: []
     }])
   }
@@ -253,7 +287,12 @@ export default function CoursePageQTV() {
         id: c.MaKhoaHoc, title: c.TenKhoaHoc, desc: c.MoTa || '',
         level: c.TrinhDo || '', status: c.TrangThai || 'Pending',
         created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
-        category: c.DanhMuc || 'Luyện thi'
+        category: c.DanhMuc || 'Luyện thi',
+        listening: !!c.Listening,
+        reading: !!c.Reading,
+        speaking: !!c.Speaking,
+        writing: !!c.Writing,
+        classCount: c.SoLop || 0
       }))))
       .catch(() => setToast('Lỗi tải danh sách khóa học'))
       .finally(() => setLoading(false))
@@ -288,14 +327,37 @@ export default function CoursePageQTV() {
     if (classesMap[courseId]) return
     fetch(`${API}/course-detail/${courseId}/classes`)
       .then(r => r.json())
-      .then(data => {
-        const mapped: LopHoc[] = data.map((c: any) => ({
-          id: c.MaLopHoc, name: c.TenLop, schedule: c.LichHoc || '—',
-          students: c.SoLuongHocVien || 0, progress: c.TienDo || 0,
-          maGiangVien: c.MaGiangVien || null, tenGiangVien: c.TenGiangVien || '—',
-          lessonCount: c.SoBuoiHoc || 0
-        }))
+      .then(async (data) => {
+        const uniqueClasses: Record<number, LopHoc> = {}
+        data.forEach((c: any) => {
+          if (!uniqueClasses[c.MaLopHoc]) {
+            uniqueClasses[c.MaLopHoc] = {
+              id: c.MaLopHoc, name: c.TenLop, schedule: c.LichHoc || '—',
+              students: c.SoLuongHocVien || 0, progress: c.TienDo || 0,
+              maGiangVien: null, tenGiangVien: '—',
+              lessonCount: c.SoBuoiHoc || 0
+            }
+          }
+        })
+        const mapped = Object.values(uniqueClasses)
         setClassesMap(prev => ({ ...prev, [courseId]: mapped }))
+
+        // Fetch teachers for each class
+        for (const cl of mapped) {
+          try {
+            const r = await fetch(`${API}/qtv/lophoc/${cl.id}/giangvien`)
+            const gvs = await r.json()
+            const tMap: Record<number, { maGiangVien: number; tenGiangVien: string }> = {}
+            if (Array.isArray(gvs)) {
+              gvs.forEach((item: any) => {
+                tMap[item.MaKyNang] = { maGiangVien: item.MaGiangVien, tenGiangVien: item.TenGiangVien }
+              })
+            }
+            setClassTeachersMap(prev => ({ ...prev, [cl.id]: tMap }))
+          } catch (e) {
+            console.error(e)
+          }
+        }
       })
       .catch(() => {})
     fetch(`${API}/qtv/khoahoc/${courseId}/giangvien`)
@@ -312,7 +374,16 @@ export default function CoursePageQTV() {
 
   // ── CRUD khóa học ─────────────────────────────────────────────────────────────
   const openAddCourse = () => {
-    setCForm({ title: '', desc: '', level: 'TOEIC', category: 'Luyện thi' })
+    setCForm({
+      title: '',
+      desc: '',
+      level: 'TOEIC',
+      category: 'Luyện thi',
+      listening: false,
+      reading: false,
+      speaking: false,
+      writing: false
+    })
     setSelectedGVsForCourse([])
     setAddGVSelect('')
     setEditCourse(null)
@@ -321,13 +392,26 @@ export default function CoursePageQTV() {
   }
 
   const openEditCourse = (c: Course) => {
-    setCForm({ title: c.title, desc: c.desc, level: c.level, category: c.category })
+    setCForm({
+      title: c.title,
+      desc: c.desc,
+      level: c.level,
+      category: c.category,
+      listening: !!c.listening,
+      reading: !!c.reading,
+      speaking: !!c.speaking,
+      writing: !!c.writing
+    })
     setEditCourse(c); setAddGVSelect(''); setClassesInForm([]); setShowCourseModal(true)
     fetch(`${API}/qtv/khoahoc/${c.id}/giangvien`).then(r => r.json()).then(setSelectedGVsForCourse).catch(() => {})
   }
 
   const saveCourse = async () => {
     if (!cForm.title.trim()) { alert('Vui lòng nhập tên khóa học!'); return }
+    if (!cForm.listening && !cForm.reading && !cForm.speaking && !cForm.writing) {
+      alert('Vui lòng chọn ít nhất một kỹ năng!');
+      return;
+    }
     const user = JSON.parse(localStorage.getItem('user') || '{}')
     try {
       let courseId = editCourse?.id
@@ -335,13 +419,30 @@ export default function CoursePageQTV() {
       if (editCourse) {
         await fetch(`${API}/admin/khoahoc/${editCourse.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TenKhoaHoc: cForm.title, MoTa: cForm.desc, TrinhDo: cForm.level, MaGiaoVien: null })
+          body: JSON.stringify({
+            TenKhoaHoc: cForm.title,
+            MoTa: cForm.desc,
+            TrinhDo: cForm.level,
+            Listening: cForm.listening ? 1 : 0,
+            Reading: cForm.reading ? 1 : 0,
+            Speaking: cForm.speaking ? 1 : 0,
+            Writing: cForm.writing ? 1 : 0
+          })
         })
         setToast('Đã lưu khóa học!')
       } else {
         const res = await fetch(`${API}/qtv/khoahoc`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TenKhoaHoc: cForm.title, MoTa: cForm.desc, TrinhDo: cForm.level, MaNguoiDung: user.MaNguoiDung || 6 })
+          body: JSON.stringify({
+            TenKhoaHoc: cForm.title,
+            MoTa: cForm.desc,
+            TrinhDo: cForm.level,
+            MaNguoiDung: user.MaNguoiDung || 6,
+            Listening: cForm.listening ? 1 : 0,
+            Reading: cForm.reading ? 1 : 0,
+            Speaking: cForm.speaking ? 1 : 0,
+            Writing: cForm.writing ? 1 : 0
+          })
         })
         const data = await res.json()
         courseId = data.MaKhoaHoc
@@ -358,32 +459,30 @@ export default function CoursePageQTV() {
 
           await fetch(`${API}/qtv/lophoc`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ TenLop: cls.name, MaLop: maLop, LichHoc: cls.schedule, SoLuongHocVien: cls.maxStudents })
+            body: JSON.stringify({
+              TenLop: cls.name,
+              MaLop: maLop,
+              LichHoc: cls.schedule,
+              SoLuongHocVien: cls.maxStudents,
+              teachers: cls.teachers // Pass the teachers object!
+            })
           })
 
           const clsRes = await fetch(`${API}/course-detail/${courseId}/classes`)
           const clsData = await clsRes.json()
           const newCls = clsData[clsData.length - 1]
 
-          if (newCls) {
-            if (cls.maGiangVien) {
-              await fetch(`${API}/qtv/lophoc/${newCls.MaLopHoc}/giangvien`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ MaGiangVien: Number(cls.maGiangVien) })
-              })
-            }
-            if (cls.lessons.length > 0) {
-              for (const lesson of cls.lessons) {
-                if (!lesson.title.trim()) continue
-                await fetch(`${API}/qtv/lesson`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    TenLesson: lesson.title, MaLopHoc: newCls.MaLopHoc,
-                    MoTa: lesson.desc, NgayBatDau: lesson.startDate || null,
-                    NgayKetThuc: lesson.endDate || null, ThuTu: lesson.order
-                  })
+          if (newCls && cls.lessons.length > 0) {
+            for (const lesson of cls.lessons) {
+              if (!lesson.title.trim()) continue
+              await fetch(`${API}/qtv/lesson`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  TenLesson: lesson.title, MaLopHoc: newCls.MaLopHoc,
+                  MoTa: lesson.desc, NgayBatDau: lesson.startDate || null,
+                  NgayKetThuc: lesson.endDate || null, ThuTu: lesson.order
                 })
-              }
+              })
             }
           }
         }
@@ -443,6 +542,39 @@ export default function CoursePageQTV() {
     } catch { alert('Lỗi khi cập nhật giáo viên') }
   }
 
+  const assignTeacherForSkill = async (courseId: number, classId: number, skillId: number, teacherId: number) => {
+    try {
+      const currentTeachers = classTeachersMap[classId] || {};
+      const newTeachersObj: Record<number, number> = {};
+      Object.keys(currentTeachers).forEach(k => {
+        const sId = Number(k);
+        if (currentTeachers[sId]?.maGiangVien) {
+          newTeachersObj[sId] = currentTeachers[sId].maGiangVien;
+        }
+      });
+      if (teacherId > 0) {
+        newTeachersObj[skillId] = teacherId;
+      } else {
+        delete newTeachersObj[skillId];
+      }
+      await fetch(`${API}/qtv/lophoc/${classId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teachers: newTeachersObj })
+      });
+      const r = await fetch(`${API}/qtv/lophoc/${classId}/giangvien`)
+      const gvs = await r.json()
+      const tMap: Record<number, { maGiangVien: number; tenGiangVien: string }> = {}
+      if (Array.isArray(gvs)) {
+        gvs.forEach((item: any) => {
+          tMap[item.MaKyNang] = { maGiangVien: item.MaGiangVien, tenGiangVien: item.TenGiangVien }
+        })
+      }
+      setClassTeachersMap(prev => ({ ...prev, [classId]: tMap }))
+      setToast('Đã phân công giáo viên!');
+    } catch { alert('Lỗi khi phân công giáo viên') }
+  }
+
   const deleteClass = (courseId: number, classId: number) => {
     confirmAction('Bạn có chắc chắn muốn xóa lớp học này?', async () => {
       await fetch(`${API}/qtv/lophoc/${classId}`, { method: 'DELETE' })
@@ -472,20 +604,13 @@ export default function CoursePageQTV() {
           MaLop: maLop,
           LichHoc: lForm.schedule,
           SoLuongHocVien: lForm.maxStudents,
-          CopyFromClassId: lForm.copyFromClassId ? Number(lForm.copyFromClassId) : null
+          CopyFromClassId: lForm.copyFromClassId ? Number(lForm.copyFromClassId) : null,
+          teachers: lForm.teachers // Pass the teachers object!
         })
       })
-      const classData = await classResponse.json()
-      const newMaLopHoc = classData.MaLopHoc
-
-      if (lForm.maGiangVien && newMaLopHoc) {
-        await fetch(`${API}/qtv/lophoc/${newMaLopHoc}/giangvien`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ MaGiangVien: Number(lForm.maGiangVien) })
-        })
-      }
+      await classResponse.json()
       setToast('Đã tạo lớp học!'); setShowAddClass(false)
-      setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', copyFromClassId: '' })
+      setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' })
       setClassesMap(prev => { const n = { ...prev }; delete n[addingToCourse.id]; return n })
       loadClassesForCourse(addingToCourse.id)
     } catch { alert('Lỗi khi tạo lớp học') }
@@ -717,23 +842,42 @@ export default function CoursePageQTV() {
                                   </div>
                                   <span className={styles.classBlockCount}>{cl.lessonCount} buổi</span>
 
-                                  <div onClick={e => e.stopPropagation()} style={{ marginLeft:8 }}>
-                                    {cl.maGiangVien ? (
-                                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                                        <span style={{ fontSize:12, fontWeight:500, color:'#2e7d32' }}>👨‍🏫 {cl.tenGiangVien}</span>
-                                        <button className={styles.btnOutline} style={{ fontSize:11, padding:'2px 6px' }}
-                                          onClick={() => assignGiaoVienToClass(c.id, cl.id, 0)}>Đổi</button>
-                                      </div>
-                                    ) : (
-                                      <select value="" style={{ fontSize:12, padding:'3px 6px', borderRadius:6, border:'1px solid #ddd', minWidth:120 }}
-                                        onChange={e => { if (e.target.value) assignGiaoVienToClass(c.id, cl.id, Number(e.target.value)) }}
-                                        disabled={!(gvKhoaMap[c.id]?.length)}>
-                                        <option value="">{gvKhoaMap[c.id]?.length ? '— Chọn GV —' : 'Chưa có GV'}</option>
-                                        {(gvKhoaMap[c.id] || []).map(gv => (
-                                          <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
-                                        ))}
-                                      </select>
-                                    )}
+                                  <div onClick={e => e.stopPropagation()} style={{ marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 260 }}>
+                                    {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
+                                      const isRequired = c[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
+                                      if (!isRequired) return null;
+                                      const skillId = getSkillId(skill);
+                                      const assigned = classTeachersMap[cl.id]?.[skillId];
+                                      return (
+                                        <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: '#f8fafc', padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                                          <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>{skill}:</span>
+                                          {assigned && assigned.maGiangVien ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                              <span style={{ fontSize: 11, fontWeight: 500, color: '#1e293b' }}>👨‍🏫 {assigned.tenGiangVien}</span>
+                                              <button 
+                                                className={styles.btnOutline} 
+                                                style={{ fontSize: 10, padding: '1px 4px', height: 'auto', border: '1px solid #e87722', color: '#e87722' }}
+                                                onClick={() => assignTeacherForSkill(c.id, cl.id, skillId, 0)}
+                                              >
+                                                Xóa
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <select 
+                                              value="" 
+                                              style={{ fontSize: 11, padding: '2px 20px 2px 4px', borderRadius: 4, border: '1px solid #cbd5e1', minWidth: 120, height: 'auto' }}
+                                              onChange={e => { if (e.target.value) assignTeacherForSkill(c.id, cl.id, skillId, Number(e.target.value)) }}
+                                              disabled={!giaoViens.length}
+                                            >
+                                              <option value="">{giaoViens.length ? '— Chọn GV —' : 'Không có GV'}</option>
+                                              {giaoViens.map(gv => (
+                                                <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
+                                              ))}
+                                            </select>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
 
                                   <div className={styles.actionBtns} onClick={e => e.stopPropagation()}>
@@ -752,7 +896,7 @@ export default function CoursePageQTV() {
                           )}
                           <div style={{ padding:'8px 0' }}>
                             <button className={styles.btnPrimary} style={{ fontSize:12 }}
-                              onClick={() => { setAddingToCourse(c); setLForm({ name:'', schedule:'Thứ 2 & 4', maxStudents:30, maGiangVien:'', copyFromClassId:'' }); setShowAddClass(true) }}>
+                              onClick={() => { setAddingToCourse(c); setLForm({ name:'', schedule:'Thứ 2 & 4', maxStudents:30, maGiangVien:'', teachers:{}, copyFromClassId:'' }); setShowAddClass(true) }}>
                               + Tạo lớp học mới
                             </button>
                           </div>
@@ -793,6 +937,52 @@ export default function CoursePageQTV() {
                   {CATS.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Kỹ năng <span className={styles.req}>*</span></label>
+              <div style={{ display: 'flex', gap: '20px', marginTop: '6px', marginBottom: '6px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#333' }}>
+                  <input
+                    type="checkbox"
+                    checked={cForm.listening}
+                    disabled={!!(editCourse && ((editCourse.classCount && editCourse.classCount > 0) || (classesMap[editCourse.id] && classesMap[editCourse.id].length > 0)))}
+                    onChange={e => setCForm(p => ({ ...p, listening: e.target.checked }))}
+                  />
+                  Listening
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#333' }}>
+                  <input
+                    type="checkbox"
+                    checked={cForm.reading}
+                    disabled={!!(editCourse && ((editCourse.classCount && editCourse.classCount > 0) || (classesMap[editCourse.id] && classesMap[editCourse.id].length > 0)))}
+                    onChange={e => setCForm(p => ({ ...p, reading: e.target.checked }))}
+                  />
+                  Reading
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#333' }}>
+                  <input
+                    type="checkbox"
+                    checked={cForm.speaking}
+                    disabled={!!(editCourse && ((editCourse.classCount && editCourse.classCount > 0) || (classesMap[editCourse.id] && classesMap[editCourse.id].length > 0)))}
+                    onChange={e => setCForm(p => ({ ...p, speaking: e.target.checked }))}
+                  />
+                  Speaking
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#333' }}>
+                  <input
+                    type="checkbox"
+                    checked={cForm.writing}
+                    disabled={!!(editCourse && ((editCourse.classCount && editCourse.classCount > 0) || (classesMap[editCourse.id] && classesMap[editCourse.id].length > 0)))}
+                    onChange={e => setCForm(p => ({ ...p, writing: e.target.checked }))}
+                  />
+                  Writing
+                </label>
+              </div>
+              {editCourse && ((editCourse.classCount && editCourse.classCount > 0) || (classesMap[editCourse.id] && classesMap[editCourse.id].length > 0)) ? (
+                <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px', fontWeight: 500 }}>
+                  ⚠ Không thể thay đổi kỹ năng của khóa khi đã có lớp trong khóa!
+                </div>
+              ) : null}
             </div>
             <div className={styles.formGroup}>
               <label>Mô tả</label>
@@ -881,21 +1071,33 @@ export default function CoursePageQTV() {
                           onChange={e => updateClassInForm(classIdx, 'maxStudents', Number(e.target.value))} />
                       </div>
                       <div className={styles.formGroup}>
-                        <label>Giảng viên phụ trách</label>
-                        <select
-                          value={(cls as any).maGiangVien || ''}
-                          onChange={e => updateClassInForm(classIdx, 'maGiangVien', e.target.value)}
-                        >
-                          <option value="">— Chọn giảng viên —</option>
-                          {selectedGVsForCourse.map(gv => (
-                            <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
-                          ))}
-                        </select>
-                        {selectedGVsForCourse.length === 0 && (
-                          <div style={{ fontSize: 12, color: '#f57c00', marginTop: 4 }}>
-                            ⚠ Hãy phân công giảng viên ở trên trước
-                          </div>
-                        )}
+                        <label style={{ marginBottom: 6, display: 'block' }}>Phân công giảng viên theo kỹ năng</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}>
+                          {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
+                            const isChecked = cForm[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
+                            if (!isChecked) return null;
+                            const skillId = getSkillId(skill);
+                            return (
+                              <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#555', minWidth: '80px' }}>{skill}:</span>
+                                <select
+                                  value={cls.teachers?.[skillId] || ''}
+                                  onChange={e => {
+                                    const val = e.target.value ? Number(e.target.value) : 0;
+                                    const updatedTeachers = { ...(cls.teachers || {}), [skillId]: val };
+                                    updateClassInForm(classIdx, 'teachers', updatedTeachers);
+                                  }}
+                                  style={{ flex: 1, padding: '4px 24px 4px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }}
+                                >
+                                  <option value="">Chưa phân công</option>
+                                  {giaoViens.map(gv => (
+                                    <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
 
@@ -979,15 +1181,40 @@ export default function CoursePageQTV() {
               <input value={lForm.name} onChange={e => setLForm(p => ({...p, name: e.target.value}))} placeholder="VD: Lớp TOEIC-01" />
             </div>
             <div className={styles.formGroup}>
-              <label>Giáo viên phụ trách lớp</label>
-              <select value={lForm.maGiangVien} onChange={e => setLForm(p => ({...p, maGiangVien: e.target.value}))}>
-                <option value="">— Chọn giáo viên —</option>
-                {(gvKhoaMap[addingToCourse.id] || []).map(gv => (
-                  <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
-                ))}
-              </select>
-              {!(gvKhoaMap[addingToCourse.id]?.length) && (
-                <div style={{ fontSize:12, color:'#f57c00', marginTop:4 }}>⚠ Khóa học chưa có GV. Hãy phân công GV trước khi tạo lớp.</div>
+              <label style={{ marginBottom: 6, display: 'block' }}>Phân công giảng viên theo kỹ năng</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#f8f9fa', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}>
+                {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
+                  const isRequired = addingToCourse[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
+                  if (!isRequired) return null;
+                  const skillId = getSkillId(skill);
+                  return (
+                    <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#555', minWidth: '80px' }}>{skill}:</span>
+                      <select
+                        value={lForm.teachers?.[skillId] || ''}
+                        onChange={e => {
+                          const val = e.target.value ? Number(e.target.value) : 0;
+                          setLForm(prev => ({
+                            ...prev,
+                            teachers: {
+                              ...prev.teachers,
+                              [skillId]: val
+                            }
+                          }));
+                        }}
+                        style={{ flex: 1, padding: '6px 24px 6px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }}
+                      >
+                        <option value="">Chưa phân công</option>
+                        {giaoViens.map(gv => (
+                          <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+              {!giaoViens.length && (
+                <div style={{ fontSize:12, color:'#f57c00', marginTop:4 }}>⚠ Hệ thống chưa có giáo viên nào.</div>
               )}
             </div>
             <div className={styles.formGroup}>
