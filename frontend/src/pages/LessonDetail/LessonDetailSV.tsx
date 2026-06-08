@@ -26,8 +26,8 @@ function LessonDetailSV() {
     setLoading(true);
     Promise.all([
       fetch(`${API}/lesson/${maLesson}`).then(r => r.json()),
-      fetch(`${API}/baigiang/${maLesson}`).then(r => r.json()),
-      fetch(`${API}/tailieu/${maLesson}`).then(r => r.json()),
+      fetch(`${API}/baigiang/${maLesson}?role=Sinh Viên`).then(r => r.json()),
+      fetch(`${API}/tailieu/${maLesson}?role=Sinh Viên`).then(r => r.json()),
     ])
       .then(([lesson, baigiangData, tailieu]) => {
         setLessonInfo(lesson);

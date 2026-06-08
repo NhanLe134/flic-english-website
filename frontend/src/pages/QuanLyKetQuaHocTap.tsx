@@ -35,37 +35,33 @@ const QuanLyKetQuaHocTap = () => {
   }, []);
 
   const totalStudents = classes.reduce((t, c) => t + (c.SoLuongHocVien || 0), 0);
-  const avgProgress = classes.length > 0
-    ? Math.round(classes.reduce((t, c) => t + (c.TienDo || 0), 0) / classes.length)
-    : 0;
 
   return (
     <div className="qlkq-wrapper">
-
-      <h1>Chào mừng trở lại!</h1>
-      <p className="qlkq-sub">Hệ thống quản lý giáo viên FLIC</p>
+      <h1 className="qlkq-title">Quản lý kết quả học tập</h1>
 
       {/* STATS */}
       <div className="stats-container">
         <div className="stat-card">
-          <p>Tổng số lớp</p>
-          <h2>{classes.length}</h2>
-          <p>Đang hoạt động</p>
+          <div className="stat-info">
+            <span className="stat-label">Tổng số lớp</span>
+            <h3 className="stat-value">{classes.length}</h3>
+            <span className="stat-desc">Đang hoạt động</span>
+          </div>
         </div>
         <div className="stat-card">
-          <p>Học sinh</p>
-          <h2>{totalStudents}</h2>
-          <p>Đang hoạt động</p>
+          <div className="stat-info">
+            <span className="stat-label">Học sinh</span>
+            <h3 className="stat-value">{totalStudents}</h3>
+            <span className="stat-desc">Đang hoạt động</span>
+          </div>
         </div>
         <div className="stat-card">
-          <p>Tiến độ trung bình</p>
-          <h2>{avgProgress}%</h2>
-          <p>Toàn bộ các lớp</p>
-        </div>
-        <div className="stat-card">
-          <p>Điểm trung bình</p>
-          <h2>8.5</h2>
-          <p>+ 5% so với tuần trước</p>
+          <div className="stat-info">
+            <span className="stat-label">Điểm trung bình</span>
+            <h3 className="stat-value">8.5</h3>
+            <span className="stat-desc">+ 5% so với tuần trước</span>
+          </div>
         </div>
       </div>
 
@@ -82,20 +78,20 @@ const QuanLyKetQuaHocTap = () => {
                 <h2>{c.TenLop}</h2>
                 <p className="class-code">Mã lớp: {c.MaLopHoc}</p>
                 {c.TenKhoaHoc && (
-                  <p style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>📚 {c.TenKhoaHoc}</p>
+                  <p className="class-course">Khóa học: {c.TenKhoaHoc}</p>
                 )}
 
                 <div className="class-info">
-                  <span>📅</span>
+                  <span className="class-info-label">Lịch học:</span>
                   <p>{c.LichHoc || "Chưa có lịch"}</p>
                 </div>
                 <div className="class-info">
-                  <span>👥</span>
-                  <p>{c.SoLuongHocVien} Học viên</p>
+                  <span className="class-info-label">Sĩ số:</span>
+                  <p>{c.SoLuongHocVien} học viên</p>
                 </div>
 
                 <div className="progress-row">
-                  <span>📈 Tiến độ lớp học</span>
+                  <span>Tiến độ lớp học</span>
                   <span className="percent">{c.TienDo || 0}%</span>
                 </div>
                 <div className="progress-bar">
@@ -115,7 +111,6 @@ const QuanLyKetQuaHocTap = () => {
           )}
         </div>
       )}
-
     </div>
   );
 };

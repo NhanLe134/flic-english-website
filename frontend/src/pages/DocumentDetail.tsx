@@ -32,9 +32,19 @@ const DocumentDetail: React.FC = () => {
   return (
     <div className="dd-wrapper">
 
-      <div className="header-row">
-        <h1>{document.TieuDe}</h1>
-        <span className="back-btn" onClick={() => navigate(-1)}>← Quay lại</span>
+      <div className="header-row" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <h1 style={{ margin: 0 }}>{document.TieuDe}</h1>
+        <span style={{
+          background: document.TrangThai === 'published' ? '#e8f5e9' : document.TrangThai === 'pending' ? '#fff3e0' : '#ffebee',
+          color: document.TrangThai === 'published' ? '#2e7d32' : document.TrangThai === 'pending' ? '#F95800' : '#c62828',
+          padding: "3px 12px",
+          borderRadius: 20,
+          fontSize: 13,
+          fontWeight: 600
+        }}>
+          {document.TrangThai === 'published' ? 'Đã duyệt' : document.TrangThai === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
+        </span>
+        <span className="back-btn" onClick={() => navigate(-1)} style={{ marginLeft: "auto" }}>← Quay lại</span>
       </div>
 
       <p className="sub-title">{document.MoTa}</p>

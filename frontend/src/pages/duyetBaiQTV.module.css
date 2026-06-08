@@ -1,7 +1,7 @@
 /* duyetBaiQTV.module.css */
 
 .page {
-  background: #faf5ec;
+  background: #ffffff;
   min-height: 100vh;
 }
 
@@ -33,36 +33,42 @@
 }
 
 .statCard {
-  border-radius: 14px;
-  padding: 20px 22px;
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .statMint {
-  background: #c8eae0;
+  background: transparent;
 }
 
 .statYellow {
-  background: #fbf0c2;
+  background: transparent;
 }
 
 .statGreen {
-  background: #c8eacc;
+  background: transparent;
 }
 
 .statRed {
-  background: #f5d4d4;
+  background: transparent;
 }
 
 .statLabel {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 12px;
+  font-size: 13px;
+  color: #718096;
+  font-weight: 500;
 }
 
 .statValue {
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #F95800;
 }
 
 /* Search Bar */
@@ -88,12 +94,12 @@
 }
 
 .searchBox input:focus {
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 .searchBtn {
   width: 44px;
-  background: #e87722;
+  background: #F95800;
   border: none;
   border-radius: 0 8px 8px 0;
   color: white;
@@ -106,7 +112,7 @@
 }
 
 .searchBtn:hover {
-  background: #cf6415;
+  background: #e04f00;
 }
 
 /* Tab Container */
@@ -130,14 +136,14 @@
 }
 
 .tabBtn:hover {
-  color: #e87722;
-  border-color: #e87722;
+  color: #F95800;
+  border-color: #F95800;
 }
 
 .tabBtnActive {
-  background: #e87722;
+  background: #F95800;
   color: #fff;
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 .tabBtnActive:hover {
@@ -197,14 +203,14 @@
 }
 
 .pillBtn:hover {
-  border-color: #e87722;
-  color: #e87722;
+  border-color: #F95800;
+  color: #F95800;
 }
 
 .pillBtnActive {
-  background: #e87722;
+  background: #F95800;
   color: #fff;
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 .pillBadge {
@@ -234,14 +240,14 @@
   font-size: 12px;
   font-weight: 600;
   color: #888;
-  border-bottom: 1.5px solid #f0eae0;
-  background: #fdfcf9;
+  border-bottom: 2px solid #eef2f6;
+  background: #f8fafc;
 }
 
 .table td {
   padding: 14px 16px;
   font-size: 13px;
-  border-bottom: 1px solid #f5f0e8;
+  border-bottom: 1px solid #eef2f6;
   color: #333;
   vertical-align: middle;
 }
@@ -256,7 +262,7 @@
 }
 
 .clickableRow:hover td {
-  background: #fffbf5;
+  background: #fff4ee;
 }
 
 .itemTitle {
@@ -503,3 +509,4 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+

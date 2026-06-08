@@ -1,6 +1,7 @@
 import styles from "./sidebarQTV.module.css"
 import { NavLink, useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { FiBook, FiFileText, FiCheckSquare, FiLogOut } from "react-icons/fi"
 
 const SidebarQTV = () => {
   const navigate = useNavigate()
@@ -23,24 +24,26 @@ const SidebarQTV = () => {
         <div className={styles.avatar}>Q</div>
         <div className={styles.userText}>
           <p className={styles.name}>Quản trị nội dung</p>
-          <span className={styles.role}>Quản trị nội dung</span>
         </div>
       </div>
 
       <ul className={styles.menu}>
         <li>
           <NavLink to="/QTV/khoahoc" className={({ isActive }) => isActive ? styles.active : ""}>
-            Khóa học
+            <FiBook className="menu-icon" />
+            <span>Khóa học</span>
           </NavLink>
         </li>
         <li>
           <NavLink to="/QTV/baocao" className={({ isActive }) => isActive ? styles.active : ""}>
-            Báo cáo kết quả
+            <FiFileText className="menu-icon" />
+            <span>Báo cáo kết quả</span>
           </NavLink>
         </li>
         <li>
           <NavLink to="/QTV/duyet-bai" className={({ isActive }) => isActive ? styles.active : ""}>
-            Duyệt bài
+            <FiCheckSquare className="menu-icon" />
+            <span>Duyệt bài</span>
           </NavLink>
         </li>
         <li>
@@ -48,7 +51,9 @@ const SidebarQTV = () => {
           <span
             onClick={() => setShowLogoutModal(true)}
             style={{
-              display: "block",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
               padding: "12px 14px",
               borderRadius: 10,
               color: "#444",
@@ -60,7 +65,8 @@ const SidebarQTV = () => {
             onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            Đăng xuất
+            <FiLogOut className="menu-icon" />
+            <span>Đăng xuất</span>
           </span>
         </li>
       </ul>
@@ -104,7 +110,7 @@ const SidebarQTV = () => {
                 onClick={handleLogout}
                 style={{
                   padding: "10px 24px", borderRadius: 8,
-                  border: "none", background: "#e87722",
+                  border: "none", background: "#F95800",
                   color: "#fff", cursor: "pointer", fontWeight: 600
                 }}
               >

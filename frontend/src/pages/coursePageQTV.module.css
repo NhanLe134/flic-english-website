@@ -1,5 +1,5 @@
 /* ── Page ── */
-.page { background: #faf5ec; min-height: 100%; }
+.page { background: #ffffff; min-height: 100%; }
 
 .pageHeader { padding: 24px 32px 10px; }
 .pageHeader h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
@@ -10,12 +10,13 @@
 .searchBox  { display: flex; max-width: 380px; }
 .searchBox input {
   flex: 1; padding: 10px 14px; border-radius: 8px 0 0 8px;
-  border: 1.5px solid #e0d8cc; border-right: none; outline: none;
+  border: 1.5px solid #eef2f6; border-right: none; outline: none;
   font-size: 13px; font-family: inherit;
+  background: #ffffff;
 }
-.searchBox input:focus { border-color: #e87722; }
+.searchBox input:focus { border-color: #F95800; }
 .searchBtn {
-  width: 44px; background: #e87722; border: none; border-radius: 0 8px 8px 0;
+  width: 44px; background: #F95800; border: none; border-radius: 0 8px 8px 0;
   color: white; cursor: pointer; font-size: 15px;
 }
 
@@ -23,14 +24,23 @@
 .content { padding: 12px 32px 32px; }
 
 /* ── Stat row ── */
-.statRow { display: grid; grid-template-columns: repeat(5,1fr); gap: 16px; margin-bottom: 20px; }
-.statCard { border-radius: 14px; padding: 20px 22px; }
-.statMint   { background: #c8eae0; }
-.statGreen  { background: #c8eacc; }
-.statBlue   { background: #d4e5f5; }
-.statYellow { background: #fbf0c2; }
-.statLabel { font-size: 14px; color: #555; margin-bottom: 12px; }
-.statValue { font-size: 30px; font-weight: 700; color: #1a1a1a; }
+.statRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.statCard { 
+  background: #ffffff; 
+  border: 1px solid #eef2f6; 
+  border-radius: 10px; 
+  padding: 16px 20px; 
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01); 
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.statMint   { background: transparent; }
+.statGreen  { background: transparent; }
+.statBlue   { background: transparent; }
+.statYellow { background: transparent; }
+.statLabel { font-size: 13px; color: #718096; font-weight: 500; }
+.statValue { font-size: 24px; font-weight: 700; color: #F95800; }
 
 /* ── Table card ── */
 .tableCard {
@@ -79,19 +89,35 @@
 
 /* ── Buttons ── */
 .btnPrimary {
-  background: #e87722; color: #fff; border: none;
+  background: #F95800; color: #fff; border: none;
   padding: 8px 16px; border-radius: 8px; font-size: 13px;
   font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
 }
-.btnPrimary:hover { background: #cf6415; }
+.btnPrimary:hover { background: #e04f00; }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btnOutline {
-  background: #fff; color: #e87722; border: 1.5px solid #e87722;
+  background: #fff; color: #F95800; border: 1.5px solid #F95800;
   padding: 7px 14px; border-radius: 8px; font-size: 12px;
   font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
 }
 .btnOutline:hover { background: #fff4ee; }
+
+.btnSmallOutline {
+  background: #fff; color: #F95800; border: 1.5px solid #F95800;
+  padding: 5px 10px; border-radius: 8px; font-size: 11px;
+  font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btnSmallOutline:hover { background: #fff4ee; }
+
+.btnSmallDanger {
+  background: #f5d4d4; color: #a82020; border: none;
+  padding: 5px 10px; border-radius: 8px; font-size: 11px;
+  font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btnSmallDanger:hover { background: #f0bfbf; }
 
 .btnDanger {
   background: #f5d4d4; color: #a82020; border: none;
@@ -102,7 +128,7 @@
 
 /* ── Class Detail Modal specific button styles ── */
 .detailBtnPrimary {
-  background: #e87722; color: #fff; border: 1.5px solid transparent;
+  background: #F95800; color: #fff; border: 1.5px solid transparent;
   height: 36px; padding: 0 16px; border-radius: 8px; font-size: 13px;
   font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center;
@@ -110,11 +136,11 @@
   line-height: 1;
   vertical-align: middle;
 }
-.detailBtnPrimary:hover { background: #cf6415; border-color: #cf6415; }
+.detailBtnPrimary:hover { background: #e04f00; border-color: #e04f00; }
 .detailBtnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .detailBtnOutline {
-  background: #fff; color: #e87722; border: 1.5px solid #e87722;
+  background: #fff; color: #F95800; border: 1.5px solid #F95800;
   height: 36px; padding: 0 16px; border-radius: 8px; font-size: 13px;
   font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center;
@@ -199,7 +225,7 @@
 }
 .formGroup input:focus,
 .formGroup select:focus,
-.formGroup textarea:focus { border-color: #e87722; }
+.formGroup textarea:focus { border-color: #F95800; }
 .formGroup textarea { resize: vertical; min-height: 80px; }
 .twoCols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .req { color: #e05050; }
@@ -208,43 +234,43 @@
 .sectionLabel { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; margin-top: 4px; }
 
 /* ── Classes in course modal ── */
-.classesHeader { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #f0eae0; margin-top: 16px; margin-bottom: 12px; }
+.classesHeader { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #eef2f6; margin-top: 16px; margin-bottom: 12px; }
 .draftList     { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.draftRow      { background: #faf5ec; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.draftRow      { background: #ffffff; border: 1px solid #eef2f6; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .draftInfo     { display: flex; flex-direction: column; gap: 2px; }
 .draftName     { font-weight: 600; font-size: 13px; }
 .draftMeta     { font-size: 11px; color: #999; }
-.draftEmpty    { text-align: center; padding: 16px; color: #bbb; font-size: 13px; background: #faf5ec; border-radius: 10px; margin-bottom: 12px; }
+.draftEmpty    { text-align: center; padding: 16px; color: #bbb; font-size: 13px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 10px; margin-bottom: 12px; }
 
-.inlineForm      { background: #fff; border: 1.5px solid #e8e0d0; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; }
+.inlineForm      { background: #fff; border: 1px solid #eef2f6; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; }
 .inlineFormTitle { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
 .inlineActions   { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 
 /* ── Detail Modal: stats + tabs ── */
-.detailStats   { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 16px 0; padding: 16px; background: #faf5ec; border-radius: 12px; }
+.detailStats   { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 16px 0; padding: 16px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 12px; }
 .detailStatItem{ text-align: center; }
-.detailStatVal { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.detailStatVal { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #F95800; }
 .detailStatLbl { font-size: 11px; color: #888; }
 
-.tabs    { display: flex; gap: 4px; border-bottom: 2px solid #f0eae0; margin-bottom: 16px; }
+.tabs    { display: flex; gap: 4px; border-bottom: 2px solid #eef2f6; margin-bottom: 16px; }
 .tab     { padding: 9px 20px; font-size: 13px; font-weight: 600; color: #888; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; border-radius: 6px 6px 0 0; font-family: inherit; transition: all .2s; }
-.tab:hover   { color: #e87722; background: #fff4ee; }
-.tabActive   { color: #e87722; border-bottom-color: #e87722; }
+.tab:hover   { color: #F95800; background: #fff4ee; }
+.tabActive   { color: #F95800; border-bottom-color: #F95800; }
 
 .tabContent { min-height: 180px; }
 .tabToolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .tabInfo    { font-size: 13px; color: #555; }
-.emptyTab   { text-align: center; padding: 40px; color: #bbb; font-size: 13px; background: #faf5ec; border-radius: 10px; font-style: italic; }
+.emptyTab   { text-align: center; padding: 40px; color: #bbb; font-size: 13px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 10px; font-style: italic; }
 
 .monoText { font-family: monospace; font-size: 12px; color: #888; }
 .boldText { font-weight: 600; }
 
 /* ── Roadmap ── */
 .roadmapList { display: flex; flex-direction: column; gap: 10px; }
-.roadmapItem { display: flex; align-items: flex-start; gap: 12px; background: #faf5ec; border-radius: 12px; padding: 14px 16px; transition: background .15s; }
-.roadmapItem:hover { background: #f5efe0; }
-.roadmapNum  { width: 28px; height: 28px; border-radius: 50%; background: #e87722; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-.roadmapIcon { width: 34px; height: 34px; border-radius: 8px; background: #d4e5f5; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.roadmapItem { display: flex; align-items: flex-start; gap: 12px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 12px; padding: 14px 16px; transition: background .15s; }
+.roadmapItem:hover { background: #f8fafc; }
+.roadmapNum  { width: 28px; height: 28px; border-radius: 50%; background: #F95800; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.roadmapIcon { width: 34px; height: 34px; border-radius: 8px; background: #fff4ec; color: #F95800; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .roadmapInfo { flex: 1; min-width: 0; }
 .roadmapTitle{ font-size: 14px; font-weight: 600; margin-bottom: 3px; }
 .roadmapDesc { font-size: 12px; color: #666; margin-bottom: 6px; }
@@ -255,8 +281,8 @@
 /* ── Enroll Modal ── */
 .enrollSearchRow   { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .enrollSearchInput { flex: 1; padding: 9px 14px; border: 1.5px solid #e0d8cc; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
-.enrollSearchInput:focus { border-color: #e87722; }
-.selectedBadge { background: #e87722; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.enrollSearchInput:focus { border-color: #F95800; }
+.selectedBadge { background: #F95800; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .enrollTableWrap { flex: 1; overflow-y: auto; max-height: 360px; border: 1px solid #f0eae0; border-radius: 10px; margin-bottom: 4px; }
 
 /* ── Toast ── */
@@ -295,7 +321,7 @@
 }
 
 .btnAddBuoi {
-  background: #e87722;
+  background: #F95800;
   color: #fff;
   border: none;
   padding: 5px 12px;
@@ -305,14 +331,15 @@
   cursor: pointer;
   font-family: inherit;
 }
-.btnAddBuoi:hover { background: #cf6415; }
+.btnAddBuoi:hover { background: #e04f00; }
 
 .inlineRoadmapEmpty {
   text-align: center;
   padding: 12px;
   color: #bbb;
   font-size: 12px;
-  background: #faf5ec;
+  background: #ffffff;
+  border: 1px solid #eef2f6;
   border-radius: 8px;
   font-style: italic;
 }
@@ -328,7 +355,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #faf5ec;
+  background: #ffffff;
+  border: 1px solid #eef2f6;
   border-radius: 8px;
   padding: 9px 12px;
 }
@@ -337,7 +365,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #e87722;
+  background: #F95800;
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -386,8 +414,8 @@
 }
 
 .btnMini {
-  border: 1px solid #e87722;
-  color: #e87722;
+  border: 1px solid #F95800;
+  color: #F95800;
   background: white;
   padding: 3px 8px;
   border-radius: 5px;
@@ -395,7 +423,7 @@
   font-size: 11px;
   font-family: inherit;
 }
-.btnMini:hover { background: #e87722; color: white; }
+.btnMini:hover { background: #F95800; color: white; }
 
 .btnMiniDanger {
   border: 1px solid #ef4444;
@@ -431,7 +459,7 @@
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   font-size: 14px;
-  accent-color: #f97316;
+  accent-color: #F95800;
   background: white;
   color: #374151;
 }
@@ -469,7 +497,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #e87722;
+  color: #F95800;
   font-size: 11px;
   width: 22px;
   flex-shrink: 0;
@@ -492,7 +520,7 @@
 }
 .classBlockCount {
   font-size: 12px;
-  color: #e87722;
+  color: #F95800;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -517,7 +545,7 @@
   width: 22px;
   height: 22px;
   background: #f0e6d8;
-  color: #e87722;
+  color: #F95800;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -548,7 +576,7 @@
 
 .classExpandChevron {
   font-size: 10px;
-  color: #e87722;
+  color: #F95800;
   flex-shrink: 0;
   width: 16px;
 }
@@ -559,8 +587,8 @@
 /* ── Nút danh sách đăng ký ── */
 .btnRegList {
   background: #fff;
-  color: #e87722;
-  border: 1.5px solid #e87722;
+  color: #F95800;
+  border: 1.5px solid #F95800;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 13px;
@@ -604,7 +632,7 @@
   cursor: pointer;
   min-width: 220px;
 }
-.regSelect:focus { border-color: #e87722; }
+.regSelect:focus { border-color: #F95800; }
 
 .regStats {
   display: flex;
@@ -660,8 +688,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border: 2px solid #e87722;
-  color: #e87722;
+  border: 2px solid #F95800;
+  color: #F95800;
   background: white;
   border-radius: 8px;
   font-size: 13px;
@@ -681,8 +709,8 @@
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  border: 1.5px solid #e87722;
-  color: #e87722;
+  border: 1.5px solid #F95800;
+  color: #F95800;
   background: white;
   border-radius: 8px;
   font-size: 13px;
@@ -753,18 +781,18 @@
 }
 
 .weekdayBtn:hover {
-  border-color: #e87722;
-  color: #e87722;
+  border-color: #F95800;
+  color: #F95800;
   background: #fffdfb;
 }
 
 .weekdayBtnActive {
-  background: #e87722;
+  background: #F95800;
   color: #fff;
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 .weekdayBtnActive:hover {
-  background: #cf6415;
+  background: #e04f00;
   color: #fff;
 }

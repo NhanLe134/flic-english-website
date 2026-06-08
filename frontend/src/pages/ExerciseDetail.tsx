@@ -375,18 +375,25 @@ const ExerciseDetail = () => {
           <div className="info-col"><span>👥</span><p className="label">Số học viên</p><b>{lesson.SoLuongHocVien}</b></div>
           <div className="info-col"><span>📘</span><p className="label">Trạng thái</p><b>Đang học</b></div>
         </div>
-        <div className="progress-section">
-          <div className="progress-label"><span>Tiến độ khóa học</span><span className="percent">68%</span></div>
-          <div className="progress-bar"><div className="progress-fill" style={{ width: "68%" }} /></div>
-        </div>
+
       </div>
 
       {/* TITLE BAR */}
       <div className="exercise-header">
         <h1>{exercise.Title}</h1>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <span style={{ background: "#fff3e0", color: "#e87722", padding: "3px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+          <span style={{ background: "#fff3e0", color: "#F95800", padding: "3px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
             {exercise.Type}
+          </span>
+          <span style={{
+            background: exercise.TrangThai === 'published' ? '#e8f5e9' : exercise.TrangThai === 'pending' ? '#fff3e0' : '#ffebee',
+            color: exercise.TrangThai === 'published' ? '#2e7d32' : exercise.TrangThai === 'pending' ? '#F95800' : '#c62828',
+            padding: "3px 12px",
+            borderRadius: 20,
+            fontSize: 13,
+            fontWeight: 600
+          }}>
+            {exercise.TrangThai === 'published' ? 'Đã duyệt' : exercise.TrangThai === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
           </span>
           {!isEdit && <button className="edit-btn" onClick={openEdit}>Sửa</button>}
           <button className="submissions-btn" onClick={() => navigate(`/danh-sach-bai-nop/${id}`)}>

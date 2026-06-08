@@ -70,7 +70,6 @@ useEffect(() => {
               Quản lý kết quả học tập
             </div>
 
-            <div onClick={() => navigate("/cai-dat")} className="sidebar-item">Cài đặt</div>
             <div onClick={() => navigate("/")} className="sidebar-item">Đăng xuất</div>
 
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { FiArrowLeft, FiFileText } from "react-icons/fi";
 import "./lessonDetail.css";
 
 const LessonDetail: React.FC = () => {
@@ -93,9 +94,24 @@ const LessonDetail: React.FC = () => {
   return (
     <div className="ld-wrapper">
 
-      <div className="back-btn" onClick={() => navigate(-1)}>← Quay lại</div>
+      <div className="back-btn" onClick={() => navigate(-1)}>
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        Quay lại
+      </div>
 
-      <h1 className="detail-title">{lesson.TieuDe}</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: '8px' }}>
+        <h1 className="detail-title" style={{ margin: 0 }}>{lesson.TieuDe}</h1>
+        <span style={{
+          background: lesson.TrangThai === 'published' ? '#e8f5e9' : lesson.TrangThai === 'pending' ? '#fff3e0' : '#ffebee',
+          color: lesson.TrangThai === 'published' ? '#2e7d32' : lesson.TrangThai === 'pending' ? '#F95800' : '#c62828',
+          padding: "3px 12px",
+          borderRadius: 20,
+          fontSize: 13,
+          fontWeight: 600
+        }}>
+          {lesson.TrangThai === 'published' ? 'Đã duyệt' : lesson.TrangThai === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
+        </span>
+      </div>
       <p style={{ color: "#777", marginBottom: 16 }}>
         {lesson.LoaiBaiHoc} • {lesson.ThoiLuong}
       </p>
@@ -159,7 +175,8 @@ const LessonDetail: React.FC = () => {
       {fileUrl && !isImage && !isPdf && !isVideo && !isAudio && (
         <div className="file-download">
           <a href={fileUrl} target="_blank" rel="noreferrer">
-            📄 Tải file đính kèm
+            <FiFileText size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+            Tải file đính kèm
           </a>
         </div>
       )}

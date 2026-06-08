@@ -98,7 +98,7 @@ const EditPersonalInfo = () => {
   return (
     <div className="epi-wrapper">
 
-      <div className="header-row">
+      <div className="epi-header-row">
         <h1>Thông tin cá nhân</h1>
         <span className="back-btn" onClick={() => navigate("/thong-tin-ca-nhan")}>
           ← Quay lại

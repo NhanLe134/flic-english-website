@@ -1,6 +1,7 @@
 import "./exercisePage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiArrowLeft } from "react-icons/fi";
 
 const ExercisePage = () => {
   const navigate = useNavigate();
@@ -11,12 +12,11 @@ const ExercisePage = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [exercises, setExercises] = useState<any[]>([]);
   const [lesson, setLesson] = useState<any>(null);
-  const [tienDo, setTienDo] = useState(0);
   const [soHocVien, setSoHocVien] = useState(0);
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
 
-  /* ===== LOAD LESSON + LỚP + TIẾN ĐỘ ===== */
+  /* ===== LOAD LESSON + LỚP ===== */
   useEffect(() => {
     if (!id) return;
     fetch(`http://localhost:5000/lesson/${id}`)
@@ -34,11 +34,6 @@ const ExercisePage = () => {
         const lopRes = await fetch(`http://localhost:5000/classes/${maLopHoc}/info`);
         const lopData = await lopRes.json();
         setLichHoc(lopData.LichHoc || "—");
-
-        // Lấy tiến độ
-        const tienDoRes = await fetch(`http://localhost:5000/lophoc/${maLopHoc}/tiendo`);
-        const tienDoData = await tienDoRes.json();
-        setTienDo(tienDoData.TienDo || 0);
 
         // Lấy tên giảng viên
         const userStr = sessionStorage.getItem("user");
@@ -90,8 +85,10 @@ const ExercisePage = () => {
 
   return (
     <div className="ep-wrapper">
-
-      <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
+      <span className="cd2-back-btn" onClick={() => navigate(-1)}>
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        Quay lại
+      </span>
 
       {/* ===== HEADER ===== */}
       <div className="header-card">
@@ -100,7 +97,8 @@ const ExercisePage = () => {
             <h1>{lesson?.TenLesson}</h1>
             <p>{lesson?.MoTa}</p>
             <p>
-              📅 {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
+              <FiCalendar size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
+              {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
               {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
             </p>
           </div>
@@ -109,28 +107,36 @@ const ExercisePage = () => {
 
         <div className="info-row">
           <div className="info-item">
-            <span>👩‍🏫</span>
+            <div className="cd2-icon-wrapper teacher-icon">
+              <FiUser size={18} />
+            </div>
             <div>
               <p className="label">Giáo viên</p>
               <b>{giangVien}</b>
             </div>
           </div>
           <div className="info-item">
-            <span>📅</span>
+            <div className="cd2-icon-wrapper calendar-icon">
+              <FiCalendar size={18} />
+            </div>
             <div>
               <p className="label">Lịch học</p>
               <b>{lichHoc}</b>
             </div>
           </div>
           <div className="info-item">
-            <span>👥</span>
+            <div className="cd2-icon-wrapper students-icon">
+              <FiUsers size={18} />
+            </div>
             <div>
               <p className="label">Số học viên</p>
               <b>{soHocVien}</b>
             </div>
           </div>
           <div className="info-item">
-            <span>📘</span>
+            <div className="cd2-icon-wrapper status-icon">
+              <FiBookOpen size={18} />
+            </div>
             <div>
               <p className="label">Trạng thái</p>
               <b>Đang học</b>
@@ -138,15 +144,6 @@ const ExercisePage = () => {
           </div>
         </div>
 
-        <div className="progress-section">
-          <div className="progress-label">
-            <span>Tiến độ khóa học</span>
-            <span className="percent">{tienDo}%</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${tienDo}%` }} />
-          </div>
-        </div>
       </div>
 
       {/* ===== TABS ===== */}
@@ -163,18 +160,47 @@ const ExercisePage = () => {
 
         <div className="exercise-top">
           <div className="ep-search-group">
-            <input
-              type="text"
-              placeholder="Tìm kiếm bài tập"
-              className="ep-search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <form className="search-container" onSubmit={(e) => e.preventDefault()} style={{ marginBottom: 0 }}>
+              <input
+                className="search-input"
+                placeholder="Tìm kiếm bài tập..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="search-button" type="button">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </button>
+            </form>
             <button
               className="ep-add-btn"
               onClick={() => navigate(`/create-exercise/${id}`)}
             >
               + Tạo bài tập
+            </button>
+            <button
+              className="ep-add-btn"
+              onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
+              style={{
+                background: "#fff",
+                color: "#F95800",
+                border: "1.5px solid #F95800",
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
+            >
+              + Tạo bài luyện tập thêm
             </button>
           </div>
           <div className="ep-total-box">
@@ -186,10 +212,27 @@ const ExercisePage = () => {
         <div className="exercise-grid">
           {filteredExercises.map((ex) => (
             <div key={ex.MaExercise} className="exercise-card">
-              <h4>{ex.Title}</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
+                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1a202c', wordBreak: 'break-word', flex: 1 }}>{ex.Title}</h4>
+                {ex.TrangThai !== 'practice' && (
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: '12px',
+                    background: ex.TrangThai === 'published' ? '#e8f5e9' : ex.TrangThai === 'rejected' ? '#ffebee' : '#fff3e0',
+                    color: ex.TrangThai === 'published' ? '#2e7d32' : ex.TrangThai === 'rejected' ? '#c62828' : '#F95800',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}>
+                    {ex.TrangThai === 'published' ? 'Đã duyệt' : ex.TrangThai === 'rejected' ? 'Từ chối' : 'Chờ duyệt'}
+                  </span>
+                )}
+              </div>
               <p>{ex.Type}</p>
-              <span>
-                📅 {ex.CreatedDate && new Date(ex.CreatedDate).toLocaleDateString("vi-VN")}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+                <FiCalendar size={14} />
+                {ex.CreatedDate && new Date(ex.CreatedDate).toLocaleDateString("vi-VN")}
               </span>
               <div className="btn-group">
                 <button
