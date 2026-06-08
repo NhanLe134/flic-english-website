@@ -16,12 +16,8 @@ const SidebarQTV = () => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logo}>
-<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" />
         <h3>WEBSITE FLIC</h3>
-=======
-        <img src={import.meta.env.BASE_URL + "flic_logo_full.png"} alt="logo" />
->>>>>>> Stashed changes
       </div>
 
       <div className={styles.adminInfo}>

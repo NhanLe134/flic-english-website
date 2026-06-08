@@ -69,11 +69,7 @@ const PersonalInfo: React.FC = () => {
     <div className="page-container">
       {/* TOPBAR */}
       <div className="topbar">
-<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} className="logo" />
-=======
-        <img src={import.meta.env.BASE_URL + "image.png"} className="logo" />
->>>>>>> Stashed changes
         <div className="avatar">👩‍🏫</div>
       </div>
 

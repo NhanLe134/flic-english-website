@@ -217,50 +217,6 @@ const LessonResultPage = () => {
         </div>
       </div>
 
-<<<<<<< Updated upstream
-      {/* LESSON GRID */}
-      {loading ? (
-        <div style={{ textAlign:"center", padding:40, color:"#999" }}>Đang tải...</div>
-      ) : lessons.length === 0 ? (
-        <div style={{ textAlign:"center", padding:40, color:"#999" }}>Chưa có buổi học nào.</div>
-      ) : (
-        <div className="lrp-lesson-grid">
-          {lessons.map((lesson, idx) => (
-            <div key={lesson.MaLesson} className={`lrp-lesson-card ${lesson.MaLesson === activeLessonId ? "lrp-lesson-card-active" : ""}`}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <div style={{ fontSize:12, color:"#e87722", fontWeight:600 }}>
-                  Buổi {lesson.ThuTu || idx + 1}
-                </div>
-                {lesson.MaLesson === activeLessonId && (
-                  <span className="lrp-active-tag">🟢 Đang học</span>
-                )}
-              </div>
-              <h3>{lesson.TenLesson}</h3>
-              {lesson.MoTa && <p className="lrp-class">{lesson.MoTa}</p>}
-              <div className="lrp-info">
-                📅 {formatDate(lesson.NgayBatDau)}
-                {lesson.NgayKetThuc ? ` → ${formatDate(lesson.NgayKetThuc)}` : ""}
-              </div>
-              <div className="lrp-info">
-                👥 {studentCount} Học viên
-              </div>
-              
-              {lesson.MaLesson !== activeLessonId && (
-                <button
-                  className="lrp-btn-secondary"
-                  onClick={() => handleSetActiveLesson(lesson.MaLesson)}
-                >
-                  Đánh dấu buổi đang học
-                </button>
-              )}
-              
-              <button
-                className="lrp-btn"
-                onClick={() => navigate(`/ketqua/${lesson.MaLesson}`)}
-              >
-                Xem kết quả học tập
-              </button>
-=======
       {/* SEARCH & EXPORT */}
       <div className="lrp-search-export-row">
         <form className="lrp-search-container" onSubmit={(e) => e.preventDefault()}>
@@ -365,7 +321,6 @@ const LessonResultPage = () => {
                   )}
                 </tbody>
               </table>
->>>>>>> Stashed changes
             </div>
           )
         )}

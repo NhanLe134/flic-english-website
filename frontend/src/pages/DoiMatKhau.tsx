@@ -101,11 +101,7 @@ const DoiMatKhau = () => {
   return (
     <div className="password-page">
       <div className="password-card">
-<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="password-logo" />
-=======
-        <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="password-logo" />
->>>>>>> Stashed changes
         <h2 className="password-title">ĐỔI MẬT KHẨU</h2>
 
         <div className="password-form">

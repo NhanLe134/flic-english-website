@@ -134,9 +134,6 @@ const Login = ({ isModal = false }: LoginProps) => {
 
   return (
     <div className="login-page">
-<<<<<<< Updated upstream
-      {cardContent}
-=======
       <div className="login-card">
         <img src={import.meta.env.BASE_URL + "image.png"} alt="FLIC Logo" className="login-logo" />
         <h2 className="login-title">Đăng nhập</h2>
@@ -210,7 +207,6 @@ const Login = ({ isModal = false }: LoginProps) => {
           <Link to="/forgot-password" className="forgot">Quên mật khẩu?</Link>
         </div>
       </div>
->>>>>>> Stashed changes
     </div>
   );
 };

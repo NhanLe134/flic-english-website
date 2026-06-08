@@ -50,11 +50,7 @@ const Hero = () => {
         </div>
 
         <div className="hero-right">
-<<<<<<< Updated upstream
           <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC" />
-=======
-          <img src={import.meta.env.BASE_URL + "image.png"} alt="FLIC" />
->>>>>>> Stashed changes
         </div>
       </div>
     </section>

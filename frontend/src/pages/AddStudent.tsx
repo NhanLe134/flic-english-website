@@ -55,11 +55,7 @@ const AddStudent: React.FC = () => {
 
       {/* HEADER */}
       <header className="top-header">
-<<<<<<< Updated upstream
         <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="logo" />
-=======
-        <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="logo" />
->>>>>>> Stashed changes
         <div className="top-avatar">👨‍🏫</div>
       </header>
 
