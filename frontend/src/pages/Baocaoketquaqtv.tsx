@@ -49,7 +49,11 @@ const trangThaiColor: Record<string, string> = {
   "Tạm dừng":   styles.ttTamDung,
 }
 
-const BaoCaoKetQuaQTV = () => {
+interface BaoCaoKetQuaQTVProps {
+  showCsvButton?: boolean
+}
+
+const BaoCaoKetQuaQTV = ({ showCsvButton = true }: BaoCaoKetQuaQTVProps) => {
   const [data, setData]             = useState<HocVien[]>([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState("")
@@ -121,20 +125,20 @@ const BaoCaoKetQuaQTV = () => {
       const classLessons = allLessons.filter(l => l.TenLop === filterLop)
       if (classLessons.length === 0) return []
 
-      const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+      const activeLesson = classLessons.find(l => classLessons[0]?.ActiveLessonId !== null && Number(l.MaLesson) === Number(classLessons[0]?.ActiveLessonId))
       const activeThuTu = activeLesson ? activeLesson.ThuTu : null
 
       if (activeThuTu === null) return [] // Chưa đánh dấu thì không hiện buổi học nào
 
       return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
-        .sort((a, b) => a - b)
+        .sort((a, b) => b - a)
         .filter(b => b <= activeThuTu)
     } else {
       // Khi chọn "Tất cả lớp":
       // Tìm buổi học đang học lớn nhất (maxActiveThuTu) trong số tất cả các lớp
       const classActiveThuTus = Array.from(new Set(allLessons.map(l => l.MaLopHoc))).map(lopId => {
         const classLessons = allLessons.filter(l => l.MaLopHoc === lopId)
-        const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+        const activeLesson = classLessons.find(l => classLessons[0]?.ActiveLessonId !== null && Number(l.MaLesson) === Number(classLessons[0]?.ActiveLessonId))
         return activeLesson ? activeLesson.ThuTu : null
       }).filter((t): t is number => t !== null)
 
@@ -143,13 +147,13 @@ const BaoCaoKetQuaQTV = () => {
       const maxActiveThuTu = Math.max(...classActiveThuTus)
       
       return Array.from(new Set(allLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
-        .sort((a, b) => a - b)
+        .sort((a, b) => b - a)
         .filter(b => b <= maxActiveThuTu)
     }
   }, [allLessons, filterLop])
 
   const getBuoiAvg = (hv: HocVien, buoiNum: number) => {
-    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum)
+    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
     if (buoiExs.length === 0) return null
 
     const scores = buoiExs
@@ -206,11 +210,12 @@ const BaoCaoKetQuaQTV = () => {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>Báo cáo kết quả học tập</h1>
-          <p className={styles.subtitle}>Xem và xuất điểm bài tập của từng học viên theo lớp, khóa học</p>
         </div>
-        <button className={styles.exportBtn} onClick={handleExportCSV}>
-          ⬇ Xuất CSV
-        </button>
+        {showCsvButton && (
+          <button className={styles.exportBtn} onClick={handleExportCSV}>
+            ⬇ Xuất CSV
+          </button>
+        )}
       </div>
 
       <div className={styles.content}>
@@ -294,7 +299,7 @@ const BaoCaoKetQuaQTV = () => {
                       </td>
                       {uniqueBuois.map(b => {
                         const hvLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
-                        const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
+                        const hvActiveLesson = hvLessons.find(l => hvLessons[0]?.ActiveLessonId !== null && Number(l.MaLesson) === Number(hvLessons[0]?.ActiveLessonId))
                         const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : null
 
                         // Nếu lớp của học viên này chưa học đến buổi b, hiển thị —
@@ -333,7 +338,7 @@ const BaoCaoKetQuaQTV = () => {
                         <td></td>
                         {uniqueBuois.map(b => {
                           const hvLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
-                          const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
+                          const hvActiveLesson = hvLessons.find(l => hvLessons[0]?.ActiveLessonId !== null && Number(l.MaLesson) === Number(hvLessons[0]?.ActiveLessonId))
                           const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : null
 
                           // Nếu lớp của học viên này chưa học đến buổi b, hiển thị —

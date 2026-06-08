@@ -23,12 +23,12 @@
   font-family: 'Oswald', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #000080; /* Màu xanh đen */
+  color: #000080;
   letter-spacing: 0.5px;
 }
 
 .logo-sub {
-  color: #F95800; /* Màu cam */
+  color: #F95800;
 }
 
 /* ADMIN PROFILE INFO */
@@ -94,7 +94,7 @@
 
 .menu-item:hover {
   background: #f8fafc;
-  color: #1e293b;
+  color: #F95800;
 }
 
 .menu-item:hover .menu-icon {
@@ -102,8 +102,8 @@
 }
 
 .menu-item.active {
-  background: #FFF3EB; /* Soft orange tint */
-  color: #F95800; /* Orange text */
+  background: #FFF3EB;
+  color: #F95800;
   font-weight: 700;
 }
 
@@ -113,7 +113,7 @@
 
 .menu-item-logout {
   color: #64748b;
-  margin-top: auto; /* Push logout to the bottom if space allows */
+  margin-top: auto;
 }
 
 .menu-item-logout:hover {

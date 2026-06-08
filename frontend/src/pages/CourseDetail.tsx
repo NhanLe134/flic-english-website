@@ -1,6 +1,7 @@
 import "./courseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { FiBookOpen, FiUsers, FiCheckSquare, FiArrowLeft } from "react-icons/fi";
 
 interface ClassItem {
   id: number;
@@ -19,6 +20,7 @@ const CourseDetail = () => {
 
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
@@ -50,6 +52,12 @@ const CourseDetail = () => {
         setClasses(mapped);
       })
       .catch((err) => console.log(err));
+
+    // Lấy số lượng bài tập cần duyệt
+    fetch("http://localhost:5000/teacher/submissions/pending-count")
+      .then(res => res.json())
+      .then(data => setPendingCount(data.count))
+      .catch(err => console.log(err));
   }, [id]);
 
   const filteredClasses = classes.filter(
@@ -60,79 +68,91 @@ const CourseDetail = () => {
 
   return (
     <div className="cd-wrapper">
+      <span className="cd-back" onClick={() => navigate(-1)}>
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        Quay lại
+      </span>
 
       {/* HEADER ROW */}
       <div className="cd-header">
         <div>
           <h1 className="cd-title">{tenKhoaHoc}</h1>
-          <p className="cd-subtitle">
-            Quản lý các lớp học thuộc {tenKhoaHoc} và theo dõi tiến độ học tập của học viên.
-          </p>
         </div>
-        <span className="cd-back" onClick={() => navigate(-1)}>← Quay lại</span>
       </div>
-
-      {/* SEARCH */}
-      <input
-        type="text"
-        placeholder="Tìm kiếm lớp học theo tên hoặc mã lớp..."
-        className="cd-search"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
 
       {/* STATS */}
       <div className="cd-stats">
-        <div className="cd-stat-card">
-          <p>Tổng số lớp học</p>
-          <h3>{filteredClasses.length}</h3>
+        <div className="cd-stat-card classes-card">
+          <div className="stat-icon-wrapper">
+            <FiBookOpen size={20} />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Lớp học</span>
+            <h3 className="stat-value">{filteredClasses.length}</h3>
+            <span className="stat-desc">Tổng số lớp học</span>
+          </div>
         </div>
-        <div className="cd-stat-card">
-          <p>Tổng số học viên</p>
-          <h3>{filteredClasses.reduce((t, c) => t + c.students, 0)}</h3>
+        <div className="cd-stat-card students-card">
+          <div className="stat-icon-wrapper">
+            <FiUsers size={20} />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Học viên</span>
+            <h3 className="stat-value">{filteredClasses.reduce((t, c) => t + c.students, 0)}</h3>
+            <span className="stat-desc">Tổng số học viên</span>
+          </div>
         </div>
-        <div className="cd-stat-card">
-          <p>Tiến độ trung bình</p>
-          <h3 className="cd-green">
-            {filteredClasses.length > 0
-              ? Math.round(
-                  filteredClasses.reduce((t, c) => t + c.progress, 0) /
-                    filteredClasses.length
-                )
-              : 0}%
-          </h3>
-        </div>
-        <div className="cd-stat-card">
-          <p>Cấp độ hiện có</p>
-          <h3>3 Levels</h3>
+        <div className="cd-stat-card pending-card">
+          <div className="stat-icon-wrapper">
+            <FiCheckSquare size={20} />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Bài tập</span>
+            <h3 className="stat-value">{pendingCount} bài</h3>
+            <span className="stat-desc">Bài tập cần duyệt</span>
+          </div>
         </div>
       </div>
+
+      {/* SEARCH CONTAINER - PREVENT SUBMIT/RELOAD */}
+      <form className="search-container" onSubmit={(e) => e.preventDefault()}>
+        <input
+          className="search-input"
+          placeholder="Tìm kiếm lớp học theo tên hoặc mã lớp..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button className="search-button" type="button">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
+      </form>
 
       {/* CLASS LIST */}
       <div className="cd-class-list">
         {filteredClasses.length === 0 ? (
           <p>Không tìm thấy lớp học</p>
         ) : (
-          filteredClasses.map((item) => (
+          filteredClasses.map((item, i) => (
             <div key={item.id} className="cd-class-card">
+              <div className="cd-card-header">
+                <span className="cd-index-tag">Lớp {i + 1}</span>
+                <span className="cd-code-tag">{item.code}</span>
+              </div>
               <h3>{item.name}</h3>
-              <p className="cd-code">{item.code}</p>
-              <p>📅 {item.schedule}</p>
-              <p>👥 {item.students} Học viên</p>
-              <div className="cd-progress-header">
-                <span>📈 Tiến độ khóa học</span>
-                <span>{item.progress}%</span>
-              </div>
-              <div className="cd-progress">
-                <div
-                  className="cd-progress-orange"
-                  style={{ width: `${item.progress - 10}%` }}
-                />
-                <div
-                  className="cd-progress-green"
-                  style={{ width: "10%" }}
-                />
-              </div>
+              <p className="cd-schedule">{(item.schedule || '—').replace(/,?\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}/g, '')}</p>
+              <p className="cd-students">{item.students} Học viên</p>
               <button
                 className="cd-detail-btn"
                 onClick={() =>
@@ -141,7 +161,7 @@ const CourseDetail = () => {
                   })
                 }
               >
-                📖 Xem chi tiết
+                Xem chi tiết
               </button>
             </div>
           ))

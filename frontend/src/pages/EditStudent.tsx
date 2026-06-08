@@ -63,7 +63,6 @@ const [student, setStudent] = useState<any>(
             </div>
 
             <div onClick={() => navigate("/quan-ly-ket-qua")} className="sidebar-item">Quản lý kết quả học tập</div>
-            <div onClick={() => navigate("/cai-dat")} className="sidebar-item">Cài đặt</div>
             <div onClick={() => navigate("/")} className="sidebar-item">Đăng xuất</div>
           </div>
         </aside>

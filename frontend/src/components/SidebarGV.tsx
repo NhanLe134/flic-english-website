@@ -1,15 +1,15 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAvatar } from "../context/AvatarContext";
 import { useState, useEffect } from "react";
+import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut } from "react-icons/fi";
 import "./SidebarGV.css";
 
 const menuItems = [
-  { label: "Quản lý khóa học",       path: "/quan-ly-khoa-hoc" },
-  { label: "Thông tin cá nhân",       path: "/thong-tin-ca-nhan" },
-  { label: "Danh sách học viên",      path: "/danh-sach-hoc-vien" },
-  { label: "Quản lý kết quả học tập", path: "/quan-ly-ket-qua" },
-  { label: "Cài đặt",                 path: "/cai-dat" },
-  { label: "Đăng xuất",               path: "/" },
+  { label: "Quản lý khóa học",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
+  { label: "Thông tin cá nhân",       path: "/thong-tin-ca-nhan",   icon: <FiUser className="menu-icon" /> },
+  { label: "Danh sách học viên",      path: "/danh-sach-hoc-vien",  icon: <FiUsers className="menu-icon" /> },
+  { label: "Quản lý kết quả học tập", path: "/quan-ly-ket-qua",   icon: <FiAward className="menu-icon" /> },
+  { label: "Đăng xuất",               path: "/",                  icon: <FiLogOut className="menu-icon" /> },
 ];
 
 const getActiveMenu = (pathname: string) => {
@@ -52,9 +52,8 @@ const getActiveMenu = (pathname: string) => {
   ) return "/quan-ly-ket-qua";
 
   if (
-    pathname.startsWith("/cai-dat") ||
-    pathname.startsWith("/doi-mat-khau")
-  ) return "/cai-dat";
+    pathname.startsWith("/quan-ly-ban-nhap")
+  ) return "/quan-ly-ban-nhap";
 
   return pathname;
 };
@@ -91,6 +90,10 @@ const Sidebar = () => {
 
   return (
     <aside className="teacher-sidebar">
+      <div className="sidebar-logo">
+        <img src={import.meta.env.BASE_URL + "flic_logo_full.png"} alt="logo" />
+      </div>
+
       <div className="teacher-profile">
         <label className="avatar-wrapper sidebar-avatar-wrapper" title="Đổi ảnh">
           <input type="file" accept="image/*" onChange={handleUpload} hidden />
@@ -102,8 +105,8 @@ const Sidebar = () => {
         </label>
 
         <div className="teacher-info">
-          <h4>{teacherInfo?.HoTen || "Đang tải..."}</h4>
-          <p>{teacherInfo?.HocVi || ""}</p>
+          <h4 className="teacher-name">{teacherInfo?.HoTen || "Đang tải..."}</h4>
+          <span className="teacher-role">{teacherInfo?.HocVi || "Giảng viên"}</span>
         </div>
       </div>
 
@@ -120,7 +123,8 @@ const Sidebar = () => {
             }}
             className={activeMenu === item.path ? "active" : ""}
           >
-            {item.label}
+            {item.icon}
+            <span>{item.label}</span>
           </li>
         ))}
       </ul>
@@ -164,7 +168,7 @@ const Sidebar = () => {
                 onClick={handleLogout}
                 style={{
                   padding: "10px 24px", borderRadius: 8,
-                  border: "none", background: "#e87722",
+                  border: "none", background: "#F95800",
                   color: "#fff", cursor: "pointer", fontWeight: 600
                 }}
               >

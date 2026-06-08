@@ -60,7 +60,7 @@ const DanhSachBaiNop = () => {
         </div>
         <div className="dsbn-stat-card">
           <p>Chờ chấm</p>
-          <h2 style={{ color: "#f58220" }}>{choCham}</h2>
+          <h2 style={{ color: "#F95800" }}>{choCham}</h2>
         </div>
       </div>
 
@@ -105,7 +105,7 @@ const DanhSachBaiNop = () => {
                   </td>
                   <td>
                     {b.Diem !== null && b.Diem !== undefined
-                      ? <span style={{ color: "#f58220", fontWeight: 600 }}>{b.Diem}</span>
+                      ? <span style={{ color: "#F95800", fontWeight: 600 }}>{b.Diem}</span>
                       : "—"}
                   </td>
                   <td>

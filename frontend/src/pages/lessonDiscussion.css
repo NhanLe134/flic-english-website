@@ -24,15 +24,18 @@
   font-size: 14px;
 }
 
-.back-btn {
-  cursor: pointer;
+.discussion-back {
   font-size: 14px;
   color: #555;
+  cursor: pointer;
   white-space: nowrap;
-  margin-top: 6px;
+  display: inline-block;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
 }
 
-.back-btn:hover {
+.discussion-back:hover {
+  color: #F95800;
   text-decoration: underline;
 }
 
@@ -41,7 +44,7 @@
   background: white;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #eef2f6;
   margin-bottom: 28px;
 }
 
@@ -51,7 +54,7 @@
 }
 
 .lesson-table thead {
-  background: #fdf8f3;
+  background: #fafafa;
 }
 
 .lesson-table th {
@@ -59,7 +62,7 @@
   text-align: left;
   font-size: 14px;
   color: #555;
-  border-bottom: 2px solid #e0d4c3;
+  border-bottom: 2px solid #eef2f6;
 }
 
 .lesson-table td {
@@ -69,11 +72,11 @@
 }
 
 .lesson-table tr:not(:last-child) td {
-  border-bottom: 1px solid #f0e8de;
+  border-bottom: 1px solid #eef2f6;
 }
 
 .lesson-table tr:hover td {
-  background: #fdf8f3;
+  background: #fafafa;
 }
 
 /* STATUS */
@@ -112,7 +115,7 @@
 }
 
 .discuss-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
 }
@@ -123,12 +126,12 @@
 
 .detaill-btn {
   background: #fff4ec;
-  color: #f58220;
-  border: 2px solid #f58220;
+  color: #F95800;
+  border: 2px solid #F95800;
 }
 
 .detaill-btn:hover {
-  background: #f58220;
+  background: #F95800;
   color: white;
 }
 
@@ -154,7 +157,7 @@
   border-radius: 14px;
   padding: 20px;
   width: 460px;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #eef2f6;
 }
 
 .discussion-user {
@@ -183,7 +186,7 @@
 .reply-btn {
   background: transparent;
   border: none;
-  color: #f58220;
+  color: #F95800;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -201,10 +204,10 @@
 .reply-item {
   margin-top: 8px;
   padding: 10px 14px;
-  background: #fdf8f3;
+  background: #f8fafc;
   border-radius: 8px;
   font-size: 14px;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #eef2f6;
   color: #444;
 }
 
@@ -219,18 +222,18 @@
   flex: 1;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid #e0d4c3;
-  background: #fdf8f3;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
   outline: none;
   font-size: 14px;
 }
 
 .reply-box input:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .send-btn {
-  background: #f58220;
+  background: #F95800;
   border: none;
   color: white;
   width: 42px;

@@ -67,7 +67,7 @@
 }
 
 .dsbn-search:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .dsbn-table-container {
@@ -112,7 +112,7 @@
 
 .status-pending {
   background: #fff4ec;
-  color: #f58220;
+  color: #F95800;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
@@ -120,7 +120,7 @@
 }
 
 .dsbn-view-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   padding: 8px 16px;

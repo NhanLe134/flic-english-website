@@ -131,7 +131,7 @@ hr {
 }
 
 .avg-score {
-  color: #f58220;
+  color: #F95800;
 }
 
 .attend-score {
@@ -172,7 +172,7 @@ hr {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #f58220;
+  background: #F95800;
   color: white;
   display: flex;
   align-items: center;
@@ -220,7 +220,7 @@ hr {
 
 .save-btn {
   margin-top: 24px;
-  background: #f58220;
+  background: #F95800;
   border: none;
   color: white;
   padding: 12px 32px;

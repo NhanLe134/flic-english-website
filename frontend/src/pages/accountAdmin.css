@@ -5,10 +5,12 @@
 }
 
 .account-page h1 {
-  font-family: 'Inter', "Segoe UI", Arial, sans-serif; /* Đổi kiểu chữ tiêu đề thành Inter */
+  font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+  /* Đổi kiểu chữ tiêu đề thành Inter */
   font-size: 26px;
   font-weight: 700;
-  color: #000080; /* Màu xanh đen */
+  color: #000080;
+  /* Màu xanh đen */
   margin-top: 0;
   margin-bottom: 6px;
   letter-spacing: -0.2px;
@@ -52,11 +54,13 @@
 }
 
 .search-filter-group select {
-  padding: 11px 44px 11px 20px; /* Symmetrical 20px left padding, 44px right padding for arrow spacing */
+  padding: 11px 44px 11px 20px;
+  /* Symmetrical 20px left padding, 44px right padding for arrow spacing */
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
-  background-position: right 20px center; /* Symmetrical 20px right margin for the chevron */
+  background-position: right 20px center;
+  /* Symmetrical 20px right margin for the chevron */
   background-size: 14px;
   appearance: none;
   -webkit-appearance: none;
@@ -76,7 +80,8 @@
 }
 
 .add-btn {
-  background: #F95800; /* Màu cam chủ đạo */
+  background: #F95800;
+  /* Màu cam chủ đạo */
   color: white;
   border: none;
   padding: 11px 22px;
@@ -128,7 +133,8 @@
 .box h3 {
   font-size: 28px;
   font-weight: 700;
-  color: #000080; /* Màu xanh đen */
+  color: #000080;
+  /* Màu xanh đen */
   margin: 0;
 }
 
@@ -142,37 +148,50 @@
   margin-top: 12px;
 }
 
-table {
+.accounts-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
 }
 
-th {
-  background: #f8fafc;
-  padding: 12px 16px; /* Giảm padding tiêu đề bảng */
-  font-weight: 600;
-  color: #475569;
-  font-size: 11px; /* Giảm kích thước chữ tiêu đề của bảng */
-  border-bottom: 1px solid #e2e8f0;
+.accounts-table th {
+  background-color: #000080;
+  padding: 16px 20px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 12px;
+  border-bottom: 1px solid #cbd5e1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-td {
-  padding: 12px 16px; /* Giảm padding ô dữ liệu */
+.accounts-table td {
+  padding: 16px 20px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   font-size: 14px;
   vertical-align: middle;
 }
 
-tr:last-child td {
+.accounts-table tr:last-child td {
   border-bottom: none;
 }
 
-tr:hover td {
-  background: #f8fafc;
+.accounts-table tbody tr {
+  cursor: pointer;
+}
+
+/* Zebra alternating rows */
+.accounts-table tbody tr:nth-child(even) td {
+  background-color: #f4f7fb !important;
+}
+
+.accounts-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
+}
+
+.accounts-table tbody tr:hover td {
+  background-color: #e8f0f8 !important;
 }
 
 /* ROLE BADGE */
@@ -182,7 +201,8 @@ tr:hover td {
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
-  white-space: nowrap; /* Chặn xuống dòng cột vai trò */
+  white-space: nowrap;
+  /* Chặn xuống dòng cột vai trò */
 }
 
 /* STATUS BADGE */
@@ -192,7 +212,8 @@ tr:hover td {
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
-  white-space: nowrap; /* Chặn xuống dòng cột trạng thái */
+  white-space: nowrap;
+  /* Chặn xuống dòng cột trạng thái */
 }
 
 .status-badge.active {
@@ -229,56 +250,62 @@ tr:hover td {
 }
 
 .btn-edit {
-  color: #F95800; /* Màu cam chủ đạo */
-  border-color: rgba(249, 88, 0, 0.2);
+  color: #000080;
+  background-color: rgba(0, 0, 128, 0.06);
+  border-color: transparent;
 }
 
 .btn-edit:hover {
-  background: #F95800;
-  color: white;
-  border-color: #F95800;
+  background-color: rgba(0, 0, 128, 0.12);
+  color: #000080;
+  border-color: rgba(0, 0, 128, 0.15);
 }
 
 .btn-lock {
-  color: #e28743; /* Cam đất/vàng đậm cảnh báo */
-  border-color: rgba(226, 135, 67, 0.2);
+  color: #d97706;
+  background-color: rgba(217, 119, 6, 0.06);
+  border-color: transparent;
 }
 
 .btn-lock:hover {
-  background: #e28743;
-  color: white;
-  border-color: #e28743;
+  background-color: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.15);
 }
 
 .btn-unlock {
-  color: #16a34a; /* Xanh lá hoạt động */
-  border-color: rgba(22, 163, 74, 0.2);
+  color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.06);
+  border-color: transparent;
 }
 
 .btn-unlock:hover {
-  background: #16a34a;
-  color: white;
-  border-color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.15);
 }
 
 .btn-delete {
-  color: #ef4444; /* Đỏ hủy */
-  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.06);
+  border-color: transparent;
 }
 
 .btn-delete:hover {
-  background: #ef4444;
-  color: white;
-  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.15);
 }
 
 /* MODALS */
 .admin-modal-overlay {
   position: fixed;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 23, 42, 0.6); /* Slate backdrop */
+  background: rgba(15, 23, 42, 0.6);
+  /* Slate backdrop */
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
@@ -290,12 +317,14 @@ tr:hover td {
   background: white;
   padding: 32px;
   border-radius: 20px;
-  width: 460px;
+  width: 600px;
+  max-width: 90vw;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid #f1f5f9;
   animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
-  text-align: left; /* Enforce left-alignment inside modal */
+  text-align: left;
+  /* Enforce left-alignment inside modal */
 }
 
 @keyframes modalFadeIn {
@@ -303,6 +332,7 @@ tr:hover td {
     opacity: 0;
     transform: scale(0.96) translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -370,11 +400,13 @@ tr:hover td {
 
 .admin-modal-overlay .modal select {
   width: 100%;
-  padding: 11px 44px 11px 20px; /* Symmetrical 20px left padding, 44px right padding for arrow spacing */
+  padding: 11px 44px 11px 20px;
+  /* Symmetrical 20px left padding, 44px right padding for arrow spacing */
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
-  background-position: right 20px center; /* Symmetrical 20px right margin for the chevron */
+  background-position: right 20px center;
+  /* Symmetrical 20px right margin for the chevron */
   background-size: 14px;
   appearance: none;
   -webkit-appearance: none;
@@ -497,8 +529,10 @@ tr:hover td {
   border-radius: 4px;
   border: 1.5px solid #cbd5e1;
   cursor: pointer;
-  accent-color: #F95800; /* Use orange color for checkboxes */
-  margin: 0 !important; /* Reset browser margin to align vertically */
+  accent-color: #F95800;
+  /* Use orange color for checkboxes */
+  margin: 0 !important;
+  /* Reset browser margin to align vertically */
 }
 
 .admin-modal-overlay .modal .permission-info-text {

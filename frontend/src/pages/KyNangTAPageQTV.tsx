@@ -146,11 +146,11 @@ const buildContentFromExtra = (cat: string, ex: FormExtra): string => {
 }
 
 
-const sec: React.CSSProperties  = { fontSize: 13, fontWeight: 700, color: '#e87722', margin: '18px 0 8px', paddingBottom: 6, borderBottom: '1.5px solid #fde8d4' }
+const sec: React.CSSProperties  = { fontSize: 13, fontWeight: 700, color: '#F95800', margin: '18px 0 8px', paddingBottom: 6, borderBottom: '1.5px solid #fde8d4' }
 const inp: React.CSSProperties  = { width: '100%', padding: '8px 11px', border: '1.5px solid #e0d8cc', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }
 const rowStyle: React.CSSProperties  = { display: 'grid', gridTemplateColumns: '1fr 1fr 32px', gap: 8, marginBottom: 8, alignItems: 'center' }
 const row1Style: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 32px', gap: 8, marginBottom: 8, alignItems: 'center' }
-const addRowBtn: React.CSSProperties = { background: 'none', border: '1.5px dashed #e87722', color: '#e87722', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit', marginBottom: 4 }
+const addRowBtn: React.CSSProperties = { background: 'none', border: '1.5px dashed #F95800', color: '#F95800', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit', marginBottom: 4 }
 const rmBtn: React.CSSProperties    = { background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 14, padding: '3px 6px', borderRadius: 5 }
 const qBlock: React.CSSProperties   = { background: '#fdf8f3', border: '1px solid #f0e4d4', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }
 
@@ -326,7 +326,7 @@ const KyNangPage = () => {
         {isEdit && selectedLesson?.FileUrl && (
           <div style={{ marginBottom: 10, padding: '8px 12px', background: '#f4f9ff', borderRadius: 8, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>📄</span><span style={{ color: '#1565c0' }}>File hiện tại: {selectedLesson.FileUrl.split('/').pop()}</span>
-            <a href={`${API}${selectedLesson.FileUrl}`} target="_blank" rel="noreferrer" style={{ color: '#e87722', marginLeft: 'auto' }}>Xem</a>
+            <a href={`${API}${selectedLesson.FileUrl}`} target="_blank" rel="noreferrer" style={{ color: '#F95800', marginLeft: 'auto' }}>Xem</a>
           </div>
         )}
         <p style={{ fontSize: 12.5, color: '#999', margin: '0 0 10px' }}>Định dạng: <strong>{accept}</strong></p>
@@ -377,7 +377,7 @@ const KyNangPage = () => {
         </div>
         <div style={sec}>📋 Danh sách từ vựng</div>
         <div style={{ background: '#fff8f0', border: '1.5px solid #fde8d4', borderRadius: 10, padding: '12px 16px', marginBottom: 14 }}>
-          <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#e87722', fontSize: 13 }}>📌 Lưu ý</p>
+          <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#F95800', fontSize: 13 }}>📌 Lưu ý</p>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#666', lineHeight: 1.9 }}>
             <li>Sinh viên sẽ thấy bảng từ vựng 2 cột: <strong>Từ vựng</strong> | <strong>Nghĩa tiếng Việt</strong></li>
             <li>Phần <strong>Ví dụ sử dụng</strong> hiển thị bên dưới bảng — có thể để trống (tự tạo từ từ + nghĩa)</li>
@@ -466,12 +466,12 @@ const KyNangPage = () => {
         <div className={styles.form}><div className={styles.full}><label>Yêu cầu đề bài <span style={{ color: 'red' }}>*</span></label><input style={inp} placeholder="VD: Luyện viết thư xin việc chính thức bằng tiếng Anh" value={ex.writingPrompt} onChange={e => setEx(ex2 => ({ ...ex2, writingPrompt: e.target.value }))} /></div></div>
         <div style={sec}>🔀 Các câu luyện tập sắp xếp (Drag &amp; Drop)</div>
         <div style={{ background: '#fff8f0', border: '1.5px solid #fde8d4', borderRadius: 10, padding: '12px 16px', marginBottom: 14 }}>
-          <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#e87722', fontSize: 13 }}>📌 Cách hoạt động</p>
+          <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#F95800', fontSize: 13 }}>📌 Cách hoạt động</p>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#666', lineHeight: 1.9 }}>
             <li>Nhập từng câu theo <strong>đúng thứ tự</strong> tạo thành đoạn văn hoàn chỉnh</li>
             <li>Hệ thống sẽ <strong>tự xáo trộn</strong> thứ tự khi hiển thị cho sinh viên</li>
             <li>Sinh viên kéo thả sắp xếp lại → nộp bài → nhận điểm tự động</li>
-            <li><span style={{ color: '#e87722', fontWeight: 700 }}>Thứ tự nhập = đáp án đúng</span></li>
+            <li><span style={{ color: '#F95800', fontWeight: 700 }}>Thứ tự nhập = đáp án đúng</span></li>
           </ul>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '32px 1fr 32px', gap: 8, marginBottom: 6, fontSize: 11.5, color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -479,7 +479,7 @@ const KyNangPage = () => {
         </div>
         {ex.writingSentences.map((sent, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr 32px', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#e87722', borderRadius: 6, textAlign: 'center', padding: '9px 0', lineHeight: 1 }}>{i + 1}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#F95800', borderRadius: 6, textAlign: 'center', padding: '9px 0', lineHeight: 1 }}>{i + 1}</div>
             <textarea style={{ ...inp, height: 58, resize: 'vertical', lineHeight: 1.5 }} placeholder={`Câu ${i + 1}`} value={sent} onChange={e => updSent(i, e.target.value)} />
             <button style={{ ...rmBtn, marginTop: 6 }} onClick={() => setEx(e => ({ ...e, writingSentences: e.writingSentences.filter((_, j) => j !== i) }))}>✕</button>
           </div>
@@ -538,7 +538,7 @@ const KyNangPage = () => {
         </div>
         <div style={sec}>✏️ Bài tập trắc nghiệm điền vào chỗ trống</div>
         <div style={{ background: '#fff8f0', border: '1.5px solid #fde8d4', borderRadius: 10, padding: '12px 16px', marginBottom: 14 }}>
-          <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#e87722', fontSize: 13 }}>📌 Cách nhập</p>
+          <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#F95800', fontSize: 13 }}>📌 Cách nhập</p>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: '#666', lineHeight: 1.9 }}>
             <li>Câu hỏi: dùng <code style={{ background: '#fde8d4', padding: '1px 5px', borderRadius: 4 }}>___</code> để đánh dấu chỗ trống</li>
             <li>Đáp án: nhập từ/cụm từ đúng điền vào chỗ trống</li>
@@ -550,7 +550,7 @@ const KyNangPage = () => {
         </div>
         {ex.grammarExRows.map((row, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr 140px 32px', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#e87722', borderRadius: 6, textAlign: 'center', padding: '9px 0', lineHeight: 1 }}>{i + 1}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#F95800', borderRadius: 6, textAlign: 'center', padding: '9px 0', lineHeight: 1 }}>{i + 1}</div>
             <input style={inp} placeholder="VD: She ___ (work) every day." value={row.question} onChange={e => uGrEx(i, 'question', e.target.value)} />
             <input style={{ ...inp, borderColor: '#86efac', background: '#f0fdf4' }} placeholder="VD: works" value={row.answer} onChange={e => uGrEx(i, 'answer', e.target.value)} />
             <button style={{ ...rmBtn, marginTop: 6 }} onClick={() => setEx(e => ({ ...e, grammarExRows: e.grammarExRows.filter((_, j) => j !== i) }))}>✕</button>
@@ -591,7 +591,7 @@ const KyNangPage = () => {
         {ex.vocab.map((v, i) => (<div key={i} style={rowStyle}><input style={inp} placeholder="VD: Biodiversity" value={v.word} onChange={e => uVocab(i, 'word', e.target.value)} /><input style={inp} placeholder="Nghĩa" value={v.meaning} onChange={e => uVocab(i, 'meaning', e.target.value)} /><button style={rmBtn} onClick={() => setEx(e => ({ ...e, vocab: e.vocab.filter((_, j) => j !== i) }))}>✕</button></div>))}
         <button style={addRowBtn} onClick={() => setEx(e => ({ ...e, vocab: [...e.vocab, emptyVocabRow()] }))}>+ Thêm từ vựng</button>
         <div style={sec}>❓ Câu hỏi &amp; Đáp án</div>
-        {ex.readingQuestions.map((q, i) => (<div key={i} style={qBlock}><div style={{ fontSize: 12, fontWeight: 700, color: '#e87722', marginBottom: 8 }}>Câu {i + 1}</div><div className={styles.form} style={{ marginBottom: 0 }}><div className={styles.full}><label>Câu hỏi</label><input style={inp} value={q.text} onChange={e => uRQ(i, 'text', e.target.value)} /></div><div className={styles.full}><label>Đáp án</label><input style={{ ...inp, borderColor: '#86efac', background: '#f0fdf4' }} value={q.answer} onChange={e => uRQ(i, 'answer', e.target.value)} /></div></div><button style={{ ...rmBtn, marginTop: 8, fontSize: 12, color: '#ef4444' }} onClick={() => setEx(e => ({ ...e, readingQuestions: e.readingQuestions.filter((_, j) => j !== i) }))}>✕ Xóa</button></div>))}
+        {ex.readingQuestions.map((q, i) => (<div key={i} style={qBlock}><div style={{ fontSize: 12, fontWeight: 700, color: '#F95800', marginBottom: 8 }}>Câu {i + 1}</div><div className={styles.form} style={{ marginBottom: 0 }}><div className={styles.full}><label>Câu hỏi</label><input style={inp} value={q.text} onChange={e => uRQ(i, 'text', e.target.value)} /></div><div className={styles.full}><label>Đáp án</label><input style={{ ...inp, borderColor: '#86efac', background: '#f0fdf4' }} value={q.answer} onChange={e => uRQ(i, 'answer', e.target.value)} /></div></div><button style={{ ...rmBtn, marginTop: 8, fontSize: 12, color: '#ef4444' }} onClick={() => setEx(e => ({ ...e, readingQuestions: e.readingQuestions.filter((_, j) => j !== i) }))}>✕ Xóa</button></div>))}
         <button style={addRowBtn} onClick={() => setEx(e => ({ ...e, readingQuestions: [...e.readingQuestions, { text: '', answer: '' }] }))}>+ Thêm câu hỏi</button>
         {renderUploadSection(isEdit)}
       </>
@@ -603,7 +603,7 @@ const KyNangPage = () => {
         {ex.objectives.map((o, i) => (<div key={i} style={row1Style}><input style={inp} placeholder="VD: Hiểu hội thoại mua sắm cơ bản" value={o} onChange={e => uObj(i, e.target.value)} /><button style={rmBtn} onClick={() => setEx(e => ({ ...e, objectives: e.objectives.filter((_, j) => j !== i) }))}>✕</button></div>))}
         <button style={addRowBtn} onClick={() => setEx(e => ({ ...e, objectives: [...e.objectives, ''] }))}>+ Thêm mục tiêu</button>
         <div style={sec}>❓ Câu hỏi</div>
-        {ex.listenQuestions.map((q, i) => (<div key={i} style={qBlock}><div style={{ fontSize: 12, fontWeight: 700, color: '#e87722', marginBottom: 8 }}>Câu {i + 1}</div><div className={styles.form} style={{ marginBottom: 0 }}><div className={styles.full}><label>Câu hỏi</label><input style={inp} value={q.text} onChange={e => uLQ(i, 'text', e.target.value)} /></div><div className={styles.full}><label>Đáp án (phân cách dấu phẩy)</label><input style={inp} value={q.options} onChange={e => uLQ(i, 'options', e.target.value)} /></div><div><label>Đáp án đúng</label><input style={inp} value={q.answer} onChange={e => uLQ(i, 'answer', e.target.value)} /></div></div><button style={{ ...rmBtn, marginTop: 8, fontSize: 12, color: '#ef4444' }} onClick={() => setEx(e => ({ ...e, listenQuestions: e.listenQuestions.filter((_, j) => j !== i) }))}>✕ Xóa</button></div>))}
+        {ex.listenQuestions.map((q, i) => (<div key={i} style={qBlock}><div style={{ fontSize: 12, fontWeight: 700, color: '#F95800', marginBottom: 8 }}>Câu {i + 1}</div><div className={styles.form} style={{ marginBottom: 0 }}><div className={styles.full}><label>Câu hỏi</label><input style={inp} value={q.text} onChange={e => uLQ(i, 'text', e.target.value)} /></div><div className={styles.full}><label>Đáp án (phân cách dấu phẩy)</label><input style={inp} value={q.options} onChange={e => uLQ(i, 'options', e.target.value)} /></div><div><label>Đáp án đúng</label><input style={inp} value={q.answer} onChange={e => uLQ(i, 'answer', e.target.value)} /></div></div><button style={{ ...rmBtn, marginTop: 8, fontSize: 12, color: '#ef4444' }} onClick={() => setEx(e => ({ ...e, listenQuestions: e.listenQuestions.filter((_, j) => j !== i) }))}>✕ Xóa</button></div>))}
         <button style={addRowBtn} onClick={() => setEx(e => ({ ...e, listenQuestions: [...e.listenQuestions, { text: '', options: '', answer: '' }] }))}>+ Thêm câu hỏi</button>
         {renderUploadSection(isEdit)}
       </>
@@ -618,7 +618,7 @@ const KyNangPage = () => {
           <div className={styles.full}><label>Gợi ý phát âm</label><input style={inp} value={ex.speakingTips} onChange={e => setEx(ex2 => ({ ...ex2, speakingTips: e.target.value }))} /></div>
         </div>
         <div style={sec}>🔊 Câu luyện nói</div>
-        {ex.speakingPhrases.map((ph, i) => (<div key={i} style={{ background: '#fdf8f3', border: '1px solid #f0e4d4', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: '#e87722' }}>Câu {i + 1}</span><button style={{ ...rmBtn, color: '#ef4444', fontSize: 12 }} onClick={() => setEx(e => ({ ...e, speakingPhrases: e.speakingPhrases.filter((_, j) => j !== i) }))}>✕ Xóa</button></div><div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><div><label style={{ fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>🇬🇧 Tiếng Anh</label><input style={inp} value={ph.text} onChange={e => uPhrase(i, 'text', e.target.value)} /></div><div><label style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', display: 'block', marginBottom: 4 }}>🔡 IPA</label><input style={{ ...inp, fontStyle: 'italic', color: '#2563eb' }} value={ph.phonetic} onChange={e => uPhrase(i, 'phonetic', e.target.value)} /></div><div><label style={{ fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>🇻🇳 Dịch nghĩa</label><input style={inp} value={ph.translation} onChange={e => uPhrase(i, 'translation', e.target.value)} /></div></div></div>))}
+        {ex.speakingPhrases.map((ph, i) => (<div key={i} style={{ background: '#fdf8f3', border: '1px solid #f0e4d4', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: '#F95800' }}>Câu {i + 1}</span><button style={{ ...rmBtn, color: '#ef4444', fontSize: 12 }} onClick={() => setEx(e => ({ ...e, speakingPhrases: e.speakingPhrases.filter((_, j) => j !== i) }))}>✕ Xóa</button></div><div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}><div><label style={{ fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>🇬🇧 Tiếng Anh</label><input style={inp} value={ph.text} onChange={e => uPhrase(i, 'text', e.target.value)} /></div><div><label style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', display: 'block', marginBottom: 4 }}>🔡 IPA</label><input style={{ ...inp, fontStyle: 'italic', color: '#2563eb' }} value={ph.phonetic} onChange={e => uPhrase(i, 'phonetic', e.target.value)} /></div><div><label style={{ fontSize: 12, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>🇻🇳 Dịch nghĩa</label><input style={inp} value={ph.translation} onChange={e => uPhrase(i, 'translation', e.target.value)} /></div></div></div>))}
         <button style={addRowBtn} onClick={() => setEx(ex2 => ({ ...ex2, speakingPhrases: [...ex2.speakingPhrases, emptyPhrase()] }))}>+ Thêm câu luyện nói</button>
         {renderUploadSection(isEdit)}
       </>
@@ -627,12 +627,12 @@ const KyNangPage = () => {
   }
 
   const renderViewVocabulary = (parsed: any) => {
-    const vSec: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#e87722', margin: '16px 0 8px', paddingBottom: 5, borderBottom: '1.5px solid #fde8d4' }
+    const vSec: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#F95800', margin: '16px 0 8px', paddingBottom: 5, borderBottom: '1.5px solid #fde8d4' }
     const vocabList: VocabRow[] = Array.isArray(parsed.vocabList) ? parsed.vocabList : []
     const autoEx = (w: string, m: string) => `The word "${w}" means "${m}" in Vietnamese.`
     return (
       <>
-        {parsed.theme && (<div style={{ display: 'inline-block', padding: '4px 14px', background: '#fff3e0', color: '#e87722', border: '1px solid #fde8d4', borderRadius: 20, fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{parsed.theme}</div>)}
+        {parsed.theme && (<div style={{ display: 'inline-block', padding: '4px 14px', background: '#fff3e0', color: '#F95800', border: '1px solid #fde8d4', borderRadius: 20, fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{parsed.theme}</div>)}
         {vocabList.length > 0 && (
           <>
             <div style={{ border: '1px solid #e0d8cc', borderRadius: 10, overflow: 'hidden', marginBottom: 16 }}>
@@ -640,7 +640,7 @@ const KyNangPage = () => {
               {vocabList.map((v, i) => (<div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '10px 16px', fontSize: 13, borderBottom: i < vocabList.length - 1 ? '1px solid #f0e8de' : 'none', background: i % 2 === 0 ? '#fff' : '#fdf8f3' }}><span style={{ fontWeight: 500 }}>{i + 1}. {v.word}</span><span style={{ color: '#555' }}>{v.meaning}</span></div>))}
             </div>
             {vocabList.some(v => v.word && v.meaning) && (
-              <><div style={vSec}>💡 Ví dụ sử dụng</div>{vocabList.filter(v => v.word && v.meaning).map((v, i) => (<div key={i} style={{ marginBottom: 10 }}><div style={{ fontWeight: 700, fontSize: 13, fontStyle: 'italic', marginBottom: 3 }}>{v.word}</div><div style={{ fontSize: 13, color: '#555', display: 'flex', alignItems: 'flex-start', gap: 6 }}><span style={{ color: '#e87722', flexShrink: 0 }}>➡</span><span>{v.example || autoEx(v.word, v.meaning)}</span></div></div>))}</>
+              <><div style={vSec}>💡 Ví dụ sử dụng</div>{vocabList.filter(v => v.word && v.meaning).map((v, i) => (<div key={i} style={{ marginBottom: 10 }}><div style={{ fontWeight: 700, fontSize: 13, fontStyle: 'italic', marginBottom: 3 }}>{v.word}</div><div style={{ fontSize: 13, color: '#555', display: 'flex', alignItems: 'flex-start', gap: 6 }}><span style={{ color: '#F95800', flexShrink: 0 }}>➡</span><span>{v.example || autoEx(v.word, v.meaning)}</span></div></div>))}</>
             )}
             <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 9, padding: '10px 14px', marginTop: 8, fontSize: 12.5 }}>
               <span style={{ fontWeight: 700, color: '#16a34a' }}>🎯 Bài luyện tập: </span>
@@ -653,7 +653,7 @@ const KyNangPage = () => {
   }
 
   const renderViewWriting = (parsed: any) => {
-    const vSec: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#e87722', margin: '16px 0 8px', paddingBottom: 5, borderBottom: '1.5px solid #fde8d4' }
+    const vSec: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#F95800', margin: '16px 0 8px', paddingBottom: 5, borderBottom: '1.5px solid #fde8d4' }
     const vBox: React.CSSProperties = { background: '#fdf8f3', border: '1px solid #f0e4d4', borderRadius: 10, padding: '12px 14px', marginBottom: 8, fontSize: 13 }
     const vTag: React.CSSProperties = { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, marginRight: 6 }
     return (
@@ -662,7 +662,7 @@ const KyNangPage = () => {
         {Array.isArray(parsed.sentences) && parsed.sentences.length > 0 && (
           <><div style={vSec}>🔀 Câu luyện tập ({parsed.sentences.length} câu)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {parsed.sentences.map((s: string, i: number) => (<div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 8, padding: '9px 12px', fontSize: 13 }}><span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#e87722', borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>{i + 1}</span><span style={{ lineHeight: 1.5 }}>{s}</span></div>))}
+              {parsed.sentences.map((s: string, i: number) => (<div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 8, padding: '9px 12px', fontSize: 13 }}><span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#F95800', borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>{i + 1}</span><span style={{ lineHeight: 1.5 }}>{s}</span></div>))}
             </div>
           </>
         )}
@@ -715,7 +715,7 @@ const KyNangPage = () => {
                     <td>{item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : '—'}</td>
                     <td><span style={{ background: statusColor[item.TrangThai]?.bg ?? '#eee', color: statusColor[item.TrangThai]?.color ?? '#333', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500 }}>{item.TrangThai}</span></td>
                     <td>
-                      <button style={{ marginRight: 6, padding: '4px 10px', borderRadius: 6, border: '1px solid #e87722', background: '#fff', color: '#e87722', cursor: 'pointer', fontSize: 12 }} onClick={() => { setSelectedLesson(item); setShowViewModal(true) }}>Xem</button>
+                      <button style={{ marginRight: 6, padding: '4px 10px', borderRadius: 6, border: '1px solid #F95800', background: '#fff', color: '#F95800', cursor: 'pointer', fontSize: 12 }} onClick={() => { setSelectedLesson(item); setShowViewModal(true) }}>Xem</button>
                       <button style={{ marginRight: 6, padding: '4px 10px', borderRadius: 6, border: '1px solid #3b82f6', background: '#fff', color: '#3b82f6', cursor: 'pointer', fontSize: 12 }} onClick={() => openEdit(item)}>Sửa</button>
                       <button style={{ marginRight: 6, padding: '4px 10px', borderRadius: 6, border: 'none', background: item.TrangThai === 'Hoạt động' ? '#f3f4f6' : '#dcfce7', color: item.TrangThai === 'Hoạt động' ? '#6b7280' : '#16a34a', cursor: 'pointer', fontSize: 12 }} onClick={() => handleToggleStatus(item)}>{item.TrangThai === 'Hoạt động' ? 'Ẩn' : 'Hiện'}</button>
                       <button style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #ef4444', background: '#fff', color: '#ef4444', cursor: 'pointer', fontSize: 12 }}
@@ -756,16 +756,16 @@ const KyNangPage = () => {
       {showViewModal && selectedLesson && (() => {
         const parsed = (() => { try { return JSON.parse(selectedLesson.NoiDung || '{}') } catch { return {} } })()
         const ky = selectedLesson.KyNang
-        const vSec: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#e87722', margin: '16px 0 8px', paddingBottom: 5, borderBottom: '1.5px solid #fde8d4' }
+        const vSec: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#F95800', margin: '16px 0 8px', paddingBottom: 5, borderBottom: '1.5px solid #fde8d4' }
         const vTag: React.CSSProperties = { display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, marginRight: 6, marginBottom: 4 }
         const vBox: React.CSSProperties = { background: '#fdf8f3', border: '1px solid #f0e4d4', borderRadius: 10, padding: '12px 14px', marginBottom: 8, fontSize: 13 }
         const renderContent = () => {
           if (ky === 'Writing')    return renderViewWriting(parsed)
           if (ky === 'Vocabulary') return renderViewVocabulary(parsed)
-          if (ky === 'Reading') return (<>{parsed.passage && (<><div style={vSec}>📖 Bài đọc</div><div style={{ ...vBox, whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{parsed.passage}</div></>)}{Array.isArray(parsed.vocab) && parsed.vocab.length > 0 && (<><div style={vSec}>📝 Từ vựng</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{parsed.vocab.map((v: any, i: number) => (<div key={i} style={{ background: '#fff', border: '1px solid #e0d8cc', borderRadius: 8, padding: '6px 12px', fontSize: 13 }}><strong>{v.word}</strong>{v.meaning ? <span style={{ color: '#888', marginLeft: 6 }}>— {v.meaning}</span> : null}</div>))}</div></>)}{Array.isArray(parsed.questions) && parsed.questions.length > 0 && (<><div style={vSec}>❓ Câu hỏi</div>{parsed.questions.map((q: any, i: number) => (<div key={i} style={vBox}><span style={{ fontWeight: 700, color: '#e87722' }}>Câu {i + 1}. </span>{q.text || q}{q.answer && <div style={{ marginTop: 6, color: '#16a34a', fontSize: 12.5 }}>✅ {q.answer}</div>}</div>))}</>)}</>)
-          if (ky === 'Listening') return (<>{Array.isArray(parsed.objectives) && parsed.objectives.length > 0 && (<><div style={vSec}>🎯 Mục tiêu</div><ul style={{ margin: '0 0 8px', paddingLeft: 20 }}>{parsed.objectives.map((o: string, i: number) => <li key={i} style={{ fontSize: 13, marginBottom: 4 }}>{o}</li>)}</ul></>)}{Array.isArray(parsed.questions) && parsed.questions.length > 0 && (<><div style={vSec}>❓ Câu hỏi</div>{parsed.questions.map((q: any, i: number) => (<div key={i} style={vBox}><div style={{ fontWeight: 700, color: '#e87722', marginBottom: 4 }}>Câu {i + 1}. {q.text || q}</div>{q.options && <div style={{ color: '#555', fontSize: 12.5, marginBottom: 4 }}>Lựa chọn: {q.options}</div>}{q.answer && <div style={{ color: '#16a34a', fontSize: 12.5 }}>✅ {q.answer}</div>}</div>))}</>)}</>)
-          if (ky === 'Speaking') return (<><div style={vSec}>🎤 Thông tin</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>{parsed.topics && <span style={{ ...vTag, background: '#fff3e0', color: '#e87722' }}>📌 {parsed.topics}</span>}{parsed.level && <span style={{ ...vTag, background: '#dbeafe', color: '#1d4ed8' }}>⚡ {parsed.level}</span>}</div>{parsed.tips && <div style={{ ...vBox, color: '#555' }}>💡 {parsed.tips}</div>}{Array.isArray(parsed.phrases) && parsed.phrases.length > 0 && (<><div style={vSec}>🔊 Câu luyện nói</div>{parsed.phrases.map((p: any, i: number) => (<div key={i} style={vBox}><div style={{ fontWeight: 700, marginBottom: 4 }}>🇬🇧 {p.text}</div>{p.phonetic && <div style={{ color: '#2563eb', fontStyle: 'italic', fontSize: 12.5, marginBottom: 2 }}>/{p.phonetic}/</div>}{p.translation && <div style={{ color: '#555', fontSize: 12.5 }}>🇻🇳 {p.translation}</div>}</div>))}</>)}</>)
-          if (ky === 'Grammar') return (<>{parsed.subtitle && (<><div style={vSec}>📐 Tiêu đề phụ</div><div style={{ ...vBox, fontWeight: 600 }}>{parsed.subtitle}</div></>)}{parsed.explanation && (<><div style={vSec}>📖 Lý thuyết</div><div style={{ ...vBox, whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{parsed.explanation}</div></>)}{parsed.exercises && (<><div style={vSec}>✏️ Bài tập ({parsed.exercises.split('\n').filter((l: string) => l.trim()).length} câu)</div><div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{parsed.exercises.split('\n').filter((l: string) => l.trim()).map((line: string, i: number) => { const match = line.match(/^\d+\.\s(.+?)\s*→\s*(.+)$/); return (<div key={i} style={{ ...vBox, margin: 0, display: 'flex', alignItems: 'flex-start', gap: 8 }}><span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#e87722', borderRadius: 4, padding: '2px 7px', flexShrink: 0 }}>{i + 1}</span><div><span>{match ? match[1] : line}</span>{match && <span style={{ marginLeft: 8, color: '#16a34a', fontWeight: 600 }}>→ {match[2]}</span>}</div></div>) })}</div></>)}</>)
+          if (ky === 'Reading') return (<>{parsed.passage && (<><div style={vSec}>📖 Bài đọc</div><div style={{ ...vBox, whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{parsed.passage}</div></>)}{Array.isArray(parsed.vocab) && parsed.vocab.length > 0 && (<><div style={vSec}>📝 Từ vựng</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{parsed.vocab.map((v: any, i: number) => (<div key={i} style={{ background: '#fff', border: '1px solid #e0d8cc', borderRadius: 8, padding: '6px 12px', fontSize: 13 }}><strong>{v.word}</strong>{v.meaning ? <span style={{ color: '#888', marginLeft: 6 }}>— {v.meaning}</span> : null}</div>))}</div></>)}{Array.isArray(parsed.questions) && parsed.questions.length > 0 && (<><div style={vSec}>❓ Câu hỏi</div>{parsed.questions.map((q: any, i: number) => (<div key={i} style={vBox}><span style={{ fontWeight: 700, color: '#F95800' }}>Câu {i + 1}. </span>{q.text || q}{q.answer && <div style={{ marginTop: 6, color: '#16a34a', fontSize: 12.5 }}>✅ {q.answer}</div>}</div>))}</>)}</>)
+          if (ky === 'Listening') return (<>{Array.isArray(parsed.objectives) && parsed.objectives.length > 0 && (<><div style={vSec}>🎯 Mục tiêu</div><ul style={{ margin: '0 0 8px', paddingLeft: 20 }}>{parsed.objectives.map((o: string, i: number) => <li key={i} style={{ fontSize: 13, marginBottom: 4 }}>{o}</li>)}</ul></>)}{Array.isArray(parsed.questions) && parsed.questions.length > 0 && (<><div style={vSec}>❓ Câu hỏi</div>{parsed.questions.map((q: any, i: number) => (<div key={i} style={vBox}><div style={{ fontWeight: 700, color: '#F95800', marginBottom: 4 }}>Câu {i + 1}. {q.text || q}</div>{q.options && <div style={{ color: '#555', fontSize: 12.5, marginBottom: 4 }}>Lựa chọn: {q.options}</div>}{q.answer && <div style={{ color: '#16a34a', fontSize: 12.5 }}>✅ {q.answer}</div>}</div>))}</>)}</>)
+          if (ky === 'Speaking') return (<><div style={vSec}>🎤 Thông tin</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>{parsed.topics && <span style={{ ...vTag, background: '#fff3e0', color: '#F95800' }}>📌 {parsed.topics}</span>}{parsed.level && <span style={{ ...vTag, background: '#dbeafe', color: '#1d4ed8' }}>⚡ {parsed.level}</span>}</div>{parsed.tips && <div style={{ ...vBox, color: '#555' }}>💡 {parsed.tips}</div>}{Array.isArray(parsed.phrases) && parsed.phrases.length > 0 && (<><div style={vSec}>🔊 Câu luyện nói</div>{parsed.phrases.map((p: any, i: number) => (<div key={i} style={vBox}><div style={{ fontWeight: 700, marginBottom: 4 }}>🇬🇧 {p.text}</div>{p.phonetic && <div style={{ color: '#2563eb', fontStyle: 'italic', fontSize: 12.5, marginBottom: 2 }}>/{p.phonetic}/</div>}{p.translation && <div style={{ color: '#555', fontSize: 12.5 }}>🇻🇳 {p.translation}</div>}</div>))}</>)}</>)
+          if (ky === 'Grammar') return (<>{parsed.subtitle && (<><div style={vSec}>📐 Tiêu đề phụ</div><div style={{ ...vBox, fontWeight: 600 }}>{parsed.subtitle}</div></>)}{parsed.explanation && (<><div style={vSec}>📖 Lý thuyết</div><div style={{ ...vBox, whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{parsed.explanation}</div></>)}{parsed.exercises && (<><div style={vSec}>✏️ Bài tập ({parsed.exercises.split('\n').filter((l: string) => l.trim()).length} câu)</div><div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{parsed.exercises.split('\n').filter((l: string) => l.trim()).map((line: string, i: number) => { const match = line.match(/^\d+\.\s(.+?)\s*→\s*(.+)$/); return (<div key={i} style={{ ...vBox, margin: 0, display: 'flex', alignItems: 'flex-start', gap: 8 }}><span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#F95800', borderRadius: 4, padding: '2px 7px', flexShrink: 0 }}>{i + 1}</span><div><span>{match ? match[1] : line}</span>{match && <span style={{ marginLeft: 8, color: '#16a34a', fontWeight: 600 }}>→ {match[2]}</span>}</div></div>) })}</div></>)}</>)
           return <div style={{ color: '#aaa', fontSize: 13 }}>Không có nội dung.</div>
         }
         return (

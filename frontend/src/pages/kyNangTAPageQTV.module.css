@@ -44,7 +44,7 @@
 
 .searchBox button {
   width: 56px;
-  background: #e87722;
+  background: #F95800;
   border: none;
   border-radius: 0 10px 10px 0;
   color: white;
@@ -126,7 +126,7 @@
 
 
 .addBtn {
-  background: #e87722;
+  background: #F95800;
   color: white;
   border: none;
   padding: 9px 16px;
@@ -140,7 +140,7 @@
 
 
 .addBtn:hover {
-  background: #cf6415;
+  background: #e04f00;
 }
 
 
@@ -175,7 +175,7 @@
 
 
 .title {
-  color: #e87722;
+  color: #F95800;
   font-weight: 500;
 }
 
@@ -215,8 +215,8 @@
 
 
 .viewBtn {
-  border: 1px solid #e87722;
-  color: #e87722;
+  border: 1px solid #F95800;
+  color: #F95800;
   background: white;
   padding: 5px 10px;
   border-radius: 6px;
@@ -224,11 +224,11 @@
   font-size: 12px;
   font-family: inherit;
 }
-.viewBtn:hover { background: #e87722; color: white; }
+.viewBtn:hover { background: #F95800; color: white; }
 
 
 .edit {
-  background: #e87722;
+  background: #F95800;
   color: white;
   border: none;
   padding: 5px 10px;
@@ -237,7 +237,7 @@
   font-size: 12px;
   font-family: inherit;
 }
-.edit:hover { background: #cf6415; }
+.edit:hover { background: #e04f00; }
 
 
 .hideBtn {
@@ -404,7 +404,7 @@
 .form input:focus,
 .form select:focus,
 .form textarea:focus {
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 
@@ -426,9 +426,9 @@
 
 .cancel {
   padding: 10px 20px;
-  border: 1.5px solid #e87722;
+  border: 1.5px solid #F95800;
   background: white;
-  color: #e87722;
+  color: #F95800;
   border-radius: 8px;
   cursor: pointer;
   font-family: inherit;
@@ -440,7 +440,7 @@
 .save {
   padding: 10px 20px;
   border: none;
-  background: #e87722;
+  background: #F95800;
   color: white;
   border-radius: 8px;
   cursor: pointer;
@@ -448,7 +448,7 @@
   font-size: 13px;
   font-weight: 600;
 }
-.save:hover { background: #cf6415; }
+.save:hover { background: #e04f00; }
 
 
 /* ── View modal extras ── */
@@ -558,7 +558,7 @@
   resize: vertical;
   outline: none;
 }
-.approveNote:focus { border-color: #e87722; }
+.approveNote:focus { border-color: #F95800; }
 
 
 .approveActions {
@@ -615,7 +615,7 @@
 
 
 .toastWarn {
-  background: #e87722;
+  background: #F95800;
 }
 
 
@@ -659,7 +659,7 @@
   height: 26px;
   border-radius: 50%;
   background: #fde8d4;
-  color: #e87722;
+  color: #F95800;
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -684,7 +684,7 @@
 
 
 .speakingPhraseInput:focus {
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 
@@ -777,7 +777,7 @@
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: #e87722;
+  background: #F95800;
   border-radius: 0 3px 3px 0;
 }
 
@@ -864,7 +864,7 @@
 .speakingProgressFill {
   height: 100%;
   border-radius: 99px;
-  background: #e87722;
+  background: #F95800;
   transition: width 0.4s ease;
 }
 
@@ -940,7 +940,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 60%;
-  background: #e87722;
+  background: #F95800;
   border-radius: 0 4px 4px 0;
 }
 
@@ -1010,8 +1010,8 @@
 
 
 .speakingMicBtnIdle:hover {
-  border-color: #e87722;
-  color: #e87722;
+  border-color: #F95800;
+  color: #F95800;
 }
 
 
@@ -1072,5 +1072,6 @@
 
 
 .speakingNextBtnBlue   { background: #3b82f6; }
-.speakingNextBtnOrange { background: #e87722; }
+.speakingNextBtnOrange { background: #F95800; }
+
 

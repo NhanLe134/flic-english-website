@@ -196,13 +196,13 @@
   margin-top: 20px;
   padding: 16px;
   background: #fff4ec;
-  border: 1px solid #f58220;
+  border: 1px solid #F95800;
   border-radius: 10px;
   text-align: center;
 }
 
 .file-download a {
-  color: #f58220;
+  color: #F95800;
   font-weight: 600;
   font-size: 15px;
   text-decoration: none;

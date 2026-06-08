@@ -69,7 +69,7 @@
 .form-card input:focus,
 .form-card select:focus,
 .form-card textarea:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .form-card textarea {
@@ -90,7 +90,7 @@
 }
 
 .tag-btn {
-  background: #f58220;
+  background: #F95800;
   border: none;
   padding: 10px 18px;
   border-radius: 8px;
@@ -141,12 +141,12 @@
 }
 
 .upload-box:hover {
-  border-color: #f58220;
+  border-color: #F95800;
   background: #fff4ec;
 }
 
 .upload-box.dragging {
-  border-color: #f58220;
+  border-color: #F95800;
   background: #fff4ec;
 }
 
@@ -172,7 +172,7 @@
   align-items: center;
   gap: 12px;
   background: #fff4ec;
-  border: 1px solid #f58220;
+  border: 1px solid #F95800;
   border-radius: 10px;
   padding: 12px 16px;
   text-align: left;
@@ -196,7 +196,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #f58220;
+  background: #F95800;
   color: white;
   display: flex;
   align-items: center;
@@ -217,7 +217,7 @@
 }
 
 .save-btn {
-  background: #f58220;
+  background: #F95800;
   border: none;
   padding: 12px 48px;
   border-radius: 10px;

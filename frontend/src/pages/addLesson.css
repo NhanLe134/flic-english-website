@@ -72,7 +72,7 @@
 .left-card input:focus,
 .left-card select:focus,
 .left-card textarea:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .left-card textarea {
@@ -102,7 +102,7 @@
 }
 
 .add-tag-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   padding: 10px 18px;
@@ -159,7 +159,7 @@
 }
 
 .right-card input:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 /* UPLOAD BOX */
@@ -179,13 +179,13 @@
 }
 
 .upload-box:hover {
-  border-color: #f58220;
+  border-color: #F95800;
   background: #fef0e0;
 }
 
 .upload-icon {
   font-size: 28px;
-  color: #f58220;
+  color: #F95800;
 }
 
 .upload-box p {
@@ -246,7 +246,7 @@
 
 .publish-btn {
   width: 100%;
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   padding: 12px;
@@ -261,6 +261,6 @@
   background: #e46d10;
 }
 .upload-box.dragging {
-  border-color: #f58220;
+  border-color: #F95800;
   background: #fff4ec;
 }

@@ -1,6 +1,7 @@
 import "./classdetail.css";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiFileText, FiArrowLeft } from "react-icons/fi";
 
 const ClassDetail = () => {
   const navigate = useNavigate();
@@ -51,8 +52,10 @@ const ClassDetail = () => {
 
   return (
     <div className="cd2-wrapper">
-
-      <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
+      <span className="cd2-back-btn" onClick={() => navigate(-1)}>
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        Quay lại
+      </span>
 
       {/* ===== HEADER CARD ===== */}
       <div className="header-card">
@@ -62,7 +65,8 @@ const ClassDetail = () => {
             <p>{lesson.MoTa}</p>
             <p>Mã lớp: B239B1</p>
             <p>
-              📅 {new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
+              <FiCalendar size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
+              {new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
               {new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
             </p>
           </div>
@@ -71,7 +75,9 @@ const ClassDetail = () => {
 
         <div className="info-row">
           <div className="info-item">
-            <span>👩‍🏫</span>
+            <div className="cd2-icon-wrapper teacher-icon">
+              <FiUser size={18} />
+            </div>
             <div>
               <p className="label">Giáo viên</p>
               <b>{teacherName}</b>
@@ -79,7 +85,9 @@ const ClassDetail = () => {
           </div>
 
           <div className="info-item">
-            <span>📅</span>
+            <div className="cd2-icon-wrapper calendar-icon">
+              <FiCalendar size={18} />
+            </div>
             <div>
               <p className="label">Lịch học</p>
               <b>{lesson.LichHoc}</b>
@@ -87,7 +95,9 @@ const ClassDetail = () => {
           </div>
 
           <div className="info-item">
-            <span>👥</span>
+            <div className="cd2-icon-wrapper students-icon">
+              <FiUsers size={18} />
+            </div>
             <div>
               <p className="label">Số học viên</p>
               <b>{studentCount}</b>
@@ -95,7 +105,9 @@ const ClassDetail = () => {
           </div>
 
           <div className="info-item">
-            <span>📘</span>
+            <div className="cd2-icon-wrapper status-icon">
+              <FiBookOpen size={18} />
+            </div>
             <div>
               <p className="label">Trạng thái</p>
               <b>Đang học</b>
@@ -103,16 +115,6 @@ const ClassDetail = () => {
           </div>
         </div>
 
-        {/* PROGRESS */}
-        <div className="progress-section">
-          <div className="progress-label">
-            <span>Tiến độ khóa học</span>
-            <span className="percent">68%</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: "68%" }}></div>
-          </div>
-        </div>
       </div>
 
       {/* ===== TABS ===== */}
@@ -140,7 +142,10 @@ const ClassDetail = () => {
       <div className="card">
         <h3>Tài liệu khóa học</h3>
         {documents.map((doc, index) => (
-          <div key={index} className="file-item">📄 {doc}</div>
+          <div key={index} className="file-item">
+            <FiFileText size={16} style={{ flexShrink: 0 }} />
+            <span>{doc}</span>
+          </div>
         ))}
       </div>
 

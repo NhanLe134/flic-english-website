@@ -1,10 +1,10 @@
 import "./approveAdmin.css";
 import React, { useState, useEffect, useRef } from "react";
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle } from "react-icons/fi";
+import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiUsers } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
-const CATS = ['Cơ bản', 'Luyện thi', 'Giao tiếp', 'Ngữ pháp', 'Từ vựng', 'Kỹ năng'];
+
 const DAYS_OF_WEEK = [
   { label: 'T2', value: 'Thứ 2' },
   { label: 'T3', value: 'Thứ 3' },
@@ -13,6 +13,21 @@ const DAYS_OF_WEEK = [
   { label: 'T6', value: 'Thứ 6' },
   { label: 'T7', value: 'Thứ 7' },
   { label: 'CN', value: 'Chủ nhật' },
+];
+
+const START_TIME_OPTIONS = [
+  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00"
+];
+
+const END_TIME_OPTIONS = [
+  "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30",
+  "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"
 ];
 
 const formatSchedule = (selectedDays: string[]) => {
@@ -100,8 +115,11 @@ interface LopHoc {
   name: string;
   schedule: string;
   students: number;
+  maxStudents: number;
   progress: number;
   lessonCount: number;
+  completed: boolean;
+  status: string;
 }
 
 
@@ -130,26 +148,53 @@ export default function ApproveAdmin() {
   const [cForm, setCForm] = useState({ title: '', desc: '', level: 'TOEIC', category: 'Luyện thi' });
   const [formLevels, setFormLevels] = useState<string[]>([]);
   const [formNewLevelInput, setFormNewLevelInput] = useState("");
+  const [courseFormErrors, setCourseFormErrors] = useState({ title: '', levels: '', levelInput: '' });
 
   // Bản đồ lưu MaLop theo MaKhoaHoc
   const [courseDetailsMap, setCourseDetailsMap] = useState<Record<number, { maLop: number }>>({});
 
   // Modal Thêm lớp học mới từ danh sách mở rộng
   const [showAddClassModal, setShowAddClassModal] = useState(false);
-  const [newClassForm, setNewClassForm] = useState({ name: '', schedule: '', maxStudents: 30 });
+  const [newClassForm, setNewClassForm] = useState({
+    name: '',
+    schedule: '',
+    days: '',
+    startTime: '07:00',
+    endTime: '08:30',
+    maxStudents: 30
+  });
+  const [addClassErrors, setAddClassErrors] = useState({ name: '' });
 
   // State chỉnh sửa trình độ inline của từng khóa học
   const [editingLevelIndex, setEditingLevelIndex] = useState<number | null>(null);
   const [editingLevelValue, setEditingLevelValue] = useState("");
   const [newLevelInput, setNewLevelInput] = useState("");
+  const [addLevelError, setAddLevelError] = useState("");
+  const editLevelWrapperRef = useRef<HTMLDivElement>(null);
 
   // Modal Chỉnh sửa lớp học trực tiếp
   const [showClassEditModal, setShowClassEditModal] = useState(false);
   const [editingClass, setEditingClass] = useState<LopHoc | null>(null);
-  const [classEditForm, setClassEditForm] = useState({ name: '', schedule: '', maxStudents: 30 });
+  const [classEditForm, setClassEditForm] = useState({
+    name: '',
+    schedule: '',
+    days: '',
+    startTime: '07:00',
+    endTime: '08:30',
+    maxStudents: 30,
+    status: 'Chưa bắt đầu'
+  });
+  const [editClassErrors, setEditClassErrors] = useState({ name: '' });
+
+  // Modal Chi tiết lớp học
+  const [showClassDetailModal, setShowClassDetailModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<LopHoc | null>(null);
 
   // Modal Xác nhận xóa lớp học
   const [deletingClass, setDeletingClass] = useState<LopHoc | null>(null);
+
+  // Modal Xác nhận xóa trình độ
+  const [deletingLevelInfo, setDeletingLevelInfo] = useState<{ course: Course; levelName: string; index: number } | null>(null);
 
   // Modal Xác nhận xóa đếm ngược
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
@@ -189,8 +234,11 @@ export default function ApproveAdmin() {
           name: c.TenLop,
           schedule: c.LichHoc || '—',
           students: c.SoLuongHocVien || 0,
+          maxStudents: c.SiSoToiDa || 30,
           progress: c.TienDo || 0,
-          lessonCount: c.SoBuoiHoc || 0
+          lessonCount: c.SoBuoiHoc || 0,
+          completed: !!c.HoanThanh,
+          status: c.TrangThai || 'Chưa bắt đầu'
         }));
         // Sắp xếp lớp mới nhất lên đầu
         mapped.sort((a, b) => b.id - a.id);
@@ -212,15 +260,30 @@ export default function ApproveAdmin() {
   };
 
   const toggleExpandCourse = (courseId: number) => {
+    setAddLevelError("");
+    setNewLevelInput("");
     if (expandedCourse === courseId) {
       setExpandedCourse(null);
       setEditingLevelIndex(null); // Reset inline edit when collapsing
       return;
     }
     setExpandedCourse(courseId);
+    setEditingLevelIndex(null);
     loadClassesForCourse(courseId);
     loadCourseDetails(courseId);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editingLevelIndex !== null && editLevelWrapperRef.current && !editLevelWrapperRef.current.contains(event.target as Node)) {
+        setEditingLevelIndex(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editingLevelIndex]);
 
   // ── Thao tác Form Thêm/Sửa khóa học ──
   const openAddCourse = () => {
@@ -228,6 +291,7 @@ export default function ApproveAdmin() {
     setEditCourse(null);
     setFormLevels([]);
     setFormNewLevelInput("");
+    setCourseFormErrors({ title: '', levels: '', levelInput: '' });
     setShowCourseModal(true);
   };
 
@@ -237,21 +301,27 @@ export default function ApproveAdmin() {
     setEditCourse(c);
     setFormLevels(list);
     setFormNewLevelInput("");
+    setCourseFormErrors({ title: '', levels: '', levelInput: '' });
     setShowCourseModal(true);
   };
 
 
 
   const saveCourse = async () => {
+    const errors = { title: '', levels: '', levelInput: '' };
     if (!cForm.title.trim()) {
-      alert('Vui lòng nhập tên khóa học!');
+      errors.title = 'Vui lòng nhập tên khóa học!';
+    }
+    if (formLevels.length === 0) {
+      errors.levels = 'Vui lòng thêm ít nhất một trình độ!';
+    }
+    if (errors.title || errors.levels) {
+      setCourseFormErrors(errors);
       return;
     }
+    setCourseFormErrors({ title: '', levels: '', levelInput: '' });
+
     const finalLevel = formLevels.join(', ');
-    if (!finalLevel.trim()) {
-      alert('Vui lòng nhập hoặc thêm ít nhất một trình độ cho khóa học!');
-      return;
-    }
     const user = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
 
     try {
@@ -321,27 +391,85 @@ export default function ApproveAdmin() {
     }
   };
 
+  const handleToggleClassCompleted = (cls: LopHoc, courseId: number) => {
+    const updatedStatus = !cls.completed;
+    fetch(`${API}/qtv/lophoc/${cls.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ HoanThanh: updatedStatus })
+    })
+    .then(r => r.json())
+    .then(() => {
+      setClassesMap(prev => {
+        const list = prev[courseId] || [];
+        const updatedList = list.map(item => {
+          if (item.id === cls.id) {
+            return { ...item, completed: updatedStatus };
+          }
+          return item;
+        });
+        return { ...prev, [courseId]: updatedList };
+      });
+      setToast(updatedStatus ? "Đã đánh dấu hoàn thành lớp học!" : "Đã hủy đánh dấu hoàn thành!");
+    })
+    .catch(() => {
+      alert("Lỗi khi cập nhật trạng thái!");
+    });
+  };
+
   // ── Sửa lớp học trực tiếp ──
   const openEditClass = (cls: LopHoc) => {
     setEditingClass(cls);
-    setClassEditForm({ name: cls.name, schedule: cls.schedule, maxStudents: cls.students });
+    
+    // Parse schedule
+    let days = '';
+    let startTime = '07:00';
+    let endTime = '08:30';
+    if (cls.schedule && cls.schedule !== '—') {
+      const parts = cls.schedule.split('·');
+      days = parts[0] ? parts[0].trim() : '';
+      if (parts[1]) {
+        const timeParts = parts[1].trim().split('-');
+        if (timeParts[0]) startTime = timeParts[0].trim();
+        if (timeParts[1]) endTime = timeParts[1].trim();
+      }
+    }
+
+    setClassEditForm({
+      name: cls.name,
+      schedule: cls.schedule,
+      days: days,
+      startTime: startTime,
+      endTime: endTime,
+      maxStudents: cls.maxStudents,
+      status: cls.status
+    });
+    setEditClassErrors({ name: '' });
     setShowClassEditModal(true);
   };
 
   const saveEditedClass = async () => {
     if (!classEditForm.name.trim()) {
-      alert("Vui lòng nhập tên lớp học!");
+      setEditClassErrors({ name: "Vui lòng nhập tên lớp học!" });
       return;
     }
+    setEditClassErrors({ name: '' });
     if (!editingClass) return;
     try {
+      const finalSchedule = classEditForm.days 
+        ? `${classEditForm.days} · ${classEditForm.startTime}-${classEditForm.endTime}` 
+        : `${classEditForm.startTime}-${classEditForm.endTime}`;
+
       await fetch(`${API}/qtv/lophoc/${editingClass.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           TenLop: classEditForm.name,
-          LichHoc: classEditForm.schedule,
-          SoLuongHocVien: classEditForm.maxStudents
+          LichHoc: finalSchedule,
+          SoLuongHocVien: classEditForm.maxStudents,
+          TrangThai: classEditForm.status
         })
       });
       setToast("Đã cập nhật lớp học thành công!");
@@ -382,28 +510,40 @@ export default function ApproveAdmin() {
   // ── Lưu lớp học mới ──
   const saveNewClass = async () => {
     if (!newClassForm.name.trim()) {
-      alert("Vui lòng nhập tên lớp học!");
+      setAddClassErrors({ name: "Vui lòng nhập tên lớp học!" });
       return;
     }
+    setAddClassErrors({ name: "" });
     const details = courseDetailsMap[expandedCourse || 0];
     if (!details || !details.maLop) {
       alert("Đang tải chi tiết khóa học, vui lòng đợi vài giây và thử lại!");
       return;
     }
     try {
+      const finalSchedule = newClassForm.days 
+        ? `${newClassForm.days} · ${newClassForm.startTime}-${newClassForm.endTime}` 
+        : `${newClassForm.startTime}-${newClassForm.endTime}`;
+
       await fetch(`${API}/qtv/lophoc`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           TenLop: newClassForm.name,
           MaLop: details.maLop,
-          LichHoc: newClassForm.schedule,
+          LichHoc: finalSchedule,
           SoLuongHocVien: newClassForm.maxStudents
         })
       });
       setToast("Đã tạo lớp học mới thành công!");
       setShowAddClassModal(false);
-      setNewClassForm({ name: '', schedule: '', maxStudents: 30 });
+      setNewClassForm({
+        name: '',
+        schedule: '',
+        days: '',
+        startTime: '07:00',
+        endTime: '08:30',
+        maxStudents: 30
+      });
       if (expandedCourse) {
         loadClassesForCourse(expandedCourse);
         loadCourses(); // Cập nhật số lớp hiển thị
@@ -526,26 +666,17 @@ export default function ApproveAdmin() {
                   </td>
                 </tr>
               ) : (
-                filteredCourses.map(course => {
+                filteredCourses.map((course, index) => {
                   const isExpanded = expandedCourse === course.id;
                   const classes = classesMap[course.id] || [];
                   const isVisible = course.status === 'Đã duyệt' || course.status === 'Hoạt động';
 
                   return (
                     <React.Fragment key={course.id}>
-                      <tr className="course-row" onClick={() => toggleExpandCourse(course.id)}>
+                      <tr className={`course-row ${index % 2 === 0 ? "even-row" : "odd-row"}`} onClick={() => toggleExpandCourse(course.id)}>
                         <td>
                           <div className="course-title-flex-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                             <span className="course-title-cell" style={{ marginBottom: 0 }}>{course.title}</span>
-                            {course.level && course.level.split(',').map((lvl, idx) => {
-                              const cleanLvl = lvl.trim();
-                              if (!cleanLvl) return null;
-                              return (
-                                <span key={idx} className="course-row-level-badge">
-                                  {cleanLvl}
-                                </span>
-                              );
-                            })}
                           </div>
                           <div className="course-desc-cell">{course.desc.slice(0, 85)}{course.desc.length > 85 ? '...' : ''}</div>
                         </td>
@@ -588,21 +719,25 @@ export default function ApproveAdmin() {
                                   {(() => {
                                     const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
                                     if (currentLevels.length === 0) {
-                                      return <p className="no-levels-text" style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 12px 0', textAlign: 'left' }}>Chưa có trình độ nào được thiết lập.</p>;
+                                      return <p className="no-levels-text">Chưa có trình độ nào được thiết lập.</p>;
                                     }
                                     return (
-                                      <div className="levels-items-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+                                      <div className="levels-items-container">
                                         {currentLevels.map((lvl, index) => {
                                           const isEditingThis = editingLevelIndex === index;
                                           return (
-                                            <div key={index} className="level-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '8px' }}>
+                                            <div 
+                                              key={index} 
+                                              ref={isEditingThis ? editLevelWrapperRef : null} 
+                                              className={`level-item-row ${isEditingThis ? 'is-editing' : ''}`}
+                                            >
                                               {isEditingThis ? (
-                                                <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                                                <>
                                                   <input 
                                                     type="text" 
                                                     value={editingLevelValue} 
                                                     onChange={e => setEditingLevelValue(e.target.value)} 
-                                                    style={{ flex: 1, padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }}
+                                                    className="level-edit-input"
                                                     onKeyDown={e => {
                                                       if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -627,37 +762,30 @@ export default function ApproveAdmin() {
                                                         setEditingLevelIndex(null);
                                                       }
                                                     }}
-                                                    style={{ border: 'none', background: '#22c55e', color: '#fff', borderRadius: '6px', padding: '4px 8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                                                    className="level-edit-btn-save"
                                                   >
                                                     Lưu
                                                   </button>
-                                                  <button 
-                                                    onClick={() => setEditingLevelIndex(null)}
-                                                    style={{ border: '1px solid #cbd5e1', background: '#fff', color: '#475569', borderRadius: '6px', padding: '4px 8px', fontSize: '12px', cursor: 'pointer' }}
-                                                  >
-                                                    Hủy
-                                                  </button>
-                                                </div>
+                                                </>
                                               ) : (
                                                 <>
-                                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{lvl}</span>
-                                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                                  <span className="level-item-text">{lvl}</span>
+                                                  <div className="level-item-actions">
                                                     <button 
                                                       onClick={() => {
                                                         setEditingLevelIndex(index);
                                                         setEditingLevelValue(lvl);
                                                       }}
-                                                      style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+                                                      className="level-action-btn-edit"
                                                       title="Sửa tên trình độ"
                                                     >
                                                       <FiEdit2 size={13} />
                                                     </button>
                                                     <button 
                                                       onClick={() => {
-                                                        const updated = currentLevels.filter((_, i) => i !== index);
-                                                        saveCourseLevel(course, updated.join(', '));
+                                                        setDeletingLevelInfo({ course, levelName: lvl, index });
                                                       }}
-                                                      style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                                                      className="level-action-btn-delete"
                                                       title="Xóa trình độ"
                                                     >
                                                       <FiTrash2 size={13} />
@@ -672,54 +800,65 @@ export default function ApproveAdmin() {
                                     );
                                   })()}
                                   
-                                  <div className="add-level-inline-form" style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: '12px', textAlign: 'left' }}>
-                                    <label className="form-label-small" style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: 700, color: '#64748b' }}>
-                                      THÊM TRÌNH ĐỘ MỚI
-                                    </label>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                  <div className="add-level-section">
+                                    <h5 className="add-level-section-title">THÊM TRÌNH ĐỘ MỚI</h5>
+                                    <div className="add-level-input-group">
                                       <input 
                                         type="text" 
                                         value={newLevelInput} 
-                                        onChange={e => setNewLevelInput(e.target.value)} 
-                                        placeholder="Nhập tên trình độ mới..." 
-                                        className="level-input-small-inline"
-                                        style={{ flex: 1, padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px' }}
+                                        onChange={e => {
+                                          setNewLevelInput(e.target.value);
+                                          setAddLevelError("");
+                                        }} 
+                                        placeholder="Nhập tên trình độ mới" 
+                                        className={`level-input-small-inline ${addLevelError ? 'has-error' : ''}`}
                                         onKeyDown={e => {
                                           if (e.key === 'Enter') {
                                             e.preventDefault();
                                             const trimmed = newLevelInput.trim();
-                                            if (trimmed) {
-                                              const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                              if (currentLevels.includes(trimmed)) {
-                                                alert("Trình độ này đã tồn tại!");
-                                                return;
-                                              }
-                                              const updated = [...currentLevels, trimmed];
-                                              saveCourseLevel(course, updated.join(', '));
-                                              setNewLevelInput("");
+                                            if (!trimmed) {
+                                              setAddLevelError("Vui lòng nhập tên trình độ!");
+                                              return;
                                             }
+                                            const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                            if (currentLevels.includes(trimmed)) {
+                                              setAddLevelError("Trình độ này đã tồn tại!");
+                                              return;
+                                            }
+                                            const updated = [...currentLevels, trimmed];
+                                            saveCourseLevel(course, updated.join(', '));
+                                            setNewLevelInput("");
+                                            setAddLevelError("");
                                           }
                                         }}
                                       />
                                       <button 
                                         onClick={() => {
                                           const trimmed = newLevelInput.trim();
-                                          if (trimmed) {
-                                            const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                            if (currentLevels.includes(trimmed)) {
-                                              alert("Trình độ này đã tồn tại!");
-                                              return;
-                                            }
-                                            const updated = [...currentLevels, trimmed];
-                                            saveCourseLevel(course, updated.join(', '));
-                                            setNewLevelInput("");
+                                          if (!trimmed) {
+                                            setAddLevelError("Vui lòng nhập tên trình độ!");
+                                            return;
                                           }
+                                          const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                          if (currentLevels.includes(trimmed)) {
+                                            setAddLevelError("Trình độ này đã tồn tại!");
+                                            return;
+                                          }
+                                          const updated = [...currentLevels, trimmed];
+                                          saveCourseLevel(course, updated.join(', '));
+                                          setNewLevelInput("");
+                                          setAddLevelError("");
                                         }}
-                                        style={{ background: '#f58220', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
+                                        className="add-level-btn-submit"
                                       >
                                         Thêm
                                       </button>
                                     </div>
+                                    {addLevelError && (
+                                      <div className="form-field-error-text" style={{ marginTop: '6px', textAlign: 'left' }}>
+                                        {addLevelError}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -731,7 +870,15 @@ export default function ApproveAdmin() {
                                   <button 
                                     className="add-class-btn-inline" 
                                     onClick={() => {
-                                      setNewClassForm({ name: '', schedule: '', maxStudents: 30 });
+                                      setNewClassForm({
+                                        name: '',
+                                        schedule: '',
+                                        days: '',
+                                        startTime: '07:00',
+                                        endTime: '08:30',
+                                        maxStudents: 30
+                                      });
+                                      setAddClassErrors({ name: '' });
                                       setShowAddClassModal(true);
                                     }}
                                   >
@@ -744,32 +891,39 @@ export default function ApproveAdmin() {
                                 ) : (
                                   <div className="classes-vertical-list">
                                     <div className="classes-list-table-header">
-                                      <div style={{ flex: 1.5 }}>TÊN LỚP HỌC</div>
-                                      <div style={{ flex: 2 }}>LỊCH HỌC</div>
-                                      <div style={{ flex: 1 }}>SĨ SỐ</div>
-                                      <div style={{ flex: 1 }}>TIẾN ĐỘ</div>
-                                      <div style={{ flex: 1 }}>BUỔI HỌC</div>
-                                      <div style={{ flex: 1, textAlign: "right" }}>THAO TÁC</div>
+                                      <div className="class-header-name">TÊN LỚP HỌC</div>
+                                      <div className="class-header-schedule">LỊCH HỌC</div>
+                                      <div className="class-header-students">SĨ SỐ</div>
+                                      <div className="class-header-completed">HOÀN THÀNH</div>
                                     </div>
                                     
                                     {classes.map(cls => (
-                                      <div key={cls.id} className="classes-list-item-row">
-                                        <div style={{ flex: 1.5, fontWeight: 600, color: "#0f172a" }}>{cls.name}</div>
-                                        <div style={{ flex: 2, color: "#475569" }}>{cls.schedule}</div>
-                                        <div style={{ flex: 1, color: "#475569" }}>{cls.students} học viên</div>
-                                        <div style={{ flex: 1 }}>
-                                          <span className="class-progress-percent">{cls.progress}%</span>
+                                      <div 
+                                        key={cls.id} 
+                                        className="classes-list-item-row"
+                                        onClick={() => {
+                                          setSelectedClass(cls);
+                                          setShowClassDetailModal(true);
+                                        }}
+                                      >
+                                        <div className="class-item-name">{cls.name}</div>
+                                        <div className="class-item-schedule">{cls.schedule}</div>
+                                        <div className="class-item-students">
+                                          <FiUsers className="class-row-icon" />
+                                          <span>{cls.students}</span>
                                         </div>
-                                        <div style={{ flex: 1 }}>
-                                          <span className="class-lessons-pill">{cls.lessonCount} buổi học</span>
-                                        </div>
-                                        <div style={{ flex: 1, display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                                          <button className="class-list-action-btn-edit" onClick={(e) => { e.stopPropagation(); openEditClass(cls); }} title="Sửa lớp">
-                                            <FiEdit2 size={13} />
-                                          </button>
-                                          <button className="class-list-action-btn-delete" onClick={(e) => { e.stopPropagation(); setDeletingClass(cls); }} title="Xóa lớp">
-                                            <FiTrash2 size={13} />
-                                          </button>
+                                        <div className="class-item-completed" onClick={(e) => e.stopPropagation()}>
+                                          <label className="switch-toggle-completed">
+                                            <input 
+                                              type="checkbox" 
+                                              checked={cls.completed} 
+                                              onChange={() => handleToggleClassCompleted(cls, course.id)} 
+                                            />
+                                            <span className="switch-slider-completed rounded"></span>
+                                          </label>
+                                          <span className={`completed-text ${cls.completed ? 'is-completed' : ''}`}>
+                                            {cls.completed ? "Xong" : "Chưa"}
+                                          </span>
                                         </div>
                                       </div>
                                     ))}
@@ -801,26 +955,26 @@ export default function ApproveAdmin() {
             </div>
 
             <div className="modal-scrollable-body">
-              <div className="form-section-title">Thông tin khóa học cơ bản</div>
               <div className="form-field-group">
                 <label>Tên khóa học <span className="required-star">*</span></label>
-                <input value={cForm.title} onChange={e => setCForm(p => ({ ...p, title: e.target.value }))} placeholder="VD: Luyện thi IELTS 6.5+ mục tiêu" />
-              </div>
-              <div className="form-field-row">
-                <div className="form-field-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Danh mục</label>
-                  <select value={cForm.category} onChange={e => setCForm(p => ({ ...p, category: e.target.value }))}>
-                    {CATS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
-                </div>
+                <input 
+                  className={courseFormErrors.title ? "has-error" : ""} 
+                  value={cForm.title} 
+                  onChange={e => {
+                    setCForm(p => ({ ...p, title: e.target.value }));
+                    setCourseFormErrors(p => ({ ...p, title: '' }));
+                  }} 
+                  placeholder="VD: Luyện thi IELTS 6.5+ mục tiêu" 
+                />
+                {courseFormErrors.title && (
+                  <span className="form-field-error-text">{courseFormErrors.title}</span>
+                )}
               </div>
 
               <div className="form-field-group">
-                <label>Trình độ của khóa học (Danh sách trình độ riêng) <span className="required-star">*</span></label>
+                <label>Trình độ của khóa học <span className="required-star">*</span></label>
                 
-                {formLevels.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 12px 0', textAlign: 'left' }}>Chưa có trình độ nào được thêm cho khóa học này. Hãy nhập ở dưới.</p>
-                ) : (
+                {formLevels.length > 0 && (
                   <div className="selected-levels-preview-row" style={{ marginTop: '4px' }}>
                     <span className="preview-label">Danh sách trình độ:</span>
                     <div className="preview-pills-list">
@@ -844,21 +998,30 @@ export default function ApproveAdmin() {
                   <input 
                     type="text" 
                     value={formNewLevelInput} 
-                    onChange={(e) => setFormNewLevelInput(e.target.value)} 
+                    onChange={(e) => {
+                      setFormNewLevelInput(e.target.value);
+                      setCourseFormErrors(p => ({ ...p, levelInput: '' }));
+                    }} 
                     placeholder="Nhập tên trình độ mới (VD: IELTS 5.5, Beginner, ...)" 
-                    className="level-input-small-inline"
+                    className={`level-input-small-inline ${courseFormErrors.levelInput ? 'has-error' : ''}`}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         const trimmed = formNewLevelInput.trim();
-                        if (trimmed) {
-                          if (formLevels.includes(trimmed)) {
-                            alert("Trình độ này đã tồn tại!");
-                            return;
-                          }
-                          setFormLevels(prev => [...prev, trimmed]);
-                          setFormNewLevelInput("");
+                        if (!trimmed) {
+                          setCourseFormErrors(p => ({ ...p, levelInput: 'Vui lòng nhập tên trình độ!' }));
+                          return;
                         }
+                        if (formLevels.includes(trimmed)) {
+                          setCourseFormErrors(p => ({ ...p, levelInput: 'Trình độ này đã tồn tại!' }));
+                          return;
+                        }
+                        setFormLevels(prev => {
+                          const next = [...prev, trimmed];
+                          setCourseFormErrors(p => ({ ...p, levels: '', levelInput: '' }));
+                          return next;
+                        });
+                        setFormNewLevelInput("");
                       }
                     }}
                   />
@@ -867,20 +1030,32 @@ export default function ApproveAdmin() {
                     className="add-custom-level-btn"
                     onClick={() => {
                       const trimmed = formNewLevelInput.trim();
-                      if (trimmed) {
-                        if (formLevels.includes(trimmed)) {
-                          alert("Trình độ này đã tồn tại!");
-                          return;
-                        }
-                        setFormLevels(prev => [...prev, trimmed]);
-                        setFormNewLevelInput("");
+                      if (!trimmed) {
+                        setCourseFormErrors(p => ({ ...p, levelInput: 'Vui lòng nhập tên trình độ!' }));
+                        return;
                       }
+                      if (formLevels.includes(trimmed)) {
+                        setCourseFormErrors(p => ({ ...p, levelInput: 'Trình độ này đã tồn tại!' }));
+                        return;
+                      }
+                      setFormLevels(prev => {
+                        const next = [...prev, trimmed];
+                        setCourseFormErrors(p => ({ ...p, levels: '', levelInput: '' }));
+                        return next;
+                      });
+                      setFormNewLevelInput("");
                     }}
-                    style={{ background: '#f58220', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: '#F95800', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}
                   >
                     Thêm
                   </button>
                 </div>
+                {courseFormErrors.levelInput && (
+                  <span className="form-field-error-text" style={{ marginTop: '4px' }}>{courseFormErrors.levelInput}</span>
+                )}
+                {courseFormErrors.levels && (
+                  <span className="form-field-error-text" style={{ marginTop: '4px' }}>{courseFormErrors.levels}</span>
+                )}
               </div>
 
               <div className="form-field-group">
@@ -913,10 +1088,17 @@ export default function ApproveAdmin() {
               <div className="form-field-group">
                 <label>Tên lớp học <span className="required-star">*</span></label>
                 <input 
+                  className={addClassErrors.name ? "has-error" : ""} 
                   value={newClassForm.name} 
-                  onChange={e => setNewClassForm(p => ({ ...p, name: e.target.value }))} 
+                  onChange={e => {
+                    setNewClassForm(p => ({ ...p, name: e.target.value }));
+                    setAddClassErrors({ name: '' });
+                  }} 
                   placeholder="VD: Lớp IELTS-01" 
                 />
+                {addClassErrors.name && (
+                  <span className="form-field-error-text">{addClassErrors.name}</span>
+                )}
               </div>
               <div className="form-field-group">
                 <label>Sĩ số tối đa</label>
@@ -931,15 +1113,15 @@ export default function ApproveAdmin() {
                 <label>Lịch học (Chọn các ngày học trong tuần)</label>
                 <div className="weekday-selection-row">
                   {DAYS_OF_WEEK.map(d => {
-                    const isSelected = getSelectedDaysFromSchedule(newClassForm.schedule).includes(d.value);
+                    const isSelected = getSelectedDaysFromSchedule(newClassForm.days).includes(d.value);
                     return (
                       <button
                         key={d.value}
                         type="button"
                         className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
                         onClick={() => {
-                          const newSchedule = toggleDayInSchedule(d.value, newClassForm.schedule);
-                          setNewClassForm(p => ({ ...p, schedule: newSchedule }));
+                          const newDaysStr = toggleDayInSchedule(d.value, newClassForm.days);
+                          setNewClassForm(p => ({ ...p, days: newDaysStr }));
                         }}
                       >
                         {d.label}
@@ -947,11 +1129,36 @@ export default function ApproveAdmin() {
                     );
                   })}
                 </div>
-                {newClassForm.schedule && (
-                  <div style={{ fontSize: '13px', color: '#f58220', fontWeight: 600, marginTop: '4px', textAlign: 'left' }}>
-                    Đã chọn: {newClassForm.schedule}
+                {(newClassForm.days || newClassForm.startTime) && (
+                  <div style={{ fontSize: '13px', color: '#F95800', fontWeight: 600, marginTop: '4px', textAlign: 'left' }}>
+                    Đã chọn: {newClassForm.days ? `${newClassForm.days} · ` : ''}{newClassForm.startTime}-{newClassForm.endTime}
                   </div>
                 )}
+              </div>
+
+              <div className="form-fields-inline-row">
+                <div className="form-field-group flex-1">
+                  <label>Giờ bắt đầu</label>
+                  <select 
+                    value={newClassForm.startTime} 
+                    onChange={e => setNewClassForm(p => ({ ...p, startTime: e.target.value }))}
+                  >
+                    {START_TIME_OPTIONS.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-field-group flex-1">
+                  <label>Giờ kết thúc</label>
+                  <select 
+                    value={newClassForm.endTime} 
+                    onChange={e => setNewClassForm(p => ({ ...p, endTime: e.target.value }))}
+                  >
+                    {END_TIME_OPTIONS.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -966,7 +1173,7 @@ export default function ApproveAdmin() {
       {/* ── MODAL: CHỈNH SỬA LỚP HỌC TRỰC TIẾP ── */}
       {showClassEditModal && editingClass && (
         <div className="modal-backdrop-blur z-index-top">
-          <div className="course-form-modal" style={{ width: '480px' }}>
+          <div className="course-form-modal" style={{ width: '520px' }}>
             <div className="modal-header-section">
               <h3>Chỉnh sửa lớp học trực tiếp</h3>
               <button className="modal-close-icon-btn" onClick={() => { setShowClassEditModal(false); setEditingClass(null); }}>
@@ -977,7 +1184,18 @@ export default function ApproveAdmin() {
             <div className="modal-scrollable-body" style={{ maxHeight: '60vh' }}>
               <div className="form-field-group">
                 <label>Tên lớp học <span className="required-star">*</span></label>
-                <input value={classEditForm.name} onChange={e => setClassEditForm(p => ({ ...p, name: e.target.value }))} placeholder="VD: Lớp IELTS-01" />
+                <input 
+                  className={editClassErrors.name ? "has-error" : ""} 
+                  value={classEditForm.name} 
+                  onChange={e => {
+                    setClassEditForm(p => ({ ...p, name: e.target.value }));
+                    setEditClassErrors({ name: '' });
+                  }} 
+                  placeholder="VD: Lớp IELTS-01" 
+                />
+                {editClassErrors.name && (
+                  <span className="form-field-error-text">{editClassErrors.name}</span>
+                )}
               </div>
               <div className="form-field-group">
                 <label>Sĩ số tối đa</label>
@@ -987,15 +1205,15 @@ export default function ApproveAdmin() {
                 <label>Lịch học (Chọn các ngày học trong tuần)</label>
                 <div className="weekday-selection-row">
                   {DAYS_OF_WEEK.map(d => {
-                    const isSelected = getSelectedDaysFromSchedule(classEditForm.schedule).includes(d.value);
+                    const isSelected = getSelectedDaysFromSchedule(classEditForm.days).includes(d.value);
                     return (
                       <button
                         key={d.value}
                         type="button"
                         className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
                         onClick={() => {
-                          const newSchedule = toggleDayInSchedule(d.value, classEditForm.schedule);
-                          setClassEditForm(p => ({ ...p, schedule: newSchedule }));
+                          const newDaysStr = toggleDayInSchedule(d.value, classEditForm.days);
+                          setClassEditForm(p => ({ ...p, days: newDaysStr }));
                         }}
                       >
                         {d.label}
@@ -1003,11 +1221,48 @@ export default function ApproveAdmin() {
                     );
                   })}
                 </div>
-                {classEditForm.schedule && (
-                  <div style={{ fontSize: '13px', color: '#f58220', fontWeight: 600, marginTop: '4px', textAlign: 'left' }}>
-                    Đã chọn: {classEditForm.schedule}
+                {(classEditForm.days || classEditForm.startTime) && (
+                  <div style={{ fontSize: '13px', color: '#F95800', fontWeight: 600, marginTop: '4px', textAlign: 'left' }}>
+                    Đã chọn: {classEditForm.days ? `${classEditForm.days} · ` : ''}{classEditForm.startTime}-{classEditForm.endTime}
                   </div>
                 )}
+              </div>
+
+              <div className="form-fields-inline-row">
+                <div className="form-field-group flex-1">
+                  <label>Giờ bắt đầu</label>
+                  <select 
+                    value={classEditForm.startTime} 
+                    onChange={e => setClassEditForm(p => ({ ...p, startTime: e.target.value }))}
+                  >
+                    {START_TIME_OPTIONS.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-field-group flex-1">
+                  <label>Giờ kết thúc</label>
+                  <select 
+                    value={classEditForm.endTime} 
+                    onChange={e => setClassEditForm(p => ({ ...p, endTime: e.target.value }))}
+                  >
+                    {END_TIME_OPTIONS.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-field-group">
+                <label>Trạng thái lớp học</label>
+                <select
+                  value={classEditForm.status}
+                  onChange={e => setClassEditForm(p => ({ ...p, status: e.target.value }))}
+                >
+                  <option value="Chưa bắt đầu">Chưa bắt đầu</option>
+                  <option value="Đang diễn ra">Đang diễn ra</option>
+                  <option value="Đã hoàn thành">Đã hoàn thành</option>
+                </select>
               </div>
             </div>
 
@@ -1056,6 +1311,79 @@ export default function ApproveAdmin() {
         </div>
       )}
 
+      {/* ── MODAL: CHI TIẾT LỚP HỌC ── */}
+      {showClassDetailModal && selectedClass && (
+        <div className="modal-backdrop-blur z-index-top">
+          <div className="course-form-modal" style={{ width: '480px' }}>
+            <div className="modal-header-section">
+              <h3>Chi tiết lớp học</h3>
+              <button className="modal-close-icon-btn" onClick={() => { setShowClassDetailModal(false); setSelectedClass(null); }}>
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div className="modal-scrollable-body" style={{ maxHeight: '60vh' }}>
+              <div className="class-detail-field-item">
+                <span className="class-detail-label">Tên lớp học</span>
+                <div className="class-detail-value">{selectedClass.name}</div>
+              </div>
+              <div className="class-detail-field-item">
+                <span className="class-detail-label">Sĩ số tối đa</span>
+                <div className="class-detail-value">{selectedClass.maxStudents} học viên</div>
+              </div>
+              <div className="class-detail-field-item">
+                <span className="class-detail-label">Sĩ số hiện tại</span>
+                <div className="class-detail-value">{selectedClass.students} học viên</div>
+              </div>
+              <div className="class-detail-field-item">
+                <span className="class-detail-label">Lịch học</span>
+                <div className="class-detail-value">{selectedClass.schedule || "Chưa thiết lập"}</div>
+              </div>
+              <div className="class-detail-field-item">
+                <span className="class-detail-label">Trạng thái</span>
+                <div className="class-detail-value">
+                  <span className={`status-badge-detail ${
+                    selectedClass.status === "Đã hoàn thành" ? "completed" :
+                    selectedClass.status === "Đang diễn ra" ? "active" : "not-started"
+                  }`}>
+                    {selectedClass.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer-section">
+              <button 
+                className="delete-btn-confirm" 
+                style={{ 
+                  backgroundColor: '#ffffff', 
+                  color: '#ef4444', 
+                  border: '1px solid #ef4444',
+                  boxShadow: 'none'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fee2e2'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}
+                onClick={() => {
+                  setDeletingClass(selectedClass);
+                  setShowClassDetailModal(false);
+                }}
+              >
+                Xóa
+              </button>
+              <button 
+                className="footer-save-btn" 
+                onClick={() => {
+                  openEditClass(selectedClass);
+                  setShowClassDetailModal(false);
+                }}
+              >
+                Chỉnh sửa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── POPUP: XÓA LỚP HỌC ── */}
       {deletingClass && (
         <div className="modal-backdrop-blur z-index-top">
@@ -1069,6 +1397,34 @@ export default function ApproveAdmin() {
             <div className="delete-modal-actions">
               <button className="delete-btn-cancel" onClick={() => setDeletingClass(null)}>Hủy</button>
               <button className="delete-btn-confirm" onClick={() => deleteClass(deletingClass.id)}>Xóa</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── POPUP: XÓA TRÌNH ĐỘ ── */}
+      {deletingLevelInfo && (
+        <div className="modal-backdrop-blur z-index-top">
+          <div className="delete-confirm-modal-box">
+            <FiAlertTriangle className="delete-modal-warning-icon" size={48} />
+            <h3>Xác nhận xóa trình độ</h3>
+            <p className="delete-warning-text">
+              Bạn có chắc chắn muốn xóa trình độ <strong>{deletingLevelInfo.levelName}</strong> của khóa học <strong>{deletingLevelInfo.course.title}</strong> không?
+              Các lớp học liên quan cũng bị xóa và không thể khôi phục.
+            </p>
+            <div className="delete-modal-actions">
+              <button className="delete-btn-cancel" onClick={() => setDeletingLevelInfo(null)}>Hủy</button>
+              <button 
+                className="delete-btn-confirm" 
+                onClick={async () => {
+                  const currentLevels = deletingLevelInfo.course.level ? deletingLevelInfo.course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
+                  const updated = currentLevels.filter((_, i) => i !== deletingLevelInfo.index);
+                  await saveCourseLevel(deletingLevelInfo.course, updated.join(', '));
+                  setDeletingLevelInfo(null);
+                }}
+              >
+                Xóa
+              </button>
             </div>
           </div>
         </div>

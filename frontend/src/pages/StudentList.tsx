@@ -85,26 +85,41 @@ const StudentList: React.FC = () => {
   return (
     <div className="sl-wrapper">
 
-      <div className="header-row">
+      <div className="sl-header-row">
         <h1>Danh sách học viên</h1>
-        <p style={{ color: "#888", fontSize: 14, marginTop: 4 }}>
-          Học viên trong các lớp bạn phụ trách
-        </p>
       </div>
 
       {/* Search + Filter */}
-      <div className="search-bar" style={{ display: "flex", gap: 10 }}>
-        <input
-          type="text"
-          placeholder="Tìm kiếm học viên..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-          style={{ flex: 1 }}
-        />
+      <div className="sl-search-filter-row">
+        <form className="sl-search-container" onSubmit={(e) => e.preventDefault()}>
+          <input
+            className="sl-search-input"
+            type="text"
+            placeholder="Tìm kiếm học viên..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+          />
+          <button className="sl-search-button" type="button">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+        </form>
+
         <select
+          className="sl-select-filter"
           value={lopFilter}
           onChange={e => { setLopFilter(e.target.value); setCurrentPage(1); }}
-          style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14 }}
         >
           <option value="">Tất cả lớp</option>
           {danhSachLop.map(lop => (
@@ -114,14 +129,14 @@ const StudentList: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-        <div style={{ background: "#e8f5e9", borderRadius: 8, padding: "10px 20px", fontSize: 13 }}>
-          <span style={{ color: "#555" }}>Tổng học viên: </span>
-          <strong style={{ color: "#2e7d32" }}>{filteredStudents.length}</strong>
+      <div className="sl-stats-row">
+        <div className="sl-stat-card">
+          <span className="sl-stat-label">Tổng học viên:</span>
+          <span className="sl-stat-value">{filteredStudents.length}</span>
         </div>
-        <div style={{ background: "#e3f2fd", borderRadius: 8, padding: "10px 20px", fontSize: 13 }}>
-          <span style={{ color: "#555" }}>Số lớp: </span>
-          <strong style={{ color: "#1565c0" }}>{danhSachLop.length}</strong>
+        <div className="sl-stat-card">
+          <span className="sl-stat-label">Số lớp:</span>
+          <span className="sl-stat-value">{danhSachLop.length}</span>
         </div>
       </div>
 
@@ -152,29 +167,25 @@ const StudentList: React.FC = () => {
               ) : (
                 currentStudents.map((student: any, index: number) => (
                   <tr key={index}>
-                    <td>{student.MaSinhVien}</td>
+                    <td>{student.MaSinhVien ? student.MaSinhVien.trim() : ""}</td>
                     <td>{student.HoTen}</td>
                     <td>{student.GioiTinh || "—"}</td>
                     <td>{student.TenKhoaHoc || "—"}</td>
                     <td>
-                      <span style={{ background: "#e8f5e9", color: "#2e7d32", padding: "2px 8px", borderRadius: 6, fontSize: 12 }}>
+                      <span className="sl-class-tag">
                         {student.Lop || "—"}
                       </span>
                     </td>
                     <td>{student.NgayGhiDanh ? new Date(student.NgayGhiDanh).toLocaleDateString("vi-VN") : "—"}</td>
                     <td>
-                      <span style={{
-                        background: student.TrangThai === "Đang học" ? "#e8f5e9" : "#f5f5f5",
-                        color: student.TrangThai === "Đang học" ? "#2e7d32" : "#666",
-                        padding: "2px 8px", borderRadius: 6, fontSize: 12
-                      }}>
+                      <span className={`sl-status-tag ${student.TrangThai === "Đang học" ? "active" : ""}`}>
                         {student.TrangThai || "—"}
                       </span>
                     </td>
                     <td>
                       <button
                         className="view-btn"
-                        onClick={() => navigate(`/xem-hoc-vien/${student.MaSinhVien}`)}
+                        onClick={() => navigate(`/xem-hoc-vien/${student.MaSinhVien ? student.MaSinhVien.trim() : ""}`)}
                       >
                         Xem
                       </button>
@@ -187,7 +198,7 @@ const StudentList: React.FC = () => {
         )}
 
         <div className="table-footer">
-          <button className="export-btn" onClick={handleExport}>⬇ Export Excel</button>
+          <button className="export-btn" onClick={handleExport}>Xuất Excel</button>
           <div className="pagination">
             <button disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>◀</button>
             <span>Trang {currentPage} / {totalPages}</span>

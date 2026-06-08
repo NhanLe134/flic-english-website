@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.hero {
+  background-color: white;
+  padding: 50px 0 100px;
+  font-family: 'Inter', sans-serif;
+}
+
+.hero-container {
+  max-width: 1250px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.hero-left {
+  width: 50%;
+}
+
+/* EYEBROW */
+.hero-subtitle {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 12px;
+}
+
+/* HEADING */
+.hero-left h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 16px 0 24px;
+  color: #111111;
+  letter-spacing: -1px;
+}
+
+/* DESCRIPTION */
+.hero-left p {
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+  font-size: 16px;
+  color: #4a4a4a;
+  margin-bottom: 40px;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+/* STATS */
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 40px;
+}
+
+.hero-stats>div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-stats h3 {
+  font-family: 'Inter', sans-serif;
+  color: #F95800;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+.hero-stats span {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #555555;
+  font-weight: 500;
+}
+
+/* IMAGE */
+.hero-right {
+  display: flex;
+  justify-content: flex-end;
+  width: 45%;
+}
+
+.hero-right img {
+  width: 450px;
+  height: auto;
+  display: block;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-login,
+.btn-register {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 12px 40px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.btn-login {
+  background-color: #F95800;
+  color: white;
+  border: 2px solid #F95800;
+}
+
+.btn-login:hover {
+  background-color: #d64c00;
+  border-color: #d64c00;
+}
+
+.btn-register {
+  background-color: transparent;
+  color: #F95800;
+  border: 2px solid #F95800;
+}
+
+.btn-register:hover {
+  background-color: #FFF2EB;
+}

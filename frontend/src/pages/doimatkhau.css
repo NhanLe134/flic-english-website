@@ -25,7 +25,7 @@
 }
 
 .password-title {
-  color: #f58220;
+  color: #F95800;
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 28px;
@@ -47,7 +47,7 @@
 }
 
 .password-label span {
-  color: #f58220;
+  color: #F95800;
 }
 
 .password-input {
@@ -63,11 +63,11 @@
 }
 
 .password-input:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 .password-save-btn {
-  background: #f58220;
+  background: #F95800;
   color: white;
   border: none;
   padding: 13px;
@@ -101,7 +101,7 @@
 }
 
 .password-back-btn:hover {
-  color: #f58220;
+  color: #F95800;
   text-decoration: underline;
 }
 

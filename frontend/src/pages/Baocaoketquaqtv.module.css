@@ -1,8 +1,7 @@
 /* ── Page & Layout ── */
 .page {
-  background: #faf5ec;
+  background: #ffffff;
   min-height: 100vh;
-  padding: 32px 40px;
   font-family: 'Segoe UI', sans-serif;
 }
 
@@ -10,12 +9,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  padding: 24px 32px 10px;
+  margin-bottom: 0;
 }
 
 .content {
   display: flex;
   flex-direction: column;
+  padding: 12px 32px 32px;
 }
 
 
@@ -76,31 +77,37 @@
 
 
 .statBox {
-  padding: 22px 24px;
-  border-radius: 14px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 
 .statBox p {
-  font-size: 14px;
-  color: #444;
-  margin: 0 0 10px;
+  font-size: 13px;
+  color: #718096;
+  margin: 0;
   font-weight: 500;
 }
 
 
 .statBox h2 {
-  font-size: 34px;
+  font-size: 24px;
   font-weight: 700;
   margin: 0;
-  color: #1a1a1a;
+  color: #F95800;
 }
 
 
-.s1 { background: #c8eae0; }
-.s2 { background: #c8eacc; }
-.s3 { background: #d4e5f5; }
-.s4 { background: #fbf0c2; }
+.s1 { background: transparent; }
+.s2 { background: transparent; }
+.s3 { background: transparent; }
+.s4 { background: transparent; }
 
 
 /* ── Filter bar ── */
@@ -135,12 +142,12 @@
 }
 
 .searchBox input:focus {
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 .searchBtn {
   width: 44px;
-  background: #e87722;
+  background: #F95800;
   border: none;
   border-radius: 0 8px 8px 0;
   color: white;
@@ -153,7 +160,7 @@
 }
 
 .searchBtn:hover {
-  background: #cf6415;
+  background: #e04f00;
 }
 
 
@@ -171,7 +178,7 @@
 
 
 .select:focus {
-  border-color: #e87722;
+  border-color: #F95800;
 }
 
 
@@ -249,7 +256,7 @@
 
 .arrowDown {
   transform: rotate(90deg);
-  color: #e87722;
+  color: #F95800;
 }
 
 

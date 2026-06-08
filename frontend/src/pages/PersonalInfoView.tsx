@@ -27,61 +27,51 @@ const PersonalInfoView = () => {
 
   return (
     <div className="piv-wrapper">
-
-      <div className="header-row">
+      <div className="piv-header-row">
         <h1>Thông tin cá nhân</h1>
         <button className="edit-btn" onClick={() => navigate("/edit-personal-info")}>
-          Sửa
+          Sửa thông tin
         </button>
       </div>
 
-      <div className="profile-view-card">
+      <div className="piv-grid">
+        {/* LEFT CARD */}
+        <div className="piv-sidebar-card">
+          <div className="piv-avatar-wrapper">
+            {data.Avatar ? (
+              <img src={data.Avatar} alt="avatar" />
+            ) : (
+              <div className="piv-avatar-initial">{data.HoTen?.charAt(0).toUpperCase()}</div>
+            )}
+          </div>
+          <h2 className="piv-name">{data.HoTen}</h2>
+          <span className="piv-badge">{data.HocVi || "Giảng viên FLIC"}</span>
 
-        <div className="profile-avatar">
-          {data.Avatar
-            ? <img src={data.Avatar} alt="avatar" />
-            : data.HoTen?.charAt(0).toUpperCase()
-          }
+          <div className="piv-contact-section">
+            <div className="piv-contact-item">
+              <span className="piv-contact-label">Email</span>
+              <p className="piv-contact-value">{data.Email || "Chưa cập nhật"}</p>
+            </div>
+            <div className="piv-contact-item">
+              <span className="piv-contact-label">Số điện thoại</span>
+              <p className="piv-contact-value">{data.SoDienThoai || "Chưa cập nhật"}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="profile-info">
-
-          <div className="info-block">
-            <span className="label">Họ và tên</span>
-            <p>{data.HoTen}</p>
+        {/* RIGHT CARDS */}
+        <div className="piv-main-content">
+          <div className="piv-info-card">
+            <h3>Chuyên môn</h3>
+            <p>{data.ChuyenMon || "Chưa cập nhật thông tin chuyên môn."}</p>
           </div>
 
-          <div className="info-block">
-            <span className="label">Chức danh</span>
-            <p className="highlight">{data.HocVi}</p>
+          <div className="piv-info-card">
+            <h3>Kinh nghiệm giảng dạy</h3>
+            <p>{data.KinhNghiem || "Chưa cập nhật kinh nghiệm giảng dạy."}</p>
           </div>
 
-          <div className="info-row-two">
-            <div>
-              <span className="label">Email</span>
-              <p>{data.Email}</p>
-            </div>
-            <div>
-              <span className="label">Số điện thoại</span>
-              <p>{data.SoDienThoai}</p>
-            </div>
-          </div>
-
-          <div className="info-block">
-            <span className="label">Chuyên môn</span>
-            <p>{data.ChuyenMon}</p>
-          </div>
-
-          <div className="info-block">
-            <span className="label">Kinh nghiệm giảng dạy</span>
-            <p>{data.KinhNghiem}</p>
-          </div>
-
-          <div className="info-block">
-            <span className="label">Giới thiệu</span>
-            <p>{data.GioiThieu}</p>
-          </div>
-
+          {/* 'Giới thiệu bản thân' đã được xoá theo yêu cầu */}
         </div>
       </div>
     </div>

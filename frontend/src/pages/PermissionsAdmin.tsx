@@ -3,6 +3,36 @@ import { useState, useEffect } from "react";
 
 const API = "http://localhost:5000";
 
+const GV_PERMISSIONS = [
+  { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
+  { code: "EXERCISE_CREATE", label: "Đăng bài tập" },
+  { code: "QUIZ_CREATE", label: "Đăng bài kiểm tra" },
+  { code: "EXTRA_PRACTICE_CREATE", label: "Đăng bài luyện tập thêm" },
+  { code: "DOCUMENT_CREATE_PENDING", label: "Đăng tài liệu" },
+  { code: "STUDENT_GRADE", label: "Chấm điểm bài tập" },
+  { code: "GRADEBOOK_VIEW_CLASS", label: "Xem điểm lớp phụ trách" },
+  { code: "SUBMISSION_VIEW", label: "Xem bài làm của SV" }
+];
+
+const QTND_PERMISSIONS = [
+  { code: "CLASS_MANAGE", label: "Tạo & quản lý lớp" },
+  { code: "STUDENT_ASSIGN", label: "Xếp lớp cho SV" },
+  { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
+  { code: "EXERCISE_CREATE", label: "Đăng bài tập" },
+  { code: "QUIZ_CREATE", label: "Đăng bài kiểm tra" },
+  { code: "EXTRA_PRACTICE_CREATE", label: "Đăng bài luyện tập thêm" },
+  { code: "DOCUMENT_CREATE_DIRECT", label: "Đăng tài liệu" },
+  { code: "CONTENT_APPROVE", label: "Duyệt bài & tài liệu của GV" },
+  { code: "STUDENT_GRADE", label: "Chấm điểm bài tập" },
+  { code: "GRADEBOOK_VIEW_ALL", label: "Xem điểm toàn hệ thống" },
+  { code: "SUBMISSION_VIEW", label: "Xem bài làm của SV" }
+];
+
+const getPermissionLabel = (permCode: string) => {
+  const found = [...GV_PERMISSIONS, ...QTND_PERMISSIONS].find(p => p.code === permCode);
+  return found ? found.label : permCode;
+};
+
 type User = {
   MaNguoiDung: number;
   TenDangNhap: string;
@@ -22,6 +52,7 @@ type PendingChange = {
 
 export default function PermissionsAdmin() {
   const [users, setUsers] = useState<User[]>([]);
+  const [permissionsMap, setPermissionsMap] = useState<Record<number, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [activeRole, setActiveRole] = useState<"Quản Trị Nội Dung" | "Giảng Viên">("Quản Trị Nội Dung");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -33,15 +64,38 @@ export default function PermissionsAdmin() {
     setTimeout(() => setToast(""), 2500);
   };
 
-  const loadUsers = () => {
+  const loadUsers = async () => {
     setLoading(true);
-    fetch(`${API}/admin/users`)
-      .then(r => r.json())
-      .then(data => {
-        setUsers(Array.isArray(data) ? data : []);
-      })
-      .catch(() => showToast("Lỗi tải danh sách người dùng"))
-      .finally(() => setLoading(false));
+    try {
+      const r = await fetch(`${API}/admin/users`);
+      const data = await r.json();
+      const userList: User[] = Array.isArray(data) ? data : [];
+      setUsers(userList);
+
+      // Fetch permissions for each relevant user concurrently
+      const permsData: Record<number, string[]> = {};
+      const relevantUsers = userList.filter(u => 
+        (u.VaiTro === "Giảng Viên" || u.VaiTro === "Quản Trị Nội Dung") && u.TrangThai !== "Khóa"
+      );
+
+      await Promise.all(
+        relevantUsers.map(async (u) => {
+          try {
+            const permRes = await fetch(`${API}/admin/users/${u.MaNguoiDung}/permissions`);
+            const permJson = await permRes.json();
+            permsData[u.MaNguoiDung] = permJson.permissions || [];
+          } catch (e) {
+            permsData[u.MaNguoiDung] = [];
+          }
+        })
+      );
+      
+      setPermissionsMap(permsData);
+    } catch (err) {
+      showToast("Lỗi tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -49,15 +103,7 @@ export default function PermissionsAdmin() {
   }, []);
 
   const getUserPermissions = (userId: number): string[] => {
-    const saved = localStorage.getItem(`user_perms_${userId}`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
+    return permissionsMap[userId] || [];
   };
 
   const handleCheckboxClick = (user: User, perm: string, currentVal: boolean) => {
@@ -69,32 +115,40 @@ export default function PermissionsAdmin() {
     setShowConfirmModal(true);
   };
 
-  const confirmChange = () => {
+  const confirmChange = async () => {
     if (!pendingChange) return;
     const { user, perm, nextVal } = pendingChange;
-    let newPerms = getUserPermissions(user.MaNguoiDung);
+    let newPerms = [...getUserPermissions(user.MaNguoiDung)];
 
-    if (user.VaiTro === "Quản Trị Nội Dung") {
-      if (nextVal) {
+    if (nextVal) {
+      if (!newPerms.includes(perm)) {
         newPerms.push(perm);
-        const hasOthers = ["Kiểm duyệt", "Xem báo cáo kết quả", "Quản lý các khoá học"].every(p => newPerms.includes(p));
-        if (hasOthers) {
-          newPerms.push("Tất cả");
-        }
-      } else {
-        newPerms = newPerms.filter(p => p !== perm && p !== "Tất cả");
       }
-    } else if (user.VaiTro === "Giảng Viên") {
-      if (nextVal) {
-        // Teachers have mutually exclusive permissions
-        newPerms = [perm];
-      } else {
-        newPerms = newPerms.filter(p => p !== perm);
-      }
+    } else {
+      newPerms = newPerms.filter(p => p !== perm);
     }
 
-    localStorage.setItem(`user_perms_${user.MaNguoiDung}`, JSON.stringify(newPerms));
-    showToast("Cập nhật quyền thành công!");
+    try {
+      // Call backend to save permissions
+      const response = await fetch(`${API}/admin/users/${user.MaNguoiDung}/permissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: newPerms })
+      });
+
+      if (response.ok) {
+        setPermissionsMap(prev => ({
+          ...prev,
+          [user.MaNguoiDung]: newPerms
+        }));
+        showToast("Cập nhật quyền thành công!");
+      } else {
+        showToast("Lưu thất bại trên máy chủ.");
+      }
+    } catch (err) {
+      showToast("Lỗi kết nối đến máy chủ.");
+    }
+
     setShowConfirmModal(false);
     setPendingChange(null);
   };
@@ -104,14 +158,9 @@ export default function PermissionsAdmin() {
     setPendingChange(null);
   };
 
-  // Filter users by activeRole and active status (locked users shouldn't have permissions displayed/managed)
+  // Filter users by activeRole and active status
   const filteredUsers = users.filter(u => u.VaiTro === activeRole && u.TrangThai !== "Khóa");
-
-  // Columns for each role (excluding 'Tất cả' according to user instructions)
-  const qtvndColumns = ["Kiểm duyệt", "Xem báo cáo kết quả", "Quản lý các khoá học"];
-  const gvColumns = ["Có tất cả quyền nhưng không có quyền đăng tải", "Có tất cả quyền"];
-
-  const activeColumns = activeRole === "Quản Trị Nội Dung" ? qtvndColumns : gvColumns;
+  const activeColumns = activeRole === "Quản Trị Nội Dung" ? QTND_PERMISSIONS : GV_PERMISSIONS;
 
   return (
     <div className="permissions-page">
@@ -137,7 +186,7 @@ export default function PermissionsAdmin() {
       {/* TABLE */}
       <div className="table-card">
         {loading ? (
-          <p style={{ padding: "20px", color: "#64748b" }}>Đang tải...</p>
+          <p style={{ padding: "20px", color: "#64748b" }}>Đang tải dữ liệu...</p>
         ) : filteredUsers.length === 0 ? (
           <p style={{ padding: "24px", color: "#64748b", fontStyle: "italic" }}>
             Không tìm thấy tài khoản hoạt động nào cho vai trò này.
@@ -146,9 +195,9 @@ export default function PermissionsAdmin() {
           <table className="permissions-table">
             <thead>
               <tr>
-                <th style={{ width: "250px" }}>Tên người dùng</th>
+                <th>Tên người dùng</th>
                 {activeColumns.map(col => (
-                  <th key={col}>{col}</th>
+                  <th key={col.code}>{col.label}</th>
                 ))}
               </tr>
             </thead>
@@ -159,13 +208,13 @@ export default function PermissionsAdmin() {
                   <tr key={u.MaNguoiDung}>
                     <td style={{ fontWeight: 600, color: "#0f172a" }}>{u.HoTen}</td>
                     {activeColumns.map(col => {
-                      const isChecked = userPerms.includes(col);
+                      const isChecked = userPerms.includes(col.code);
                       return (
-                        <td key={col} className="checkbox-cell">
+                        <td key={col.code} className="checkbox-cell">
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => handleCheckboxClick(u, col, isChecked)}
+                            onChange={() => handleCheckboxClick(u, col.code, isChecked)}
                           />
                         </td>
                       );
@@ -185,9 +234,9 @@ export default function PermissionsAdmin() {
             <h3>Xác nhận thay đổi quyền</h3>
             <p>
               {pendingChange.nextVal ? (
-                <>Bạn muốn bổ sung quyền <strong>"{pendingChange.perm}"</strong> cho <strong>"{pendingChange.user.HoTen}"</strong>?</>
+                <>Bạn muốn bổ sung quyền <strong>"{getPermissionLabel(pendingChange.perm)}"</strong> cho <strong>"{pendingChange.user.HoTen}"</strong>?</>
               ) : (
-                <>Bạn muốn xóa quyền <strong>"{pendingChange.perm}"</strong> của <strong>"{pendingChange.user.HoTen}"</strong>?</>
+                <>Bạn muốn xóa quyền <strong>"{getPermissionLabel(pendingChange.perm)}"</strong> của <strong>"{pendingChange.user.HoTen}"</strong>?</>
               )}
             </p>
             <div className="modal-actions">

@@ -4,7 +4,7 @@ import { FiSearch } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
-type ContentType = "baigiang" | "baihocmo";
+type ContentType = "baigiang" | "baihocmo" | "baitap";
 type ApprovalStatus = "Chờ duyệt" | "Đã duyệt" | "Từ chối";
 
 interface BaiGiangItem {
@@ -49,6 +49,7 @@ export default function DuyetBaiQTV() {
   
   const [baiGiangData, setBaiGiangData] = useState<BaiGiangItem[]>([]);
   const [baiHocMoData, setBaiHocMoData] = useState<BaiHocMoItem[]>([]);
+  const [baiTapData, setBaiTapData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
 
@@ -62,10 +63,12 @@ export default function DuyetBaiQTV() {
     Promise.all([
       fetch(`${API}/qtv/baigiang`).then((r) => r.json()),
       fetch(`${API}/baihocmo`).then((r) => r.json()),
+      fetch(`${API}/qtv/exercises`).then((r) => r.json()),
     ])
-      .then(([bg, bhm]) => {
+      .then(([bg, bhm, bt]) => {
         setBaiGiangData(Array.isArray(bg) ? bg : []);
         setBaiHocMoData(Array.isArray(bhm) ? bhm : []);
+        setBaiTapData(Array.isArray(bt) ? bt : []);
       })
       .catch((err) => console.error("Error loading data:", err))
       .finally(() => setLoading(false));
@@ -98,17 +101,23 @@ export default function DuyetBaiQTV() {
   const handleApproveStatus = async (item: any, status: ApprovalStatus) => {
     if (!item) return;
     try {
-      const endpoint =
-        activeTab === "baigiang"
-          ? `${API}/baigiang/${item.MaBaiHoc}/status`
-          : `${API}/baihocmo/${item.MaBaiHocMo}/duyet`;
+      let endpoint = "";
+      if (activeTab === "baigiang") {
+        endpoint = `${API}/baigiang/${item.MaBaiHoc}/status`;
+      } else if (activeTab === "baihocmo") {
+        endpoint = `${API}/baihocmo/${item.MaBaiHocMo}/duyet`;
+      } else if (activeTab === "baitap") {
+        endpoint = `${API}/exercise/${item.MaExercise}/status`;
+      } else if (activeTab === "tailieu") {
+        endpoint = `${API}/tailieu/${item.MaTaiLieu}/status`;
+      }
 
       // Status values mapped for backend
       let statusVal = "";
       if (status === "Đã duyệt") {
-        statusVal = activeTab === "baigiang" ? "published" : "Hoạt động";
+        statusVal = (activeTab === "baigiang" || activeTab === "baitap") ? "published" : "Hoạt động";
       } else {
-        statusVal = activeTab === "baigiang" ? "rejected" : "Từ chối";
+        statusVal = (activeTab === "baigiang" || activeTab === "baitap") ? "rejected" : "Từ chối";
       }
 
       const res = await fetch(endpoint, {
@@ -133,7 +142,7 @@ export default function DuyetBaiQTV() {
   // Stats calculation
   const allItems = [
     ...baiGiangData.map((d) => ({ ...d, type: "baigiang" })),
-    ...baiHocMoData.map((d) => ({ ...d, type: "baihocmo" })),
+    ...baiTapData.map((d) => ({ ...d, type: "baitap" })),
   ];
 
   const totalCount = allItems.length;
@@ -142,15 +151,22 @@ export default function DuyetBaiQTV() {
   const rejectedCount = allItems.filter((i) => getStatusLabel(i.TrangThai) === "Từ chối").length;
 
   // Filter current tab data
-  const currentData = activeTab === "baigiang" ? baiGiangData : baiHocMoData;
+  const currentData =
+    activeTab === "baigiang" ? baiGiangData :
+    activeTab === "baihocmo" ? baiHocMoData :
+    baiTapData;
 
   const filteredData = currentData.filter((item: any) => {
     const statusLabel = getStatusLabel(item.TrangThai);
     const matchStatus = filterStatus === "Tất cả" || statusLabel === filterStatus;
+    const itemTitle = item.TieuDe || item.Title || "";
+    const itemAuthor = item.TenGiangVien || item.TenNguoiTao || "";
+    const itemCourse = item.TenKhoaHoc || "";
+    
     const matchSearch =
-      (item.TieuDe || "").toLowerCase().includes(search.toLowerCase()) ||
-      (item.TenGiangVien || item.TenNguoiTao || "").toLowerCase().includes(search.toLowerCase()) ||
-      (item.TenKhoaHoc || "").toLowerCase().includes(search.toLowerCase());
+      itemTitle.toLowerCase().includes(search.toLowerCase()) ||
+      itemAuthor.toLowerCase().includes(search.toLowerCase()) ||
+      itemCourse.toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
@@ -166,7 +182,6 @@ export default function DuyetBaiQTV() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h1>Duyệt bài</h1>
-        <p>Kiểm tra và phê duyệt bài giảng, khóa học và các bài đăng kỹ năng do giáo viên gửi lên hệ thống.</p>
       </div>
 
       <div className={styles.content}>
@@ -216,13 +231,13 @@ export default function DuyetBaiQTV() {
             Bài giảng
           </button>
           <button
-            className={`${styles.tabBtn} ${activeTab === "baihocmo" ? styles.tabBtnActive : ""}`}
+            className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
             onClick={() => {
-              setActiveTab("baihocmo");
+              setActiveTab("baitap");
               setFilterStatus("Tất cả");
             }}
           >
-            Bài học kỹ năng
+            Bài tập / Bài kiểm tra
           </button>
         </div>
 
@@ -278,16 +293,17 @@ export default function DuyetBaiQTV() {
                       onClick={() => setSelectedItem(item)}
                     >
                       <td className={styles.itemTitle}>
-                        <b>{item.TieuDe}</b>
-                        {activeTab === "baigiang" && item.TenKhoaHoc && (
-                          <span className={styles.courseSubtitleText}>({item.TenKhoaHoc})</span>
+                        <b>{item.TieuDe || item.Title}</b>
+                        {(activeTab === "baigiang" || activeTab === "baitap") && item.TenKhoaHoc && (
+                          <span className={styles.courseSubtitleText}> ({item.TenKhoaHoc})</span>
                         )}
                       </td>
                       <td>{item.TenGiangVien || item.TenNguoiTao || "—"}</td>
                       <td>
-                        {activeTab === "baigiang"
-                          ? `Bài giảng (${item.LoaiBaiHoc || "Lý thuyết"})`
-                          : "Bài đăng"}
+                        {activeTab === "baigiang" ? `Bài giảng (${item.LoaiBaiHoc || "Lý thuyết"})` :
+                         activeTab === "baihocmo" ? "Bài học kỹ năng" :
+                         activeTab === "baitap" ? `Bài tập (${item.Type})` :
+                         "Tài liệu"}
                       </td>
                       <td>
                         <span className={`${styles.statusBadge} ${getStatusClass(item.TrangThai)}`}>
@@ -296,8 +312,8 @@ export default function DuyetBaiQTV() {
                       </td>
                       <td>{item.CapDo || "—"}</td>
                       <td>
-                        {item.NgayGui || item.NgayTao
-                          ? new Date(item.NgayGui || item.NgayTao).toLocaleDateString("vi-VN")
+                        {item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate
+                          ? new Date(item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate).toLocaleDateString("vi-VN")
                           : "—"}
                       </td>
                     </tr>
@@ -315,8 +331,8 @@ export default function DuyetBaiQTV() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <h2>{selectedItem.TieuDe}</h2>
-                <p className={styles.modalSubtitle}>Chi tiết khóa học</p>
+                <h2>{selectedItem.TieuDe || selectedItem.Title}</h2>
+                <p className={styles.modalSubtitle}>Chi tiết nội dung yêu cầu phê duyệt</p>
               </div>
               <button className={styles.closeBtn} onClick={() => setSelectedItem(null)}>
                 ×
@@ -326,40 +342,88 @@ export default function DuyetBaiQTV() {
             <div className={styles.modalBody}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label>Giảng viên</label>
+                  <label>Giảng viên / Người đăng</label>
                   <input
                     type="text"
                     disabled
-                    value={selectedItem.TenGiangVien || selectedItem.TenNguoiTao || ""}
+                    value={selectedItem.TenGiangVien || selectedItem.TenNguoiTao || "Hệ thống"}
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Loại</label>
+                  <label>Loại nội dung</label>
                   <input
                     type="text"
                     disabled
-                    value={activeTab === "baigiang" ? "Bài giảng" : "Bài đăng"}
+                    value={
+                      activeTab === "baigiang" ? "Bài giảng" :
+                      activeTab === "baihocmo" ? "Bài học kỹ năng" :
+                      activeTab === "baitap" ? "Bài tập / Bài kiểm tra" :
+                      "Tài liệu học tập"
+                    }
                   />
                 </div>
               </div>
 
-              <div className={styles.formGroupFull}>
-                <label>Mô tả</label>
-                <textarea
-                  disabled
-                  rows={4}
-                  value={
-                    activeTab === "baigiang"
-                      ? selectedItem.NoiDung || "Chưa có nội dung chi tiết."
-                      : selectedItem.MoTa || "Chưa có mô tả."
-                  }
-                />
-              </div>
+              {activeTab === "baitap" ? (
+                <>
+                  <div className={styles.formRowThree}>
+                    <div className={styles.formGroup}>
+                      <label>Kỹ năng</label>
+                      <input type="text" disabled value={selectedItem.KyNang || "—"} />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Dạng bài</label>
+                      <input type="text" disabled value={selectedItem.DangBai || "—"} />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Định dạng</label>
+                      <input type="text" disabled value={selectedItem.Type || "—"} />
+                    </div>
+                  </div>
+                  <div className={styles.formGroupFull}>
+                    <label>Đề bài / Nội dung</label>
+                    <textarea
+                      disabled
+                      rows={3}
+                      value={selectedItem.Content || "Không có nội dung đề bài."}
+                    />
+                  </div>
+                  {selectedItem.Questions && (
+                    <div className={styles.formGroupFull}>
+                      <label>Câu hỏi / Đáp án</label>
+                      <textarea
+                        disabled
+                        rows={4}
+                        value={selectedItem.Questions}
+                      />
+                    </div>
+                  )}
+                  {selectedItem.Vocabulary && (
+                    <div className={styles.formGroupFull}>
+                      <label>Từ vựng đi kèm</label>
+                      <input type="text" disabled value={selectedItem.Vocabulary} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className={styles.formGroupFull}>
+                  <label>Mô tả / Nội dung chi tiết</label>
+                  <textarea
+                    disabled
+                    rows={4}
+                    value={
+                      activeTab === "baigiang" ? selectedItem.NoiDung || "Chưa có nội dung chi tiết." :
+                      activeTab === "baihocmo" ? selectedItem.MoTa || "Chưa có mô tả." :
+                      selectedItem.MoTa || "Chưa có mô tả tài liệu."
+                    }
+                  />
+                </div>
+              )}
 
               <div className={styles.formRowThree}>
                 <div className={styles.formGroup}>
-                  <label>Cấp độ</label>
-                  <input type="text" disabled value={selectedItem.CapDo || "TOEIC"} />
+                  <label>Lớp học</label>
+                  <input type="text" disabled value={selectedItem.TenLop || "—"} />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Ngày gửi</label>
@@ -367,22 +431,18 @@ export default function DuyetBaiQTV() {
                     type="text"
                     disabled
                     value={
-                      selectedItem.NgayGui || selectedItem.NgayTao
-                        ? new Date(selectedItem.NgayGui || selectedItem.NgayTao).toLocaleDateString("vi-VN")
-                        : "12/06/2026"
+                      selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate
+                        ? new Date(selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate).toLocaleDateString("vi-VN")
+                        : "—"
                     }
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Mức độ</label>
+                  <label>Trình độ khóa học</label>
                   <input
                     type="text"
                     disabled
-                    value={
-                      activeTab === "baigiang"
-                        ? selectedItem.CapDo || "Beginner"
-                        : selectedItem.CapDo || "Beginner"
-                    }
+                    value={selectedItem.CapDo || "Beginner"}
                   />
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 import "./lessonManagement.css";
 
 const LessonManagement: React.FC = () => {
@@ -36,44 +37,48 @@ const LessonManagement: React.FC = () => {
     setSelectedId(null);
   };
 
-  // ← thêm hàm đổi trạng thái
-  const toggleStatus = async (id: number, currentStatus: string) => {
-    const newStatus = currentStatus === "published" ? "draft" : "published";
-    try {
-      await fetch(`http://localhost:5000/baigiang/${id}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ TrangThai: newStatus })
-      });
-      setLessons(prev =>
-        prev.map(l => l.MaBaiHoc === id ? { ...l, TrangThai: newStatus } : l)
-      );
-    } catch (err) {
-      console.log(err);
-    }
-  };
+
 
   return (
     <div className="lm-wrapper">
+      <span className="back-btn-span" onClick={() => navigate(-1)}>
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        Quay lại
+      </span>
 
       {/* PAGE HEADER */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Quản lý bài giảng</h1>
-          <p className="subtitle">Quản lý và tổ chức các bài học trong khóa học của bạn</p>
         </div>
-        <button className="back-btn" onClick={() => navigate("/class/1")}>← Quay lại</button>
       </div>
 
       {/* TOOLBAR */}
       <div className="toolbar">
-        <input
-          type="text"
-          placeholder="🔍 Tìm bài học..."
-          className="search-input"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <form className="search-container" onSubmit={(e) => e.preventDefault()} style={{ marginBottom: 0 }}>
+          <input
+            type="text"
+            placeholder="Tìm bài học..."
+            className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button className="search-button" type="button">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+        </form>
         <select
           className="filter-select"
           value={filterType}
@@ -113,14 +118,25 @@ const LessonManagement: React.FC = () => {
                   <td>{l.LoaiBaiHoc}</td>
                   <td>{l.ThoiLuong}</td>
                   <td>
-                    {/* ← đổi thành button có thể click */}
                     <span
-                      className={`status ${l.TrangThai === "published" ? "published" : "draft"}`}
-                      style={{ cursor: "pointer", userSelect: "none" }}
-                      title="Bấm để đổi trạng thái"
-                      onClick={() => toggleStatus(l.MaBaiHoc, l.TrangThai)}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        background:
+                          l.TrangThai === "published" ? "#e8f5e9" :
+                          l.TrangThai === "pending" ? "#fff3e0" :
+                          l.TrangThai === "rejected" ? "#ffebee" : "#eee",
+                        color:
+                          l.TrangThai === "published" ? "#2e7d32" :
+                          l.TrangThai === "pending" ? "#F95800" :
+                          l.TrangThai === "rejected" ? "#c62828" : "#666"
+                      }}
                     >
-                      {l.TrangThai === "published" ? "✅ Đã xuất bản" : "📝 Nháp"}
+                      {l.TrangThai === "published" ? "Đã duyệt" :
+                       l.TrangThai === "pending" ? "Chờ duyệt" :
+                       l.TrangThai === "rejected" ? "Từ chối" : l.TrangThai || "Nháp"}
                     </span>
                   </td>
                   <td>

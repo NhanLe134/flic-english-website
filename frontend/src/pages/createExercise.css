@@ -56,7 +56,7 @@
 }
 
 .tab.active {
-  background: #f58220;
+  background: #F95800;
   color: white;
   font-weight: 600;
 }
@@ -85,7 +85,7 @@
 }
 
 .exercise-title:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 /* TYPE SELECT */
@@ -118,7 +118,7 @@
 }
 
 .exercise-content:focus {
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 textarea.exercise-content {
@@ -140,7 +140,7 @@ textarea.exercise-content {
   padding: 16px;
   text-align: center;
   font-size: 15px;
-  color: #f58220;
+  color: #F95800;
   cursor: pointer;
   border: 2px dashed #e6caa5;
   transition: 0.2s;
@@ -148,7 +148,7 @@ textarea.exercise-content {
 
 .add-content:hover {
   background: #fef0e0;
-  border-color: #f58220;
+  border-color: #F95800;
 }
 
 /* UPLOAD */
@@ -174,7 +174,7 @@ textarea.exercise-content {
 }
 
 .upload-box:hover {
-  border-color: #f58220;
+  border-color: #F95800;
   background: #fef0e0;
 }
 
@@ -229,7 +229,7 @@ textarea.exercise-content {
   display: block;
   margin: 30px auto 0;
   padding: 12px 48px;
-  background: #f58220;
+  background: #F95800;
   border: none;
   border-radius: 10px;
   color: white;
@@ -266,7 +266,7 @@ textarea.exercise-content {
 .check-icon {
   width: 60px;
   height: 60px;
-  background: #f58220;
+  background: #F95800;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -293,7 +293,7 @@ textarea.exercise-content {
 
 .question-block-header h4 {
   margin: 0;
-  color: #f58220;
+  color: #F95800;
   font-size: 15px;
 }
 

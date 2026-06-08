@@ -1,0 +1,126 @@
+.sidebar-admin {
+  width: 260px;
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #eef2f6;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+/* LOGO SECTION */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  border-bottom: 1px solid #f6f8fb;
+}
+
+.logo-text {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000080; /* Màu xanh đen */
+  letter-spacing: 0.5px;
+}
+
+.logo-sub {
+  color: #F95800; /* Màu cam */
+}
+
+/* ADMIN PROFILE INFO */
+.admin-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-avatar {
+  width: 42px;
+  height: 42px;
+  background: #b7d9b7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: #2e7d32;
+  flex-shrink: 0;
+}
+
+.admin-info span {
+  font-weight: 550;
+  font-size: 14px;
+  color: #333333;
+}
+
+/* MENU SECTION */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 6px;
+  flex: 1;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  text-decoration: none;
+  color: #64748b;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 550;
+  transition: all 0.2s ease;
+}
+
+.menu-icon {
+  font-size: 18px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.menu-item span {
+  flex: 1;
+}
+
+.menu-item:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.menu-item:hover .menu-icon {
+  color: #F95800;
+}
+
+.menu-item.active {
+  background: #FFF3EB; /* Soft orange tint */
+  color: #F95800; /* Orange text */
+  font-weight: 700;
+}
+
+.menu-item.active .menu-icon {
+  color: #F95800;
+}
+
+.menu-item-logout {
+  color: #64748b;
+  margin-top: auto; /* Push logout to the bottom if space allows */
+}
+
+.menu-item-logout:hover {
+  background: #fff1f2;
+  color: #f43f5e;
+}
+
+.menu-item-logout:hover .menu-icon {
+  color: #f43f5e;
+}
