@@ -735,6 +735,59 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       );
     }
 
+    // ADMIN STATISTICS
+    if (urlStr === `${new URL(urlStr).origin}/admin/stats` && method === "GET") {
+      return new Response(
+        JSON.stringify({
+          tongNguoiDung: 125,
+          sinhVien: 78,
+          giangVien: 12,
+          quanTriVien: 2,
+          khoaHoc: 5,
+          dangKy: 45
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("/admin/stats/dangky-thang") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          { Thang: 1, SoLuong: 5 },
+          { Thang: 2, SoLuong: 8 },
+          { Thang: 3, SoLuong: 12 },
+          { Thang: 4, SoLuong: 15 },
+          { Thang: 5, SoLuong: 10 },
+          { Thang: 6, SoLuong: 3 }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ADMIN USERS MANAGEMENT
+    if (urlStr.includes("/admin/users") && !urlStr.includes("/permissions") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          { MaNguoiDung: 1, TenDangNhap: "admin", HoTen: "Nguyễn Văn Admin", Email: "admin@flic.com", TrangThai: "Active", NgayTao: "2025-01-01", VaiTro: "Quản Trị Viên" },
+          { MaNguoiDung: 2, TenDangNhap: "teacher1", HoTen: "Trần Văn Giảng", Email: "teacher@flic.com", TrangThai: "Active", NgayTao: "2025-01-05", VaiTro: "Giảng Viên" },
+          { MaNguoiDung: 3, TenDangNhap: "student1", HoTen: "Lê Minh Học", Email: "student@flic.com", TrangThai: "Active", NgayTao: "2025-01-10", VaiTro: "Học Viên" },
+          { MaNguoiDung: 4, TenDangNhap: "qtv", HoTen: "Phạm Quản Trị", Email: "qtv@flic.com", TrangThai: "Active", NgayTao: "2025-01-15", VaiTro: "Quản Trị Nội Dung" }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("/admin/users") && urlStr.includes("/permissions") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          { MaQuyen: 1, TenQuyen: "Xem thống kê", MaNguoiDung: 1 },
+          { MaQuyen: 2, TenQuyen: "Quản lý khóa học", MaNguoiDung: 1 },
+          { MaQuyen: 3, TenQuyen: "Quản lý người dùng", MaNguoiDung: 1 }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // COURSES MANAGEMENT
     if (urlStr.includes("/admin/khoahoc") && method === "GET") {
       return new Response(

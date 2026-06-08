@@ -1,10 +1,12 @@
-const sql = require("mssql/msnodesqlv8");
+const sql = require("mssql");
 
 const config = {
-  connectionString: "Driver={ODBC Driver 17 for SQL Server};Server=WINDOWS-10\\SQLEXPRESS;Database=Website;Trusted_Connection=yes;",
-  
+  user: 'team3',
+  password: 'FLIC@2026!218',
+  server: '14.225.192.252',
+  database: 'WebHocTiengAnh',
   options: {
-    enableArithAbort: true,
+    encrypt: false,
     trustServerCertificate: true
   }
 };
