@@ -427,10 +427,7 @@ app.get("/course-detail/:id/classes", async (req, res) => {
             FROM LESSON active_ls 
             WHERE active_ls.MaLesson = l.ActiveLessonId
           ), 0) AS TienDo,
-<<<<<<< Updated upstream
           pc.MaGiangVien, n.HoTen AS TenGiangVien,
-=======
->>>>>>> Stashed changes
           COUNT(DISTINCT ls.MaLesson) AS SoBuoiHoc,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
@@ -438,7 +435,6 @@ app.get("/course-detail/:id/classes", async (req, res) => {
           ) AS SoLuongHocVien
         FROM LOPHOC l
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
-<<<<<<< Updated upstream
         LEFT JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
         LEFT JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
         LEFT JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
@@ -446,11 +442,9 @@ app.get("/course-detail/:id/classes", async (req, res) => {
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc, l.HoanThanh, l.TrangThai, l.SoLuongHocVien,
                  l.ActiveLessonId, pc.MaGiangVien, n.HoTen
-=======
         LEFT JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc, l.ActiveLessonId
->>>>>>> Stashed changes
       `)
     
     const classes = result.recordset
@@ -490,24 +484,18 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
             FROM LESSON active_ls 
             WHERE active_ls.MaLesson = l.ActiveLessonId
           ), 0) AS TienDo,
-<<<<<<< Updated upstream
           pc.MaGiangVien, n.HoTen AS TenGiangVien,
-=======
->>>>>>> Stashed changes
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
             WHERE sl.MaLopHoc = l.MaLopHoc
           ) AS SoLuongHocVien
         FROM LOPHOC l
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
-<<<<<<< Updated upstream
         JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
         JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
         JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
-=======
         JOIN PHANCONG_LOP_KYNANG pc ON l.MaLopHoc = pc.MaLopHoc
         JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
->>>>>>> Stashed changes
         WHERE kc.MaKhoaHoc = @id
           AND g.MaNguoiDung = @maNguoiDung
       `)
@@ -2576,7 +2564,6 @@ app.get("/baocao/lessons", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 
-<<<<<<< Updated upstream
 /* ========== PHÂN QUYỀN - QUẢN LÝ QUYỀN CHI TIẾT ========== */
 // Lấy quyền của người dùng từ database
 app.get("/admin/users/:id/permissions", async (req, res) => {
@@ -2670,7 +2657,6 @@ app.post("/admin/users/:id/permissions", async (req, res) => {
     res.status(500).json({ message: "Lỗi: " + err.message }) 
   }
 })
-=======
 // ── Cập nhật phân công kỹ năng cho lớp học ──
 app.post("/qtv/lophoc/:id/giangvien-kynang", async (req, res) => {
   const classId = req.params.id;
@@ -2901,7 +2887,6 @@ app.put("/students/:maSinhVien", async (req, res) => {
   }
 });
 
->>>>>>> Stashed changes
 
 const initDb = async () => {
   try {

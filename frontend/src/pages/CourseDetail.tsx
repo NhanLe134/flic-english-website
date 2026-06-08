@@ -1,7 +1,7 @@
 import "./courseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiBookOpen, FiUsers, FiTrendingUp, FiCheckSquare, FiArrowLeft } from "react-icons/fi";
+import { FiBookOpen, FiUsers, FiCheckSquare, FiArrowLeft } from "react-icons/fi";
 
 interface ClassItem {
   id: number;

@@ -35,9 +35,6 @@ const QuanLyKetQuaHocTap = () => {
   }, []);
 
   const totalStudents = classes.reduce((t, c) => t + (c.SoLuongHocVien || 0), 0);
-  const avgProgress = classes.length > 0
-    ? Math.round(classes.reduce((t, c) => t + (c.TienDo || 0), 0) / classes.length)
-    : 0;
 
   return (
     <div className="qlkq-wrapper">

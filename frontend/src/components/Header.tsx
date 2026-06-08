@@ -1,4 +1,4 @@
-import "./Header.css";
+﻿import "./Header.css";
 import { useAvatar } from "../context/AvatarContext";
 import { useState, useEffect } from "react";
 
@@ -25,19 +25,15 @@ const Header = () => {
 
   return (
     <header className="teacher-header">
-<<<<<<< Updated upstream
       <img src={`${import.meta.env.BASE_URL}image.png`} alt="logo" className="teacher-logo" />
-=======
-      <img src={import.meta.env.BASE_URL + "image.png"} alt="logo" className="teacher-logo" />
->>>>>>> Stashed changes
 
-      <label className="avatar-wrapper header-avatar-wrapper" title="Đổi ảnh">
+      <label className="avatar-wrapper header-avatar-wrapper" title="─Éß╗òi ß║únh">
         <input type="file" accept="image/*" onChange={handleUpload} hidden />
         {avatar
           ? <img src={avatar} alt="avatar" className="avatar-img" />
           : <div className="avatar-placeholder">{initials}</div>
         }
-        <div className="avatar-overlay">📷</div>
+        <div className="avatar-overlay">≡ƒô╖</div>
       </label>
     </header>
   );

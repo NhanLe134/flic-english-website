@@ -134,11 +134,6 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
   return <div className={styles.toast}>✓ {msg}</div>
 }
 
-const StatusBadge = ({ s }: { s: string }) => {
-  const cls = s === 'Đã duyệt' ? styles.badgeGreen : s === 'Từ chối' ? styles.badgeRed : styles.badgeYellow
-  return <span className={`${styles.badge} ${cls}`}>{s === 'Pending' ? 'Chờ duyệt' : s}</span>
-}
-
 export default function CoursePageQTV() {
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}")
   const isQTV = user.VaiTro === "Quản Trị Nội Dung"

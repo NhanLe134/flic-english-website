@@ -1,7 +1,7 @@
 import "./exercisePage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiFileText, FiArrowLeft } from "react-icons/fi";
+import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiArrowLeft } from "react-icons/fi";
 
 const ExercisePage = () => {
   const navigate = useNavigate();

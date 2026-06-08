@@ -44,7 +44,7 @@ const ViewStudent = () => {
 
     try {
       setSaving(true);
-      const trimmedId = id.trim();
+      const trimmedId = (id || "").trim();
       const res = await fetch(`http://localhost:5000/students/${trimmedId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
