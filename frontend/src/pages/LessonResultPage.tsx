@@ -263,7 +263,7 @@ const LessonResultPage = () => {
           <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Đang tải bảng điểm...</div>
         ) : (
           id === "101" ? (
-            <BaoCaoKetQuaQTV showCsvButton={false} />
+            <BaoCaoKetQuaQTV />
           ) : (
             <div className="lrp-table-wrapper">
               <table>

@@ -165,6 +165,7 @@ export default function CoursePageQTV() {
   const [expandedClass, setExpandedClass]   = useState<number | null>(null)
 
   const [classesMap, setClassesMap]   = useState<Record<number, LopHoc[]>>({})
+  const [_gvKhoaMap, _setGvKhoaMap]     = useState<Record<number, GiaoVienKhoa[]>>({})
   const [classTeachersMap, setClassTeachersMap] = useState<Record<number, Record<number, { maGiangVien: number; tenGiangVien: string }>>>({})
 
   // Modal tạo/sửa khóa học
@@ -519,7 +520,8 @@ export default function CoursePageQTV() {
     }
   }
 
-  const assignTeacherForSkill = async (_courseId: number, classId: number, skillId: number, teacherId: number) => {
+  // ── Kỹ năng ───────────────────────────────────────────────────────────────────
+  const assignTeacherForSkill = async (classId: number, skillId: number, teacherId: number) => {
     try {
       const currentTeachers = classTeachersMap[classId] || {};
       const newTeachersObj: Record<number, number> = {};
@@ -727,7 +729,9 @@ export default function CoursePageQTV() {
         {/* Stats */}
         <div className={styles.statRow}>
           <div className={`${styles.statCard} ${styles.statMint}`}><div className={styles.statLabel}>Tổng khóa học</div><div className={styles.statValue}>{courses.length}</div></div>
+          <div className={`${styles.statCard} ${styles.statGreen}`}><div className={styles.statLabel}>Đã duyệt</div><div className={styles.statValue}>{courses.filter(c => c.status === 'Đã duyệt').length}</div></div>
           <div className={`${styles.statCard} ${styles.statBlue}`}><div className={styles.statLabel}>Tổng lớp học</div><div className={styles.statValue}>{totalCls}</div></div>
+          <div className={`${styles.statCard} ${styles.statYellow}`}><div className={styles.statLabel}>Chờ duyệt</div><div className={styles.statValue}>{courses.filter(c => c.status === 'Pending').length}</div></div>
           <div className={`${styles.statCard} ${styles.statOrange}`} style={{ cursor:'pointer' }} onClick={() => setShowRegModal(true)}>
             <div className={styles.statLabel}>Đăng ký chờ ghi danh</div>
             <div className={styles.statValue}>{pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</div>
@@ -754,6 +758,9 @@ export default function CoursePageQTV() {
               <button className={styles.btnRegList} onClick={() => setShowRegModal(true)}>
                 <FiFileText style={{ marginRight: 6 }} /> Đăng ký ({pendingRegs.filter(r => r.status === 'Chờ ghi danh').length})
               </button>
+              <button className={styles.btnPrimary} onClick={openAddCourse}>
+                <FiPlus style={{ marginRight: 6 }} /> Thêm khóa học
+              </button>
             </div>
           </div>
 
@@ -766,13 +773,14 @@ export default function CoursePageQTV() {
                   <th>TÊN KHÓA HỌC</th>
                   <th>CẤP ĐỘ</th>
                   <th>LỚP HỌC</th>
+                  <th>TRẠNG THÁI</th>
                   <th>NGÀY TẠO</th>
                   <th>THAO TÁC</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={5} className={styles.empty}>Không có khóa học nào</td></tr>
+                  <tr><td colSpan={6} className={styles.empty}>Không có khóa học nào</td></tr>
                 ) : filtered.map(c => (
                   <React.Fragment key={c.id}>
                     <tr>
@@ -787,26 +795,19 @@ export default function CoursePageQTV() {
                           {(classesMap[c.id] || []).length} lớp
                         </button>
                       </td>
+                      <td><StatusBadge s={c.status} /></td>
                       <td>{c.created}</td>
                       <td>
                         <div className={styles.actionBtns}>
-                          <button
-                            className={styles.btnPrimary}
-                            onClick={() => {
-                              setAddingToCourse(c);
-                              setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' });
-                              setShowAddClass(true);
-                            }}
-                          >
-                            Thêm lớp học
-                          </button>
+                          <button className={styles.btnOutline} onClick={() => openEditCourse(c)}>Sửa</button>
+                          <button className={styles.btnDanger} onClick={() => deleteCourse(c.id)}>Xóa</button>
                         </div>
                       </td>
                     </tr>
 
                     {expandedCourse === c.id && (
                       <tr>
-                        <td colSpan={5} className={styles.expandedCell}>
+                        <td colSpan={6} className={styles.expandedCell}>
                           {(classesMap[c.id] || []).length === 0 ? (
                             <div className={styles.expandEmpty}>Chưa có lớp học nào.</div>
                           ) : (
@@ -835,7 +836,7 @@ export default function CoursePageQTV() {
                                               <button 
                                                 className={styles.btnOutline} 
                                                 style={{ fontSize: 10, padding: '1px 4px', height: 'auto', border: '1px solid #e87722', color: '#e87722' }}
-                                                onClick={() => assignTeacherForSkill(c.id, cl.id, skillId, 0)}
+                                                onClick={() => assignTeacherForSkill(cl.id, skillId, 0)}
                                               >
                                                 Xóa
                                               </button>
@@ -844,7 +845,7 @@ export default function CoursePageQTV() {
                                             <select 
                                               value="" 
                                               style={{ fontSize: 11, padding: '2px 20px 2px 4px', borderRadius: 4, border: '1px solid #cbd5e1', minWidth: 120, height: 'auto' }}
-                                              onChange={e => { if (e.target.value) assignTeacherForSkill(c.id, cl.id, skillId, Number(e.target.value)) }}
+                                              onChange={e => { if (e.target.value) assignTeacherForSkill(cl.id, skillId, Number(e.target.value)) }}
                                               disabled={!giaoViens.length}
                                             >
                                               <option value="">{giaoViens.length ? '— Chọn GV —' : 'Không có GV'}</option>

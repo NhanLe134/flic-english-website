@@ -53,6 +53,14 @@ export default function AccountAdmin() {
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [addErrors, setAddErrors] = useState<{ username?: string; fullname?: string; email?: string; password?: string }>({});
+  const [editErrors, setEditErrors] = useState<{ email?: string }>({});
+
+  useEffect(() => {
+    if (!showModal) {
+      setEditErrors({});
+    }
+  }, [showModal]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -92,6 +100,7 @@ export default function AccountAdmin() {
   useEffect(() => {
     if (!showAddModal) {
       setNewPermissions([]);
+      setAddErrors({});
     }
   }, [showAddModal]);
 
@@ -134,6 +143,24 @@ export default function AccountAdmin() {
 
   const handleSave = async () => {
     if (!selectedUser) return;
+    const errors: { email?: string } = {};
+    if (!selectedUser.Email.trim()) {
+      errors.email = "Vui lòng nhập email!";
+    } else {
+      // Basic email check
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(selectedUser.Email.trim())) {
+        errors.email = "Email không đúng định dạng!";
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      return;
+    }
+
+    setEditErrors({});
+
     try {
       // Cập nhật thông tin cơ bản
       await fetch(`${API}/admin/users/${selectedUser.MaNguoiDung}`, {
@@ -166,9 +193,33 @@ export default function AccountAdmin() {
 
 
   const handleCreateUser = async () => {
-    if (!newUser.username.trim() || !newUser.email.trim()) {
-      alert("Vui lòng nhập tên đăng nhập và email!"); return;
+    const errors: { username?: string; fullname?: string; email?: string; password?: string } = {};
+    if (!newUser.username.trim()) {
+      errors.username = "Vui lòng nhập tên đăng nhập!";
     }
+    if (!newUser.fullname.trim()) {
+      errors.fullname = "Vui lòng nhập họ và tên!";
+    }
+    if (!newUser.email.trim()) {
+      errors.email = "Vui lòng nhập email!";
+    } else {
+      // Basic email check
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newUser.email.trim())) {
+        errors.email = "Email không đúng định dạng!";
+      }
+    }
+    if (!newUser.password.trim()) {
+      errors.password = "Vui lòng nhập mật khẩu!";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAddErrors(errors);
+      return;
+    }
+
+    setAddErrors({});
+
     try {
       const response = await fetch(`${API}/admin/users`, {
         method: "POST",
@@ -218,7 +269,7 @@ export default function AccountAdmin() {
       <div className="account-top">
         <div className="search-filter-group">
           <input
-            placeholder="Tìm kiếm theo tên, email, tài khoản..."
+            placeholder="Tìm theo họ tên, email, tên đăng nhập"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -243,6 +294,7 @@ export default function AccountAdmin() {
         <div className="box"><p>Tổng người dùng</p><h3>{users.length}</h3></div>
         <div className="box"><p>Sinh viên</p><h3>{users.filter(u => u.VaiTro === "Học Viên").length}</h3></div>
         <div className="box"><p>Giảng viên</p><h3>{users.filter(u => u.VaiTro === "Giảng Viên").length}</h3></div>
+        <div className="box"><p>Quản trị nội dung</p><h3>{users.filter(u => u.VaiTro === "Quản Trị Nội Dung").length}</h3></div>
         <div className="box"><p>Đang hoạt động</p><h3>{users.filter(u => isActive(u.TrangThai)).length}</h3></div>
       </div>
 
@@ -254,8 +306,8 @@ export default function AccountAdmin() {
           <table className="accounts-table">
             <thead>
               <tr>
-                <th>Tên người dùng</th>
-                <th>Tài khoản</th>
+                <th>Tên đăng nhập</th>
+                <th>Họ tên</th>
                 <th>Email</th>
                 <th>Vai trò</th>
                 <th>Trạng thái</th>
@@ -267,10 +319,12 @@ export default function AccountAdmin() {
                 <tr><td colSpan={6} className="table-empty">Không có dữ liệu</td></tr>
               ) : filteredUsers.map(u => (
                 <tr key={u.MaNguoiDung} onClick={() => { setSelectedUser({ ...u }); setShowDetailModal(true); }}>
+                  <td className="user-username">
+                    <div style={{ fontWeight: 600 }}>{u.TenDangNhap}</div>
+                  </td>
                   <td>
                     <div className="user-name">{u.HoTen}</div>
                   </td>
-                  <td className="user-username">{u.TenDangNhap}</td>
                   <td className="user-email">{u.Email}</td>
                   <td>
                     <span
@@ -329,6 +383,7 @@ export default function AccountAdmin() {
               <div className="form-field">
                 <label>Email</label>
                 <input value={selectedUser.Email} onChange={e => setSelectedUser({ ...selectedUser, Email: e.target.value })} />
+                {editErrors.email && <span className="error-message">{editErrors.email}</span>}
               </div>
 
               <div className="form-field">
@@ -414,21 +469,25 @@ export default function AccountAdmin() {
               <div className="form-field">
                 <label>Tên đăng nhập <span className="required-star">*</span></label>
                 <input placeholder="VD: nguyenvana" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
+                {addErrors.username && <span className="error-message">{addErrors.username}</span>}
               </div>
 
               <div className="form-field">
-                <label>Họ và tên</label>
+                <label>Họ và tên <span className="required-star">*</span></label>
                 <input placeholder="Nguyễn Văn A" value={newUser.fullname} onChange={e => setNewUser({ ...newUser, fullname: e.target.value })} />
+                {addErrors.fullname && <span className="error-message">{addErrors.fullname}</span>}
               </div>
 
               <div className="form-field">
                 <label>Email <span className="required-star">*</span></label>
                 <input placeholder="example@email.com" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                {addErrors.email && <span className="error-message">{addErrors.email}</span>}
               </div>
 
               <div className="form-field">
-                <label>Mật khẩu</label>
+                <label>Mật khẩu <span className="required-star">*</span></label>
                 <input type="password" placeholder="Mặc định: 123456" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                {addErrors.password && <span className="error-message">{addErrors.password}</span>}
               </div>
 
               <div className="form-field">
@@ -559,7 +618,7 @@ export default function AccountAdmin() {
 
               <div className="form-field">
                 <label>Trạng thái</label>
-                <div className="info-value status-wrapper">
+                <div className="info-value">
                   <span className={` ${isActive(selectedUser.TrangThai) ? "active" : "locked"}`}>
                     {isActive(selectedUser.TrangThai) ? "Hoạt động" : "Khóa"}
                   </span>

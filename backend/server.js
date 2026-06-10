@@ -2119,6 +2119,22 @@ app.get("/baocao/baitap-headers", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 
+// Lấy toàn bộ phân công giảng viên cho tất cả các lớp
+app.get("/baocao/giangvien-all", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT pc.MaLopHoc, pc.MaGiangVien, n.HoTen AS TenGiangVien
+      FROM PHANCONGGIANGVIEN pc
+      JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
+      JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // Lấy học viên + điểm từng bài tập
 app.get("/baocao/hocvien", async (req, res) => {
   try {

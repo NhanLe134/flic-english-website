@@ -65,6 +65,13 @@
   background: #333;
 }
 
+/* Bỏ border khi click trên biểu đồ */
+svg:focus,
+svg:active {
+  outline: none;
+  border: none;
+}
+
 
 /* ── Stats ── */
 .stats {

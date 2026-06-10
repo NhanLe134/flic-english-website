@@ -4,7 +4,6 @@
   flex-direction: column;
   gap: 20px;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  background-color: #ffffff;
 }
 
 /* HEADER CONTAINER */
@@ -16,9 +15,10 @@
 }
 
 .page-header-container h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: #000080;
+  margin-top: 0;
   margin-bottom: 6px;
   letter-spacing: -0.5px;
 }
