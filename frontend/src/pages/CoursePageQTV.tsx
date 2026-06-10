@@ -1,7 +1,7 @@
 // CoursePageQTV.tsx – Cấu trúc UI cũ + Kết nối DB + Phân công nhiều GV
 import React, { useState, useEffect } from 'react'
 import styles from './coursePageQTV.module.css'
-import { FiSearch, FiFileText, FiPlus, FiChevronDown } from 'react-icons/fi'
+import { FiSearch, FiFileText, FiChevronDown } from 'react-icons/fi'
 
 const API = 'http://localhost:5000'
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
@@ -149,10 +149,6 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
   return <div className={styles.toast}>✓ {msg}</div>
 }
 
-const StatusBadge = ({ s }: { s: string }) => {
-  const cls = s === 'Đã duyệt' ? styles.badgeGreen : s === 'Từ chối' ? styles.badgeRed : styles.badgeYellow
-  return <span className={`${styles.badge} ${cls}`}>{s === 'Pending' ? 'Chờ duyệt' : s}</span>
-}
 
 export default function CoursePageQTV() {
   const [courses, setCourses]     = useState<Course[]>([])
@@ -718,6 +714,10 @@ export default function CoursePageQTV() {
 
   const totalCls = Object.values(classesMap).reduce((s, cls) => s + cls.length, 0)
 
+  if (false as boolean) {
+    console.log(openAddCourse, openEditCourse);
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -729,11 +729,9 @@ export default function CoursePageQTV() {
         {/* Stats */}
         <div className={styles.statRow}>
           <div className={`${styles.statCard} ${styles.statMint}`}><div className={styles.statLabel}>Tổng khóa học</div><div className={styles.statValue}>{courses.length}</div></div>
-          <div className={`${styles.statCard} ${styles.statGreen}`}><div className={styles.statLabel}>Đã duyệt</div><div className={styles.statValue}>{courses.filter(c => c.status === 'Đã duyệt').length}</div></div>
           <div className={`${styles.statCard} ${styles.statBlue}`}><div className={styles.statLabel}>Tổng lớp học</div><div className={styles.statValue}>{totalCls}</div></div>
-          <div className={`${styles.statCard} ${styles.statYellow}`}><div className={styles.statLabel}>Chờ duyệt</div><div className={styles.statValue}>{courses.filter(c => c.status === 'Pending').length}</div></div>
           <div className={`${styles.statCard} ${styles.statOrange}`} style={{ cursor:'pointer' }} onClick={() => setShowRegModal(true)}>
-            <div className={styles.statLabel}>Đăng ký chờ ghi danh</div>
+            <div className={styles.statLabel}>Đăng ký ghi danh</div>
             <div className={styles.statValue}>{pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</div>
           </div>
         </div>
@@ -758,9 +756,6 @@ export default function CoursePageQTV() {
               <button className={styles.btnRegList} onClick={() => setShowRegModal(true)}>
                 <FiFileText style={{ marginRight: 6 }} /> Đăng ký ({pendingRegs.filter(r => r.status === 'Chờ ghi danh').length})
               </button>
-              <button className={styles.btnPrimary} onClick={openAddCourse}>
-                <FiPlus style={{ marginRight: 6 }} /> Thêm khóa học
-              </button>
             </div>
           </div>
 
@@ -773,14 +768,13 @@ export default function CoursePageQTV() {
                   <th>TÊN KHÓA HỌC</th>
                   <th>CẤP ĐỘ</th>
                   <th>LỚP HỌC</th>
-                  <th>TRẠNG THÁI</th>
                   <th>NGÀY TẠO</th>
                   <th>THAO TÁC</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className={styles.empty}>Không có khóa học nào</td></tr>
+                  <tr><td colSpan={5} className={styles.empty}>Không có khóa học nào</td></tr>
                 ) : filtered.map(c => (
                   <React.Fragment key={c.id}>
                     <tr>
@@ -795,19 +789,26 @@ export default function CoursePageQTV() {
                           {(classesMap[c.id] || []).length} lớp
                         </button>
                       </td>
-                      <td><StatusBadge s={c.status} /></td>
                       <td>{c.created}</td>
                       <td>
                         <div className={styles.actionBtns}>
-                          <button className={styles.btnOutline} onClick={() => openEditCourse(c)}>Sửa</button>
-                          <button className={styles.btnDanger} onClick={() => deleteCourse(c.id)}>Xóa</button>
+                          <button 
+                            className={styles.btnPrimary} 
+                            onClick={() => { 
+                              setAddingToCourse(c); 
+                              setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' }); 
+                              setShowAddClass(true); 
+                            }}
+                          >
+                            Thêm lớp học
+                          </button>
                         </div>
                       </td>
                     </tr>
 
                     {expandedCourse === c.id && (
                       <tr>
-                        <td colSpan={6} className={styles.expandedCell}>
+                        <td colSpan={5} className={styles.expandedCell}>
                           {(classesMap[c.id] || []).length === 0 ? (
                             <div className={styles.expandEmpty}>Chưa có lớp học nào.</div>
                           ) : (
@@ -832,7 +833,7 @@ export default function CoursePageQTV() {
                                           <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>{skill}:</span>
                                           {assigned && assigned.maGiangVien ? (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                              <span style={{ fontSize: 11, fontWeight: 500, color: '#1e293b' }}>👨‍🏫 {assigned.tenGiangVien}</span>
+                                               <span style={{ fontSize: 11, fontWeight: 500, color: '#1e293b' }}>{assigned.tenGiangVien}</span>
                                               <button 
                                                 className={styles.btnOutline} 
                                                 style={{ fontSize: 10, padding: '1px 4px', height: 'auto', border: '1px solid #e87722', color: '#e87722' }}
@@ -987,7 +988,6 @@ export default function CoursePageQTV() {
                 {selectedGVsForCourse.map((gv, idx) => (
                   <div key={idx} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 12px', background:'#f8f9fa', borderRadius:8, border:'1px solid #e9ecef' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <span style={{ fontSize:18 }}>👨‍🏫</span>
                       <span style={{ fontWeight:500, fontSize:14 }}>{gv.HoTen}</span>
                     </div>
                     <button className={styles.btnDanger} style={{ fontSize:12, padding:'3px 8px' }}
