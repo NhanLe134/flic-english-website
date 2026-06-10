@@ -2090,9 +2090,8 @@ app.get("/baocao/diem-all", async (req, res) => {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        b.MaSinhVien, b.MaExercise, b.Diem, b.NgayNop
+        b.MaBaiNop, b.MaSinhVien, b.MaExercise, b.Diem, b.NgayNop
       FROM BAINOP b
-      WHERE b.Diem IS NOT NULL
     `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -2509,15 +2508,16 @@ app.get("/student/bainop/:maNguoiDung", async (req, res) => {
     
     let query = `
       SELECT b.MaBaiNop, b.MaExercise, b.Diem, b.NgayNop, b.TrangThai,
-             e.Title AS TenBaiTap, e.MaLesson
+             e.Title AS TenBaiTap, COALESCE(e.MaLesson, bg.MaLesson) AS MaLesson
       FROM BAINOP b
       JOIN EXERCISE e ON b.MaExercise = e.MaExercise
+      LEFT JOIN BAIHOCKHOAHOC bg ON e.MaBaiHoc = bg.MaBaiHoc
       WHERE b.MaSinhVien = @id
     `
     
     // Nếu có lessonId thì lọc thêm
     if (lessonId) {
-      query += ` AND e.MaLesson = @lessonId`
+      query += ` AND COALESCE(e.MaLesson, bg.MaLesson) = @lessonId`
     }
     
     const request = pool.request().input("id", req.params.maNguoiDung)

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useNavigate } from "react-router-dom"
 import styles from "./Baocaoketquaqtv.module.css"
 import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
 
@@ -49,14 +50,18 @@ const trangThaiColor: Record<string, string> = {
   "Tạm dừng":   styles.ttTamDung,
 }
 
-const BaoCaoKetQuaQTV = () => {
+interface Props {
+  showCsvButton?: boolean
+}
+
+const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
+  const navigate = useNavigate()
   const [data, setData]             = useState<HocVien[]>([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState("")
   const [filterKhoa, setFilterKhoa] = useState("Tất cả khóa học")
   const [filterLop, setFilterLop]   = useState("")
   const [filterTT, setFilterTT]     = useState("Tất cả trạng thái")
-  const [expandedId, setExpandedId] = useState<number | null>(null)
   const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -123,9 +128,9 @@ const BaoCaoKetQuaQTV = () => {
     if (classLessons.length === 0) return []
 
     const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
-    const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
+    const activeThuTu = activeLesson ? activeLesson.ThuTu : null
 
-    if (activeThuTu === 0 || activeThuTu === -Infinity) return []
+    if (activeThuTu === null || activeThuTu === 0) return [] // Chưa đánh dấu thì không hiện buổi học nào
 
     return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
       .sort((a, b) => b - a)
@@ -193,6 +198,16 @@ const BaoCaoKetQuaQTV = () => {
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : "—"
 
+  const handleBuoiClick = (hv: HocVien, buoiNum: number) => {
+    const lessonObj = allLessons.find(
+      l => l.TenLop === hv.lopKhoaHoc && l.ThuTu === buoiNum
+    )
+    const targetLessonId = lessonObj ? lessonObj.MaLesson : null
+    if (targetLessonId) {
+      navigate(`/xem-ket-qua/${hv.maHV}`, { state: { lessonId: targetLessonId } })
+    }
+  }
+
   const handleExportCSV = () => {
     const headers = ["Họ và tên", "Mã HV", "Trạng thái", ...uniqueBuois.map(b => `Buổi ${b}`)]
     const rows = filtered.map(h => [
@@ -218,9 +233,11 @@ const BaoCaoKetQuaQTV = () => {
           <h1 className={styles.title}>Báo cáo kết quả học tập</h1>
           <p className={styles.subtitle}>Xem và xuất điểm bài tập của từng học viên theo lớp, khóa học</p>
         </div>
-        <button className={styles.exportBtn} onClick={handleExportCSV}>
-          ⬇ Xuất CSV
-        </button>
+        {showCsvButton && (
+          <button className={styles.exportBtn} onClick={handleExportCSV}>
+            ⬇ Xuất CSV
+          </button>
+        )}
       </div>
 
       <div className={styles.content}>
@@ -306,6 +323,7 @@ const BaoCaoKetQuaQTV = () => {
                 <tr>
                   <th>HỌ VÀ TÊN</th>
                   <th>MÃ HV</th>
+                  <th>LỚP/KHÓA</th>
                   <th>TRẠNG THÁI</th>
                   {uniqueBuois.map(b => (
                     <th key={b}>ĐIỂM TB BUỔI {b}</th>
@@ -314,13 +332,17 @@ const BaoCaoKetQuaQTV = () => {
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={3 + uniqueBuois.length} className={styles.empty}>Không có dữ liệu.</td></tr>
+                  <tr><td colSpan={4 + uniqueBuois.length} className={styles.empty}>Không có dữ liệu.</td></tr>
                 ) : paginatedData.map(hv => (
                   <tr key={hv.id} className={styles.row}>
                     <td>
                       <p className={styles.tenHV}>{hv.hoTen}</p>
                     </td>
                     <td className={styles.maHV}>{hv.maHV}</td>
+                    <td>
+                      <p className={styles.tenLop}>{hv.lopKhoaHoc}</p>
+                      <p className={styles.subInfo}>{hv.tenKhoa}</p>
+                    </td>
                     <td>
                       <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
                         {hv.trangThai}
@@ -341,8 +363,8 @@ const BaoCaoKetQuaQTV = () => {
                       if (!hasExs) {
                         return <td key={b} className={styles.emptyVal}>—</td>
                       }
-                      return (
-                        <td key={b}>
+                       return (
+                        <td key={b} className={styles.clickableCell} onClick={() => handleBuoiClick(hv, b)}>
                           {avg !== null
                             ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
                             : <span className={styles.chuaNop}>Chưa nộp</span>

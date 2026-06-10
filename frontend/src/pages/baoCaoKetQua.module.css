@@ -321,3 +321,11 @@
   font-size: 13px;
   color: #666;
 }
+
+.clickableCell {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.clickableCell:hover {
+  background-color: #fdf2e9 !important;
+}

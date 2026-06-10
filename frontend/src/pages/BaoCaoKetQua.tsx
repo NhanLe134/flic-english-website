@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './baoCaoKetQua.module.css'
 import { FiUsers, FiCheckCircle, FiAward } from 'react-icons/fi'
 
@@ -47,13 +48,13 @@ const pillColor = (d: number | null) => {
 }
 
 export default function BaoCaoKetQua() {
+  const navigate = useNavigate()
   const [allData, setAllData]           = useState<StudentResult[]>([])
   const [loading, setLoading]           = useState(true)
   const [searchText, setSearchText]     = useState('')
   const [filterClass, setFilterClass]   = useState('')
   const [filterCourse, setFilterCourse] = useState('Tất cả khóa học')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
-  const [expandedId, setExpandedId]     = useState<string | null>(null)
   const [rawHeaders, setRawHeaders]     = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons]     = useState<LessonInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -113,9 +114,9 @@ export default function BaoCaoKetQua() {
     if (classLessons.length === 0) return []
 
     const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
-    const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
+    const activeThuTu = activeLesson ? activeLesson.ThuTu : null
 
-    if (activeThuTu === 0 || activeThuTu === -Infinity) return []
+    if (activeThuTu === null || activeThuTu === 0) return [] // Chưa đánh dấu thì không hiện buổi học nào
 
     return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
       .sort((a, b) => b - a)
@@ -190,6 +191,16 @@ export default function BaoCaoKetQua() {
   const diemTBchung = diemTBs.length > 0
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : '—'
+
+  const handleBuoiClick = (student: StudentResult, buoiNum: number) => {
+    const lessonObj = allLessons.find(
+      l => l.TenLop === student.className && l.ThuTu === buoiNum
+    )
+    const targetLessonId = lessonObj ? lessonObj.MaLesson : null
+    if (targetLessonId) {
+      navigate(`/xem-ket-qua/${student.studentId}`, { state: { lessonId: targetLessonId } })
+    }
+  }
 
   // Xuất file CSV
   const downloadCSV = () => {
@@ -332,7 +343,7 @@ export default function BaoCaoKetQua() {
                   {uniqueBuois.map(b => {
                     const hvLessons = allLessons.filter(l => l.TenLop === s.className)
                     const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
-                    const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...hvLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
+                    const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : null
 
                     if (hvActiveThuTu === null || b > hvActiveThuTu) {
                       return <td key={b} className={styles.emptyVal}>—</td>
@@ -345,7 +356,11 @@ export default function BaoCaoKetQua() {
                     }
 
                     return (
-                      <td key={b} className={styles.scoreCell}>
+                      <td 
+                        key={b} 
+                        className={`${styles.scoreCell} ${styles.clickableCell}`} 
+                        onClick={() => handleBuoiClick(s, b)}
+                      >
                         {avg !== null ? (
                           <span className={`${styles.avgBadge} ${pillColor(avg)}`}>{avg.toFixed(1)}</span>
                         ) : (

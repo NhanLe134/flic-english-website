@@ -60,6 +60,19 @@ const db = {
       NhanXet: "",
       NgayNop: "2026-03-08T14:20:00.000Z",
       TenLop: "IELTS-SP-01"
+    },
+    {
+      MaBaiNop: 9999,
+      MaExercise: 1,
+      HoTen: "Học Viên Giả Định",
+      MaSinhVien: "SV_MOCK_TEST",
+      FileUrl: "",
+      LinkUrl: "",
+      NoiDungBaiNop: "This is a mock homework submission.",
+      Diem: 8.5,
+      NhanXet: "Bài làm tốt",
+      NgayNop: "2026-03-09T08:00:00.000Z",
+      TenLop: "TOEIC-01"
     }
   ],
   documents: [
@@ -484,12 +497,13 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     }
 
     // 9. GET STUDENTS FOR TEACHER OR CLASS
-    if (urlStr.includes("/teacher/students/") || urlStr.includes("/lophoc/") && urlStr.endsWith("/students")) {
+    if (urlStr.includes("/teacher/students/") || (urlStr.includes("/lophoc/") && (urlStr.endsWith("/students") || urlStr.endsWith("/sinhvien")))) {
       return new Response(
         JSON.stringify([
           { MaSinhVien: "SV01", HoTen: "Nguyễn Văn An", GioiTinh: "Nam", TenKhoaHoc: "TOEIC 650+ Intensive", Lop: "TOEIC-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" },
           { MaSinhVien: "SV02", HoTen: "Trần Thị Bích", GioiTinh: "Nữ", TenKhoaHoc: "TOEIC 650+ Intensive", Lop: "TOEIC-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" },
-          { MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", TenKhoaHoc: "IELTS Speaking Band 7", Lop: "IELTS-SP-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" }
+          { MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", TenKhoaHoc: "IELTS Speaking Band 7", Lop: "IELTS-SP-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" },
+          { MaSinhVien: "SV_MOCK_TEST", HoTen: "Học Viên Giả Định", GioiTinh: "Nam", TenKhoaHoc: "TOEIC 650+ Intensive", Lop: "TOEIC-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" }
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
@@ -653,7 +667,8 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         JSON.stringify([
           { MaNguoiDung: 101, MaSinhVien: "SV01", HoTen: "Nguyễn Văn An", GioiTinh: "Nam", NgaySinh: "2002-03-12T00:00:00.000Z", TenLop: "TOEIC-01", TenKhoaHoc: "TOEIC 650+ Intensive", TrangThai: "Đang học", baiTaps: { 1: 8.5 } },
           { MaNguoiDung: 102, MaSinhVien: "SV02", HoTen: "Trần Thị Bích", GioiTinh: "Nữ", NgaySinh: "2001-11-02T00:00:00.000Z", TenLop: "TOEIC-01", TenKhoaHoc: "TOEIC 650+ Intensive", TrangThai: "Đang học", baiTaps: { 1: 9.0 } },
-          { MaNguoiDung: 103, MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", NgaySinh: "2000-08-20T00:00:00.000Z", TenLop: "IELTS-SP-01", TenKhoaHoc: "IELTS Speaking Band 7", TrangThai: "Đang học", baiTaps: { 1: 8.0 } }
+          { MaNguoiDung: 103, MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", NgaySinh: "2000-08-20T00:00:00.000Z", TenLop: "IELTS-SP-01", TenKhoaHoc: "IELTS Speaking Band 7", TrangThai: "Đang học", baiTaps: { 1: 8.0 } },
+          { MaNguoiDung: 9999, MaSinhVien: "SV_MOCK_TEST", HoTen: "Học Viên Giả Định", GioiTinh: "Nam", NgaySinh: "2002-05-15T00:00:00.000Z", TenLop: "TOEIC-01", TenKhoaHoc: "TOEIC 650+ Intensive", TrangThai: "Đang học", baiTaps: { 1: 8.5 } }
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
@@ -675,6 +690,19 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
           { MaLesson: 1, TenLesson: "Buổi 1", ThuTu: 1, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveLessonId: 1 },
           { MaLesson: 2, TenLesson: "Buổi 2", ThuTu: 2, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveLessonId: 1 }
         ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("/baocao/diem-all")) {
+      return new Response(
+        JSON.stringify(db.submissions.map(s => ({
+          MaBaiNop: s.MaBaiNop,
+          MaSinhVien: s.MaSinhVien,
+          MaExercise: s.MaExercise,
+          Diem: s.Diem,
+          NgayNop: s.NgayNop
+        }))),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
