@@ -1,1 +1,666 @@
-/* CSS cho ProfilePage.css */
+.premium-profile-viewport {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  background-color: #fbf9f4; /* Warm, premium off-white background */
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  padding: 40px;
+}
+
+.premium-profile-dashboard {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+/* ==========================================================================
+   CỘT TRÁI: THẺ TÀI KHOẢN (IDENTITY SIDEBAR)
+   ========================================================================== */
+.profile-sidebar-card {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 128, 0.03);
+  border: 1px solid #f0e4d4;
+  padding: 40px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  text-align: center;
+  box-sizing: border-box;
+  position: sticky;
+  top: 120px;
+}
+
+/* Section Avatar */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.avatar-ring {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 128, 0.1);
+  outline: 1px solid #e5d5c0;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background: linear-gradient(135deg, #c09d6f 0%, #a48154 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.avatar-ring:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 128, 0.18);
+  outline-color: #F95800; /* Orange highlight */
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.2s ease;
+}
+
+.avatar-ring:hover .avatar-img {
+  filter: brightness(0.85);
+}
+
+.avatar-placeholder-gradient {
+  color: #ffffff;
+  font-size: 64px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: 50%;
+}
+
+.avatar-ring:hover .camera-overlay {
+  opacity: 1;
+}
+
+.change-photo-btn {
+  background: transparent;
+  border: none;
+  color: #F95800; /* Orange highlight */
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.change-photo-btn:hover {
+  color: #000080; /* Navy Blue */
+  background-color: #f0f0ff;
+}
+
+/* Thông tin tài khoản */
+.user-identity-details {
+  width: 100%;
+  margin-bottom: 30px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f3ebe1;
+}
+
+.user-fullname {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f0f0ff; /* Light Navy */
+  color: #000080; /* Navy Blue */
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid #d0d0ff;
+}
+
+.user-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.active {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.status-text {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Footer thẻ học viên */
+.student-card-footer {
+  width: 100%;
+}
+
+.footer-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+}
+
+.meta-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.font-code {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+
+/* ==========================================================================
+   CỘT PHẢI: BẢNG CHI TIẾT THÔNG TIN (DETAILS CONTENT)
+   ========================================================================== */
+.profile-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Header & Nút thao tác */
+.details-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.title-area h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #F95800; /* Main Orange */
+  margin: 0 0 6px 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.title-area p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.action-buttons-area {
+  display: flex;
+  align-items: center;
+}
+
+/* Button Premium Styles */
+.premium-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.edit-btn {
+  background-color: transparent;
+  border: 1.5px solid #000080; /* Navy Blue border */
+  color: #000080; /* Navy Blue text */
+}
+
+.edit-btn:hover {
+  background-color: #000080; /* Navy Blue hover */
+  color: #ffffff;
+  border-color: #000080;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 128, 0.15);
+}
+
+/* Card Nhóm Thông Tin */
+.info-group-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 128, 0.02);
+  border: 1px solid #f0e4d4;
+  padding: 30px 40px;
+}
+
+.info-group-card.highlight-card {
+  border-left: 4px solid #F95800; /* Main Orange border-left */
+  background-color: #fdfcf9;
+}
+
+.card-subheader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #000080; /* Navy Blue subheaders */
+  border-bottom: 1px solid #f5ede1;
+  padding-bottom: 14px;
+  margin-bottom: 24px;
+}
+
+.card-subheader h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Grid Layout */
+.fields-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 50px;
+  row-gap: 28px;
+}
+
+.form-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field-wrapper.span-2 {
+  grid-column: 1 / span 2;
+}
+
+.field-meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.field-display-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-display-value.bold-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.field-display-value.color-navy {
+  color: #000080; /* Navy blue value highlight */
+}
+
+.field-display-value.course-highlight-text {
+  font-size: 18px;
+  font-weight: 800;
+  color: #000080; /* Navy Blue for Course Name */
+  background-color: #f0f0ff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.inline-icon {
+  color: #000080; /* Navy Blue icons */
+  flex-shrink: 0;
+}
+
+/* Badge Trạng Thái */
+.status-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.status-pill-badge.text-active {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+
+/* ==========================================================================
+   POPUP MODAL CHỈNH SỬA THÔNG TIN (ADMIN STYLE POPUP)
+   ========================================================================== */
+.modal-backdrop-blur {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeInModal 0.2s ease-out;
+}
+
+.course-form-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 540px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #f0e4d4;
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.course-form-modal.w-520 {
+  width: 520px;
+}
+
+/* Modal Header */
+.modal-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header-section h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000080; /* Navy Blue for Modal title */
+}
+
+.modal-close-icon-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.modal-close-icon-btn:hover {
+  background-color: #f1f5f9;
+  color: #000080;
+}
+
+/* Modal Scrollable Body */
+.modal-scrollable-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 55vh;
+  box-sizing: border-box;
+}
+
+.modal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-form-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-form-input,
+.modal-form-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s;
+  background-color: #ffffff;
+}
+
+.modal-form-input:focus,
+.modal-form-select:focus {
+  border-color: #F95800; /* Orange focus border */
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.08);
+}
+
+.modal-form-input.input-readonly {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* Modal Footer */
+.modal-footer-section {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  box-sizing: border-box;
+}
+
+.footer-cancel-btn {
+  background: transparent;
+  border: 1.5px solid #cbd5e1;
+  color: #475569;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.footer-cancel-btn:hover {
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+.footer-save-btn {
+  background-color: #F95800; /* Main Orange */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.footer-save-btn:hover {
+  background-color: #dd4e00;
+}
+
+/* Animations */
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+
+/* ==========================================================================
+   SPINNER LOADING & STATES
+   ========================================================================== */
+.profile-loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #F95800; /* Orange spinner color text */
+  font-weight: 600;
+}
+
+.premium-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3ebe1;
+  border-top-color: #F95800; /* Orange spinner indicator */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error Alert */
+.profile-error-alert {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 600;
+  max-width: 500px;
+  margin: 100px auto;
+}
+
+.error-icon {
+  margin-bottom: 12px;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .premium-profile-dashboard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 30px;
+  }
+
+  .profile-sidebar-card {
+    width: 100%;
+    position: static;
+    padding: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .premium-profile-viewport {
+    padding: 20px;
+  }
+
+  .details-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .action-buttons-area {
+    width: 100%;
+  }
+
+  .premium-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .fields-grid-layout {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+  }
+
+  .form-field-wrapper.span-2 {
+    grid-column: unset;
+  }
+
+  .info-group-card {
+    padding: 24px;
+  }
+}

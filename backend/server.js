@@ -1070,12 +1070,13 @@ app.get("/students/:maSinhVien", async (req, res) => {
       .query(`
         SELECT
           s.MaSinhVien,
-          n.MaNguoiDung,       -- thêm dòng này
+          n.MaNguoiDung,
           n.HoTen,
           n.Email,
           n.GioiTinh,
           n.NgaySinh,
           s.Lop,
+          s.MSSV,
           k.TenKhoaHoc
         FROM SINHVIEN s
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -2433,7 +2434,33 @@ app.get("/students/by-user/:maNguoiDung", async (req, res) => {
     const result = await pool.request()
       .input("maNguoiDung", req.params.maNguoiDung)
       .query(`SELECT MaSinhVien FROM SINHVIEN WHERE MaNguoiDung = @maNguoiDung`)
-    res.json(result.recordset[0] || null)
+    
+    if (result.recordset.length > 0) {
+      return res.json(result.recordset[0]);
+    }
+
+    // Nếu chưa có record trong SINHVIEN, kiểm tra xem người dùng này có thực sự là học viên không
+    const userCheck = await pool.request()
+      .input("maNguoiDung", req.params.maNguoiDung)
+      .query(`
+        SELECT MaNguoiDung FROM NGUOIDUNG WHERE MaNguoiDung = @maNguoiDung
+        AND MaNguoiDung NOT IN (SELECT MaNguoiDung FROM GIANGVIEN)
+        AND MaNguoiDung NOT IN (SELECT MaNguoiDung FROM ADMIN)
+        AND MaNguoiDung NOT IN (SELECT MaNguoiDung FROM QUANTRIVIENNOIDUNG)
+      `);
+
+    if (userCheck.recordset.length > 0) {
+      // Tự động tạo mã sinh viên nếu thiếu (Ví dụ cho tài khoản seed)
+      const maSV = "SV" + Date.now().toString().slice(-8);
+      await pool.request()
+        .input("maNguoiDung", req.params.maNguoiDung)
+        .input("maSV", maSV)
+        .query(`INSERT INTO SINHVIEN (MaNguoiDung, MaSinhVien) VALUES (@maNguoiDung, @maSV)`);
+      
+      return res.json({ MaSinhVien: maSV });
+    }
+
+    res.json(null)
   } catch (err) { res.status(500).send(err.message) }
 })
 // Chi tiết 1 khóa học (public)
@@ -2505,7 +2532,7 @@ app.get("/users/:id", async (req, res) => {
 // Cập nhật profile
 app.put("/users/:id/profile", async (req, res) => {
   try {
-    const { HoTen, NgaySinh, Email, GioiTinh } = req.body
+    const { HoTen, NgaySinh, Email, GioiTinh, Lop, MSSV } = req.body
     const pool = await poolPromise
     await pool.request()
       .input("id", req.params.id)
@@ -2518,6 +2545,25 @@ app.put("/users/:id/profile", async (req, res) => {
         SET HoTen=@HoTen, NgaySinh=@NgaySinh, Email=@Email, GioiTinh=@GioiTinh
         WHERE MaNguoiDung=@id
       `)
+
+    if (Lop !== undefined || MSSV !== undefined) {
+      const request = pool.request().input("id", req.params.id);
+      let setClauses = [];
+      if (Lop !== undefined) {
+        request.input("Lop", Lop || null);
+        setClauses.push("Lop = @Lop");
+      }
+      if (MSSV !== undefined) {
+        request.input("MSSV", MSSV || null);
+        setClauses.push("MSSV = @MSSV");
+      }
+      await request.query(`
+        UPDATE SINHVIEN
+        SET ${setClauses.join(", ")}
+        WHERE MaNguoiDung=@id
+      `);
+    }
+
     res.json({ message: "Đã cập nhật" })
   } catch (err) { res.status(500).send(err.message) }
 })

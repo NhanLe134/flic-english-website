@@ -113,6 +113,10 @@
   box-shadow: none;
 }
 
+.student-navbar .nav-dropdown::before {
+  display: none !important;
+}
+
 .student-navbar .nav-dropdown-inner {
   background: #fff;
   border-radius: 12px;
@@ -120,7 +124,7 @@
   padding: 8px;
   min-width: 185px;
   border: 1px solid #f0e4d4;
-  animation: dropFadeIn 0.2s ease;
+  animation: studentDropFadeIn 0.2s ease;
 }
 
 .student-navbar .nav-dropdown-inner a {
@@ -161,7 +165,7 @@
   min-width: 160px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
-  animation: dropFadeIn 0.2s ease;
+  animation: studentDropFadeIn 0.2s ease;
 }
 
 .student-navbar .dropdown-logout-item {
@@ -279,4 +283,9 @@
 @keyframes modalScaleIn {
   from { transform: scale(0.9) translateY(10px); opacity: 0; }
   to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes studentDropFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

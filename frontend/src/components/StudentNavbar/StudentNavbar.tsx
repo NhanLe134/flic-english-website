@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./StudentNavbar.css";
 import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
@@ -13,13 +13,27 @@ export default function StudentNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  let currentUser: any = {};
-  try {
-    currentUser = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
-  } catch (e) {
-    console.error("Error parsing user from sessionStorage", e);
-  }
-  const hoTen = currentUser?.HoTen || "Sinh Viên";
+  const [hoTen, setHoTen] = useState("Sinh Viên");
+  const [avatarUrl, setAvatarUrl] = useState(userIcon);
+
+  const syncUserInfo = () => {
+    try {
+      const user = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
+      setHoTen(user.HoTen || "Sinh Viên");
+      const savedAvatar = localStorage.getItem(`user_avatar_${user.MaNguoiDung}`);
+      setAvatarUrl(savedAvatar || userIcon);
+    } catch (e) {
+      console.error("Error syncing user info in navbar", e);
+    }
+  };
+
+  useEffect(() => {
+    syncUserInfo();
+    window.addEventListener("avatarChanged", syncUserInfo);
+    return () => {
+      window.removeEventListener("avatarChanged", syncUserInfo);
+    };
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem("user");
@@ -106,7 +120,7 @@ export default function StudentNavbar() {
           onMouseLeave={() => setShowUserMenu(false)}
           style={{ position: "relative", cursor: "pointer" }}
         >
-          <img src={userIcon} alt="user avatar" className="user-avatar" />
+          <img src={avatarUrl} alt="user avatar" className="user-avatar" />
           <span className="user-name">{hoTen}</span>
           <FiChevronDown className={`user-chevron ${showUserMenu ? "open" : ""}`} size={14} />
 

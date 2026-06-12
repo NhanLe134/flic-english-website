@@ -4,9 +4,9 @@ import './StudentLayout.css'
 
 export default function StudentLayout() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif', background: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif', background: '#ffffff' }}>
       <StudentNavbar />
-      <div style={{ flex: 1, padding: '32px' }}>
+      <div style={{ flex: 1, padding: '0' }}>
         <Outlet />
       </div>
     </div>
