@@ -1,20 +1,14 @@
-import { Outlet } from "react-router-dom";
-import NavbarLogin from "../components/NavbarLogin";
-import SidebarSV from "../components/Sidebar/Sidebar";
-import "./StudentLayout.css";
+import { Outlet } from 'react-router-dom'
+import StudentNavbar from '../components/StudentNavbar/StudentNavbar'
+import './StudentLayout.css'
 
-const StudentLayout = () => {
+export default function StudentLayout() {
   return (
-    <div className="student-page">
-      <NavbarLogin />
-      <div className="student-body">
-        <SidebarSV />
-        <main className="student-content">
-          <Outlet />
-        </main>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif', background: '#f8fafc' }}>
+      <StudentNavbar />
+      <div style={{ flex: 1, padding: '32px' }}>
+        <Outlet />
       </div>
     </div>
-  );
-};
-
-export default StudentLayout;
+  )
+}

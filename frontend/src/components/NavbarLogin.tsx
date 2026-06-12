@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./NavbarLogin.css";
-import logo from "../assets/logo.png";
-import user from "../assets/user.png";
+const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
+const user = import.meta.env.BASE_URL + "user.png";
 
 function NavbarLogin() {
   const [showUserMenu, setShowUserMenu] = useState(false);

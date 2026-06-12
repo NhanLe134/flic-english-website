@@ -71,6 +71,8 @@ import ChamBaiPage from "./pages/ChamBaiPage"
 import BaoCaoKetQuaQTV from "./pages/Baocaoketquaqtv"
 import BaiGiangSV from "./pages/LessonDetail/BaiGiangSV"
 import StudentLayout from "./layout/StudentLayout"
+import HocThuSV from "./pages/HocThuSV"
+import TestThuSV from "./pages/TestThuSV"
 
 function App() {
   return (
@@ -152,8 +154,10 @@ function App() {
         </Route>
 
         {/*Sinh viên*/}
-        <Route path="/course-register" element={<CourseRegister />} />
         <Route element={<StudentLayout />}>
+          <Route path="/course-register" element={<CourseRegister />} />
+          <Route path="/hoc-thu-sv" element={<HocThuSV />} />
+          <Route path="/test-thu-sv" element={<TestThuSV />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />
