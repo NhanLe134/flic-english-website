@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Fragment } from "react"
 import styles from "./Baocaoketquaqtv.module.css"
 import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
 
@@ -63,6 +63,19 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [expandedStudents, setExpandedStudents] = useState<Set<number>>(new Set())
+
+  const toggleExpandStudent = (id: number) => {
+    setExpandedStudents(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -128,11 +141,13 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
     const activeThuTu = activeLesson ? activeLesson.ThuTu : null
 
-    if (activeThuTu === null || activeThuTu === 0) return [] // Chưa đánh dấu thì không hiện buổi học nào
+    const allBuoiNumbers = Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
+      .sort((a, b) => b - a);
 
-    return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
-      .sort((a, b) => b - a)
-      .filter(b => b <= activeThuTu)
+    if (activeThuTu !== null && activeThuTu !== 0) {
+      return allBuoiNumbers.filter(b => b <= activeThuTu);
+    }
+    return allBuoiNumbers;
   }, [allLessons, filterLop])
 
   const getBuoiAvg = (hv: HocVien, buoiNum: number) => {
@@ -311,59 +326,140 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>HỌ VÀ TÊN</th>
-                  <th>MÃ HV</th>
+                  <th>MÃ SINH VIÊN</th>
+                  <th>HỌ TÊN</th>
                   <th>LỚP/KHÓA</th>
                   <th>TRẠNG THÁI</th>
-                  {uniqueBuois.map(b => (
-                    <th key={b}>ĐIỂM TB BUỔI {b}</th>
-                  ))}
+                  {uniqueBuois.map(b => {
+                    const classLessons = allLessons.filter(l => l.TenLop === filterLop)
+                    const lessonForBuoi = classLessons.find(l => l.ThuTu === b)
+                    const isActive = lessonForBuoi && classLessons[0]?.ActiveLessonId === lessonForBuoi.MaLesson
+                    return (
+                      <th key={b}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                          <span>BUỔI {b}</span>
+                          {isActive && (
+                            <span className={styles.activeBadgeHeader}>Đang học</span>
+                          )}
+                        </div>
+                      </th>
+                    )
+                  })}
+                  <th>ĐIỂM TB</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={4 + uniqueBuois.length} className={styles.empty}>Không có dữ liệu.</td></tr>
-                ) : paginatedData.map(hv => (
-                  <tr key={hv.id} className={styles.row}>
-                    <td>
-                      <p className={styles.tenHV}>{hv.hoTen}</p>
+                  <tr>
+                    <td colSpan={5 + uniqueBuois.length} className={styles.empty}>
+                      Không có dữ liệu.
                     </td>
-                    <td className={styles.maHV}>{hv.maHV}</td>
-                    <td>
-                      <p className={styles.tenLop}>{hv.lopKhoaHoc}</p>
-                      <p className={styles.subInfo}>{hv.tenKhoa}</p>
-                    </td>
-                    <td>
-                      <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
-                        {hv.trangThai}
-                      </span>
-                    </td>
-                    {uniqueBuois.map(b => {
-                      const hvLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
-                      const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
-                      const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...hvLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
-
-                      // Nếu lớp của học viên này chưa học đến buổi b, hiển thị —
-                      if (hvActiveThuTu === null || b > hvActiveThuTu) {
-                        return <td key={b} className={styles.emptyVal}>—</td>
-                      }
-
-                      const avg = getBuoiAvg(hv, b)
-                      const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
-                      if (!hasExs) {
-                        return <td key={b} className={styles.emptyVal}>—</td>
-                      }
-                       return (
-                        <td key={b}>
-                          {avg !== null
-                            ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
-                            : <span className={styles.chuaNop}>Chưa nộp</span>
-                          }
-                        </td>
-                      )
-                    })}
                   </tr>
-                ))}
+                ) : (
+                  paginatedData.map(hv => {
+                    const isExpanded = expandedStudents.has(hv.id)
+                    const classLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
+                    return (
+                      <Fragment key={hv.id}>
+                        <tr 
+                          className={styles.row}
+                          onClick={() => toggleExpandStudent(hv.id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td className={styles.maHV}>{hv.maHV}</td>
+                          <td>
+                            <p className={styles.tenHV}>{hv.hoTen}</p>
+                          </td>
+                          <td>
+                            <p className={styles.tenLop}>{hv.lopKhoaHoc}</p>
+                            <p className={styles.subInfo}>{hv.tenKhoa}</p>
+                          </td>
+                          <td>
+                            <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
+                              {hv.trangThai}
+                            </span>
+                          </td>
+                          {uniqueBuois.map(b => {
+                            const hvActiveLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+                            const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
+
+                            if (hvActiveThuTu === null || b > hvActiveThuTu) {
+                              return <td key={b} className={styles.emptyVal}>—</td>
+                            }
+
+                            const avg = getBuoiAvg(hv, b)
+                            const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
+                            if (!hasExs) {
+                              return <td key={b} className={styles.emptyVal}>—</td>
+                            }
+                            return (
+                              <td key={b}>
+                                {avg !== null
+                                  ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
+                                  : <span className={styles.chuaNop}>Chưa nộp</span>
+                                }
+                              </td>
+                            )
+                          })}
+                          <td>
+                            {hv.diemTB !== null ? (
+                              <span className={`${styles.diemBadge} ${diemColor(hv.diemTB)}`} style={{ fontWeight: 700 }}>
+                                {hv.diemTB}
+                              </span>
+                            ) : (
+                              <span className={styles.chuaNop}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className={styles.expandRow}>
+                            <td colSpan={5 + uniqueBuois.length}>
+                              <div className={styles.detailsContainer}>
+                                <h4 className={styles.detailsTitle}>Chi tiết bài tập của {hv.hoTen}</h4>
+                                <div className={styles.detailsGrid}>
+                                  {uniqueBuois.map(b => {
+                                    const buoiExs = activeHeaders.filter(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
+                                    return (
+                                      <div key={b} className={styles.buoiCard}>
+                                        <h5>Buổi {b}</h5>
+                                        <div className={styles.buoiExList}>
+                                          {buoiExs.length === 0 ? (
+                                            <div className={styles.chuaNop}>Không có bài tập</div>
+                                          ) : (
+                                            buoiExs.map(ex => {
+                                              const score = hv.rawScores[ex.MaExercise]
+                                              const hasScore = score !== null
+                                              return (
+                                                <div key={ex.MaExercise} className={styles.exCard}>
+                                                  <div className={styles.exCardContent}>
+                                                    <span className={styles.exCardTitle}>{ex.TenBai}</span>
+                                                  </div>
+                                                  <div className={styles.exCardBadge}>
+                                                    {hasScore ? (
+                                                      <span className={`${styles.diemBadgeMini} ${diemColor(score)}`}>
+                                                        {score}
+                                                      </span>
+                                                    ) : (
+                                                      <span className={styles.chuaNopMini}>Chưa nộp</span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )
+                                            })
+                                          )}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           )}
