@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import styles from './coursePageQTV.module.css'
 import { FiSearch, FiFileText, FiChevronDown } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 
 const API = 'http://localhost:5000'
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
@@ -150,7 +151,9 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 }
 
 
+
 export default function CoursePageQTV() {
+  const navigate = useNavigate()
   const [courses, setCourses]     = useState<Course[]>([])
   const [giaoViens, setGiaoViens] = useState<GiaoVien[]>([])
   const [search, setSearch]       = useState('')
@@ -202,6 +205,206 @@ export default function CoursePageQTV() {
   const [loadingLessons, setLoadingLessons] = useState(false)
   const [showAddLesson, setShowAddLesson]   = useState(false)
   const [lessonForm, setLessonForm]         = useState({ title: '', desc: '', startDate: '', endDate: '', order: 1 })
+
+  // Roadmap assets states
+  const [lessonAssets, setLessonAssets] = useState<Record<number, { lectures: any[], exercises: any[], documents: any[] }>>({})
+  const [activeLessonIdForAsset, setActiveLessonIdForAsset] = useState<number | null>(null)
+
+  // Lecture Modal
+  const [showAddLectureModal, setShowAddLectureModal] = useState(false)
+  const [bgTab, setBgTab] = useState<'create' | 'reuse'>('create')
+  const [bgForm, setBgForm] = useState({ title: '', content: '', fileUrl: '', type: 'Video', duration: '30 phút', order: 1 })
+  const [allExistingBg, setAllExistingBg] = useState<any[]>([])
+
+
+
+  // Document Modal
+  const [showAddDocModal, setShowAddDocModal] = useState(false)
+  const [docTab, setDocTab] = useState<'create' | 'reuse'>('create')
+  const [docForm, setDocForm] = useState({ title: '', desc: '', content: '', fileUrl: '' })
+  const [allExistingDoc, setAllExistingDoc] = useState<any[]>([])
+
+  const fetchLessonAssets = async (lessonId: number) => {
+    try {
+      const [bgRes, exRes, tlRes] = await Promise.all([
+        fetch(`${API}/baigiang/${lessonId}`).then(r => r.json()),
+        fetch(`${API}/exercises/${lessonId}`).then(r => r.json()),
+        fetch(`${API}/tailieu/${lessonId}`).then(r => r.json())
+      ]);
+      setLessonAssets(prev => ({
+        ...prev,
+        [lessonId]: {
+          lectures: bgRes || [],
+          exercises: exRes || [],
+          documents: tlRes || []
+        }
+      }));
+    } catch (err) {
+      console.error("Error fetching lesson assets:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (lessons.length > 0) {
+      lessons.forEach(l => {
+        fetchLessonAssets(l.id);
+      });
+    }
+  }, [lessons]);
+
+  const openAddLecture = (lessonId: number) => {
+    setActiveLessonIdForAsset(lessonId)
+    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '30 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
+    setBgTab('create')
+    setShowAddLectureModal(true)
+    fetch(`${API}/baigiang/list/all`)
+      .then(r => r.json())
+      .then(data => setAllExistingBg(data))
+      .catch(() => setAllExistingBg([]))
+  }
+
+  const openAddExercise = (lessonId: number) => {
+    navigate(`/QTV/create-exercise/${lessonId}`);
+  }
+
+  const openAddDoc = (lessonId: number) => {
+    setActiveLessonIdForAsset(lessonId)
+    setDocForm({ title: '', desc: '', content: '', fileUrl: '' })
+    setDocTab('create')
+    setShowAddDocModal(true)
+    fetch(`${API}/tailieu/list/all`)
+      .then(r => r.json())
+      .then(data => setAllExistingDoc(data))
+      .catch(() => setAllExistingDoc([]))
+  }
+
+  const saveNewLecture = async () => {
+    if (!bgForm.title.trim()) { alert('Vui lòng nhập tiêu đề!'); return }
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
+      await fetch(`${API}/baigiang`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          TieuDe: bgForm.title,
+          NoiDung: bgForm.content,
+          FileUrl: bgForm.fileUrl,
+          LoaiBaiHoc: bgForm.type,
+          ThoiLuong: bgForm.duration,
+          TrangThai: 'published',
+          ThuTu: bgForm.order,
+          MaKhoaHoc: detailCourse?.id,
+          MaGiangVien: user.MaNguoiDung || 1,
+          MaLesson: activeLessonIdForAsset
+        })
+      });
+      setToast('Đã thêm bài giảng mới!');
+      setShowAddLectureModal(false);
+      if (activeLessonIdForAsset) fetchLessonAssets(activeLessonIdForAsset);
+    } catch {
+      alert('Lỗi khi lưu bài giảng');
+    }
+  }
+
+
+  const saveNewDoc = async () => {
+    if (!docForm.title.trim()) { alert('Vui lòng nhập tiêu đề!'); return }
+    try {
+      await fetch(`${API}/tailieu`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          TieuDe: docForm.title,
+          MoTa: docForm.desc,
+          NoiDung: docForm.content,
+          FileUrl: docForm.fileUrl,
+          MaLesson: activeLessonIdForAsset
+        })
+      });
+      setToast('Đã thêm tài liệu mới!');
+      setShowAddDocModal(false);
+      if (activeLessonIdForAsset) fetchLessonAssets(activeLessonIdForAsset);
+    } catch {
+      alert('Lỗi khi lưu tài liệu');
+    }
+  }
+
+  const cloneLecture = async (originalBgId: number) => {
+    try {
+      const res = await fetch(`${API}/baigiang/${originalBgId}/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ MaLesson: activeLessonIdForAsset })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setToast('Đã sao chép bài giảng!');
+        setShowAddLectureModal(false);
+        if (activeLessonIdForAsset) fetchLessonAssets(activeLessonIdForAsset);
+      } else {
+        alert(data.message || 'Lỗi khi sao chép');
+      }
+    } catch {
+      alert('Lỗi kết nối');
+    }
+  }
+
+
+  const cloneDoc = async (originalDocId: number) => {
+    try {
+      const res = await fetch(`${API}/tailieu/${originalDocId}/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ MaLesson: activeLessonIdForAsset })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setToast('Đã sao chép tài liệu!');
+        setShowAddDocModal(false);
+        if (activeLessonIdForAsset) fetchLessonAssets(activeLessonIdForAsset);
+      } else {
+        alert(data.message || 'Lỗi khi sao chép');
+      }
+    } catch {
+      alert('Lỗi kết nối');
+    }
+  }
+
+  const deleteRoadmapLecture = (bgId: number, lessonId: number) => {
+    confirmAction('Bạn có chắc chắn muốn xóa bài giảng này?', async () => {
+      try {
+        await fetch(`${API}/baigiang/${bgId}`, { method: 'DELETE' });
+        setToast('Đã xóa bài giảng!');
+        fetchLessonAssets(lessonId);
+      } catch {
+        alert('Lỗi khi xóa bài giảng');
+      }
+    });
+  }
+
+  const deleteRoadmapExercise = (exId: number, lessonId: number) => {
+    confirmAction('Bạn có chắc chắn muốn xóa bài tập này?', async () => {
+      try {
+        await fetch(`${API}/exercises/${exId}`, { method: 'DELETE' });
+        setToast('Đã xóa bài tập!');
+        fetchLessonAssets(lessonId);
+      } catch {
+        alert('Lỗi khi xóa bài tập');
+      }
+    });
+  }
+
+  const deleteRoadmapDoc = (docId: number, lessonId: number) => {
+    confirmAction('Bạn có chắc chắn muốn xóa tài liệu này?', async () => {
+      try {
+        await fetch(`${API}/tailieu/${docId}`, { method: 'DELETE' });
+        setToast('Đã xóa tài liệu!');
+        fetchLessonAssets(lessonId);
+      } catch {
+        alert('Lỗi khi xóa tài liệu');
+      }
+    });
+  }
 
   // Modal tạo lớp học
   const [showAddClass, setShowAddClass]       = useState(false)
@@ -365,38 +568,7 @@ export default function CoursePageQTV() {
   }
 
   // ── CRUD khóa học ─────────────────────────────────────────────────────────────
-  const openAddCourse = () => {
-    setCForm({
-      title: '',
-      desc: '',
-      level: 'TOEIC',
-      category: 'Luyện thi',
-      listening: false,
-      reading: false,
-      speaking: false,
-      writing: false
-    })
-    setSelectedGVsForCourse([])
-    setAddGVSelect('')
-    setEditCourse(null)
-    setClassesInForm([])
-    setShowCourseModal(true)
-  }
 
-  const openEditCourse = (c: Course) => {
-    setCForm({
-      title: c.title,
-      desc: c.desc,
-      level: c.level,
-      category: c.category,
-      listening: !!c.listening,
-      reading: !!c.reading,
-      speaking: !!c.speaking,
-      writing: !!c.writing
-    })
-    setEditCourse(c); setAddGVSelect(''); setClassesInForm([]); setShowCourseModal(true)
-    fetch(`${API}/qtv/khoahoc/${c.id}/giangvien`).then(r => r.json()).then(setSelectedGVsForCourse).catch(() => {})
-  }
 
   const saveCourse = async () => {
     if (!cForm.title.trim()) { alert('Vui lòng nhập tên khóa học!'); return }
@@ -714,9 +886,7 @@ export default function CoursePageQTV() {
 
   const totalCls = courses.reduce((s, c) => s + (c.classCount || 0), 0)
 
-  if (false as boolean) {
-    console.log(openAddCourse, openEditCourse);
-  }
+
 
   return (
     <div className={styles.page}>
@@ -833,7 +1003,7 @@ export default function CoursePageQTV() {
                                           <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>{skill}:</span>
                                           {assigned && assigned.maGiangVien ? (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                               <span style={{ fontSize: 11, fontWeight: 500, color: '#1e293b' }}>{assigned.tenGiangVien}</span>
+                                              <span style={{ fontSize: 11, fontWeight: 500, color: '#1e293b' }}>{assigned.tenGiangVien}</span>
                                               <button 
                                                 className={styles.btnOutline} 
                                                 style={{ fontSize: 10, padding: '1px 4px', height: 'auto', border: '1px solid #e87722', color: '#e87722' }}
@@ -1361,22 +1531,84 @@ export default function CoursePageQTV() {
                   <div className={styles.emptyTab}>Chưa có lộ trình. Nhấn "Thêm buổi học" để xây dựng.</div>
                 ) : (
                   <div className={styles.roadmapList}>
-                    {lessons.map((l, idx) => (
-                      <div key={l.id} className={styles.roadmapItem}>
-                        <div className={styles.roadmapNum}>{idx + 1}</div>
-                        <div className={styles.roadmapInfo}>
-                          <div className={styles.roadmapTitle}>{l.title}</div>
-                          {l.desc && <div className={styles.roadmapDesc}>{l.desc}</div>}
-                          <div className={styles.roadmapMeta}>
-                            {l.startDate && <span className={styles.durationText}>📅 {new Date(l.startDate).toLocaleDateString('vi-VN')}</span>}
-                            {l.endDate && <span className={styles.durationText}> → {new Date(l.endDate).toLocaleDateString('vi-VN')}</span>}
+                    {lessons.map((l, idx) => {
+                      const assets = lessonAssets[l.id] || { lectures: [], exercises: [], documents: [] };
+                      return (
+                        <div key={l.id} className={styles.roadmapItem} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                              <div className={styles.roadmapNum}>{idx + 1}</div>
+                              <div className={styles.roadmapInfo}>
+                                <div className={styles.roadmapTitle}>{l.title}</div>
+                                {l.desc && <div className={styles.roadmapDesc}>{l.desc}</div>}
+                                <div className={styles.roadmapMeta}>
+                                  {l.startDate && <span className={styles.durationText}>📅 {new Date(l.startDate).toLocaleDateString('vi-VN')}</span>}
+                                  {l.endDate && <span className={styles.durationText}> → {new Date(l.endDate).toLocaleDateString('vi-VN')}</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <div className={styles.actionBtns}>
+                              <button className={styles.btnDanger} onClick={() => deleteLesson(l.id)}>Xóa buổi</button>
+                            </div>
+                          </div>
+
+                          {/* Assets container */}
+                          <div style={{ marginTop: '12px', paddingLeft: '48px', borderLeft: '2px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {/* Lectures list */}
+                            {assets.lectures.length > 0 && (
+                              <div>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#f58220' }}>🎥 Bài giảng:</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                  {assets.lectures.map((bg: any) => (
+                                    <div key={bg.MaBaiHoc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                      <span style={{ fontSize: '13px', color: '#334155' }}>{bg.TieuDe} <span style={{ fontSize: '11px', color: '#64748b' }}>({bg.LoaiBaiHoc} · {bg.ThoiLuong})</span></span>
+                                      <button className={styles.detailBtnDanger} style={{ fontSize: '11px', padding: '2px 6px', height: 'auto', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444' }} onClick={() => deleteRoadmapLecture(bg.MaBaiHoc, l.id)}>Xóa</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Exercises list */}
+                            {assets.exercises.length > 0 && (
+                              <div>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#0284c7' }}>📝 Bài tập & Kiểm tra:</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                  {assets.exercises.map((ex: any) => (
+                                    <div key={ex.MaExercise} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0f9ff', padding: '6px 10px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
+                                      <span style={{ fontSize: '13px', color: '#0369a1' }}>{ex.Title} <span style={{ fontSize: '11px', color: '#0284c7' }}>({ex.Type})</span></span>
+                                      <button className={styles.detailBtnDanger} style={{ fontSize: '11px', padding: '2px 6px', height: 'auto', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444' }} onClick={() => deleteRoadmapExercise(ex.MaExercise, l.id)}>Xóa</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Documents list */}
+                            {assets.documents.length > 0 && (
+                              <div>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a' }}>📂 Tài liệu:</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                  {assets.documents.map((doc: any) => (
+                                    <div key={doc.MaTaiLieu} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', padding: '6px 10px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                                      <span style={{ fontSize: '13px', color: '#15803d' }}>{doc.TieuDe}</span>
+                                      <button className={styles.detailBtnDanger} style={{ fontSize: '11px', padding: '2px 6px', height: 'auto', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444' }} onClick={() => deleteRoadmapDoc(doc.MaTaiLieu, l.id)}>Xóa</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Add Buttons */}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                              <button className={styles.detailBtnOutline} style={{ fontSize: '11px', padding: '4px 10px', borderColor: '#f58220', color: '#f58220', cursor: 'pointer', background: 'white' }} onClick={() => openAddLecture(l.id)}>+ Bài giảng</button>
+                              <button className={styles.detailBtnOutline} style={{ fontSize: '11px', padding: '4px 10px', borderColor: '#0284c7', color: '#0284c7', cursor: 'pointer', background: 'white' }} onClick={() => openAddExercise(l.id)}>+ Bài tập</button>
+                              <button className={styles.detailBtnOutline} style={{ fontSize: '11px', padding: '4px 10px', borderColor: '#16a34a', color: '#16a34a', cursor: 'pointer', background: 'white' }} onClick={() => openAddDoc(l.id)}>+ Tài liệu</button>
+                            </div>
                           </div>
                         </div>
-                        <div className={styles.actionBtns}>
-                          <button className={styles.btnDanger} onClick={() => deleteLesson(l.id)}>Xóa</button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1469,6 +1701,148 @@ export default function CoursePageQTV() {
               <button className={styles.detailBtnOutline} onClick={() => setShowAddLesson(false)}>Hủy</button>
               <button className={styles.detailBtnPrimary} onClick={saveLesson}>Thêm buổi</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════ MODAL: THÊM BÀI GIẢNG ════ */}
+      {showDetail && showAddLectureModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal} style={{ maxWidth: '600px' }}>
+            <div className={styles.modalTop}>
+              <h3>Thêm bài giảng</h3>
+              <button className={styles.modalClose} onClick={() => setShowAddLectureModal(false)}>×</button>
+            </div>
+            
+            <div className={styles.tabs} style={{ marginBottom: '16px' }}>
+              <button className={`${styles.tab} ${bgTab === 'create' ? styles.tabActive : ''}`} onClick={() => setBgTab('create')}>Tạo mới</button>
+              <button className={`${styles.tab} ${bgTab === 'reuse' ? styles.tabActive : ''}`} onClick={() => setBgTab('reuse')}>Chọn từ danh sách</button>
+            </div>
+
+            {bgTab === 'create' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className={styles.formGroup}>
+                  <label>Tiêu đề bài giảng *</label>
+                  <input value={bgForm.title} onChange={e => setBgForm(p => ({...p, title: e.target.value}))} placeholder="VD: Lesson 1: Grammar basics" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Nội dung (Markdown hoặc HTML)</label>
+                  <textarea value={bgForm.content} onChange={e => setBgForm(p => ({...p, content: e.target.value}))} placeholder="Nội dung bài học..." rows={5} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Link tài liệu / Video URL (nếu có)</label>
+                  <input value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                </div>
+                <div className={styles.twoCols}>
+                  <div className={styles.formGroup}>
+                    <label>Loại bài học</label>
+                    <select value={bgForm.type} onChange={e => setBgForm(p => ({...p, type: e.target.value}))}>
+                      <option value="Video">Video</option>
+                      <option value="PDF">PDF</option>
+                      <option value="Writing">Writing</option>
+                      <option value="Document">Tài liệu khác</option>
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Thời lượng</label>
+                    <input value={bgForm.duration} onChange={e => setBgForm(p => ({...p, duration: e.target.value}))} placeholder="VD: 45 phút" />
+                  </div>
+                </div>
+                <div className={styles.modalFooter}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>
+                  <button className={styles.detailBtnPrimary} onClick={saveNewLecture}>Tạo mới</button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px' }}>
+                  {allExistingBg.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Không tìm thấy bài giảng nào.</div>
+                  ) : (
+                    allExistingBg.map((bg: any) => (
+                      <div key={bg.MaBaiHoc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ flex: 1, paddingRight: '8px' }}>
+                          <strong style={{ fontSize: '14px', color: '#1e293b', display: 'block' }}>{bg.TieuDe}</strong>
+                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                            {bg.LoaiBaiHoc} · {bg.ThoiLuong} · Nguồn: Lớp {bg.TenLop} ({bg.TenLesson})
+                          </div>
+                        </div>
+                        <button className={styles.detailBtnPrimary} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }} onClick={() => cloneLecture(bg.MaBaiHoc)}>Chọn</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className={styles.modalFooter} style={{ marginTop: '16px' }}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Đóng</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+
+      {/* ════ MODAL: THÊM TÀI LIỆU ════ */}
+      {showDetail && showAddDocModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal} style={{ maxWidth: '600px' }}>
+            <div className={styles.modalTop}>
+              <h3>Thêm tài liệu</h3>
+              <button className={styles.modalClose} onClick={() => setShowAddDocModal(false)}>×</button>
+            </div>
+            
+            <div className={styles.tabs} style={{ marginBottom: '16px' }}>
+              <button className={`${styles.tab} ${docTab === 'create' ? styles.tabActive : ''}`} onClick={() => setDocTab('create')}>Tạo mới</button>
+              <button className={`${styles.tab} ${docTab === 'reuse' ? styles.tabActive : ''}`} onClick={() => setDocTab('reuse')}>Chọn từ danh sách</button>
+            </div>
+
+            {docTab === 'create' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className={styles.formGroup}>
+                  <label>Tiêu đề tài liệu *</label>
+                  <input value={docForm.title} onChange={e => setDocForm(p => ({...p, title: e.target.value}))} placeholder="VD: Slide bài học Unit 1" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Mô tả ngắn</label>
+                  <input value={docForm.desc} onChange={e => setDocForm(p => ({...p, desc: e.target.value}))} placeholder="Slide tóm tắt lý thuyết..." />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Nội dung tài liệu (Markdown hoặc Text)</label>
+                  <textarea value={docForm.content} onChange={e => setDocForm(p => ({...p, content: e.target.value}))} placeholder="Nội dung tóm tắt..." rows={4} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>File đính kèm (URL)</label>
+                  <input value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                </div>
+                <div className={styles.modalFooter}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddDocModal(false)}>Hủy</button>
+                  <button className={styles.detailBtnPrimary} onClick={saveNewDoc}>Tạo mới</button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px' }}>
+                  {allExistingDoc.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Không tìm thấy tài liệu nào.</div>
+                  ) : (
+                    allExistingDoc.map((doc: any) => (
+                      <div key={doc.MaTaiLieu} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                        <div style={{ flex: 1, paddingRight: '8px' }}>
+                          <strong style={{ fontSize: '14px', color: '#15803d', display: 'block' }}>{doc.TieuDe}</strong>
+                          <div style={{ fontSize: '11px', color: '#16a34a', marginTop: '2px' }}>
+                            {doc.MoTa || 'Không có mô tả'} · Nguồn: Lớp {doc.TenLop} ({doc.TenLesson})
+                          </div>
+                        </div>
+                        <button className={styles.detailBtnPrimary} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }} onClick={() => cloneDoc(doc.MaTaiLieu)}>Chọn</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className={styles.modalFooter} style={{ marginTop: '16px' }}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddDocModal(false)}>Đóng</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

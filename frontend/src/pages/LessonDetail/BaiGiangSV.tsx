@@ -73,13 +73,21 @@ function BaiGiangSV() {
 
           {/* Breadcrumb */}
           <nav className="ld2-breadcrumb">
-            <span className="ld2-link" onClick={() => navigate(`/course-detail/${maLopHoc}`)}>
-              Lớp học
-            </span>
-            <span>›</span>
-            <span className="ld2-link" onClick={() => navigate(-1)}>
-              Buổi học
-            </span>
+            {maLopHoc ? (
+              <>
+                <span className="ld2-link" onClick={() => navigate(`/course-detail/${maLopHoc}`)}>
+                  Lớp học
+                </span>
+                <span>›</span>
+                <span className="ld2-link" onClick={() => navigate(-1)}>
+                  Buổi học
+                </span>
+              </>
+            ) : (
+              <span className="ld2-link" onClick={() => navigate("/MyCourses")}>
+                Lớp học của tôi
+              </span>
+            )}
             <span>›</span>
             <span className="ld2-active">{baiGiang.TieuDe}</span>
           </nav>
