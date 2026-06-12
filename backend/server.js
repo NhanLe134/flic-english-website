@@ -447,7 +447,6 @@ app.get("/course-detail/:id/classes", async (req, res) => {
             FROM LESSON active_ls 
             WHERE active_ls.MaLesson = l.ActiveLessonId
           ), 0) AS TienDo,
-          pc.MaGiangVien, n.HoTen AS TenGiangVien,
           COUNT(DISTINCT ls.MaLesson) AS SoBuoiHoc,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
@@ -455,13 +454,10 @@ app.get("/course-detail/:id/classes", async (req, res) => {
           ) AS SoLuongHocVien
         FROM LOPHOC l
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
-        LEFT JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
-        LEFT JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
-        LEFT JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
         LEFT JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc, l.HoanThanh, l.TrangThai, l.SoLuongHocVien,
-                 l.ActiveLessonId, pc.MaGiangVien, n.HoTen, l.MaLop
+                 l.ActiveLessonId, l.MaLop
       `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -474,7 +470,7 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
       .input("id", req.params.id)
       .input("maNguoiDung", req.params.maNguoiDung)
       .query(`
-        SELECT 
+        SELECT DISTINCT
           l.MaLopHoc, l.TenLop, l.LichHoc,
           COALESCE((
             SELECT TOP 1 
@@ -485,7 +481,6 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
             FROM LESSON active_ls 
             WHERE active_ls.MaLesson = l.ActiveLessonId
           ), 0) AS TienDo,
-          pc.MaGiangVien, n.HoTen AS TenGiangVien,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
             WHERE sl.MaLopHoc = l.MaLopHoc
@@ -494,7 +489,6 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
         JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
         JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
-        JOIN NGUOIDUNG n ON g.MaNguoiDung = n.MaNguoiDung
         WHERE kc.MaKhoaHoc = @id
           AND g.MaNguoiDung = @maNguoiDung
       `)
@@ -1695,7 +1689,99 @@ app.post("/qtv/khoahocchitiet", async (req, res) => {
       .query(`INSERT INTO KHOAHOCCHITIET (TenLop, MoTa, MaKhoaHoc) 
               OUTPUT INSERTED.MaLop
               VALUES (@TenLop, @MoTa, @MaKhoaHoc)`)
-    res.json({ MaLop: result.recordset[0].MaLop })
+              
+    const newMaLop = result.recordset[0].MaLop
+
+    // Đồng bộ lại TrinhDo trong KHOAHOC
+    const levelsResult = await pool.request()
+      .input("courseId", MaKhoaHoc)
+      .query(`SELECT TenLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @courseId`)
+    const levelsStr = levelsResult.recordset.map(r => r.TenLop.trim()).filter(Boolean).join(", ")
+    await pool.request()
+      .input("courseId", MaKhoaHoc)
+      .input("TrinhDo", levelsStr)
+      .query(`UPDATE KHOAHOC SET TrinhDo = @TrinhDo WHERE MaKhoaHoc = @courseId`)
+
+    res.json({ MaLop: newMaLop })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// ── Cập nhật KhoaHocChiTiet (Trình độ) ──
+app.put("/qtv/khoahocchitiet/:maLop", async (req, res) => {
+  try {
+    const { TenLop } = req.body
+    const pool = await poolPromise
+    
+    // Lấy MaKhoaHoc trước để đồng bộ
+    const getCourseResult = await pool.request()
+      .input("maLop", req.params.maLop)
+      .query(`SELECT MaKhoaHoc FROM KHOAHOCCHITIET WHERE MaLop = @maLop`)
+      
+    if (getCourseResult.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy trình độ" })
+    }
+    
+    const courseId = getCourseResult.recordset[0].MaKhoaHoc
+
+    await pool.request()
+      .input("maLop", req.params.maLop)
+      .input("TenLop", TenLop)
+      .query(`UPDATE KHOAHOCCHITIET SET TenLop = @TenLop WHERE MaLop = @maLop`)
+
+    // Đồng bộ lại TrinhDo trong KHOAHOC
+    const levelsResult = await pool.request()
+      .input("courseId", courseId)
+      .query(`SELECT TenLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @courseId`)
+    const levelsStr = levelsResult.recordset.map(r => r.TenLop.trim()).filter(Boolean).join(", ")
+    await pool.request()
+      .input("courseId", courseId)
+      .input("TrinhDo", levelsStr)
+      .query(`UPDATE KHOAHOC SET TrinhDo = @TrinhDo WHERE MaKhoaHoc = @courseId`)
+
+    res.json({ message: "Cập nhật thành công" })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// ── Xóa KhoaHocChiTiet (Trình độ) ──
+app.delete("/qtv/khoahocchitiet/:maLop", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    
+    // Lấy MaKhoaHoc trước để đồng bộ
+    const getCourseResult = await pool.request()
+      .input("maLop", req.params.maLop)
+      .query(`SELECT MaKhoaHoc FROM KHOAHOCCHITIET WHERE MaLop = @maLop`)
+      
+    if (getCourseResult.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy trình độ" })
+    }
+    
+    const courseId = getCourseResult.recordset[0].MaKhoaHoc
+
+    // Kiểm tra xem có lớp học (LOPHOC) nào đang trỏ tới MaLop này không
+    const classCheck = await pool.request()
+      .input("maLop", req.params.maLop)
+      .query(`SELECT COUNT(*) AS count FROM LOPHOC WHERE MaLop = @maLop`)
+      
+    if (classCheck.recordset[0].count > 0) {
+      return res.status(400).json({ message: "Không thể xóa trình độ này vì đang có lớp học thuộc trình độ này!" })
+    }
+
+    await pool.request()
+      .input("maLop", req.params.maLop)
+      .query(`DELETE FROM KHOAHOCCHITIET WHERE MaLop = @maLop`)
+
+    // Đồng bộ lại TrinhDo trong KHOAHOC
+    const levelsResult = await pool.request()
+      .input("courseId", courseId)
+      .query(`SELECT TenLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @courseId`)
+    const levelsStr = levelsResult.recordset.map(r => r.TenLop.trim()).filter(Boolean).join(", ")
+    await pool.request()
+      .input("courseId", courseId)
+      .input("TrinhDo", levelsStr)
+      .query(`UPDATE KHOAHOC SET TrinhDo = @TrinhDo WHERE MaKhoaHoc = @courseId`)
+
+    res.json({ message: "Xóa thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
 app.get("/teacher/students/:maNguoiDung", async (req, res) => {

@@ -712,7 +712,7 @@ export default function CoursePageQTV() {
     (!levelFilter || c.level === levelFilter)
   )
 
-  const totalCls = Object.values(classesMap).reduce((s, cls) => s + cls.length, 0)
+  const totalCls = courses.reduce((s, c) => s + (c.classCount || 0), 0)
 
   if (false as boolean) {
     console.log(openAddCourse, openEditCourse);
@@ -786,7 +786,7 @@ export default function CoursePageQTV() {
                       <td>
                         <button className={styles.classBadgeBtn} onClick={() => toggleExpandCourse(c.id)}>
                           <FiChevronDown style={{ marginRight: 4, transform: expandedCourse === c.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                          {(classesMap[c.id] || []).length} lớp
+                          {classesMap[c.id] ? classesMap[c.id].length : c.classCount} lớp
                         </button>
                       </td>
                       <td>{c.created}</td>

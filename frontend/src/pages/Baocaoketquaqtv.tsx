@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
 import styles from "./Baocaoketquaqtv.module.css"
 import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
 
@@ -55,7 +54,6 @@ interface Props {
 }
 
 const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
-  const navigate = useNavigate()
   const [data, setData]             = useState<HocVien[]>([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState("")
@@ -198,15 +196,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : "—"
 
-  const handleBuoiClick = (hv: HocVien, buoiNum: number) => {
-    const lessonObj = allLessons.find(
-      l => l.TenLop === hv.lopKhoaHoc && l.ThuTu === buoiNum
-    )
-    const targetLessonId = lessonObj ? lessonObj.MaLesson : null
-    if (targetLessonId) {
-      navigate(`/xem-ket-qua/${hv.maHV}`, { state: { lessonId: targetLessonId } })
-    }
-  }
+
 
   const handleExportCSV = () => {
     const headers = ["Họ và tên", "Mã HV", "Trạng thái", ...uniqueBuois.map(b => `Buổi ${b}`)]
@@ -364,7 +354,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                         return <td key={b} className={styles.emptyVal}>—</td>
                       }
                        return (
-                        <td key={b} className={styles.clickableCell} onClick={() => handleBuoiClick(hv, b)}>
+                        <td key={b}>
                           {avg !== null
                             ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
                             : <span className={styles.chuaNop}>Chưa nộp</span>

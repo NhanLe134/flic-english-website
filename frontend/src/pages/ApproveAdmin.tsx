@@ -30,73 +30,158 @@ const END_TIME_OPTIONS = [
   "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"
 ];
 
-const formatSchedule = (selectedDays: string[]) => {
-  if (selectedDays.length === 0) return '';
-  const sorted = [...selectedDays].sort((a, b) => {
+const parseSchedule = (schedule: string) => {
+  const daySchedules: Record<string, { startTime: string; endTime: string }> = {};
+  const selectedDays: string[] = [];
+
+  if (!schedule || schedule === '—') {
+    return { days: '', daySchedules };
+  }
+
+  // Thử parse theo định dạng mới trước: các ngày riêng biệt có dấu ngoặc ()
+  // Ví dụ: "Thứ 3 (07:00-08:30) · Thứ 5 (19:00-20:30)"
+  const parts = schedule.split('·').map(p => p.trim());
+  let isNewFormat = true;
+  
+  if (parts.length === 0 || parts[0] === '') {
+    isNewFormat = false;
+  } else {
+    for (const part of parts) {
+      const match = part.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (!match) {
+        isNewFormat = false;
+        break;
+      }
+    }
+  }
+
+  if (isNewFormat) {
+    parts.forEach(part => {
+      const match = part.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (match) {
+        const day = match[1].trim(); // ví dụ: "Thứ 3"
+        const timeStr = match[2].trim(); // ví dụ: "07:00-08:30"
+        const times = timeStr.split('-');
+        const startTime = times[0] ? times[0].trim() : '07:00';
+        const endTime = times[1] ? times[1].trim() : '08:30';
+        
+        const matchedDay = DAYS_OF_WEEK.find(d => d.value.toLowerCase() === day.toLowerCase());
+        if (matchedDay) {
+          if (!selectedDays.includes(matchedDay.value)) {
+            selectedDays.push(matchedDay.value);
+          }
+          daySchedules[matchedDay.value] = { startTime, endTime };
+        }
+      }
+    });
+  } else {
+    // Định dạng cũ: "Thứ 2, Thứ 4 · 09:00-10:30" hoặc "Thứ 2, 4, 6 · 09:00-10:30"
+    let daysPart = '';
+    let timePart = '';
+    
+    if (schedule.includes('·')) {
+      const partsOld = schedule.split('·');
+      daysPart = partsOld[0].trim();
+      timePart = partsOld[1] ? partsOld[1].trim() : '';
+    } else if (schedule.includes('-') && (schedule.includes(':') || /^\d{2}/.test(schedule))) {
+      timePart = schedule.trim();
+    } else {
+      daysPart = schedule.trim();
+    }
+
+    let commonStartTime = '07:00';
+    let commonEndTime = '08:30';
+    if (timePart) {
+      const times = timePart.split('-');
+      if (times[0]) commonStartTime = times[0].trim();
+      if (times[1]) commonEndTime = times[1].trim();
+    }
+
+    const extractedDays: string[] = [];
+    
+    if (daysPart.toLowerCase().includes('chủ nhật')) {
+      extractedDays.push('Chủ nhật');
+    }
+    
+    const thuMatch = daysPart.match(/Thứ\s+([^&·\(\)]+)/i);
+    if (thuMatch) {
+      const cleanParts = thuMatch[1].replace(/Thứ/gi, '').split(',').map(s => s.trim());
+      cleanParts.forEach(p => {
+        if (p.includes('&')) {
+          p.split('&').forEach(sp => {
+            const cleanSp = sp.trim();
+            if (cleanSp && !isNaN(Number(cleanSp))) {
+              extractedDays.push(`Thứ ${cleanSp}`);
+            }
+          });
+        } else {
+          if (p && !isNaN(Number(p))) {
+            extractedDays.push(`Thứ ${p}`);
+          }
+        }
+      });
+    }
+    
+    const ampMatch = daysPart.match(/&\s*(\d+)/);
+    if (ampMatch) {
+      const num = ampMatch[1];
+      const dayStr = `Thứ ${num}`;
+      if (!extractedDays.includes(dayStr)) {
+        extractedDays.push(dayStr);
+      }
+    }
+
+    DAYS_OF_WEEK.forEach(d => {
+      if (daysPart.toLowerCase().includes(d.value.toLowerCase()) && !extractedDays.includes(d.value)) {
+        extractedDays.push(d.value);
+      }
+    });
+
+    extractedDays.forEach(day => {
+      const matchedDay = DAYS_OF_WEEK.find(d => d.value.toLowerCase() === day.toLowerCase());
+      if (matchedDay) {
+        if (!selectedDays.includes(matchedDay.value)) {
+          selectedDays.push(matchedDay.value);
+        }
+        daySchedules[matchedDay.value] = { startTime: commonStartTime, endTime: commonEndTime };
+      }
+    });
+  }
+
+  selectedDays.sort((a, b) => {
     const idxA = DAYS_OF_WEEK.findIndex(d => d.value === a);
     const idxB = DAYS_OF_WEEK.findIndex(d => d.value === b);
     return idxA - idxB;
   });
 
-  if (sorted.length === 1) return sorted[0];
-
-  const thuNums = sorted.filter(d => d !== 'Chủ nhật').map(d => d.replace('Thứ ', ''));
-  const hasCN = sorted.includes('Chủ nhật');
-
-  if (!hasCN) {
-    const lastThu = thuNums[thuNums.length - 1];
-    const otherThus = thuNums.slice(0, -1).join(', ');
-    return `Thứ ${otherThus} & ${lastThu}`;
-  } else {
-    if (thuNums.length === 0) return 'Chủ nhật';
-    if (thuNums.length === 1) return `Thứ ${thuNums[0]} & Chủ nhật`;
-    return `Thứ ${thuNums.join(', ')} & Chủ nhật`;
-  }
+  return {
+    days: selectedDays.join(', '),
+    daySchedules
+  };
 };
 
-const getSelectedDaysFromSchedule = (schedule: string): string[] => {
-  if (!schedule) return [];
-  const days: string[] = [];
-  if (schedule.includes('Chủ nhật')) {
-    days.push('Chủ nhật');
-  }
-  const match = schedule.match(/Thứ\s+([^&]+)/);
-  if (match) {
-    const parts = match[1].split(',').map(s => s.trim());
-    parts.forEach(p => {
-      if (p.includes('&')) {
-        p.split('&').forEach(sp => {
-          const clean = sp.trim();
-          if (clean && !isNaN(Number(clean))) {
-            days.push(`Thứ ${clean}`);
-          }
-        });
-      } else {
-        if (p && !isNaN(Number(p))) {
-          days.push(`Thứ ${p}`);
-        }
-      }
-    });
-  }
-  const lastMatch = schedule.match(/&\s*(\d+)/);
-  if (lastMatch) {
-    const num = lastMatch[1];
-    if (!days.includes(`Thứ ${num}`)) {
-      days.push(`Thứ ${num}`);
-    }
-  }
-  return days;
-};
+const serializeSchedule = (
+  selectedDaysStr: string,
+  daySchedules: Record<string, { startTime: string; endTime: string }>
+) => {
+  if (!selectedDaysStr) return '—';
+  
+  const days = selectedDaysStr.split(',').map(d => d.trim()).filter(Boolean);
+  
+  days.sort((a, b) => {
+    const idxA = DAYS_OF_WEEK.findIndex(d => d.value === a);
+    const idxB = DAYS_OF_WEEK.findIndex(d => d.value === b);
+    return idxA - idxB;
+  });
 
-const toggleDayInSchedule = (day: string, currentSchedule: string) => {
-  const days = getSelectedDaysFromSchedule(currentSchedule);
-  let newDays = [];
-  if (days.includes(day)) {
-    newDays = days.filter(d => d !== day);
-  } else {
-    newDays = [...days, day];
-  }
-  return formatSchedule(newDays);
+  if (days.length === 0) return '—';
+
+  const scheduleParts = days.map(day => {
+    const sched = daySchedules[day] || { startTime: '07:00', endTime: '08:30' };
+    return `${day} (${sched.startTime}-${sched.endTime})`;
+  });
+
+  return scheduleParts.join(' · ');
 };
 const getSkillId = (skillName: string): number => {
   switch (skillName.toLowerCase()) {
@@ -183,8 +268,7 @@ export default function ApproveAdmin() {
     name: '',
     schedule: '',
     days: '',
-    startTime: '07:00',
-    endTime: '08:30',
+    daySchedules: {} as Record<string, { startTime: string; endTime: string }>,
     maxStudents: 30,
     maLop: 0,
     teachers: {} as Record<number, number>
@@ -205,8 +289,7 @@ export default function ApproveAdmin() {
     name: '',
     schedule: '',
     days: '',
-    startTime: '07:00',
-    endTime: '08:30',
+    daySchedules: {} as Record<string, { startTime: string; endTime: string }>,
     maxStudents: 30,
     status: 'Chưa bắt đầu',
     maLop: 0,
@@ -223,7 +306,7 @@ export default function ApproveAdmin() {
   const [deletingClass, setDeletingClass] = useState<LopHoc | null>(null);
 
   // Modal Xác nhận xóa trình độ
-  const [deletingLevelInfo, setDeletingLevelInfo] = useState<{ course: Course; levelName: string; index: number } | null>(null);
+  const [deletingLevelInfo, setDeletingLevelInfo] = useState<{ course: Course; levelName: string; index: number; maLop: number } | null>(null);
 
   // Modal Xác nhận xóa đếm ngược
   const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
@@ -434,12 +517,14 @@ export default function ApproveAdmin() {
         const data = await res.json();
         courseId = data.MaKhoaHoc;
 
-        // Tạo khóa học chi tiết chi tiết
-        await fetch(`${API}/qtv/khoahocchitiet`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TenLop: cForm.title, MoTa: cForm.desc, MaKhoaHoc: courseId })
-        });
+        // Tạo các trình độ chi tiết cho khóa học
+        for (const lvl of formLevels) {
+          await fetch(`${API}/qtv/khoahocchitiet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ TenLop: lvl, MoTa: cForm.desc, MaKhoaHoc: courseId })
+          });
+        }
         setToast('Đã tạo khóa học mới thành công!');
       }
 
@@ -482,26 +567,13 @@ export default function ApproveAdmin() {
   const openEditClass = (cls: LopHoc) => {
     setEditingClass(cls);
 
-    // Parse schedule
-    let days = '';
-    let startTime = '07:00';
-    let endTime = '08:30';
-    if (cls.schedule && cls.schedule !== '—') {
-      const parts = cls.schedule.split('·');
-      days = parts[0] ? parts[0].trim() : '';
-      if (parts[1]) {
-        const timeParts = parts[1].trim().split('-');
-        if (timeParts[0]) startTime = timeParts[0].trim();
-        if (timeParts[1]) endTime = timeParts[1].trim();
-      }
-    }
+    const { days, daySchedules } = parseSchedule(cls.schedule);
 
     setClassEditForm({
       name: cls.name,
       schedule: cls.schedule,
       days: days,
-      startTime: startTime,
-      endTime: endTime,
+      daySchedules: daySchedules,
       maxStudents: cls.maxStudents,
       status: cls.status,
       maLop: cls.maLop || 0,
@@ -559,9 +631,7 @@ export default function ApproveAdmin() {
     }
     setEditClassErrors({ name: '', maLop: '', maxStudents: '' });
     try {
-      const finalSchedule = classEditForm.days
-        ? `${classEditForm.days} · ${classEditForm.startTime}-${classEditForm.endTime}`
-        : `${classEditForm.startTime}-${classEditForm.endTime}`;
+      const finalSchedule = serializeSchedule(classEditForm.days, classEditForm.daySchedules);
 
       await fetch(`${API}/qtv/lophoc/${editingClass.id}`, {
         method: 'PUT',
@@ -587,26 +657,47 @@ export default function ApproveAdmin() {
   };
 
   // ── Lưu trình độ khóa học inline ──
-  const saveCourseLevel = async (course: Course, newLevel: string) => {
-    if (!newLevel.trim()) {
-      alert("Vui lòng nhập hoặc chọn trình độ!");
+  const saveCourseLevel = async (course: Course, newLevelName: string, maLop: number) => {
+    if (!newLevelName.trim()) {
+      alert("Vui lòng nhập tên trình độ!");
       return;
     }
     try {
-      await fetch(`${API}/admin/khoahoc/${course.id}`, {
+      await fetch(`${API}/qtv/khoahocchitiet/${maLop}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          TenKhoaHoc: course.title,
-          MoTa: course.desc,
-          TrinhDo: newLevel
+          TenLop: newLevelName
         })
       });
       setToast("Đã cập nhật trình độ khóa học thành công!");
       setEditingLevelIndex(null);
+      loadCourseDetails(course.id);
       loadCourses();
     } catch {
       alert("Lỗi khi cập nhật trình độ");
+    }
+  };
+
+  // ── Thêm trình độ khóa học inline ──
+  const addCourseLevel = async (course: Course, levelName: string) => {
+    try {
+      await fetch(`${API}/qtv/khoahocchitiet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          TenLop: levelName,
+          MoTa: course.desc,
+          MaKhoaHoc: course.id
+        })
+      });
+      setToast("Đã thêm trình độ mới thành công!");
+      setNewLevelInput("");
+      setAddLevelError("");
+      loadCourseDetails(course.id);
+      loadCourses();
+    } catch {
+      alert("Lỗi khi thêm trình độ");
     }
   };
 
@@ -639,9 +730,7 @@ export default function ApproveAdmin() {
     }
     setAddClassErrors({ name: '', maLop: '', maxStudents: '' });
     try {
-      const finalSchedule = newClassForm.days
-        ? `${newClassForm.days} · ${newClassForm.startTime}-${newClassForm.endTime}`
-        : `${newClassForm.startTime}-${newClassForm.endTime}`;
+      const finalSchedule = serializeSchedule(newClassForm.days, newClassForm.daySchedules);
 
       await fetch(`${API}/qtv/lophoc`, {
         method: 'POST',
@@ -660,8 +749,7 @@ export default function ApproveAdmin() {
         name: '',
         schedule: '',
         days: '',
-        startTime: '07:00',
-        endTime: '08:30',
+        daySchedules: {},
         maxStudents: 30,
         maLop: 0,
         teachers: {}
@@ -839,7 +927,7 @@ export default function ApproveAdmin() {
 
                                 <div className="course-levels-editable-list">
                                   {(() => {
-                                    const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                    const currentLevels = courseDetailsMap[course.id] || [];
                                     if (currentLevels.length === 0) {
                                       return <p className="no-levels-text">Chưa có trình độ nào được thiết lập.</p>;
                                     }
@@ -849,7 +937,7 @@ export default function ApproveAdmin() {
                                           const isEditingThis = editingLevelIndex === index;
                                           return (
                                             <div
-                                              key={index}
+                                              key={lvl.MaLop}
                                               ref={isEditingThis ? editLevelWrapperRef : null}
                                               className={`level-item-row ${isEditingThis ? 'is-editing' : ''}`}
                                             >
@@ -860,14 +948,12 @@ export default function ApproveAdmin() {
                                                     value={editingLevelValue}
                                                     onChange={e => setEditingLevelValue(e.target.value)}
                                                     className="level-edit-input"
-                                                    onKeyDown={e => {
+                                                    onKeyDown={async e => {
                                                       if (e.key === 'Enter') {
                                                         e.preventDefault();
                                                         const val = editingLevelValue.trim();
                                                         if (val) {
-                                                          const updated = [...currentLevels];
-                                                          updated[index] = val;
-                                                          saveCourseLevel(course, updated.join(', '));
+                                                          await saveCourseLevel(course, val, lvl.MaLop);
                                                           setEditingLevelIndex(null);
                                                         }
                                                       }
@@ -875,12 +961,10 @@ export default function ApproveAdmin() {
                                                     autoFocus
                                                   />
                                                   <button
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                       const val = editingLevelValue.trim();
                                                       if (val) {
-                                                        const updated = [...currentLevels];
-                                                        updated[index] = val;
-                                                        saveCourseLevel(course, updated.join(', '));
+                                                        await saveCourseLevel(course, val, lvl.MaLop);
                                                         setEditingLevelIndex(null);
                                                       }
                                                     }}
@@ -891,12 +975,12 @@ export default function ApproveAdmin() {
                                                 </>
                                               ) : (
                                                 <>
-                                                  <span className="level-item-text">{lvl}</span>
+                                                  <span className="level-item-text">{lvl.TenLop}</span>
                                                   <div className="level-item-actions">
                                                     <button
                                                       onClick={() => {
                                                         setEditingLevelIndex(index);
-                                                        setEditingLevelValue(lvl);
+                                                        setEditingLevelValue(lvl.TenLop);
                                                       }}
                                                       className="level-action-btn-edit"
                                                       title="Sửa tên trình độ"
@@ -905,7 +989,7 @@ export default function ApproveAdmin() {
                                                     </button>
                                                     <button
                                                       onClick={() => {
-                                                        setDeletingLevelInfo({ course, levelName: lvl, index });
+                                                        setDeletingLevelInfo({ course, levelName: lvl.TenLop, index, maLop: lvl.MaLop });
                                                       }}
                                                       className="level-action-btn-delete"
                                                       title="Xóa trình độ"
@@ -934,7 +1018,7 @@ export default function ApproveAdmin() {
                                         }}
                                         placeholder="Nhập tên trình độ mới"
                                         className={`level-input-small-inline ${addLevelError ? 'has-error' : ''}`}
-                                        onKeyDown={e => {
+                                        onKeyDown={async e => {
                                           if (e.key === 'Enter') {
                                             e.preventDefault();
                                             const trimmed = newLevelInput.trim();
@@ -942,34 +1026,28 @@ export default function ApproveAdmin() {
                                               setAddLevelError("Vui lòng nhập tên trình độ!");
                                               return;
                                             }
-                                            const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                            if (currentLevels.includes(trimmed)) {
+                                            const currentLevels = courseDetailsMap[course.id] || [];
+                                            if (currentLevels.some(l => l.TenLop.toLowerCase() === trimmed.toLowerCase())) {
                                               setAddLevelError("Trình độ này đã tồn tại!");
                                               return;
                                             }
-                                            const updated = [...currentLevels, trimmed];
-                                            saveCourseLevel(course, updated.join(', '));
-                                            setNewLevelInput("");
-                                            setAddLevelError("");
+                                            await addCourseLevel(course, trimmed);
                                           }
                                         }}
                                       />
                                       <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                           const trimmed = newLevelInput.trim();
                                           if (!trimmed) {
                                             setAddLevelError("Vui lòng nhập tên trình độ!");
                                             return;
                                           }
-                                          const currentLevels = course.level ? course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                          if (currentLevels.includes(trimmed)) {
+                                          const currentLevels = courseDetailsMap[course.id] || [];
+                                          if (currentLevels.some(l => l.TenLop.toLowerCase() === trimmed.toLowerCase())) {
                                             setAddLevelError("Trình độ này đã tồn tại!");
                                             return;
                                           }
-                                          const updated = [...currentLevels, trimmed];
-                                          saveCourseLevel(course, updated.join(', '));
-                                          setNewLevelInput("");
-                                          setAddLevelError("");
+                                          await addCourseLevel(course, trimmed);
                                         }}
                                         className="add-level-btn-submit"
                                       >
@@ -998,8 +1076,7 @@ export default function ApproveAdmin() {
                                         name: '',
                                         schedule: '',
                                         days: '',
-                                        startTime: '07:00',
-                                        endTime: '08:30',
+                                        daySchedules: {},
                                         maxStudents: 30,
                                         maLop: defaultMaLop,
                                         teachers: {}
@@ -1092,86 +1169,94 @@ export default function ApproveAdmin() {
               <div className="form-field-group">
                 <label>Trình độ của khóa học <span className="required-star">*</span></label>
 
-                {formLevels.length > 0 && (
-                  <div className="selected-levels-preview-row">
-                    <span className="preview-label">Danh sách trình độ:</span>
-                    <div className="preview-pills-list">
-                      {formLevels.map(l => (
-                        <span key={l} className="selected-level-badge">
-                          {l}
-                          <button
-                            type="button"
-                            className="remove-level-badge-btn"
-                            onClick={() => setFormLevels(prev => prev.filter(x => x !== l))}
-                          >
-                            &times;
-                          </button>
-                        </span>
-                      ))}
-                    </div>
+                {editCourse ? (
+                  <div style={{ color: '#8a6d3b', fontSize: '13px', backgroundColor: '#fcf8e3', padding: '12px', borderRadius: '8px', border: '1px solid #faebcc', lineHeight: '1.5' }}>
+                    Trình độ của khóa học này đang được liên kết trực tiếp với lớp học. Bạn có thể thêm, sửa, hoặc xóa các trình độ ở mục <strong>QUẢN LÝ TRÌNH ĐỘ</strong> bằng cách bấm mở rộng dòng thông tin của khóa học này ở danh sách bên ngoài.
                   </div>
-                )}
+                ) : (
+                  <>
+                    {formLevels.length > 0 && (
+                      <div className="selected-levels-preview-row">
+                        <span className="preview-label">Danh sách trình độ:</span>
+                        <div className="preview-pills-list">
+                          {formLevels.map(l => (
+                            <span key={l} className="selected-level-badge">
+                              {l}
+                              <button
+                                type="button"
+                                className="remove-level-badge-btn"
+                                onClick={() => setFormLevels(prev => prev.filter(x => x !== l))}
+                              >
+                                &times;
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                <div className="custom-level-add-input-row">
-                  <input
-                    type="text"
-                    value={formNewLevelInput}
-                    onChange={(e) => {
-                      setFormNewLevelInput(e.target.value);
-                      setCourseFormErrors(p => ({ ...p, levelInput: '' }));
-                    }}
-                    placeholder="Nhập tên trình độ mới (VD: IELTS 5.5, Beginner, ...)"
-                    className={`level-input-small-inline ${courseFormErrors.levelInput ? 'has-error' : ''}`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const trimmed = formNewLevelInput.trim();
-                        if (!trimmed) {
-                          setCourseFormErrors(p => ({ ...p, levelInput: 'Vui lòng nhập tên trình độ!' }));
-                          return;
-                        }
-                        if (formLevels.includes(trimmed)) {
-                          setCourseFormErrors(p => ({ ...p, levelInput: 'Trình độ này đã tồn tại!' }));
-                          return;
-                        }
-                        setFormLevels(prev => {
-                          const next = [...prev, trimmed];
-                          setCourseFormErrors(p => ({ ...p, levels: '', levelInput: '' }));
-                          return next;
-                        });
-                        setFormNewLevelInput("");
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="add-custom-level-btn"
-                    onClick={() => {
-                      const trimmed = formNewLevelInput.trim();
-                      if (!trimmed) {
-                        setCourseFormErrors(p => ({ ...p, levelInput: 'Vui lòng nhập tên trình độ!' }));
-                        return;
-                      }
-                      if (formLevels.includes(trimmed)) {
-                        setCourseFormErrors(p => ({ ...p, levelInput: 'Trình độ này đã tồn tại!' }));
-                        return;
-                      }
-                      setFormLevels(prev => {
-                        const next = [...prev, trimmed];
-                        setCourseFormErrors(p => ({ ...p, levels: '', levelInput: '' }));
-                        return next;
-                      });
-                      setFormNewLevelInput("");
-                    }}
-                  >
-                    Thêm
-                  </button>
-                </div>
-                {courseFormErrors.levelInput && (
-                  <span className="form-field-error-text mt-4">{courseFormErrors.levelInput}</span>
-                )}
-                {courseFormErrors.levels && (
-                  <span className="form-field-error-text mt-4">{courseFormErrors.levels}</span>
+                    <div className="custom-level-add-input-row">
+                      <input
+                        type="text"
+                        value={formNewLevelInput}
+                        onChange={(e) => {
+                          setFormNewLevelInput(e.target.value);
+                          setCourseFormErrors(p => ({ ...p, levelInput: '' }));
+                        }}
+                        placeholder="Nhập tên trình độ mới (VD: IELTS 5.5, Beginner, ...)"
+                        className={`level-input-small-inline ${courseFormErrors.levelInput ? 'has-error' : ''}`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const trimmed = formNewLevelInput.trim();
+                            if (!trimmed) {
+                              setCourseFormErrors(p => ({ ...p, levelInput: 'Vui lòng nhập tên trình độ!' }));
+                              return;
+                            }
+                            if (formLevels.includes(trimmed)) {
+                              setCourseFormErrors(p => ({ ...p, levelInput: 'Trình độ này đã tồn tại!' }));
+                              return;
+                            }
+                            setFormLevels(prev => {
+                              const next = [...prev, trimmed];
+                              setCourseFormErrors(p => ({ ...p, levels: '', levelInput: '' }));
+                              return next;
+                            });
+                            setFormNewLevelInput("");
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="add-custom-level-btn"
+                        onClick={() => {
+                          const trimmed = formNewLevelInput.trim();
+                          if (!trimmed) {
+                            setCourseFormErrors(p => ({ ...p, levelInput: 'Vui lòng nhập tên trình độ!' }));
+                            return;
+                          }
+                          if (formLevels.includes(trimmed)) {
+                            setCourseFormErrors(p => ({ ...p, levelInput: 'Trình độ này đã tồn tại!' }));
+                            return;
+                          }
+                          setFormLevels(prev => {
+                            const next = [...prev, trimmed];
+                            setCourseFormErrors(p => ({ ...p, levels: '', levelInput: '' }));
+                            return next;
+                          });
+                          setFormNewLevelInput("");
+                        }}
+                      >
+                        Thêm
+                      </button>
+                    </div>
+                    {courseFormErrors.levelInput && (
+                      <span className="form-field-error-text mt-4">{courseFormErrors.levelInput}</span>
+                    )}
+                    {courseFormErrors.levels && (
+                      <span className="form-field-error-text mt-4">{courseFormErrors.levels}</span>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -1310,15 +1395,36 @@ export default function ApproveAdmin() {
                   <label>Lịch học (Chọn các ngày học trong tuần)</label>
                   <div className="weekday-selection-row">
                     {DAYS_OF_WEEK.map(d => {
-                      const isSelected = getSelectedDaysFromSchedule(newClassForm.days).includes(d.value);
+                      const isSelected = newClassForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
                       return (
                         <button
                           key={d.value}
                           type="button"
                           className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
                           onClick={() => {
-                            const newDaysStr = toggleDayInSchedule(d.value, newClassForm.days);
-                            setNewClassForm(p => ({ ...p, days: newDaysStr }));
+                            const daysList = newClassForm.days.split(',').map(x => x.trim()).filter(Boolean);
+                            let newDaysList = [];
+                            const newDaySchedules = { ...newClassForm.daySchedules };
+
+                            if (daysList.includes(d.value)) {
+                              newDaysList = daysList.filter(day => day !== d.value);
+                              delete newDaySchedules[d.value];
+                            } else {
+                              newDaysList = [...daysList, d.value];
+                              newDaySchedules[d.value] = { startTime: '07:00', endTime: '08:30' };
+                            }
+
+                            newDaysList.sort((a, b) => {
+                              const idxA = DAYS_OF_WEEK.findIndex(item => item.value === a);
+                              const idxB = DAYS_OF_WEEK.findIndex(item => item.value === b);
+                              return idxA - idxB;
+                            });
+
+                            setNewClassForm(p => ({
+                              ...p,
+                              days: newDaysList.join(', '),
+                              daySchedules: newDaySchedules
+                            }));
                           }}
                         >
                           {d.label}
@@ -1328,34 +1434,57 @@ export default function ApproveAdmin() {
                   </div>
                 </div>
 
-                <div className="form-fields-inline-row">
-                  <div className="form-field-group flex-1">
-                    <label>Giờ bắt đầu</label>
-                    <select
-                      value={newClassForm.startTime}
-                      onChange={e => setNewClassForm(p => ({ ...p, startTime: e.target.value }))}
-                    >
-                      {START_TIME_OPTIONS.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-field-group flex-1">
-                    <label>Giờ kết thúc</label>
-                    <select
-                      value={newClassForm.endTime}
-                      onChange={e => setNewClassForm(p => ({ ...p, endTime: e.target.value }))}
-                    >
-                      {END_TIME_OPTIONS.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                {newClassForm.days.split(',').map(x => x.trim()).filter(Boolean).map(day => {
+                  const sched = newClassForm.daySchedules[day] || { startTime: '07:00', endTime: '08:30' };
+                  return (
+                    <div key={day} className="day-schedule-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+                      <div style={{ minWidth: '70px', fontWeight: 'bold' }}>{day}:</div>
+                      <div className="form-field-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <select
+                          value={sched.startTime}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewClassForm(p => ({
+                              ...p,
+                              daySchedules: {
+                                ...p.daySchedules,
+                                [day]: { ...sched, startTime: val }
+                              }
+                            }));
+                          }}
+                        >
+                          {START_TIME_OPTIONS.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ alignSelf: 'center' }}>đến</div>
+                      <div className="form-field-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <select
+                          value={sched.endTime}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewClassForm(p => ({
+                              ...p,
+                              daySchedules: {
+                                ...p.daySchedules,
+                                [day]: { ...sched, endTime: val }
+                              }
+                            }));
+                          }}
+                        >
+                          {END_TIME_OPTIONS.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })}
 
-                {(newClassForm.days || newClassForm.startTime) && (
+                {newClassForm.days && (
                   <div className="modal-skills-info">
-                    Đã chọn: {newClassForm.days ? `${newClassForm.days} · ` : ''}{newClassForm.startTime}-{newClassForm.endTime}
+                    Đã chọn: {serializeSchedule(newClassForm.days, newClassForm.daySchedules)}
                   </div>
                 )}
 
@@ -1481,15 +1610,36 @@ export default function ApproveAdmin() {
                   <label>Lịch học (Chọn các ngày học trong tuần)</label>
                   <div className="weekday-selection-row">
                     {DAYS_OF_WEEK.map(d => {
-                      const isSelected = getSelectedDaysFromSchedule(classEditForm.days).includes(d.value);
+                      const isSelected = classEditForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
                       return (
                         <button
                           key={d.value}
                           type="button"
                           className={`weekday-btn-choice ${isSelected ? 'selected' : ''}`}
                           onClick={() => {
-                            const newDaysStr = toggleDayInSchedule(d.value, classEditForm.days);
-                            setClassEditForm(p => ({ ...p, days: newDaysStr }));
+                            const daysList = classEditForm.days.split(',').map(x => x.trim()).filter(Boolean);
+                            let newDaysList = [];
+                            const newDaySchedules = { ...classEditForm.daySchedules };
+
+                            if (daysList.includes(d.value)) {
+                              newDaysList = daysList.filter(day => day !== d.value);
+                              delete newDaySchedules[d.value];
+                            } else {
+                              newDaysList = [...daysList, d.value];
+                              newDaySchedules[d.value] = { startTime: '07:00', endTime: '08:30' };
+                            }
+
+                            newDaysList.sort((a, b) => {
+                              const idxA = DAYS_OF_WEEK.findIndex(item => item.value === a);
+                              const idxB = DAYS_OF_WEEK.findIndex(item => item.value === b);
+                              return idxA - idxB;
+                            });
+
+                            setClassEditForm(p => ({
+                              ...p,
+                              days: newDaysList.join(', '),
+                              daySchedules: newDaySchedules
+                            }));
                           }}
                         >
                           {d.label}
@@ -1499,34 +1649,57 @@ export default function ApproveAdmin() {
                   </div>
                 </div>
 
-                <div className="form-fields-inline-row">
-                  <div className="form-field-group flex-1">
-                    <label>Giờ bắt đầu</label>
-                    <select
-                      value={classEditForm.startTime}
-                      onChange={e => setClassEditForm(p => ({ ...p, startTime: e.target.value }))}
-                    >
-                      {START_TIME_OPTIONS.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-field-group flex-1">
-                    <label>Giờ kết thúc</label>
-                    <select
-                      value={classEditForm.endTime}
-                      onChange={e => setClassEditForm(p => ({ ...p, endTime: e.target.value }))}
-                    >
-                      {END_TIME_OPTIONS.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                {classEditForm.days.split(',').map(x => x.trim()).filter(Boolean).map(day => {
+                  const sched = classEditForm.daySchedules[day] || { startTime: '07:00', endTime: '08:30' };
+                  return (
+                    <div key={day} className="day-schedule-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+                      <div style={{ minWidth: '70px', fontWeight: 'bold' }}>{day}:</div>
+                      <div className="form-field-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <select
+                          value={sched.startTime}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setClassEditForm(p => ({
+                              ...p,
+                              daySchedules: {
+                                ...p.daySchedules,
+                                [day]: { ...sched, startTime: val }
+                              }
+                            }));
+                          }}
+                        >
+                          {START_TIME_OPTIONS.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ alignSelf: 'center' }}>đến</div>
+                      <div className="form-field-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <select
+                          value={sched.endTime}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setClassEditForm(p => ({
+                              ...p,
+                              daySchedules: {
+                                ...p.daySchedules,
+                                [day]: { ...sched, endTime: val }
+                              }
+                            }));
+                          }}
+                        >
+                          {END_TIME_OPTIONS.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })}
 
-                {(classEditForm.days || classEditForm.startTime) && (
+                {classEditForm.days && (
                   <div className="modal-skills-info">
-                    Đã chọn: {classEditForm.days ? `${classEditForm.days} · ` : ''}{classEditForm.startTime}-{classEditForm.endTime}
+                    Đã chọn: {serializeSchedule(classEditForm.days, classEditForm.daySchedules)}
                   </div>
                 )}
 
@@ -1749,16 +1922,31 @@ export default function ApproveAdmin() {
             <h3>Xác nhận xóa trình độ</h3>
             <p className="delete-warning-text">
               Bạn có chắc chắn muốn xóa trình độ <strong>{deletingLevelInfo.levelName}</strong> của khóa học <strong>{deletingLevelInfo.course.title}</strong> không?
-              Các lớp học liên quan cũng bị xóa và không thể khôi phục.
+              <br />
+              <span style={{ fontSize: '12px', color: '#ff6b6b', marginTop: '6px', display: 'inline-block' }}>
+                Lưu ý: Chỉ có thể xóa trình độ khi không có lớp học nào đang thuộc trình độ này.
+              </span>
             </p>
             <div className="delete-modal-actions">
               <button className="delete-btn-cancel" onClick={() => setDeletingLevelInfo(null)}>Hủy</button>
               <button
                 className="delete-btn-confirm"
                 onClick={async () => {
-                  const currentLevels = deletingLevelInfo.course.level ? deletingLevelInfo.course.level.split(',').map(s => s.trim()).filter(Boolean) : [];
-                  const updated = currentLevels.filter((_, i) => i !== deletingLevelInfo.index);
-                  await saveCourseLevel(deletingLevelInfo.course, updated.join(', '));
+                  try {
+                    const res = await fetch(`${API}/qtv/khoahocchitiet/${deletingLevelInfo.maLop}`, {
+                      method: 'DELETE'
+                    });
+                    if (!res.ok) {
+                      const errData = await res.json();
+                      alert(errData.message || "Không thể xóa trình độ này");
+                    } else {
+                      setToast("Đã xóa trình độ thành công!");
+                      loadCourseDetails(deletingLevelInfo.course.id);
+                      loadCourses();
+                    }
+                  } catch (err) {
+                    alert("Gặp lỗi khi xóa trình độ");
+                  }
                   setDeletingLevelInfo(null);
                 }}
               >
