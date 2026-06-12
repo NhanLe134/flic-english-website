@@ -1659,3 +1659,22 @@ GO
 ALTER TABLE [dbo].[TUVUNG]  WITH CHECK ADD FOREIGN KEY([MaBaiHocMo])
 REFERENCES [dbo].[BAIHOCMO] ([MaBaiHocMo])
 GO
+
+
+  -- Bước 1: Thêm 4 cột mới vào bảng với kiểu dữ liệu BIT (True/False trong SQL Server)
+ALTER TABLE [WebHocTiengAnh].[dbo].[KHOAHOC]
+ADD 
+    [Listening] BIT NULL,
+    [Reading] BIT NULL,
+    [Writing] BIT NULL,
+    [Speaking] BIT NULL;
+GO
+
+-- Bước 2: Cập nhật giá trị của cả 4 cột này thành True (số 1 tương đương với True trong kiểu BIT) cho các bản ghi cũ
+UPDATE [WebHocTiengAnh].[dbo].[KHOAHOC]
+SET 
+    [Listening] = 1,
+    [Reading] = 1,
+    [Writing] = 1,
+    [Speaking] = 1;
+GO

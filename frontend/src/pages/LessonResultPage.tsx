@@ -5,6 +5,11 @@ import { saveAs } from "file-saver";
 import "./lessonResultPage.css";
 import BaoCaoKetQuaQTV from "./Baocaoketquaqtv";
 
+interface StudentScore {
+  Diem: number | null;
+  MaBaiNop: number | null;
+}
+
 interface Student {
   MaSinhVien: string;
   HoTen: string;
@@ -12,7 +17,7 @@ interface Student {
   NgayGhiDanh: string;
   TrangThai: string;
   MaNguoiDung: number;
-  scores: Record<number, number | null>; // MaExercise -> Diem
+  scores: Record<number, StudentScore | null>; // MaExercise -> StudentScore
   diemTB: number | null;
 }
 
@@ -61,23 +66,24 @@ const LessonResultPage = () => {
           });
         setClassExercises(classExs);
 
-        // Map grades to a lookup map (MaNguoiDung -> MaExercise -> Diem)
-        const gradesMap: Record<number, Record<number, number>> = {};
+        // Map grades to a lookup map (MaNguoiDung -> MaExercise -> { Diem, MaBaiNop })
+        const gradesMap: Record<number, Record<number, { Diem: number | null, MaBaiNop: number | null }>> = {};
         if (Array.isArray(grades)) {
           grades.forEach((g: any) => {
             const userId = Number(g.MaSinhVien); // MaSinhVien field in BAINOP stores MaNguoiDung
             const exId = Number(g.MaExercise);
-            const score = Number(g.Diem);
+            const score = g.Diem !== null ? Number(g.Diem) : null;
+            const submissionId = g.MaBaiNop ? Number(g.MaBaiNop) : null;
             if (!gradesMap[userId]) {
               gradesMap[userId] = {};
             }
-            gradesMap[userId][exId] = score;
+            gradesMap[userId][exId] = { Diem: score, MaBaiNop: submissionId };
           });
         }
 
         // Map students with their grades and average score
         const mappedStudents: Student[] = (Array.isArray(sinhVienList) ? sinhVienList : []).map((sv: any) => {
-          const studentScores: Record<number, number | null> = {};
+          const studentScores: Record<number, StudentScore | null> = {};
           classExs.forEach(ex => {
             const userId = Number(sv.MaNguoiDung);
             const exId = ex.MaExercise;
@@ -87,7 +93,9 @@ const LessonResultPage = () => {
           });
 
           // Calculate average score for submitted exercises
-          const submittedScores = Object.values(studentScores).filter((s): s is number => s !== null);
+          const submittedScores = Object.values(studentScores)
+            .filter((s): s is StudentScore => s !== null && s.Diem !== null)
+            .map(s => s.Diem as number);
           const diemTB = submittedScores.length > 0
             ? Math.round((submittedScores.reduce((a, b) => a + b, 0) / submittedScores.length) * 100) / 100
             : null;
@@ -157,8 +165,8 @@ const LessonResultPage = () => {
         "Trạng thái": s.TrangThai || "—",
       };
       classExercises.forEach(ex => {
-        const score = s.scores[ex.MaExercise];
-        rowData[`Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`] = score !== null ? score : "Chưa nộp";
+        const scoreObj = s.scores[ex.MaExercise];
+        rowData[`Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`] = (scoreObj && scoreObj.Diem !== null) ? scoreObj.Diem : "Chưa nộp";
       });
       rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
       return rowData;
@@ -255,7 +263,7 @@ const LessonResultPage = () => {
           <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Đang tải bảng điểm...</div>
         ) : (
           id === "101" ? (
-            <BaoCaoKetQuaQTV showCsvButton={false} />
+            <BaoCaoKetQuaQTV />
           ) : (
             <div className="lrp-table-wrapper">
               <table>
@@ -294,12 +302,34 @@ const LessonResultPage = () => {
                           </span>
                         </td>
                         {classExercises.map(ex => {
-                          const score = s.scores[ex.MaExercise];
+                          const scoreObj = s.scores[ex.MaExercise];
+                          const hasScore = scoreObj && scoreObj.Diem !== null;
+                          const hasSubmission = scoreObj && scoreObj.MaBaiNop !== null;
                           return (
                             <td key={ex.MaExercise}>
-                              {score !== null ? (
-                                <span className={`lrp-score-badge ${getDiemClass(score)}`}>
-                                  {score}
+                              {hasScore ? (
+                                <span 
+                                  className={`lrp-score-badge ${getDiemClass(scoreObj.Diem)} ${hasSubmission ? "clickable-badge" : ""}`}
+                                  onClick={() => {
+                                    if (scoreObj.MaBaiNop) {
+                                      navigate(`/cham-bai/${scoreObj.MaBaiNop}`);
+                                    }
+                                  }}
+                                  style={hasSubmission ? { cursor: 'pointer' } : {}}
+                                >
+                                  {scoreObj.Diem}
+                                </span>
+                              ) : hasSubmission ? (
+                                <span 
+                                  className={`lrp-score-badge lrp-diem-chuanop clickable-badge`}
+                                  onClick={() => {
+                                    if (scoreObj.MaBaiNop) {
+                                      navigate(`/cham-bai/${scoreObj.MaBaiNop}`);
+                                    }
+                                  }}
+                                  style={{ cursor: 'pointer', background: '#e0d8cc', color: '#555' }}
+                                >
+                                  Chờ chấm
                                 </span>
                               ) : (
                                 <span className="lrp-score-chuanop">Chưa nộp</span>

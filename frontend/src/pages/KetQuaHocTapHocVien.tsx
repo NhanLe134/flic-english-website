@@ -107,7 +107,15 @@ const KetQuaHocTapHocVien = () => {
             <p className="empty-msg">Chưa có bài tập nào được nộp</p>
           ) : (
             baiNops.map((item, i) => (
-              <div key={i} className="test-item">
+              <div 
+                key={i} 
+                className={`test-item ${item.MaBaiNop ? "clickable" : ""}`}
+                onClick={() => {
+                  if (item.MaBaiNop) {
+                    navigate(`/cham-bai/${item.MaBaiNop}`);
+                  }
+                }}
+              >
                 <div className="test-info">
                   <div className="test-name">{item.TenBaiTap || `Bài tập số ${i + 1}`}</div>
                   <div className="test-date">

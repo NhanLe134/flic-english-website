@@ -220,6 +220,9 @@
   border-radius: 8px; font-family: inherit; font-size: 13px;
   outline: none; box-sizing: border-box; transition: border 0.2s;
 }
+.formGroup select {
+  padding-right: 32px;
+}
 .formGroup input:focus,
 .formGroup select:focus,
 .formGroup textarea:focus { border-color: #F95800; }

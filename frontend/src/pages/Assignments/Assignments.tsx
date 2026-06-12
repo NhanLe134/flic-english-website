@@ -71,17 +71,73 @@ function Assignments() {
     const status  = daNop ? (daCham ? "Đã chấm" : "Đã nộp") : "Chưa làm"
     const progress= daNop ? 100 : 0
 
+    const parsedContent = (() => {
+      if (!e.Content) return {};
+      try {
+        if (e.Content.trim().startsWith("{")) {
+          return JSON.parse(e.Content);
+        }
+      } catch (err) {}
+      return {};
+    })();
+
+    const isExam = !!parsedContent.isExam || e.Type === "exam";
+    const deadline = parsedContent.deadline || null;
+    const startTime = parsedContent.startTime || null;
+    const duration = parsedContent.duration || 50;
+
+    let buttonDisabled = false;
+    let label = daNop ? "Xem kết quả" : "Làm bài tập";
+    let subInfo = "";
+
+    const now = new Date().getTime();
+
+    if (isExam && startTime) {
+      const startMs = new Date(startTime).getTime();
+      const endMs = startMs + duration * 60 * 1000;
+      if (now < startMs) {
+        buttonDisabled = true;
+        label = "Chưa mở";
+        subInfo = `Mở lúc: ${new Date(startTime).toLocaleString()}`;
+      } else if (now > endMs) {
+        if (!daNop) {
+          buttonDisabled = true;
+          label = "Đã đóng";
+        }
+        subInfo = "Bài kiểm tra đã kết thúc";
+      } else {
+        if (!daNop) {
+          label = "Làm bài Thi ⏱️";
+        }
+        subInfo = `Kết thúc lúc: ${new Date(endMs).toLocaleTimeString()}`;
+      }
+    } else if (deadline) {
+      const deadlineMs = new Date(deadline).getTime();
+      if (now > deadlineMs) {
+        if (!daNop) {
+          buttonDisabled = true;
+          label = "Quá hạn";
+        }
+        subInfo = `Hạn chót: ${new Date(deadline).toLocaleString()} (Quá hạn)`;
+      } else {
+        subInfo = `Hạn chót: ${new Date(deadline).toLocaleString()}`;
+      }
+    }
+
     return {
       MaExercise:   e.MaExercise,
       title:        e.Title,
-      type:         e.Type || "Bài tập",
+      type:         isExam ? "Exam (Bài kiểm tra)" : (e.Type || "Bài tập"),
       status,
       progress,
       diem:         nop?.Diem ?? null,
       TenLop:       e.TenLop,
       TenKhoaHoc:   e.TenKhoaHoc,
       MaLopHoc:     e.MaLopHoc,
-      btnLabel:     daNop ? "Xem kết quả" : "Làm bài tập",
+      btnLabel:     label,
+      buttonDisabled,
+      subInfo,
+      isExam
     }
   })
 
@@ -102,7 +158,6 @@ function Assignments() {
 
   return (
         <div className="asgn-content">
-
           <h1 className="asgn-title">Bài tập</h1>
 
           {/* Filter row */}
@@ -169,7 +224,7 @@ function Assignments() {
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
                     <p className="asgn-card-type">{a.type}</p>
                     {a.TenLop && (
-                      <span style={{ fontSize:11, color:"#aaa", background:"#f5f5f5", padding:"2px 8px", borderRadius:10 }}>
+                      <span style={{ fontSize:11, color:"#aaa", background:"#f5f5f5", padding:"2px 8px", borderRadius:10, marginLeft:"auto" }}>
                         {a.TenLop}
                       </span>
                     )}
@@ -190,11 +245,19 @@ function Assignments() {
                     <div style={{ width:`${a.progress}%`, background: barColor[a.status] || "#f97316" }} />
                   </div>
 
+                  {a.subInfo && (
+                    <p style={{ margin: "8px 0 4px", fontSize: 12, color: a.subInfo.includes("Quá hạn") || a.subInfo.includes("kết thúc") ? "#dc2626" : "#666", fontStyle: "italic" }}>
+                      {a.subInfo}
+                    </p>
+                  )}
+
                   <button
-                    className={`asgn-btn ${a.status !== "Chưa làm" ? "asgn-btn-outline" : "asgn-btn-fill"}`}
-                    onClick={() => navigate(`/exercise/${a.MaExercise}`, {
+                    className={`asgn-btn ${a.buttonDisabled ? "asgn-btn-disabled" : a.status !== "Chưa làm" ? "asgn-btn-outline" : "asgn-btn-fill"}`}
+                    disabled={a.buttonDisabled}
+                    onClick={() => !a.buttonDisabled && navigate(`/exercise/${a.MaExercise}`, {
                       state: { maLopHoc: a.MaLopHoc }
                     })}
+                    style={a.buttonDisabled ? { background: "#d1d5db", color: "#9ca3af", borderColor: "#d1d5db", cursor: "default", boxShadow: "none" } : undefined}
                   >
                     {a.btnLabel}
                   </button>
@@ -202,7 +265,6 @@ function Assignments() {
               ))}
             </div>
           )}
-
         </div>
   )
 }

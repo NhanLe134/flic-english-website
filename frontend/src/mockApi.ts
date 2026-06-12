@@ -60,6 +60,19 @@ const db = {
       NhanXet: "",
       NgayNop: "2026-03-08T14:20:00.000Z",
       TenLop: "IELTS-SP-01"
+    },
+    {
+      MaBaiNop: 9999,
+      MaExercise: 1,
+      HoTen: "Học Viên Giả Định",
+      MaSinhVien: "SV_MOCK_TEST",
+      FileUrl: "",
+      LinkUrl: "",
+      NoiDungBaiNop: "This is a mock homework submission.",
+      Diem: 8.5,
+      NhanXet: "Bài làm tốt",
+      NgayNop: "2026-03-09T08:00:00.000Z",
+      TenLop: "TOEIC-01"
     }
   ],
   documents: [
@@ -484,12 +497,13 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     }
 
     // 9. GET STUDENTS FOR TEACHER OR CLASS
-    if (urlStr.includes("/teacher/students/") || urlStr.includes("/lophoc/") && urlStr.endsWith("/students")) {
+    if (urlStr.includes("/teacher/students/") || (urlStr.includes("/lophoc/") && (urlStr.endsWith("/students") || urlStr.endsWith("/sinhvien")))) {
       return new Response(
         JSON.stringify([
           { MaSinhVien: "SV01", HoTen: "Nguyễn Văn An", GioiTinh: "Nam", TenKhoaHoc: "TOEIC 650+ Intensive", Lop: "TOEIC-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" },
           { MaSinhVien: "SV02", HoTen: "Trần Thị Bích", GioiTinh: "Nữ", TenKhoaHoc: "TOEIC 650+ Intensive", Lop: "TOEIC-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" },
-          { MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", TenKhoaHoc: "IELTS Speaking Band 7", Lop: "IELTS-SP-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" }
+          { MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", TenKhoaHoc: "IELTS Speaking Band 7", Lop: "IELTS-SP-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" },
+          { MaSinhVien: "SV_MOCK_TEST", HoTen: "Học Viên Giả Định", GioiTinh: "Nam", TenKhoaHoc: "TOEIC 650+ Intensive", Lop: "TOEIC-01", NgayGhiDanh: "2026-03-01", TrangThai: "Đang học" }
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
@@ -653,7 +667,8 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         JSON.stringify([
           { MaNguoiDung: 101, MaSinhVien: "SV01", HoTen: "Nguyễn Văn An", GioiTinh: "Nam", NgaySinh: "2002-03-12T00:00:00.000Z", TenLop: "TOEIC-01", TenKhoaHoc: "TOEIC 650+ Intensive", TrangThai: "Đang học", baiTaps: { 1: 8.5 } },
           { MaNguoiDung: 102, MaSinhVien: "SV02", HoTen: "Trần Thị Bích", GioiTinh: "Nữ", NgaySinh: "2001-11-02T00:00:00.000Z", TenLop: "TOEIC-01", TenKhoaHoc: "TOEIC 650+ Intensive", TrangThai: "Đang học", baiTaps: { 1: 9.0 } },
-          { MaNguoiDung: 103, MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", NgaySinh: "2000-08-20T00:00:00.000Z", TenLop: "IELTS-SP-01", TenKhoaHoc: "IELTS Speaking Band 7", TrangThai: "Đang học", baiTaps: { 1: 8.0 } }
+          { MaNguoiDung: 103, MaSinhVien: "SV03", HoTen: "Lê Minh Cường", GioiTinh: "Nam", NgaySinh: "2000-08-20T00:00:00.000Z", TenLop: "IELTS-SP-01", TenKhoaHoc: "IELTS Speaking Band 7", TrangThai: "Đang học", baiTaps: { 1: 8.0 } },
+          { MaNguoiDung: 9999, MaSinhVien: "SV_MOCK_TEST", HoTen: "Học Viên Giả Định", GioiTinh: "Nam", NgaySinh: "2002-05-15T00:00:00.000Z", TenLop: "TOEIC-01", TenKhoaHoc: "TOEIC 650+ Intensive", TrangThai: "Đang học", baiTaps: { 1: 8.5 } }
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
@@ -675,6 +690,19 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
           { MaLesson: 1, TenLesson: "Buổi 1", ThuTu: 1, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveLessonId: 1 },
           { MaLesson: 2, TenLesson: "Buổi 2", ThuTu: 2, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveLessonId: 1 }
         ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("/baocao/diem-all")) {
+      return new Response(
+        JSON.stringify(db.submissions.map(s => ({
+          MaBaiNop: s.MaBaiNop,
+          MaSinhVien: s.MaSinhVien,
+          MaExercise: s.MaExercise,
+          Diem: s.Diem,
+          NgayNop: s.NgayNop
+        }))),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -731,6 +759,59 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 
       return new Response(
         JSON.stringify({ success: true, message: "Cập nhật trạng thái kiểm duyệt thành công!" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ADMIN STATISTICS
+    if (urlStr === `${new URL(urlStr).origin}/admin/stats` && method === "GET") {
+      return new Response(
+        JSON.stringify({
+          tongNguoiDung: 125,
+          sinhVien: 78,
+          giangVien: 12,
+          quanTriVien: 2,
+          khoaHoc: 5,
+          dangKy: 45
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("/admin/stats/dangky-thang") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          { Thang: 1, SoLuong: 5 },
+          { Thang: 2, SoLuong: 8 },
+          { Thang: 3, SoLuong: 12 },
+          { Thang: 4, SoLuong: 15 },
+          { Thang: 5, SoLuong: 10 },
+          { Thang: 6, SoLuong: 3 }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ADMIN USERS MANAGEMENT
+    if (urlStr.includes("/admin/users") && !urlStr.includes("/permissions") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          { MaNguoiDung: 1, TenDangNhap: "admin", HoTen: "Nguyễn Văn Admin", Email: "admin@flic.com", TrangThai: "Active", NgayTao: "2025-01-01", VaiTro: "Quản Trị Viên" },
+          { MaNguoiDung: 2, TenDangNhap: "teacher1", HoTen: "Trần Văn Giảng", Email: "teacher@flic.com", TrangThai: "Active", NgayTao: "2025-01-05", VaiTro: "Giảng Viên" },
+          { MaNguoiDung: 3, TenDangNhap: "student1", HoTen: "Lê Minh Học", Email: "student@flic.com", TrangThai: "Active", NgayTao: "2025-01-10", VaiTro: "Học Viên" },
+          { MaNguoiDung: 4, TenDangNhap: "qtv", HoTen: "Phạm Quản Trị", Email: "qtv@flic.com", TrangThai: "Active", NgayTao: "2025-01-15", VaiTro: "Quản Trị Nội Dung" }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("/admin/users") && urlStr.includes("/permissions") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          { MaQuyen: 1, TenQuyen: "Xem thống kê", MaNguoiDung: 1 },
+          { MaQuyen: 2, TenQuyen: "Quản lý khóa học", MaNguoiDung: 1 },
+          { MaQuyen: 3, TenQuyen: "Quản lý người dùng", MaNguoiDung: 1 }
+        ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }

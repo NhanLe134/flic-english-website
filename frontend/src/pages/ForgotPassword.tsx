@@ -15,14 +15,39 @@ const ForgotPassword = ({ isModal = false }: ForgotPasswordProps) => {
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState("")
   const [success, setSuccess] = useState("")
+  const [errors,  setErrors]  = useState<{ email?: string }>({})
+
+  const handleBlur = () => {
+    const val = email.trim();
+    if (!val) {
+      setErrors({ email: "Vui lòng điền email!" });
+    } else if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(val)) {
+      setErrors({ email: "Vui lòng điền đúng định dạng email!" });
+    } else {
+      setErrors({});
+    }
+  };
 
   const handleSubmit = async () => {
-    if (!email.trim()) { setError("Vui lòng nhập email!"); return }
-    if (!email.includes("@")) { setError("Email không hợp lệ!"); return }
+    const newErrors: typeof errors = {};
+    let hasError = false;
+
+    const emailVal = email.trim();
+    if (!emailVal) {
+      newErrors.email = "Vui lòng điền email!";
+      hasError = true;
+    } else if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailVal)) {
+      newErrors.email = "Vui lòng điền đúng định dạng email!";
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+    setError("");
+    setSuccess("");
+
+    if (hasError) return;
 
     setLoading(true)
-    setError("")
-    setSuccess("")
 
     try {
       const res  = await fetch(`${API}/forgot-password`, {
@@ -47,8 +72,6 @@ const ForgotPassword = ({ isModal = false }: ForgotPasswordProps) => {
   const cardContent = (
     <div className="forgot-card">
 
-      <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC Logo" className="forgot-logo" />
-
       <h2 className="forgot-title">QUÊN MẬT KHẨU</h2>
       <p className="forgot-text">Nhập email của bạn để nhận mật khẩu mới</p>
 
@@ -70,28 +93,34 @@ const ForgotPassword = ({ isModal = false }: ForgotPasswordProps) => {
         </div>
       )}
 
-      {/* Error */}
-      {error && (
-        <div style={{
-          background:"#fef2f2", border:"1px solid #fecaca",
-          borderRadius:10, padding:"10px 14px", marginBottom:14,
-          fontSize:13, color:"#dc2626", textAlign:"center", width:"100%"
-        }}>
-          ⚠️ {error}
-        </div>
-      )}
-
       {!success && (
-        <>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
           <input
             type="email"
             placeholder="Nhập email đã đăng ký"
             className="forgot-input"
             value={email}
-            onChange={e => { setEmail(e.target.value); setError("") }}
+            onChange={e => {
+              setEmail(e.target.value);
+              setErrors({});
+              setError("");
+            }}
+            onBlur={handleBlur}
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
             disabled={loading}
+            style={{ borderColor: errors.email ? "#ef4444" : undefined }}
           />
+          {errors.email && (
+            <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block", textAlign: "left", width: "100%" }}>
+              {errors.email}
+            </span>
+          )}
+
+          {error && (
+            <div style={{ color: "#ef4444", fontSize: "14px", marginTop: "16px", marginBottom: "-8px", textAlign: "left", fontStyle: "italic" }}>
+              {error}
+            </div>
+          )}
 
           <button
             className="forgot-button"
@@ -101,7 +130,7 @@ const ForgotPassword = ({ isModal = false }: ForgotPasswordProps) => {
           >
             {loading ? "Đang gửi..." : "Gửi mật khẩu mới"}
           </button>
-        </>
+        </div>
       )}
 
       <button className="forgot-back" onClick={() => navigate(isModal ? "?auth=login" : "/login")}>

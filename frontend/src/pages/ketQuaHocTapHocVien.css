@@ -155,6 +155,18 @@ hr {
   background: #fdf8f3;
 }
 
+.test-item.clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.test-item.clickable:hover {
+  background: #fdf2e9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.1);
+  border-color: #f95800;
+}
+
 .test-name {
   font-weight: 600;
   font-size: 14px;

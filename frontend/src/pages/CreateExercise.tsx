@@ -6,6 +6,24 @@ interface Question {
   question: string;
   answers: string[];
   correct: string;
+  explanation?: string;
+  audioUrl?: string;
+  imageUrl?: string;
+  text?: string;
+  prompt?: string;
+  vocabPairs?: { word: string; meaning: string }[];
+  fillInAnswers?: string[];
+  sentences?: string[];
+}
+
+interface ExamSection {
+  type: string;
+  title: string;
+  audioUrl?: string;
+  imageUrl?: string;
+  content?: string;
+  vocab?: string;
+  questions?: Question[];
 }
 
 const getDangBaiOptions = (kn: string): string[] => {
@@ -17,15 +35,18 @@ const getDangBaiOptions = (kn: string): string[] => {
 };
 
 const mapDangBaiToType = (db: string): string => {
-  if (db === "Nghe audio trắc nghiệm" || db === "Hình ảnh chọn đáp án") return "listening";
-  if (db === "Nghe chép chính tả" || db === "Điền từ vào đoạn văn") return "essay";
-  if (db === "Luyện phát âm (check phát âm tự động)" || db === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking";
-  if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "multiple";
-  if (db === "Bài tập từ vựng") return "essay";
-  if (db === "Sắp xếp từ thành câu") return "ordering";
-  if (db === "Trắc nghiệm xác định thì") return "multiple";
-  if (db === "Viết đoạn văn ngắn") return "essay";
-  if (db === "Sắp xếp câu thành đoạn văn") return "ordering";
+  if (db === "Nghe audio trắc nghiệm") return "listening-mcq";
+  if (db === "Hình ảnh chọn đáp án") return "listening-image";
+  if (db === "Nghe chép chính tả") return "listening-dictation";
+  if (db === "Điền từ vào đoạn văn") return "listening-fill-in";
+  if (db === "Luyện phát âm (check phát âm tự động)") return "speaking-pronounce";
+  if (db === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking-topic";
+  if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
+  if (db === "Bài tập từ vựng") return "reading-vocab-mcq";
+  if (db === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (db === "Trắc nghiệm xác định thì") return "writing-tense-mcq";
+  if (db === "Viết đoạn văn ngắn") return "writing-essay";
+  if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
   return "multiple";
 };
 
@@ -39,26 +60,65 @@ const CreateExercise = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("listening");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [extraContents, setExtraContents] = useState<string[]>([]);
+  const [type, setType] = useState("listening-mcq");
   
   const [kyNang, setKyNang] = useState("Nghe");
   const [dangBai, setDangBai] = useState("Nghe audio trắc nghiệm");
   const [isFree, setIsFree] = useState(false);
   const [isExam, setIsExam] = useState(false);
+  const [deadline, setDeadline] = useState("");
+  const [showAnswer, setShowAnswer] = useState(false);
 
-  const [questions, setQuestions] = useState<Question[]>([
-    { question: "", answers: ["", "", "", ""], correct: "A" }
+  // States for Exam Builder
+  const [examDuration, setExamDuration] = useState(50);
+  const [examStartTime, setExamStartTime] = useState("");
+  const [examSections, setExamSections] = useState<ExamSection[]>([
+    {
+      type: "listening-mcq",
+      title: "Phần 1: Nghe trắc nghiệm",
+      audioUrl: "",
+      questions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
+    }
   ]);
 
-  const [singleQuestion,  setSingleQuestion]  = useState("");
-  const [speakingAnswer,  setSpeakingAnswer]  = useState(""); // đáp án mẫu cho speaking
-  const [connectPairs,   setConnectPairs]   = useState([{ left: "", right: "" }]);
-  const [matchingPairs,  setMatchingPairs]  = useState([{ left: "", right: "" }]);
-  const [vocabPairs,     setVocabPairs]     = useState([{ word: "", meaning: "" }]);
+  // Unified state for multiple questions in regular exercises
+  const [questions, setQuestions] = useState<any[]>([
+    {
+      question: "",
+      answers: ["", "", "", ""],
+      correct: "A",
+      explanation: "",
+      audioUrl: "",
+      imageUrl: "",
+      text: "",
+      prompt: "",
+      vocabPairs: [{ word: "", meaning: "" }],
+      fillInAnswers: [],
+      sentences: [""]
+    }
+  ]);
+
+  /* ===== LOAD LESSON ===== */
+  useEffect(() => {
+    if (!id) return;
+    fetch(`http://localhost:5000/lesson/${id}`)
+      .then(res => res.json())
+      .then(data => setLesson(Array.isArray(data) ? data[0] : data))
+      .catch(err => console.log(err));
+  }, [id]);
+
+  /* ===== FILE UPLOAD HELPER ===== */
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("http://localhost:5000/upload", {
+      method: "POST",
+      body: formData
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    const data = await res.json();
+    return data.url || "";
+  };
 
   const handleKyNangChange = (kn: string) => {
     setKyNang(kn);
@@ -72,112 +132,133 @@ const CreateExercise = () => {
     setDangBai(db);
     const targetType = mapDangBaiToType(db);
     setType(targetType);
-    setQuestions([{ question: "", answers: ["", "", "", ""], correct: "A" }]);
-    setSingleQuestion("");
-    setExtraContents([]);
-    setAudioFile(null);
-    setConnectPairs([{ left: "", right: "" }]);
-    setMatchingPairs([{ left: "", right: "" }]);
-    setVocabPairs([{ word: "", meaning: "" }]);
-    setSpeakingAnswer("");
+    
+    // Reset questions state with proper initial structure
+    setQuestions([
+      {
+        question: "",
+        answers: ["", "", "", ""],
+        correct: "A",
+        explanation: "",
+        audioUrl: "",
+        imageUrl: "",
+        text: "",
+        prompt: "",
+        vocabPairs: [{ word: "", meaning: "" }],
+        fillInAnswers: [],
+        sentences: [""]
+      }
+    ]);
   };
 
-  /* ===== LOAD LESSON ===== */
-  useEffect(() => {
-    if (!id) return;
-    fetch(`http://localhost:5000/lesson/${id}`)
-      .then(res => res.json())
-      .then(data => setLesson(Array.isArray(data) ? data[0] : data))
-      .catch(err => console.log(err));
-  }, [id]);
-
-  /* ===== HANDLE FILE ===== */
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setUploadedFile(e.target.files[0]);
+  /* ===== QUESTION ACTIONS FOR REGULAR MODE ===== */
+  const addQuestionItem = () => {
+    setQuestions([
+      ...questions,
+      {
+        question: "",
+        answers: ["", "", "", ""],
+        correct: "A",
+        explanation: "",
+        audioUrl: "",
+        imageUrl: "",
+        text: "",
+        prompt: "",
+        vocabPairs: [{ word: "", meaning: "" }],
+        fillInAnswers: [],
+        sentences: [""]
+      }
+    ]);
   };
 
-  const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setAudioFile(e.target.files[0]);
-  };
-
-  /* ===== HANDLE QUESTIONS ===== */
-  const addQuestion = () => {
-    setQuestions([...questions, { question: "", answers: ["", "", "", ""], correct: "A" }]);
-  };
-
-  const removeQuestion = (index: number) => {
+  const removeQuestionItem = (idx: number) => {
     if (questions.length === 1) return;
-    setQuestions(questions.filter((_, i) => i !== index));
+    setQuestions(questions.filter((_, i) => i !== idx));
   };
 
-  const updateQuestion = (index: number, field: string, value: any) => {
-    const updated = [...questions];
-    (updated[index] as any)[field] = value;
-    setQuestions(updated);
+  const updateQuestionItemField = (idx: number, field: string, value: any) => {
+    const copy = [...questions];
+    copy[idx][field] = value;
+    setQuestions(copy);
   };
 
-  const updateAnswer = (qIndex: number, aIndex: number, value: string) => {
-    const updated = [...questions];
-    updated[qIndex].answers[aIndex] = value;
-    setQuestions(updated);
+  const updateQuestionItemAnswer = (qIdx: number, aIdx: number, value: string) => {
+    const copy = [...questions];
+    copy[qIdx].answers[aIdx] = value;
+    setQuestions(copy);
   };
 
-  /* ===== HANDLE CONNECT ===== */
-  const handleConnectChange = (index: number, field: "left" | "right", value: string) => {
-    const updated = [...connectPairs];
-    updated[index][field] = value;
-    setConnectPairs(updated);
+  /* ===== INSTANT FILE UPLOAD FOR MULTIPLE QUESTIONS ===== */
+  const handleQuestionFileUpload = async (idx: number, field: "audioUrl" | "imageUrl", file: File) => {
+    try {
+      const url = await uploadFile(file);
+      updateQuestionItemField(idx, field, url);
+    } catch (err) {
+      alert("Lỗi khi tải file lên");
+    }
   };
 
-  const addConnectPair = () => setConnectPairs([...connectPairs, { left: "", right: "" }]);
-
-  const removeConnectPair = (index: number) => {
-    if (connectPairs.length === 1) return;
-    setConnectPairs(connectPairs.filter((_, i) => i !== index));
+  /* ===== EXAM BUILDER HELPERS ===== */
+  const addExamSection = () => {
+    setExamSections([
+      ...examSections,
+      {
+        type: "listening-mcq",
+        title: `Phần ${examSections.length + 1}`,
+        audioUrl: "",
+        questions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
+      }
+    ]);
   };
 
-  /* ===== HANDLE MATCHING ===== */
-  const handleMatchingChange = (index: number, field: "left" | "right", value: string) => {
-    const updated = [...matchingPairs];
-    updated[index][field] = value;
-    setMatchingPairs(updated);
+  const removeExamSection = (idx: number) => {
+    if (examSections.length === 1) return;
+    setExamSections(examSections.filter((_, i) => i !== idx));
   };
 
-  const addMatchingPair = () => setMatchingPairs([...matchingPairs, { left: "", right: "" }]);
-
-  const removeMatchingPair = (index: number) => {
-    if (matchingPairs.length === 1) return;
-    setMatchingPairs(matchingPairs.filter((_, i) => i !== index));
+  const handleExamSectionUpload = async (secIdx: number, field: "audioUrl" | "imageUrl", file: File) => {
+    try {
+      const url = await uploadFile(file);
+      const copy = [...examSections];
+      copy[secIdx][field] = url;
+      setExamSections(copy);
+    } catch (err) {
+      alert("Lỗi khi tải file lên");
+    }
   };
 
-  /* ===== HANDLE VOCAB ===== */
-  const handleVocabChange = (index: number, field: "word" | "meaning", value: string) => {
-    const updated = [...vocabPairs];
-    updated[index][field] = value;
-    setVocabPairs(updated);
+  const addQuestionToSection = (secIdx: number) => {
+    const copy = [...examSections];
+    if (!copy[secIdx].questions) copy[secIdx].questions = [];
+    copy[secIdx].questions.push({ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" });
+    setExamSections(copy);
   };
 
-  const addVocabPair = () => setVocabPairs([...vocabPairs, { word: "", meaning: "" }]);
-
-  const removeVocabPair = (index: number) => {
-    if (vocabPairs.length === 1) return;
-    setVocabPairs(vocabPairs.filter((_, i) => i !== index));
+  const removeQuestionFromSection = (secIdx: number, qIdx: number) => {
+    const copy = [...examSections];
+    if (copy[secIdx].questions) {
+      copy[secIdx].questions = copy[secIdx].questions.filter((_, i) => i !== qIdx);
+    }
+    setExamSections(copy);
   };
 
-  /* ===== HANDLE EXTRA CONTENTS ===== */
-  const addExtraContent = () => setExtraContents([...extraContents, ""]);
-
-  const updateExtraContent = (index: number, value: string) => {
-    const updated = [...extraContents];
-    updated[index] = value;
-    setExtraContents(updated);
+  const updateQuestionInSection = (secIdx: number, qIdx: number, field: string, value: any) => {
+    const copy = [...examSections];
+    if (copy[secIdx].questions && copy[secIdx].questions[qIdx]) {
+      (copy[secIdx].questions[qIdx] as any)[field] = value;
+    }
+    setExamSections(copy);
   };
 
-  const removeExtraContent = (index: number) => {
-    setExtraContents(extraContents.filter((_, i) => i !== index));
+  const updateAnswerInSection = (secIdx: number, qIdx: number, aIdx: number, value: string) => {
+    const copy = [...examSections];
+    if (copy[secIdx].questions && copy[secIdx].questions[qIdx]) {
+      copy[secIdx].questions[qIdx].answers[aIdx] = value;
+    }
+    setExamSections(copy);
   };
 
-  /* ===== CREATE ===== */
+  /* ===== CREATE & POST EXERCISE ===== */
   const handleCreate = async (statusOverride?: "draft" | "pending" | "published" | "practice") => {
     if (!title) { alert("Vui lòng nhập tiêu đề"); return; }
 
@@ -185,76 +266,36 @@ const CreateExercise = () => {
     const user = JSON.parse(userStr || "{}");
     const isTeacher = user.VaiTro === "Giảng Viên";
     const status = statusOverride || (isPractice ? "practice" : (isTeacher ? "pending" : "published"));
-
     const today = new Date().toISOString().split("T")[0];
-    let content       = "";
-    let questionsStr  = "";
-    let audioUrl      = "";
-    let vocabularyStr = "";
-
-    if (type === "multiple" || type === "listening") {
-      questionsStr = questions.map(q => {
-        const answersStr = q.answers
-          .map((a, i) => `${["A","B","C","D"][i]}. ${a}`)
-          .join("|");
-        return `${q.question}||${answersStr}|Đáp án đúng: ${q.correct}`;
-      }).join("###");
-    }
-
-    if (type === "essay") {
-      content      = singleQuestion;
-      questionsStr = "";
-    }
-    if (type === "speaking") {
-      // Content: "chủ đề
-      content      = singleQuestion;
-      questionsStr = speakingAnswer; // đáp án mẫu lưu vào Questions
-    }
-
-    if (type === "ordering") {
-      content = singleQuestion;
-    }
-
-    if (type === "connect") {
-      questionsStr = connectPairs.map(p => `${p.left}::${p.right}`).join("|");
-    }
-
-    if (type === "matching") {
-      questionsStr = matchingPairs.map(p => `${p.left}::${p.right}`).join("|");
-    }
-
-    // Từ vựng — chỉ với essay
-    if (type === "essay") {
-      vocabularyStr = vocabPairs
-        .filter(p => p.word.trim())
-        .map(p => `${p.word.trim()}::${p.meaning.trim()}`)
-        .join("|");
-    }
-
-    // Extra contents (câu hỏi bổ sung)
-    if (extraContents.length > 0) {
-      content += "\n---\n" + extraContents.join("\n---\n");
-    }
 
     try {
-      if (audioFile) {
-        const formData = new FormData();
-        formData.append("file", audioFile);
-        const uploadRes = await fetch("http://localhost:5000/upload", {
-          method: "POST",
-          body: formData
-        });
-        const uploadData = await uploadRes.json();
-        audioUrl = uploadData.url || "";
-      }
+      let contentStr = "";
+      let questionsStr = "";
+      let mainAudioUrl = "";
 
-      if (uploadedFile) {
-        const formData = new FormData();
-        formData.append("file", uploadedFile);
-        await fetch("http://localhost:5000/upload", {
-          method: "POST",
-          body: formData
-        });
+      if (isExam) {
+        // Compile entire structure into Content
+        const examContent = {
+          isExam: true,
+          duration: examDuration,
+          startTime: examStartTime,
+          deadline: deadline || null,
+          sections: examSections
+        };
+        contentStr = JSON.stringify(examContent);
+        questionsStr = ""; 
+      } else {
+        // Regular exercise
+        const contentMeta = {
+          deadline: deadline || null,
+          description: questions[0]?.question || "",
+          imageUrl: questions[0]?.imageUrl || "",
+          audioUrl: questions[0]?.audioUrl || ""
+        };
+        contentStr = JSON.stringify(contentMeta);
+        // Serialize the array of questions
+        questionsStr = JSON.stringify(questions);
+        mainAudioUrl = questions[0]?.audioUrl || "";
       }
 
       await fetch("http://localhost:5000/exercises/create", {
@@ -262,13 +303,13 @@ const CreateExercise = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           Title:       title,
-          Type:        type,
-          Content:     content,
+          Type:        isExam ? "exam" : type,
+          Content:     contentStr,
           Questions:   questionsStr,
-          Vocabulary:  vocabularyStr,
+          Vocabulary:  "", 
           CreatedDate: today,
           MaLesson:    Number(id),
-          AudioUrl:    audioUrl,
+          AudioUrl:    mainAudioUrl,
           ShowAnswer:  showAnswer ? 1 : 0,
           IsFree:      isFree ? 1 : 0,
           IsExam:      isExam ? 1 : 0,
@@ -291,7 +332,7 @@ const CreateExercise = () => {
       setShowSuccess(true);
       setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       alert("Lỗi khi tạo bài tập");
     }
   };
@@ -300,14 +341,12 @@ const CreateExercise = () => {
 
   return (
     <div className="ce-wrapper">
-
       <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
 
       {/* HEADER CARD */}
       <div className="ce-header-card">
         <h1>{lesson?.TenLesson || "Đang tải..."}</h1>
         <p>{lesson?.MoTa || ""}</p>
-        <p>Mã lớp: B239B1</p>
       </div>
 
       {/* TABS */}
@@ -320,21 +359,22 @@ const CreateExercise = () => {
 
       {/* EXERCISE EDITOR */}
       <div className="exercise-editor">
-
         <input
           className="exercise-title"
-          placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập"}
+          placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập / bài kiểm tra"}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
-        <div style={{ display: 'flex', gap: 15, marginBottom: 15 }}>
-          <div style={{ flex: 1 }}>
+        {/* Global Settings Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
+          <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Kỹ năng</label>
             <select
               className="exercise-type"
               style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
               value={kyNang}
+              disabled={isExam}
               onChange={(e) => handleKyNangChange(e.target.value)}
             >
               <option value="Nghe">Nghe (Listening)</option>
@@ -343,12 +383,13 @@ const CreateExercise = () => {
               <option value="Viet">Viết (Writing)</option>
             </select>
           </div>
-          <div style={{ flex: 2 }}>
+          <div>
             <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Dạng bài tập</label>
             <select
               className="exercise-type"
               style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
               value={dangBai}
+              disabled={isExam}
               onChange={(e) => handleDangBaiChange(e.target.value)}
             >
               {getDangBaiOptions(kyNang).map(opt => (
@@ -358,356 +399,726 @@ const CreateExercise = () => {
           </div>
         </div>
 
-        {/* Checkboxes: Học thử miễn phí & Đặt làm bài kiểm tra */}
-        <div style={{ display: "flex", gap: "24px", marginTop: "15px", marginBottom: "15px" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Hạn nộp bài (Deadline)</label>
             <input
-              type="checkbox"
-              checked={isFree}
-              onChange={(e) => setIsFree(e.target.checked)}
-              style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
+              type="datetime-local"
+              className="exercise-type"
+              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+              value={deadline}
+              onChange={e => setDeadline(e.target.value)}
             />
-            <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>
-              Học thử miễn phí (Free)
-            </span>
-          </label>
-
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={isExam}
-              onChange={(e) => setIsExam(e.target.checked)}
-              style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
-            />
-            <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>
-              Đặt làm bài kiểm tra (Exam)
-            </span>
-          </label>
-        </div>
-
-        <div style={{ marginBottom: "20px", fontSize: "13px", color: "#666" }}>
-          Định dạng trình soạn thảo: <strong>{
-            type === "listening" ? "Nghe / Audio Trắc nghiệm" :
-            type === "multiple" ? "Trắc nghiệm" :
-            type === "essay" ? "Tự luận / Đọc hiểu" :
-            type === "speaking" ? "Nói / Ghi âm" :
-            type === "ordering" ? "Sắp xếp từ" :
-            type === "connect" ? "Nối từ" :
-            type === "matching" ? "Ghép từ" : type
-          }</strong>
-        </div>
-
-        {/* ── TRẮC NGHIỆM ── */}
-        {type === "multiple" && (
-          <div>
-            {questions.map((q, qIndex) => (
-              <div key={qIndex} className="question-block">
-                <div className="question-block-header">
-                  <h4>Câu {qIndex + 1}</h4>
-                  {questions.length > 1 && (
-                    <button className="remove-btn" onClick={() => removeQuestion(qIndex)}>✕ Xóa</button>
-                  )}
-                </div>
-                <textarea
-                  className="exercise-content"
-                  placeholder={`Nhập câu hỏi ${qIndex + 1}`}
-                  value={q.question}
-                  onChange={(e) => updateQuestion(qIndex, "question", e.target.value)}
-                />
-                {["A", "B", "C", "D"].map((label, aIndex) => (
-                  <input
-                    key={label}
-                    className="exercise-content"
-                    placeholder={`Đáp án ${label}`}
-                    value={q.answers[aIndex]}
-                    onChange={(e) => updateAnswer(qIndex, aIndex, e.target.value)}
-                  />
-                ))}
-                <select
-                  className="exercise-type"
-                  value={q.correct}
-                  onChange={(e) => updateQuestion(qIndex, "correct", e.target.value)}
-                >
-                  {["A", "B", "C", "D"].map((label) => (
-                    <option key={label} value={label}>Đáp án đúng: {label}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
-            <div className="add-content" onClick={addQuestion}>+ Thêm câu hỏi</div>
           </div>
-        )}
-
-        {/* ── TỰ LUẬN ── */}
-        {type === "essay" && (
-          <div>
-            <textarea
-              className="exercise-content"
-              placeholder="Nhập đoạn văn / nội dung đề bài..."
-              value={singleQuestion}
-              onChange={(e) => setSingleQuestion(e.target.value)}
-            />
-
-            {/* VOCABULARY */}
-            <div className="question-block" style={{ marginTop: 16 }}>
-              <div className="question-block-header">
-                <h4>📚 Từ vựng (tuỳ chọn)</h4>
-              </div>
-              <p style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>
-                Nhập từ vựng và nghĩa để hiển thị bảng Vocabulary Practice
-              </p>
-              {vocabPairs.map((pair, index) => (
-                <div key={index} className="connect-row">
-                  <input
-                    className="exercise-content"
-                    placeholder="Từ vựng (vd: Biodiversity)"
-                    value={pair.word}
-                    onChange={(e) => handleVocabChange(index, "word", e.target.value)}
-                  />
-                  <input
-                    className="exercise-content"
-                    placeholder="Nghĩa (vd: variety of different living things)"
-                    value={pair.meaning}
-                    onChange={(e) => handleVocabChange(index, "meaning", e.target.value)}
-                  />
-                  {vocabPairs.length > 1 && (
-                    <button className="remove-btn" onClick={() => removeVocabPair(index)}>✕</button>
-                  )}
-                </div>
-              ))}
-              <div className="add-content" onClick={addVocabPair}>+ Thêm từ vựng</div>
-            </div>
-          </div>
-        )}
-
-        {/* ── GHÉP TỪ ── */}
-        {type === "matching" && (
-          <div>
-            <p style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>
-              Nhập từng cặp từ và nghĩa tương ứng. Học viên sẽ click để ghép đúng cặp.
-            </p>
-            {matchingPairs.map((pair, index) => (
-              <div key={index} className="connect-row">
-                <input
-                  className="exercise-content"
-                  placeholder="Từ / cụm từ"
-                  value={pair.left}
-                  onChange={(e) => handleMatchingChange(index, "left", e.target.value)}
-                />
-                <input
-                  className="exercise-content"
-                  placeholder="Nghĩa / định nghĩa"
-                  value={pair.right}
-                  onChange={(e) => handleMatchingChange(index, "right", e.target.value)}
-                />
-                {matchingPairs.length > 1 && (
-                  <button className="remove-btn" onClick={() => removeMatchingPair(index)}>✕</button>
-                )}
-              </div>
-            ))}
-            <div className="add-content" onClick={addMatchingPair}>+ Thêm cặp từ</div>
-          </div>
-        )}
-
-        {/* ── SẮP XẾP ── */}
-        {type === "ordering" && (
-          <textarea
-            className="exercise-content"
-            placeholder="Nhập các từ cần sắp xếp (cách nhau bằng dấu phẩy)"
-            value={singleQuestion}
-            onChange={(e) => setSingleQuestion(e.target.value)}
-          />
-        )}
-
-        {/* ── NỐI TỪ ── */}
-        {type === "connect" && (
-          <div>
-            {connectPairs.map((pair, index) => (
-              <div key={index} className="connect-row">
-                <input
-                  className="exercise-content"
-                  placeholder="Từ bên trái"
-                  value={pair.left}
-                  onChange={(e) => handleConnectChange(index, "left", e.target.value)}
-                />
-                <input
-                  className="exercise-content"
-                  placeholder="Từ bên phải"
-                  value={pair.right}
-                  onChange={(e) => handleConnectChange(index, "right", e.target.value)}
-                />
-                {connectPairs.length > 1 && (
-                  <button className="remove-btn" onClick={() => removeConnectPair(index)}>✕</button>
-                )}
-              </div>
-            ))}
-            <div className="add-content" onClick={addConnectPair}>+ Thêm cặp nối</div>
-          </div>
-        )}
-
-        {/* ── NGHE ── */}
-        {type === "listening" && (
-          <div>
-            <p className="upload-label">🎵 Upload file âm thanh</p>
-            <div
-              className="upload-box"
-              onClick={() => document.getElementById("audio-input")?.click()}
-            >
+          <div style={{ display: "flex", gap: "50px", alignItems: "center", paddingTop: "20px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
               <input
-                id="audio-input"
-                type="file"
-                accept=".mp3,.wav,.m4a"
-                onChange={handleAudioChange}
-                hidden
+                type="checkbox"
+                checked={isFree}
+                onChange={(e) => setIsFree(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
               />
-              {audioFile ? (
-                <div className="upload-selected">
-                  <span className="upload-icon">🎵</span>
-                  <span className="upload-filename">{audioFile.name}</span>
-                  <span
-                    className="upload-remove"
-                    onClick={(e) => { e.stopPropagation(); setAudioFile(null); }}
-                  >✕</span>
-                </div>
-              ) : (
-                <div className="upload-placeholder">
-                  <span className="upload-icon">⬆️</span>
-                  <span>Kéo thả hoặc <u>chọn file âm thanh</u></span>
-                  <span className="upload-hint">MP3, WAV, M4A</span>
-                </div>
-              )}
-            </div>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>Học thử miễn phí</span>
+            </label>
 
-            {questions.map((q, qIndex) => (
-              <div key={qIndex} className="question-block">
-                <div className="question-block-header">
-                  <h4>Câu {qIndex + 1}</h4>
-                  {questions.length > 1 && (
-                    <button className="remove-btn" onClick={() => removeQuestion(qIndex)}>✕ Xóa</button>
-                  )}
-                </div>
-                <textarea
-                  className="exercise-content"
-                  placeholder={`Nhập câu hỏi ${qIndex + 1} sau khi nghe...`}
-                  value={q.question}
-                  onChange={(e) => updateQuestion(qIndex, "question", e.target.value)}
-                />
-                {["A", "B", "C", "D"].map((label, aIndex) => (
-                  <input
-                    key={label}
-                    className="exercise-content"
-                    placeholder={`Đáp án ${label}`}
-                    value={q.answers[aIndex]}
-                    onChange={(e) => updateAnswer(qIndex, aIndex, e.target.value)}
-                  />
-                ))}
-                <select
-                  className="exercise-type"
-                  value={q.correct}
-                  onChange={(e) => updateQuestion(qIndex, "correct", e.target.value)}
-                >
-                  {["A", "B", "C", "D"].map((label) => (
-                    <option key={label} value={label}>Đáp án đúng: {label}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
-            <div className="add-content" onClick={addQuestion}>+ Thêm câu hỏi</div>
-          </div>
-        )}
-
-        {/* ── NÓI ── */}
-        {type === "speaking" && (
-          <div>
-            <textarea
-              className="exercise-content"
-              placeholder="Nhập chủ đề / câu hỏi cho phần nói..."
-              value={singleQuestion}
-              onChange={(e) => setSingleQuestion(e.target.value)}
-            />
-            <input
-              className="exercise-content"
-              placeholder="Gợi ý từ vựng (ví dụ: travel, holiday, beach...)"
-            />
-            <textarea
-              className="exercise-content"
-              placeholder="Hướng dẫn (ví dụ: Hãy nói 2-3 phút về chủ đề này...)"
-            />
-            {/* Đáp án mẫu để máy chấm phát âm */}
-            <div className="question-block" style={{ marginTop: 16 }}>
-              <div className="question-block-header">
-                <h4>🎯 Đáp án mẫu (dùng để máy chấm)</h4>
-              </div>
-              <p style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>
-                Nhập câu / đoạn văn học viên cần đọc đúng. Máy sẽ nhận diện giọng nói và so sánh.
-              </p>
-              <textarea
-                className="exercise-content"
-                placeholder="VD: The quick brown fox jumps over the lazy dog"
-                value={speakingAnswer}
-                onChange={(e) => setSpeakingAnswer(e.target.value)}
-                rows={3}
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={isExam}
+                onChange={(e) => setIsExam(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
               />
-            </div>
-          </div>
-        )}
-
-        {/* ── EXTRA CONTENTS (câu hỏi bổ sung cho essay) ── */}
-        {extraContents.map((content, index) => (
-          <div key={index} className="question-block">
-            <div className="question-block-header">
-              <h4>Câu hỏi {index + 1}</h4>
-              <button className="remove-btn" onClick={() => removeExtraContent(index)}>✕ Xóa</button>
-            </div>
-            <textarea
-              className="exercise-content"
-              placeholder="Nhập câu hỏi..."
-              value={content}
-              onChange={(e) => updateExtraContent(index, e.target.value)}
-            />
-          </div>
-        ))}
-
-        {/* Chỉ hiện "+ Thêm câu hỏi" với essay */}
-        {type === "essay" && (
-          <div className="add-content" onClick={addExtraContent}>+ Thêm câu hỏi</div>
-        )}
-
-        {/* ── UPLOAD FILE ── */}
-        <div className="upload-section">
-          <p className="upload-label">📎 Upload file bài tập</p>
-          <div
-            className="upload-box"
-            onClick={() => document.getElementById("file-input")?.click()}
-          >
-            <input
-              id="file-input"
-              type="file"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-              onChange={handleFileChange}
-              hidden
-            />
-            {uploadedFile ? (
-              <div className="upload-selected">
-                <span className="upload-icon">📄</span>
-                <span className="upload-filename">{uploadedFile.name}</span>
-                <span
-                  className="upload-remove"
-                  onClick={(e) => { e.stopPropagation(); setUploadedFile(null); }}
-                >✕</span>
-              </div>
-            ) : (
-              <div className="upload-placeholder">
-                <span className="upload-icon">⬆️</span>
-                <span>Kéo thả hoặc <u>chọn file</u></span>
-                <span className="upload-hint">PDF, DOC, DOCX, PNG, JPG</span>
-              </div>
-            )}
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>Đặt làm bài kiểm tra (Exam)</span>
+            </label>
           </div>
         </div>
+
+        {/* ────────────────── EXAM BUILDER SECTION ────────────────── */}
+        {isExam ? (
+          <div style={{ borderTop: "2px solid #e6caa5", marginTop: 25, paddingTop: 20 }}>
+            <h3 style={{ color: "#a33d2c", marginBottom: 15 }}>⚙️ Cấu hình Bài Kiểm Tra</h3>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Thời lượng (phút)</label>
+                <input
+                  type="number"
+                  className="exercise-content"
+                  style={{ marginTop: 0 }}
+                  value={examDuration}
+                  onChange={e => setExamDuration(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Thời gian bắt đầu</label>
+                <input
+                  type="datetime-local"
+                  className="exercise-type"
+                  style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+                  value={examStartTime}
+                  onChange={e => setExamStartTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <h4 style={{ color: "#5a3e2b", borderBottom: "1px solid #e0d4c3", paddingBottom: 8, marginBottom: 15 }}>📚 Các Phần Bài Thi (Exam Sections)</h4>
+
+            {examSections.map((sec, secIdx) => (
+              <div key={secIdx} className="question-block" style={{ background: "#fcf9f5", border: "2px solid #e6caa5", position: "relative", marginBottom: 24 }}>
+                <div className="question-block-header">
+                  <h4 style={{ fontSize: 16 }}>Phần {secIdx + 1}: {sec.title}</h4>
+                  <button className="remove-btn" onClick={() => removeExamSection(secIdx)}>✕ Xóa phần này</button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 15, marginBottom: 15 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Tiêu đề phần</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      style={{ marginTop: 4 }}
+                      value={sec.title}
+                      onChange={e => {
+                        const copy = [...examSections];
+                        copy[secIdx].title = e.target.value;
+                        setExamSections(copy);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Dạng kỹ năng</label>
+                    <select
+                      className="exercise-type"
+                      style={{ width: '100%', marginTop: 4, marginBottom: 0 }}
+                      value={sec.type}
+                      onChange={e => {
+                        const copy = [...examSections];
+                        copy[secIdx].type = e.target.value;
+                        // Reset properties based on type
+                        if (e.target.value === "listening-mcq" || e.target.value === "reading-split") {
+                          copy[secIdx].questions = [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }];
+                          copy[secIdx].content = "";
+                        } else {
+                          copy[secIdx].questions = [];
+                          copy[secIdx].content = "";
+                        }
+                        setExamSections(copy);
+                      }}
+                    >
+                      <option value="listening-mcq">Listening (Nghe trắc nghiệm)</option>
+                      <option value="reading-split">Reading (Đọc hiểu chia đôi màn hình)</option>
+                      <option value="speaking-topic">Speaking (Nói theo chủ đề)</option>
+                      <option value="writing-essay">Writing (Viết luận tự luận)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Section Specific Inputs */}
+                {sec.type === "listening-mcq" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 File nghe cho phần này</label>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={async e => {
+                        if (e.target.files && e.target.files[0]) {
+                          await handleExamSectionUpload(secIdx, "audioUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5, marginBottom: 15 }}
+                    />
+                    {sec.audioUrl && <p style={{ color: "green", fontSize: 13 }}>✓ Đã tải lên: {sec.audioUrl}</p>}
+
+                    {/* Section MCQ List */}
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Câu hỏi"
+                          className="exercise-content"
+                          style={{ marginTop: 0 }}
+                          value={q.question}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "question", e.target.value)}
+                        />
+                        {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                          <input
+                            key={lbl}
+                            type="text"
+                            placeholder={`Lựa chọn ${lbl}`}
+                            className="exercise-content"
+                            style={{ margin: "5px 0" }}
+                            value={q.answers[aIdx]}
+                            onChange={e => updateAnswerInSection(secIdx, qIdx, aIdx, e.target.value)}
+                          />
+                        ))}
+                        <select
+                          className="exercise-type"
+                          style={{ width: "100%", marginTop: 5 }}
+                          value={q.correct}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "correct", e.target.value)}
+                        >
+                          <option value="A">Đáp án đúng: A</option>
+                          <option value="B">Đáp án đúng: B</option>
+                          <option value="C">Đáp án đúng: C</option>
+                          <option value="D">Đáp án đúng: D</option>
+                        </select>
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi trắc nghiệm</button>
+                  </div>
+                )}
+
+                {sec.type === "reading-split" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>📖 Bài đọc dài (Hiển thị bên trái)</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={5}
+                      value={sec.content || ""}
+                      onChange={e => {
+                        const copy = [...examSections];
+                        copy[secIdx].content = e.target.value;
+                        setExamSections(copy);
+                      }}
+                      placeholder="Nhập bài đọc..."
+                    />
+
+                    {/* Section MCQ List */}
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Câu hỏi"
+                          className="exercise-content"
+                          style={{ marginTop: 0 }}
+                          value={q.question}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "question", e.target.value)}
+                        />
+                        {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                          <input
+                            key={lbl}
+                            type="text"
+                            placeholder={`Lựa chọn ${lbl}`}
+                            className="exercise-content"
+                            style={{ margin: "5px 0" }}
+                            value={q.answers[aIdx]}
+                            onChange={e => updateAnswerInSection(secIdx, qIdx, aIdx, e.target.value)}
+                          />
+                        ))}
+                        <select
+                          className="exercise-type"
+                          style={{ width: "100%", marginTop: 5 }}
+                          value={q.correct}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "correct", e.target.value)}
+                        >
+                          <option value="A">Đáp án đúng: A</option>
+                          <option value="B">Đáp án đúng: B</option>
+                          <option value="C">Đáp án đúng: C</option>
+                          <option value="D">Đáp án đúng: D</option>
+                        </select>
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi cho bài đọc</button>
+                  </div>
+                )}
+
+                {sec.type === "speaking-topic" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🗣️ Chủ đề / Topic nói</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={3}
+                      value={sec.content || ""}
+                      onChange={e => {
+                        const copy = [...examSections];
+                        copy[secIdx].content = e.target.value;
+                        setExamSections(copy);
+                      }}
+                      placeholder="Nhập yêu cầu bài nói..."
+                    />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>🖼️ Ảnh gợi ý</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async e => {
+                        if (e.target.files && e.target.files[0]) {
+                          await handleExamSectionUpload(secIdx, "imageUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5 }}
+                    />
+                    {sec.imageUrl && <img src={sec.imageUrl} alt="Exam prompt suggestion" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
+                  </div>
+                )}
+
+                {sec.type === "writing-essay" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>✍️ Đề bài viết luận</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={4}
+                      value={sec.content || ""}
+                      onChange={e => {
+                        const copy = [...examSections];
+                        copy[secIdx].content = e.target.value;
+                        setExamSections(copy);
+                      }}
+                      placeholder="Nhập đề bài viết luận..."
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <button type="button" className="add-content" onClick={addExamSection}>+ Thêm phần (Add Section)</button>
+          </div>
+        ) : (
+          /* ────────────────── DYNAMIC MULTI-QUESTION BUILDERS ────────────────── */
+          <div style={{ borderTop: "2px solid #e6caa5", marginTop: 25, paddingTop: 20 }}>
+            <h3 style={{ color: "#a33d2c", marginBottom: 15 }}>📝 Danh sách Câu Hỏi ({dangBai})</h3>
+
+            {questions.map((q, qIndex) => (
+              <div key={qIndex} className="question-block" style={{ border: "2px solid #e6caa5" }}>
+                <div className="question-block-header">
+                  <h4 style={{ fontSize: 15 }}>Câu {qIndex + 1}</h4>
+                  {questions.length > 1 && (
+                    <button className="remove-btn" onClick={() => removeQuestionItem(qIndex)}>✕ Xóa câu này</button>
+                  )}
+                </div>
+
+                {/* ── SPEAKING PRONOUNCE ── */}
+                {type === "speaking-pronounce" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Từ vựng / Câu mẫu phát âm</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Ví dụ: Hello, beautiful world!"
+                      value={q.text || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "text", e.target.value)}
+                    />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Cấp độ</label>
+                    <select
+                      className="exercise-type"
+                      style={{ width: "100%", marginTop: 4 }}
+                      value={q.level || "Đọc theo câu"}
+                      onChange={e => updateQuestionItemField(qIndex, "level", e.target.value)}
+                    >
+                      <option value="Luyện âm đơn">Luyện âm đơn (Phoneme)</option>
+                      <option value="Đọc từ theo âm">Đọc từ theo âm (Word)</option>
+                      <option value="Đọc theo câu">Đọc theo câu (Sentence)</option>
+                    </select>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Hướng dẫn học viên (tùy chọn)"
+                      value={q.explanation || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "explanation", e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* ── SPEAKING TOPIC ── */}
+                {type === "speaking-topic" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài / Topic bằng chữ</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={3}
+                      placeholder="Nhập đề bài nói..."
+                      value={q.prompt || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "prompt", e.target.value)}
+                    />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Hình ảnh gợi ý</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleQuestionFileUpload(qIndex, "imageUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5 }}
+                    />
+                    {q.imageUrl && <img src={q.imageUrl} alt="Topic hint" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
+                  </div>
+                )}
+
+                {/* ── LISTENING MCQ & TENSE MCQ & VOCAB MCQ ── */}
+                {(type === "listening-mcq" || type === "writing-tense-mcq" || type === "reading-vocab-mcq" || type === "multiple") && (
+                  <div>
+                    {type === "listening-mcq" && (
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block" }}>Audio riêng của câu hỏi (Tùy chọn)</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={e => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleQuestionFileUpload(qIndex, "audioUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5 }}
+                        />
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải: {q.audioUrl}</p>}
+                      </div>
+                    )}
+
+                    <textarea
+                      className="exercise-content"
+                      placeholder="Nhập câu hỏi"
+                      value={q.question || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "question", e.target.value)}
+                    />
+                    {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                      <input
+                        key={lbl}
+                        className="exercise-content"
+                        style={{ margin: "5px 0" }}
+                        placeholder={`Đáp án ${lbl}`}
+                        value={q.answers[aIdx] || ""}
+                        onChange={e => updateQuestionItemAnswer(qIndex, aIdx, e.target.value)}
+                      />
+                    ))}
+                    <select
+                      className="exercise-type"
+                      style={{ width: "100%", marginTop: 5 }}
+                      value={q.correct}
+                      onChange={e => updateQuestionItemField(qIndex, "correct", e.target.value)}
+                    >
+                      <option value="A">Đáp án đúng: A</option>
+                      <option value="B">Đáp án đúng: B</option>
+                      <option value="C">Đáp án đúng: C</option>
+                      <option value="D">Đáp án đúng: D</option>
+                    </select>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Giải thích đáp án (tùy chọn)"
+                      value={q.explanation || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "explanation", e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* ── LISTENING IMAGE ── */}
+                {type === "listening-image" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Hình ảnh đề bài</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleQuestionFileUpload(qIndex, "imageUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                    />
+                    {q.imageUrl && <img src={q.imageUrl} alt="Listening image cue" style={{ maxHeight: 120, display: "block", marginBottom: 10 }} />}
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Audio câu trả lời</label>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleQuestionFileUpload(qIndex, "audioUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                    />
+                    {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+
+                    <select
+                      className="exercise-type"
+                      style={{ width: "100%" }}
+                      value={q.correct}
+                      onChange={e => updateQuestionItemField(qIndex, "correct", e.target.value)}
+                    >
+                      <option value="A">Đáp án đúng: A</option>
+                      <option value="B">Đáp án đúng: B</option>
+                      <option value="C">Đáp án đúng: C</option>
+                      <option value="D">Đáp án đúng: D</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* ── LISTENING DICTATION ── */}
+                {type === "listening-dictation" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleQuestionFileUpload(qIndex, "audioUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                    />
+                    {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Nội dung văn bản đúng</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="The quick brown fox jumps..."
+                      value={q.text || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "text", e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* ── LISTENING FILL IN (CLOZE) ── */}
+                {type === "listening-fill-in" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleQuestionFileUpload(qIndex, "audioUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                    />
+                    {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đoạn văn (Dùng [1], [2]... để tạo ô trống)</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={3}
+                      placeholder="Yesterday, I went to the [1] and bought [2]..."
+                      value={q.text || ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const blanksCount = (val.match(/\[\d+\]/g) || []).length;
+                        const currentAnswers = q.fillInAnswers || [];
+                        const nextAnswers = Array.from({ length: blanksCount }).map((_, i) => currentAnswers[i] || "");
+                        const copy = [...questions];
+                        copy[qIndex].text = val;
+                        copy[qIndex].fillInAnswers = nextAnswers;
+                        setQuestions(copy);
+                      }}
+                    />
+
+                    {q.fillInAnswers && q.fillInAnswers.length > 0 && (
+                      <div style={{ marginTop: 10 }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: "#a33d2c" }}>Đáp án ô điền:</p>
+                        {q.fillInAnswers.map((ans: string, aIdx: number) => (
+                          <input
+                            key={aIdx}
+                            type="text"
+                            className="exercise-content"
+                            style={{ margin: "4px 0" }}
+                            placeholder={`Đáp án ô trống [${aIdx + 1}]`}
+                            value={ans}
+                            onChange={e => {
+                              const copy = [...questions];
+                              copy[qIndex].fillInAnswers[aIdx] = e.target.value;
+                              setQuestions(copy);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── WRITING ORDER WORDS ── */}
+                {type === "writing-order-words" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu gợi ý / Câu gốc (tiếng Việt)</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Con mèo đang ngủ trên giường."
+                      value={q.text || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "text", e.target.value)}
+                    />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Câu tiếng Anh hoàn chỉnh</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="The cat is sleeping on the bed"
+                      value={q.correctSentence || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "correctSentence", e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* ── WRITING ESSAY ── */}
+                {type === "writing-essay" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài viết luận</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={4}
+                      placeholder="Write a short letter..."
+                      value={q.prompt || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "prompt", e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* ── WRITING ORDER SENTENCES ── */}
+                {type === "writing-order-sentences" && (
+                  <div>
+                    <p style={{ fontSize: 12, color: "#888", marginBottom: 5 }}>Nhập các câu của đoạn văn theo thứ tự đúng logic:</p>
+                    {q.sentences?.map((sText: string, sIdx: number) => (
+                      <div key={sIdx} style={{ display: "flex", gap: 10, alignItems: "center", margin: "4px 0" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>Câu {sIdx + 1}</span>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          style={{ marginTop: 0 }}
+                          value={sText}
+                          onChange={e => {
+                            const copy = [...questions];
+                            copy[qIndex].sentences[sIdx] = e.target.value;
+                            setQuestions(copy);
+                          }}
+                        />
+                        {q.sentences.length > 1 && (
+                          <button
+                            type="button"
+                            className="remove-btn"
+                            style={{ padding: "2px 6px" }}
+                            onClick={() => {
+                              const copy = [...questions];
+                              copy[qIndex].sentences = copy[qIndex].sentences.filter((_: any, i: number) => i !== sIdx);
+                              setQuestions(copy);
+                            }}
+                          >✕</button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="add-content"
+                      style={{ padding: "4px 12px", marginTop: 8 }}
+                      onClick={() => {
+                        const copy = [...questions];
+                        copy[qIndex].sentences.push("");
+                        setQuestions(copy);
+                      }}
+                    >+ Thêm câu tiếp theo</button>
+                  </div>
+                )}
+
+                {/* ── READING SPLIT ── */}
+                {type === "reading-split" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Bài đọc dài (Hiển thị bên trái)</label>
+                    <textarea
+                      className="exercise-content"
+                      rows={5}
+                      placeholder="Nhập bài đọc dài..."
+                      value={q.text || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "text", e.target.value)}
+                    />
+                    
+                    <div style={{ marginTop: 10 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#a33d2c" }}>Các câu hỏi trắc nghiệm của bài đọc này:</p>
+                      {q.subQuestions?.map((sub: any, subIdx: number) => (
+                        <div key={subIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                          <div className="question-block-header">
+                            <h5>Câu hỏi {subIdx + 1}</h5>
+                            {q.subQuestions.length > 1 && (
+                              <button
+                                type="button"
+                                className="remove-btn"
+                                style={{ padding: "2px 6px", fontSize: 11 }}
+                                onClick={() => {
+                                  const copy = [...questions];
+                                  copy[qIndex].subQuestions = copy[qIndex].subQuestions.filter((_: any, i: number) => i !== subIdx);
+                                  setQuestions(copy);
+                                }}
+                              >Xóa</button>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Câu hỏi"
+                            className="exercise-content"
+                            style={{ marginTop: 0 }}
+                            value={sub.question}
+                            onChange={e => {
+                              const copy = [...questions];
+                              copy[qIndex].subQuestions[subIdx].question = e.target.value;
+                              setQuestions(copy);
+                            }}
+                          />
+                          {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                            <input
+                              key={lbl}
+                              type="text"
+                              placeholder={`Lựa chọn ${lbl}`}
+                              className="exercise-content"
+                              style={{ margin: "5px 0" }}
+                              value={sub.answers[aIdx]}
+                              onChange={e => {
+                                const copy = [...questions];
+                                copy[qIndex].subQuestions[subIdx].answers[aIdx] = e.target.value;
+                                setQuestions(copy);
+                              }}
+                            />
+                          ))}
+                          <select
+                            className="exercise-type"
+                            style={{ width: "100%", marginTop: 5 }}
+                            value={sub.correct}
+                            onChange={e => {
+                              const copy = [...questions];
+                              copy[qIndex].subQuestions[subIdx].correct = e.target.value;
+                              setQuestions(copy);
+                            }}
+                          >
+                            <option value="A">Đáp án đúng: A</option>
+                            <option value="B">Đáp án đúng: B</option>
+                            <option value="C">Đáp án đúng: C</option>
+                            <option value="D">Đáp án đúng: D</option>
+                          </select>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="add-content"
+                        style={{ padding: "6px 12px", marginTop: 8 }}
+                        onClick={() => {
+                          const copy = [...questions];
+                          if (!copy[qIndex].subQuestions) copy[qIndex].subQuestions = [];
+                          copy[qIndex].subQuestions.push({ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" });
+                          setQuestions(copy);
+                        }}
+                      >+ Thêm câu hỏi cho bài đọc</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <button type="button" className="add-content" onClick={addQuestionItem}>+ Thêm câu hỏi ({dangBai})</button>
+          </div>
+        )}
 
         {/* ── HIỂN THỊ ĐÁP ÁN ── */}
-        <div style={{ marginTop: "15px" }}>
+        <div style={{ marginTop: "15px", marginBottom: "15px" }}>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
             <input
               type="checkbox"
@@ -721,61 +1132,53 @@ const CreateExercise = () => {
           </label>
         </div>
 
-        {(() => {
-          const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
-          const user = JSON.parse(userStr || "{}");
-          const isTeacher = user.VaiTro === "Giảng Viên";
-
-          return (
-            <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
-              {isPractice ? (
-                <button
-                  type="button"
-                  className="save-btn"
-                  style={{ flex: 1, marginTop: 0 }}
-                  onClick={() => handleCreate("practice")}
-                >
-                  Tạo bài luyện tập
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="draft-btn"
-                    style={{
-                      flex: 1,
-                      padding: "12px",
-                      borderRadius: "10px",
-                      background: "#fff",
-                      border: "1.5px solid #F95800",
-                      color: "#F95800",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      transition: "background 0.2s"
-                    }}
-                    onClick={() => handleCreate("draft")}
-                    onMouseOver={(e) => (e.currentTarget.style.background = "#fff4ec")}
-                    onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
-                  >
-                    Lưu nháp
-                  </button>
-                  <button
-                    type="button"
-                    className="save-btn"
-                    style={{ flex: 1, marginTop: 0 }}
-                    onClick={() => handleCreate(isTeacher ? "pending" : "published")}
-                  >
-                    {isTeacher ? "Gửi yêu cầu phê duyệt" : "Lưu & Xuất bản"}
-                  </button>
-                </>
-              )}
-            </div>
-          );
-        })()}
-
+        {/* ── SUBMIT ACTIONS ── */}
+        <div style={{ display: "flex", gap: "12px", marginTop: "30px" }}>
+          {isPractice ? (
+            <button
+              type="button"
+              className="save-btn"
+              style={{ flex: 1, marginTop: 0 }}
+              onClick={() => handleCreate("practice")}
+            >
+              Tạo bài luyện tập
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="draft-btn"
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: "#fff",
+                  border: "1.5px solid #F95800",
+                  color: "#F95800",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "background 0.2s"
+                }}
+                onClick={() => handleCreate("draft")}
+                onMouseOver={(e) => (e.currentTarget.style.background = "#fff4ec")}
+                onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
+              >
+                Lưu nháp
+              </button>
+              <button
+                type="button"
+                className="save-btn"
+                style={{ flex: 1, marginTop: 0 }}
+                onClick={() => handleCreate(lesson?.TrangThaiDuyet === "Giảng Viên" ? "pending" : "published")}
+              >
+                Gửi duyệt
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* SUCCESS */}
+      {/* SUCCESS OVERLAY */}
       {showSuccess && (
         <div className="success-overlay">
           <div className="success-popup">
@@ -784,7 +1187,6 @@ const CreateExercise = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

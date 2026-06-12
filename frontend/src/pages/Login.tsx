@@ -16,11 +16,27 @@ const Login = ({ isModal = false }: LoginProps) => {
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
 
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+  const [loginError, setLoginError] = useState("");
+
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      alert("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
-      return;
+    const newErrors: typeof errors = {};
+    let hasError = false;
+
+    if (!username.trim()) {
+      newErrors.username = "Vui lòng điền tên đăng nhập!";
+      hasError = true;
     }
+    if (!password.trim()) {
+      newErrors.password = "Vui lòng điền mật khẩu!";
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+    setLoginError("");
+
+    if (hasError) return;
+
     setLoading(true);
     try {
       const res = await fetch(`${API}/login`, {
@@ -30,7 +46,10 @@ const Login = ({ isModal = false }: LoginProps) => {
       });
 
       const data = await res.json();
-      if (!res.ok) { alert(data.message); return; }
+      if (!res.ok) {
+        setLoginError(data.message || "Tên đăng nhập hoặc mật khẩu không chính xác!");
+        return;
+      }
 
       const roleRes  = await fetch(`${API}/users/role/${data.MaNguoiDung}`)
       const roleData = await roleRes.json()
@@ -45,7 +64,7 @@ const Login = ({ isModal = false }: LoginProps) => {
       else                                       navigate("/profile")
     } catch (err) {
       console.error(err);
-      alert("Không kết nối được server");
+      setLoginError("Không kết nối được server");
     } finally {
       setLoading(false);
     }
@@ -62,9 +81,18 @@ const Login = ({ isModal = false }: LoginProps) => {
           type="text"
           placeholder="Nhập tên đăng nhập hoặc email"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={e => {
+            setUsername(e.target.value);
+            setErrors(prev => ({ ...prev, username: undefined }));
+          }}
           onKeyDown={e => e.key === "Enter" && handleLogin()}
+          style={{ borderColor: errors.username ? "#ef4444" : undefined }}
         />
+        {errors.username && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.username}
+          </span>
+        )}
 
         <label>Mật khẩu <span>*</span></label>
         <div style={{ position:"relative", width:"100%" }}>
@@ -72,9 +100,12 @@ const Login = ({ isModal = false }: LoginProps) => {
             type={showPass ? "text" : "password"}
             placeholder="Nhập mật khẩu"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={e => {
+              setPassword(e.target.value);
+              setErrors(prev => ({ ...prev, password: undefined }));
+            }}
             onKeyDown={e => e.key === "Enter" && handleLogin()}
-            style={{ width:"100%", boxSizing:"border-box", paddingRight:44 }}
+            style={{ width:"100%", boxSizing:"border-box", paddingRight:44, borderColor: errors.password ? "#ef4444" : undefined }}
           />
           {/* Nút mắt */}
           <button
@@ -111,13 +142,24 @@ const Login = ({ isModal = false }: LoginProps) => {
             )}
           </button>
         </div>
+        {errors.password && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.password}
+          </span>
+        )}
+
+        {loginError && (
+          <div style={{ color: "#ef4444", fontSize: "14px", marginTop: "16px", marginBottom: "-8px", textAlign: "left", fontStyle: "italic" }}>
+            {loginError}
+          </div>
+        )}
 
         <button onClick={handleLogin} disabled={loading}
           style={{ opacity: loading ? 0.7 : 1 }}>
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>
 
-        <p style={{ textAlign:"center", marginTop:12, fontSize:14, color:"#666" }}>
+        <p style={{ textAlign:"center", marginTop:12, fontSize:15, color:"#666" }}>
           Chưa có tài khoản?{" "}
           <Link to={isModal ? "?auth=register" : "/register"} style={{ color:"#000080", fontWeight:600 }}>
             Đăng ký ngay

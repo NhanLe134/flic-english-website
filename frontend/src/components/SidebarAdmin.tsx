@@ -44,7 +44,7 @@ export default function SidebarAdmin() {
           className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}
         >
           <FiUsers className="menu-icon" />
-          <span>Tài khoản</span>
+          <span>Quản lý tài khoản</span>
         </NavLink>
         <NavLink
           to="/admin/permissions"

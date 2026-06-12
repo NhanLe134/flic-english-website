@@ -102,7 +102,7 @@
 /* STATS CARDS */
 .account-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -152,6 +152,40 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
+}
+
+.accounts-table th:nth-child(1),
+.accounts-table td:nth-child(1) {
+  width: 18%;
+  word-break: break-all;
+}
+
+.accounts-table th:nth-child(2),
+.accounts-table td:nth-child(2) {
+  width: 22%;
+  word-break: break-word;
+}
+
+.accounts-table th:nth-child(3),
+.accounts-table td:nth-child(3) {
+  width: 25%;
+  word-break: break-all;
+}
+
+.accounts-table th:nth-child(4),
+.accounts-table td:nth-child(4) {
+  width: 15%;
+}
+
+.accounts-table th:nth-child(5),
+.accounts-table td:nth-child(5) {
+  width: 10%;
+}
+
+.accounts-table th:nth-child(6),
+.accounts-table td:nth-child(6) {
+  width: 10%;
 }
 
 .accounts-table th {
@@ -171,6 +205,9 @@
   color: #334155;
   font-size: 14px;
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .accounts-table tr:last-child td {
@@ -313,9 +350,13 @@
   z-index: 999;
 }
 
-.admin-modal-overlay .modal {
+.admin-modal-overlay .modal.account-modal {
   background: white;
-  padding: 32px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  max-height: 90vh;
   border-radius: 20px;
   width: 600px;
   max-width: 90vw;
@@ -343,15 +384,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
   text-align: left;
 }
 
-.admin-modal-overlay .modal-header h3 {
+.admin-modal-overlay .modal.account-modal .modal-header h3 {
   font-size: 20px;
   font-weight: 700;
-  color: #0f172a;
-  margin: 0;
+  color: #000080;
+  margin: 0 0 2px 0 !important;
+  padding: 0;
   text-align: left;
 }
 
@@ -368,17 +409,16 @@
   color: #334155;
 }
 
-.admin-modal-overlay .modal-sub {
+.admin-modal-overlay .modal.account-modal .modal-sub {
   font-size: 13px;
   color: #64748b;
-  margin: 0 0 20px 0;
+  margin-top: 0 !important;
   text-align: left;
 }
 
 .admin-modal-overlay .modal label {
   display: block;
-  margin-top: 14px;
-  margin-bottom: 6px;
+  margin: 0;
   font-weight: 600;
   font-size: 13px;
   color: #475569;
@@ -426,11 +466,13 @@
   box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.15);
 }
 
-.modal-actions {
+.account-modal .modal-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 28px;
   gap: 12px;
+  flex-shrink: 0;
+  padding: 0;
+  margin-top: 25px;
 }
 
 .cancel {
@@ -473,9 +515,9 @@
 
 /* Static read-only display values */
 .admin-modal-overlay .modal .info-value {
-  padding: 11px 16px;
+  padding: 11px 14px;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
   font-size: 14px;
   color: #334155;
@@ -539,4 +581,125 @@
   font-size: 13.5px;
   color: #64748b;
   font-style: italic;
+}
+
+.account-modal .modal-scrollable-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  margin: 0;
+  padding: 0 12px 0 0;
+}
+
+.account-modal .modal-header-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.account-modal .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-modal .required-star {
+  color: red;
+}
+
+.account-modal .info-value.status-wrapper {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.admin-modal-overlay .modal .permission-item.disabled,
+.admin-modal-overlay .modal .permission-item.disabled input {
+  cursor: default;
+}
+
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #333;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.table-loading {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.table-empty {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.accounts-table td .user-name {
+  font-weight: 600;
+}
+
+.accounts-table td.user-username {
+  font-size: 13px;
+  color: #555;
+}
+
+.accounts-table td.user-email,
+.accounts-table td.user-created {
+  font-size: 13px;
+}
+
+@media (max-width: 1200px) {
+  .account-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .account-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .account-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Error Validation Messages ── */
+.error-message {
+  color: #ef4444;
+  font-size: 12.5px;
+  font-weight: 550;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ── Modal Custom Scrollbar ── */
+.account-modal .modal-scrollable-body::-webkit-scrollbar {
+  width: 6px;
+}
+.account-modal .modal-scrollable-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.account-modal .modal-scrollable-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.account-modal .modal-scrollable-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

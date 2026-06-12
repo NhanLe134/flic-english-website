@@ -4,7 +4,7 @@
   flex-direction: column;
   gap: 24px;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  padding: 4px;
+  padding: 0;
 }
 
 /* HEADER */
@@ -13,9 +13,10 @@
 }
 
 .dashboard-header h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: #000080;
+  margin-top: 0;
   margin-bottom: 6px;
   letter-spacing: -0.5px;
 }
@@ -127,6 +128,20 @@
 
 .chart-container:hover {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.chart-container svg,
+.chart-container svg:focus,
+.chart-container svg:active {
+  outline: none;
+  border: none;
+}
+
+.pie-box svg,
+.pie-box svg:focus,
+.pie-box svg:active {
+  outline: none;
+  border: none;
 }
 
 .chart-container h3,
