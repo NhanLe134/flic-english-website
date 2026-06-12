@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import styles from './baoCaoKetQua.module.css'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell
@@ -81,7 +80,6 @@ const pillColor = (d: number | null) => {
 }
 
 export default function BaoCaoKetQua() {
-  const navigate = useNavigate()
   const [allData, setAllData]           = useState<StudentResult[]>([])
   const [loading, setLoading]           = useState(true)
   const [searchText, setSearchText]     = useState('')
@@ -173,44 +171,6 @@ export default function BaoCaoKetQua() {
       .finally(() => setLoading(false))
   }, [])
 
-  const activeHeaders = useMemo(() => {
-    if (!filterClass) return rawHeaders
-    return rawHeaders.filter(h => h.TenLop === filterClass)
-  }, [rawHeaders, filterClass])
-
-  const uniqueBuois = useMemo(() => {
-    if (!filterClass) return []
-    const classLessons = allLessons.filter(l => l.TenLop === filterClass)
-    if (classLessons.length === 0) return []
-
-    const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
-    const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
-
-    if (activeThuTu === 0 || activeThuTu === -Infinity) return [] // Chưa đánh dấu thì không hiện buổi học nào
-
-    return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
-      .sort((a, b) => b - a)
-      .filter(b => activeThuTu !== null && b <= activeThuTu)
-  }, [allLessons, filterClass])
-
-  const getBuoiAvg = (hv: StudentResult, buoiNum: number) => {
-    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum)
-    if (buoiExs.length === 0) return null
-
-    const scores = buoiExs
-      .map(ex => hv.rawScores[ex.MaExercise])
-      .filter((s): s is number => s !== null)
-
-    if (scores.length === 0) return null
-
-    const avg = scores.reduce((a, b) => a + b, 0) / scores.length
-    return Math.round(avg * 10) / 10
-  }
-
-  const courseOptions = useMemo(() => {
-    return ["Tất cả khóa học", ...Array.from(new Set(allData.map(h => h.courseName).filter(x => x && x !== '—')))]
-  }, [allData])
-
   const lecturerOptions = useMemo(() => {
     return Array.from(new Set(classLecturers.map(item => item.TenGiangVien))).filter(Boolean)
   }, [classLecturers])
@@ -243,6 +203,72 @@ export default function BaoCaoKetQua() {
     })
     return Array.from(names)
   }, [lecturerClassIds, allLessons, allData])
+
+  const activeHeaders = useMemo(() => {
+    if (viewMode === 'class') {
+      if (!filterClass) return [];
+      return rawHeaders.filter(h => h.TenLop === filterClass);
+    } else if (viewMode === 'lecturer') {
+      if (lecturerClassNames.length === 0) return [];
+      return rawHeaders.filter(h => h.TenLop && lecturerClassNames.includes(h.TenLop));
+    }
+    return rawHeaders;
+  }, [rawHeaders, filterClass, viewMode, lecturerClassNames])
+
+  const uniqueBuois = useMemo(() => {
+    if (viewMode === 'class') {
+      if (!filterClass) return []
+      const classLessons = allLessons.filter(l => l.TenLop === filterClass)
+      if (classLessons.length === 0) return []
+
+      const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+      const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
+
+      if (activeThuTu === 0 || activeThuTu === -Infinity) return [] // Chưa đánh dấu thì không hiện buổi học nào
+
+      return Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
+        .sort((a, b) => b - a)
+        .filter(b => activeThuTu !== null && b <= activeThuTu)
+    } else if (viewMode === 'lecturer') {
+      if (lecturerClassNames.length === 0) return []
+      const validBuois = new Set<number>()
+      lecturerClassNames.forEach(className => {
+        const classLessons = allLessons.filter(l => l.TenLop === className)
+        if (classLessons.length > 0) {
+          const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+          const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
+          
+          if (activeThuTu !== null && activeThuTu > 0) {
+            classLessons.forEach(l => {
+              if (l.ThuTu !== null && l.ThuTu <= activeThuTu) {
+                validBuois.add(l.ThuTu)
+              }
+            })
+          }
+        }
+      })
+      return Array.from(validBuois).sort((a, b) => b - a)
+    }
+    return []
+  }, [allLessons, filterClass, viewMode, lecturerClassNames])
+
+  const getBuoiAvg = (hv: StudentResult, buoiNum: number) => {
+    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.className)
+    if (buoiExs.length === 0) return null
+
+    const scores = buoiExs
+      .map(ex => hv.rawScores[ex.MaExercise])
+      .filter((s): s is number => s !== null)
+
+    if (scores.length === 0) return null
+
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length
+    return Math.round(avg * 10) / 10
+  }
+
+  const courseOptions = useMemo(() => {
+    return ["Tất cả khóa học", ...Array.from(new Set(allData.map(h => h.courseName).filter(x => x && x !== '—')))]
+  }, [allData])
 
   const classOptions = useMemo(() => {
     const classIdMap: Record<string, number> = {}
@@ -294,15 +320,7 @@ export default function BaoCaoKetQua() {
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : '—'
 
-  const handleBuoiClick = (student: StudentResult, buoiNum: number) => {
-    const lessonObj = allLessons.find(
-      l => l.TenLop === student.className && l.ThuTu === buoiNum
-    )
-    const targetLessonId = lessonObj ? lessonObj.MaLesson : null
-    if (targetLessonId) {
-      navigate(`/xem-ket-qua/${student.studentId}`, { state: { lessonId: targetLessonId } })
-    }
-  }
+
 
   const chartData = useMemo(() => {
     let trungBinhCount = 0
@@ -574,8 +592,7 @@ export default function BaoCaoKetQua() {
                         return (
                           <td 
                             key={b} 
-                            className={`${styles.scoreCell} ${styles.clickableCell}`}
-                            onClick={() => handleBuoiClick(s, b)}
+                            className={styles.scoreCell}
                           >
                             {avg !== null ? (
                               <span className={`${styles.avgBadge} ${pillColor(avg)}`}>{avg.toFixed(1)}</span>
