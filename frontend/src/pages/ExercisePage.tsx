@@ -16,6 +16,8 @@ const ExercisePage = () => {
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
 
+
+
   /* ===== LOAD LESSON + LỚP ===== */
   useEffect(() => {
     if (!id) return;
@@ -183,6 +185,7 @@ const ExercisePage = () => {
                 </svg>
               </button>
             </form>
+
             <button
               className="ep-add-btn"
               onClick={() => navigate(`/create-exercise/${id}`)}
@@ -268,6 +271,8 @@ const ExercisePage = () => {
           </div>
         </div>
       )}
+
+
 
     </div>
   );

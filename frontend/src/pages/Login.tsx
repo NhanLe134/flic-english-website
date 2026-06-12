@@ -56,6 +56,7 @@ const Login = ({ isModal = false }: LoginProps) => {
       const vaiTro   = roleData?.VaiTro || "Học Viên"
 
       sessionStorage.setItem("user", JSON.stringify({ ...data, VaiTro: vaiTro }))
+      localStorage.setItem("user", JSON.stringify({ ...data, VaiTro: vaiTro }))
 
       // Khi đăng nhập thành công và chuyển hướng, query param ?auth=login sẽ tự động mất đi
       if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")

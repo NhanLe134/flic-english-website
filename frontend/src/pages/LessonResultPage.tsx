@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "./lessonResultPage.css";
@@ -41,6 +41,15 @@ const LessonResultPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
+
+  const refetchClassInfo = () => {
+    fetch(`http://localhost:5000/classes/${id}/info`)
+      .then(r => r.json())
+      .then(info => setClassInfo(info))
+      .catch(err => console.error(err));
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -51,9 +60,11 @@ const LessonResultPage = () => {
       fetch(`http://localhost:5000/lophoc/${id}/sinhvien`).then(r => r.json()),
       fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
       fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
+      fetch(`http://localhost:5000/classes/${id}/lessons`).then(r => r.json()),
     ])
-      .then(([info, sinhVienList, headers, grades]) => {
+      .then(([info, sinhVienList, headers, grades, lessonsList]) => {
         setClassInfo(info);
+        setLessons(Array.isArray(lessonsList) ? lessonsList : []);
 
         // Filter and sort exercises for this class by lesson order (ThuTu) and then MaExercise
         const classExs = (Array.isArray(headers) ? headers : [])
@@ -142,6 +153,73 @@ const LessonResultPage = () => {
     };
   }, [filteredStudents, classExercises]);
 
+  // Lấy danh sách các buổi học (sắp xếp giảm dần và lọc theo buổi đang học nếu có)
+  const uniqueBuois = useMemo(() => {
+    if (lessons.length === 0) return [];
+    
+    const activeLesson = lessons.find(l => l.MaLesson === classInfo?.ActiveLessonId);
+    const activeThuTu = activeLesson ? activeLesson.ThuTu : null;
+
+    const allBuoiNumbers = Array.from(new Set(lessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
+      .sort((a, b) => b - a);
+
+    if (activeThuTu !== null && activeThuTu !== 0) {
+      return allBuoiNumbers.filter(b => b <= activeThuTu);
+    }
+    return allBuoiNumbers;
+  }, [lessons, classInfo]);
+
+  const toggleExpandStudent = (maSV: string) => {
+    setExpandedStudents(prev => {
+      const next = new Set(prev);
+      if (next.has(maSV)) {
+        next.delete(maSV);
+      } else {
+        next.add(maSV);
+      }
+      return next;
+    });
+  };
+
+  const handleMarkActiveLesson = async (lessonId: number) => {
+    try {
+      const res = await fetch(`http://localhost:5000/classes/${id}/active-lesson`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activeLessonId: lessonId })
+      });
+      if (res.ok) {
+        refetchClassInfo();
+      } else {
+        alert("Lỗi khi cập nhật buổi học đang học");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getStudentBuoiStatus = (s: Student, buoiNum: number) => {
+    const exsInBuoi = classExercises.filter(ex => ex.ThuTu === buoiNum);
+    if (exsInBuoi.length === 0) return { status: "none", score: null };
+
+    const scores = exsInBuoi
+      .map(ex => s.scores[ex.MaExercise]?.Diem)
+      .filter((d): d is number => d !== null);
+
+    const hasSubmission = exsInBuoi.some(ex => s.scores[ex.MaExercise]?.MaBaiNop !== null);
+
+    if (scores.length > 0) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      return { status: "graded", score: Math.round(avg * 10) / 10 };
+    }
+
+    if (hasSubmission) {
+      return { status: "pending", score: null };
+    }
+
+    return { status: "chuanop", score: null };
+  };
+
   const handleExportExcel = () => {
     if (filteredStudents.length === 0) {
       alert("Không có học viên nào để xuất!");
@@ -151,9 +229,9 @@ const LessonResultPage = () => {
     const headers = [
       "Mã sinh viên",
       "Họ tên",
-      "Giới tính",
+      "Lớp/khóa",
       "Trạng thái",
-      ...classExercises.map(ex => `Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`),
+      ...uniqueBuois.map(b => `Buổi ${b}`),
       "Điểm trung bình"
     ];
 
@@ -161,12 +239,12 @@ const LessonResultPage = () => {
       const rowData: Record<string, any> = {
         "Mã sinh viên": s.MaSinhVien,
         "Họ tên": s.HoTen,
-        "Giới tính": s.GioiTinh || "—",
+        "Lớp/khóa": classInfo?.TenLop || "—",
         "Trạng thái": s.TrangThai || "—",
       };
-      classExercises.forEach(ex => {
-        const scoreObj = s.scores[ex.MaExercise];
-        rowData[`Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`] = (scoreObj && scoreObj.Diem !== null) ? scoreObj.Diem : "Chưa nộp";
+      uniqueBuois.forEach(b => {
+        const res = getStudentBuoiStatus(s, b);
+        rowData[`Buổi ${b}`] = res.status === "graded" ? res.score : res.status === "pending" ? "Chờ chấm" : "Chưa nộp";
       });
       rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
       return rowData;
@@ -177,8 +255,8 @@ const LessonResultPage = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng điểm");
 
     const colWidths = [
-      { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 15 },
-      ...classExercises.map(() => ({ wch: 25 })),
+      { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
+      ...uniqueBuois.map(() => ({ wch: 15 })),
       { wch: 18 }
     ];
     worksheet["!cols"] = colWidths;
@@ -271,83 +349,167 @@ const LessonResultPage = () => {
                   <tr>
                     <th>Mã sinh viên</th>
                     <th>Họ tên</th>
-                    <th>Giới tính</th>
+                    <th>Lớp/khóa</th>
                     <th>Trạng thái</th>
-                    {classExercises.map(ex => (
-                      <th key={ex.MaExercise} title={ex.TenBai}>
-                        B{ex.ThuTu ?? 0}: {ex.TenBai}
-                      </th>
-                    ))}
+                    {uniqueBuois.map(b => {
+                      const lessonForBuoi = lessons.find(l => l.ThuTu === b);
+                      const isActive = lessonForBuoi && classInfo?.ActiveLessonId === lessonForBuoi.MaLesson;
+                      return (
+                        <th key={b}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                            <span>Buổi {b}</span>
+                            {isActive ? (
+                              <span className="lrp-active-badge">Đang học</span>
+                            ) : (
+                              <button 
+                                type="button" 
+                                className="lrp-mark-active-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (lessonForBuoi) {
+                                    handleMarkActiveLesson(lessonForBuoi.MaLesson);
+                                  }
+                                }}
+                              >
+                                Đánh dấu đang học
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
                     <th>Điểm TB</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredStudents.length === 0 ? (
                     <tr>
-                      <td colSpan={5 + classExercises.length} style={{ textAlign: "center", padding: "30px", color: "#999" }}>
+                      <td colSpan={5 + uniqueBuois.length} style={{ textAlign: "center", padding: "30px", color: "#999" }}>
                         Không tìm thấy dữ liệu học viên
                       </td>
                     </tr>
                   ) : (
-                    filteredStudents.map((s, index) => (
-                      <tr key={index}>
-                        <td className="lrp-code-cell">{s.MaSinhVien}</td>
-                        <td>
-                          <span className="lrp-name-text">{s.HoTen}</span>
-                        </td>
-                        <td>{s.GioiTinh}</td>
-                        <td>
-                          <span className={`lrp-status-badge ${s.TrangThai === "Đang học" ? "active" : ""}`}>
-                            {s.TrangThai}
-                          </span>
-                        </td>
-                        {classExercises.map(ex => {
-                          const scoreObj = s.scores[ex.MaExercise];
-                          const hasScore = scoreObj && scoreObj.Diem !== null;
-                          const hasSubmission = scoreObj && scoreObj.MaBaiNop !== null;
-                          return (
-                            <td key={ex.MaExercise}>
-                              {hasScore ? (
-                                <span 
-                                  className={`lrp-score-badge ${getDiemClass(scoreObj.Diem)} ${hasSubmission ? "clickable-badge" : ""}`}
-                                  onClick={() => {
-                                    if (scoreObj.MaBaiNop) {
-                                      navigate(`/cham-bai/${scoreObj.MaBaiNop}`);
-                                    }
-                                  }}
-                                  style={hasSubmission ? { cursor: 'pointer' } : {}}
-                                >
-                                  {scoreObj.Diem}
-                                </span>
-                              ) : hasSubmission ? (
-                                <span 
-                                  className={`lrp-score-badge lrp-diem-chuanop clickable-badge`}
-                                  onClick={() => {
-                                    if (scoreObj.MaBaiNop) {
-                                      navigate(`/cham-bai/${scoreObj.MaBaiNop}`);
-                                    }
-                                  }}
-                                  style={{ cursor: 'pointer', background: '#e0d8cc', color: '#555' }}
-                                >
-                                  Chờ chấm
+                    filteredStudents.map((s, index) => {
+                      const isExpanded = expandedStudents.has(s.MaSinhVien);
+                      return (
+                        <Fragment key={index}>
+                          <tr 
+                            className="lrp-row"
+                            onClick={() => toggleExpandStudent(s.MaSinhVien)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <td className="lrp-code-cell">{s.MaSinhVien}</td>
+                            <td>
+                              <span className="lrp-name-text">{s.HoTen}</span>
+                            </td>
+                            <td>
+                              <p style={{ margin: 0, fontWeight: 600 }}>{classInfo?.TenLop || "—"}</p>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>{classInfo?.TenKhoaHoc || "—"}</p>
+                            </td>
+                            <td>
+                              <span className={`lrp-status-badge ${s.TrangThai === "Đang học" ? "active" : ""}`}>
+                                {s.TrangThai}
+                              </span>
+                            </td>
+                            {uniqueBuois.map(b => {
+                              const res = getStudentBuoiStatus(s, b);
+                              return (
+                                <td key={b}>
+                                  {res.status === "graded" ? (
+                                    <span className={`lrp-score-badge ${getDiemClass(res.score)}`}>
+                                      {res.score}
+                                    </span>
+                                  ) : res.status === "pending" ? (
+                                    <span className="lrp-score-badge lrp-diem-chuanop" style={{ background: '#e0d8cc', color: '#555' }}>
+                                      Chờ chấm
+                                    </span>
+                                  ) : res.status === "chuanop" ? (
+                                    <span className="lrp-score-chuanop">Chưa nộp</span>
+                                  ) : (
+                                    <span className="lrp-score-chuanop">—</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                            <td>
+                              {s.diemTB !== null ? (
+                                <span className={`lrp-score-badge ${getDiemClass(s.diemTB)}`} style={{ fontWeight: 700 }}>
+                                  {s.diemTB}
                                 </span>
                               ) : (
-                                <span className="lrp-score-chuanop">Chưa nộp</span>
+                                <span className="lrp-score-chuanop">—</span>
                               )}
                             </td>
-                          );
-                        })}
-                        <td>
-                          {s.diemTB !== null ? (
-                            <span className={`lrp-score-badge ${getDiemClass(s.diemTB)}`} style={{ fontWeight: 700 }}>
-                              {s.diemTB}
-                            </span>
-                          ) : (
-                            <span className="lrp-score-chuanop">—</span>
+                          </tr>
+                          {isExpanded && (
+                            <tr className="lrp-expanded-row">
+                              <td colSpan={6 + uniqueBuois.length}>
+                                <div className="lrp-details-container">
+                                  <h4 className="lrp-details-title">Chi tiết bài tập của {s.HoTen}</h4>
+                                  <div className="lrp-details-grid">
+                                    {uniqueBuois.map(b => {
+                                      const buoiExs = classExercises.filter(ex => ex.ThuTu === b);
+                                      return (
+                                        <div key={b} className="lrp-details-buoi-card">
+                                          <h5>Buổi {b}</h5>
+                                          <div className="lrp-details-ex-list">
+                                            {buoiExs.length === 0 ? (
+                                              <div className="lrp-score-chuanop">Không có bài tập</div>
+                                            ) : (
+                                              buoiExs.map(ex => {
+                                                const scoreObj = s.scores[ex.MaExercise];
+                                                const hasScore = scoreObj && scoreObj.Diem !== null;
+                                                const hasSubmission = scoreObj && scoreObj.MaBaiNop !== null;
+                                                return (
+                                                  <div key={ex.MaExercise} className="lrp-details-ex-item">
+                                                    <span className="ex-title">{ex.TenBai}</span>
+                                                    <span className="ex-score">
+                                                      {hasScore ? (
+                                                        <span 
+                                                          className={`score-val ${getDiemClass(scoreObj.Diem)} ${hasSubmission ? "clickable-badge" : ""}`}
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (scoreObj.MaBaiNop) {
+                                                              navigate(`/cham-bai/${scoreObj.MaBaiNop}`);
+                                                            }
+                                                          }}
+                                                          style={hasSubmission ? { cursor: 'pointer', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 } : { padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}
+                                                        >
+                                                          {scoreObj.Diem}
+                                                        </span>
+                                                      ) : hasSubmission ? (
+                                                        <span 
+                                                          className="score-val pending"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (scoreObj.MaBaiNop) {
+                                                              navigate(`/cham-bai/${scoreObj.MaBaiNop}`);
+                                                            }
+                                                          }}
+                                                          style={{ cursor: 'pointer', background: '#f1f5f9', color: '#64748b', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}
+                                                        >
+                                                          Chờ chấm
+                                                        </span>
+                                                      ) : (
+                                                        <span className="score-val none">Chưa nộp</span>
+                                                      )}
+                                                    </span>
+                                                  </div>
+                                                );
+                                              })
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                      </tr>
-                    ))
+                        </Fragment>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

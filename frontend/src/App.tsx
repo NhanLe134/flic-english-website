@@ -151,6 +151,7 @@ function App() {
           <Route path="khoahoc" element={<CoursePageQTV />} />
           <Route path="baocao" element={<BaoCaoKetQuaQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
+          <Route path="create-exercise/:id" element={<CreateExercise />} />
         </Route>
 
         {/*Sinh viên*/}

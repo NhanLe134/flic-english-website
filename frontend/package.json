@@ -14,6 +14,7 @@
     "@types/file-saver": "^2.0.7",
     "@uiw/react-md-editor": "^4.1.0",
     "file-saver": "^2.0.5",
+    "mammoth": "^1.12.0",
     "marked": "^17.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

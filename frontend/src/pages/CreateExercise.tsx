@@ -57,6 +57,10 @@ const CreateExercise = () => {
   const isPractice = searchParams.get("isPractice") === "true";
 
   const [lesson, setLesson] = useState<any>(null);
+  const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+  const user = JSON.parse(userStr || "{}");
+  const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
+  const isQTV = vaiTroLower === "quản trị nội dung" || vaiTroLower === "quản trị viên" || vaiTroLower === "admin" || window.location.pathname.toLowerCase().includes("/qtv");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
   const [title, setTitle] = useState("");
@@ -106,6 +110,235 @@ const CreateExercise = () => {
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
   }, [id]);
+
+  const [activeTab, setActiveTab] = useState<"create" | "reuse">("create");
+  const [allExistingEx, setAllExistingEx] = useState<any[]>([]);
+  const [reuseSearch, setReuseSearch] = useState("");
+
+  useEffect(() => {
+    // Fetch all existing exercises for cloning
+    const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+    let url = "http://localhost:5000/exercises/list/all";
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if ((user.VaiTro || "").toLowerCase().trim() === "giảng viên" && user.MaNguoiDung) {
+        url += `?maNguoiDung=${user.MaNguoiDung}`;
+      }
+    }
+    fetch(url)
+      .then(res => res.json())
+      .then(data => setAllExistingEx(data))
+      .catch(err => console.log(err));
+  }, []);
+
+  const handleReuseExercise = async (exerciseId: number) => {
+    try {
+      const res = await fetch(`http://localhost:5000/exercises/${exerciseId}/clone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ MaLesson: Number(id) })
+      });
+      if (res.ok) {
+        setSuccessMessage("Sao chép bài tập thành công");
+        setShowSuccess(true);
+        const isQTVPath = window.location.pathname.startsWith("/QTV");
+        if (isQTVPath) {
+          setTimeout(() => navigate("/QTV/khoahoc"), 1500);
+        } else {
+          setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
+        }
+      } else {
+        const txt = await res.text();
+        alert("Không thể dùng lại bài tập: " + txt);
+      }
+    } catch (err) {
+      alert("Lỗi kết nối: " + err);
+    }
+  };
+
+  const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      let text = "";
+      if (file.name.endsWith(".docx")) {
+        const arrayBuffer = await file.arrayBuffer();
+        const mammothModule = await import("mammoth");
+        const extractRawText = mammothModule.extractRawText || mammothModule.default?.extractRawText;
+        if (!extractRawText) {
+          throw new Error("Mammoth library did not export extractRawText");
+        }
+        const result = await extractRawText({ arrayBuffer });
+        text = result.value;
+      } else {
+        text = await file.text();
+      }
+
+      processScannedText(text);
+    } catch (err) {
+      alert("Lỗi khi đọc file: " + err);
+    }
+  };
+
+  const processScannedText = (text: string) => {
+    if (!text.trim()) {
+      alert("File trống hoặc không đọc được nội dung.");
+      return;
+    }
+
+    const isReading = kyNang === "Doc" || kyNang === "Đọc";
+
+    if (isReading) {
+      let passage = "";
+      let questionsText = text;
+      
+      const passageMarker = /\[(?:Bài đọc|Reading|Passage)\]\s*([\s\S]*?)(?=\[Câu hỏi\]|Câu\s*\d+|Question\s*\d+|$)/i;
+      const match = text.match(passageMarker);
+      if (match) {
+        passage = match[1].trim();
+        questionsText = text.replace(match[0], "");
+      } else {
+        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+)/i;
+        const parts = text.split(qBoundary);
+        if (parts.length > 0) {
+          passage = parts[0].trim();
+          questionsText = parts.slice(1).join("\n\n");
+        }
+      }
+
+      const subQuestions: any[] = [];
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+)/i;
+      const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
+      
+      for (const block of qBlocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) continue;
+
+        let questionText = "";
+        let answers = ["", "", "", ""];
+        let correct = "A";
+
+        for (let line of lines) {
+          if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
+            correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+          } else {
+            if (answers.every(a => !a)) {
+              if (questionText) questionText += "\n";
+              questionText += line;
+            }
+          }
+        }
+        
+        questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+        subQuestions.push({ question: questionText, answers, correct });
+      }
+
+      if (type === "reading-split") {
+        setQuestions([
+          {
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            explanation: "",
+            audioUrl: "",
+            imageUrl: "",
+            text: passage,
+            prompt: "",
+            vocabPairs: [{ word: "", meaning: "" }],
+            fillInAnswers: [],
+            sentences: [""],
+            subQuestions: subQuestions
+          }
+        ]);
+      } else {
+        const parsedExs = subQuestions.map(sq => ({
+          question: sq.question,
+          answers: sq.answers,
+          correct: sq.correct,
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: passage,
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""]
+        }));
+        if (parsedExs.length > 0) setQuestions(parsedExs);
+      }
+      alert("Đã quét thành công bài đọc và " + subQuestions.length + " câu hỏi!");
+    } else {
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+)/i;
+      const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
+      const parsed: any[] = [];
+      
+      for (const block of qBlocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) continue;
+
+        let questionText = "";
+        let answers = ["", "", "", ""];
+        let correct = "A";
+        let explanation = "";
+
+        for (let line of lines) {
+          if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
+            correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+          } else if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else {
+            if (answers.every(a => !a)) {
+              if (questionText) questionText += "\n";
+              questionText += line;
+            } else {
+              if (explanation) {
+                explanation += "\n" + line;
+              }
+            }
+          }
+        }
+        
+        questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+        parsed.push({
+          question: questionText,
+          answers,
+          correct,
+          explanation,
+          audioUrl: "",
+          imageUrl: "",
+          text: "",
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""]
+        });
+      }
+
+      if (parsed.length > 0) {
+        setQuestions(parsed);
+        alert(`Đã quét thành công ${parsed.length} câu hỏi!`);
+      } else {
+        alert("Không thể phân tích câu hỏi nào. Vui lòng kiểm tra lại định dạng file.");
+      }
+    }
+  };
 
   /* ===== FILE UPLOAD HELPER ===== */
   const uploadFile = async (file: File): Promise<string> => {
@@ -330,7 +563,12 @@ const CreateExercise = () => {
           : "Tạo bài tập thành công"
       );
       setShowSuccess(true);
-      setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
+      const isQTVPath = window.location.pathname.startsWith("/QTV");
+      if (isQTVPath) {
+        setTimeout(() => navigate("/QTV/khoahoc"), 1500);
+      } else {
+        setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
+      }
     } catch (err) {
       console.error(err);
       alert("Lỗi khi tạo bài tập");
@@ -357,14 +595,129 @@ const CreateExercise = () => {
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
 
-      {/* EXERCISE EDITOR */}
-      <div className="exercise-editor">
-        <input
-          className="exercise-title"
-          placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập / bài kiểm tra"}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+      {/* SUB-TABS: TẠO MỚI / CHỌN CÓ SẴN */}
+      <div style={{
+        marginBottom: "24px",
+        display: "inline-flex",
+        gap: "4px",
+        background: "#e5e2db",
+        padding: "3px",
+        borderRadius: "8px",
+        width: "fit-content",
+        border: "1px solid #d4cfc7"
+      }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab("create")}
+          style={{
+            cursor: "pointer",
+            padding: "5px 14px",
+            fontSize: "12px",
+            fontWeight: "600",
+            border: "none",
+            borderRadius: "6px",
+            transition: "all 0.15s ease",
+            background: activeTab === "create" ? "#fff" : "transparent",
+            color: activeTab === "create" ? "#2d1e15" : "#70625a",
+            boxShadow: activeTab === "create" ? "0 1px 3px rgba(0,0,0,0.12)" : "none"
+          }}
+        >
+          Tạo mới
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("reuse")}
+          style={{
+            cursor: "pointer",
+            padding: "5px 14px",
+            fontSize: "12px",
+            fontWeight: "600",
+            border: "none",
+            borderRadius: "6px",
+            transition: "all 0.15s ease",
+            background: activeTab === "reuse" ? "#fff" : "transparent",
+            color: activeTab === "reuse" ? "#2d1e15" : "#70625a",
+            boxShadow: activeTab === "reuse" ? "0 1px 3px rgba(0,0,0,0.12)" : "none"
+          }}
+        >
+          Chọn bài tập có sẵn
+        </button>
+      </div>
+
+      {activeTab === "reuse" ? (
+        <div className="exercise-editor" style={{ padding: "20px" }}>
+          <h3 style={{ marginBottom: "15px", color: "#5a3e2b" }}>Chọn bài tập có sẵn</h3>
+          
+          <input
+            type="text"
+            placeholder="Tìm kiếm bài tập..."
+            value={reuseSearch}
+            onChange={e => setReuseSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border: "1.5px solid #e0d4c3",
+              marginBottom: "20px",
+              boxSizing: "border-box"
+            }}
+          />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {allExistingEx.filter(ex => ex.Title?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy bài tập nào.</div>
+            ) : (
+              allExistingEx.filter(ex => ex.Title?.toLowerCase().includes(reuseSearch.toLowerCase())).map((ex: any) => (
+                <div key={ex.MaExercise} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfaf7", padding: "15px", borderRadius: "10px", border: "1px solid #e0d4c3" }}>
+                  <div style={{ flex: 1, paddingRight: "15px", textAlign: "left" }}>
+                    <strong style={{ fontSize: "16px", color: "#5a3e2b", display: "block" }}>{ex.Title}</strong>
+                    <span style={{ fontSize: "12px", color: "#8b7e74" }}>
+                      Kỹ năng: {ex.KyNang || "—"} · Dạng: {ex.DangBai || "—"} · Lớp: {ex.TenLop} ({ex.TenLesson})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="save-btn"
+                    style={{ fontSize: "13px", padding: "8px 16px", width: "auto", margin: 0 }}
+                    onClick={() => handleReuseExercise(ex.MaExercise)}
+                  >
+                    Chọn bài này
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      ) : (
+        /* EXERCISE EDITOR */
+        <div className="exercise-editor">
+          {/* NÚT QUÉT FILE CÂU HỎI */}
+          <div style={{
+            background: "#fdfbf7",
+            border: "1.5px dashed #d97706",
+            borderRadius: "10px",
+            padding: "15px",
+            marginBottom: "20px",
+            textAlign: "left"
+          }}>
+            <h4 style={{ margin: "0 0 5px 0", color: "#d97706", fontSize: "15px" }}>Quét câu hỏi từ file Word (.docx) hoặc Text (.txt)</h4>
+            <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#666" }}>
+              Hỗ trợ quét tự động câu hỏi trắc nghiệm MCQ, bài đọc Reading và các tùy chọn câu hỏi đáp án.
+            </p>
+            <input
+              type="file"
+              accept=".txt,.docx"
+              onChange={handleFileScan}
+              style={{ fontSize: "13px" }}
+            />
+          </div>
+
+          <input
+            className="exercise-title"
+            placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập / bài kiểm tra"}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
 
         {/* Global Settings Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
@@ -1143,6 +1496,15 @@ const CreateExercise = () => {
             >
               Tạo bài luyện tập
             </button>
+          ) : isQTV ? (
+            <button
+              type="button"
+              className="save-btn"
+              style={{ flex: 1, marginTop: 0 }}
+              onClick={() => handleCreate("published")}
+            >
+              Đăng lên
+            </button>
           ) : (
             <>
               <button
@@ -1177,6 +1539,7 @@ const CreateExercise = () => {
           )}
         </div>
       </div>
+      )}
 
       {/* SUCCESS OVERLAY */}
       {showSuccess && (

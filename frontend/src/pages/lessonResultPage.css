@@ -291,3 +291,100 @@ tr:hover td {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
   filter: brightness(0.95);
 }
+
+/* ACCORDION EXPANDED ROW & DETAILS */
+.lrp-expanded-row td {
+  background: #f8fafc !important;
+  padding: 20px 24px !important;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.lrp-details-container {
+  text-align: left;
+}
+
+.lrp-details-title {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.lrp-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.lrp-details-buoi-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.lrp-details-buoi-card h5 {
+  margin: 0 0 10px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 1.5px solid #f1f5f9;
+  padding-bottom: 6px;
+}
+
+.lrp-details-ex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lrp-details-ex-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.lrp-details-ex-item .ex-title {
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lrp-details-ex-item .ex-score {
+  font-weight: 600;
+}
+
+/* SESSION MARKS & BADGES */
+.lrp-active-badge {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.lrp-mark-active-btn {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.lrp-mark-active-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
