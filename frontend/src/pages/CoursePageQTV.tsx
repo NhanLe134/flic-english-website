@@ -627,7 +627,7 @@ export default function CoursePageQTV() {
               TenLop: cls.name,
               MaLop: maLop,
               LichHoc: cls.schedule,
-              SoLuongHocVien: cls.maxStudents,
+              SoLuongHocVien: null,
               teachers: cls.teachers // Pass the teachers object!
             })
           })
@@ -750,7 +750,7 @@ export default function CoursePageQTV() {
           TenLop: lForm.name,
           MaLop: maLop,
           LichHoc: lForm.schedule,
-          SoLuongHocVien: lForm.maxStudents,
+          SoLuongHocVien: null,
           CopyFromClassId: lForm.copyFromClassId ? Number(lForm.copyFromClassId) : null,
           teachers: lForm.teachers // Pass the teachers object!
         })
@@ -1239,11 +1239,7 @@ export default function CoursePageQTV() {
                     </div>
 
                     <div className={styles.twoCols}>
-                      <div className={styles.formGroup}>
-                        <label>Sĩ số tối đa</label>
-                        <input type="number" min={1} value={cls.maxStudents}
-                          onChange={e => updateClassInForm(classIdx, 'maxStudents', Number(e.target.value))} />
-                      </div>
+
                       <div className={styles.formGroup}>
                         <label style={{ marginBottom: 6, display: 'block' }}>Phân công giảng viên theo kỹ năng</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}>
@@ -1421,9 +1417,7 @@ export default function CoursePageQTV() {
                   })}
                 </div>
               </div>
-              <div className={styles.formGroup}><label>Sĩ số tối đa</label>
-                <input type="number" min={1} value={lForm.maxStudents} onChange={e => setLForm(p => ({...p, maxStudents: Number(e.target.value)}))} />
-              </div>
+
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.btnOutline} onClick={() => setShowAddClass(false)}>Hủy</button>
@@ -1447,7 +1441,7 @@ export default function CoursePageQTV() {
 
             <div className={styles.detailStats}>
               <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{enrolledStudents.length}</div><div className={styles.detailStatLbl}>Học viên</div></div>
-              <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{detailClass.students}</div><div className={styles.detailStatLbl}>Sĩ số tối đa</div></div>
+
               <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{lessons.length}</div><div className={styles.detailStatLbl}>Buổi học</div></div>
               <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{detailClass.progress}%</div><div className={styles.detailStatLbl}>Tiến độ</div></div>
             </div>

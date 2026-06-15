@@ -180,7 +180,7 @@ app.post("/qtv/lophoc", async (req, res) => {
       .input("TenLop", TenLop)
       .input("MaLop", MaLop)
       .input("LichHoc", LichHoc)
-      .input("SoLuongHocVien", SoLuongHocVien || 30)
+      .input("SoLuongHocVien", (SoLuongHocVien === undefined || SoLuongHocVien === null) ? null : SoLuongHocVien)
       .query(`
         INSERT INTO LOPHOC (TenLop, MaLop, LichHoc, SoLuongHocVien, TienDo) 
         VALUES (@TenLop, @MaLop, @LichHoc, @SoLuongHocVien, 0);
