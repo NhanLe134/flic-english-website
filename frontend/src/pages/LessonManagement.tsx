@@ -5,7 +5,7 @@ import "./lessonManagement.css";
 
 const LessonManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { buoiHocId } = useParams();
 
   const [lessons, setLessons] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -41,11 +41,11 @@ const LessonManagement: React.FC = () => {
       const res = await fetch(`http://localhost:5000/baigiang/${lectureId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ MaLesson: lessonId })
+        body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
         // Refresh lessons list
-        const lRes = await fetch(`http://localhost:5000/baigiang/${lessonId}`);
+        const lRes = await fetch(`http://localhost:5000/baigiang/${buoiHocId}`);
         const lData = await lRes.json();
         setLessons(lData);
         setShowReuseModal(false);
@@ -59,12 +59,12 @@ const LessonManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!lessonId) return;
-    fetch(`http://localhost:5000/baigiang/${lessonId}`)
+    if (!buoiHocId) return;
+    fetch(`http://localhost:5000/baigiang/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
-  }, [lessonId]);
+  }, [buoiHocId]);
 
   const handleDeleteClick = (id: number) => {
     setSelectedId(id);
@@ -146,7 +146,7 @@ const LessonManagement: React.FC = () => {
         >
           + Chọn bài giảng có sẵn
         </button>
-        <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${lessonId}`)}>
+        <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
           + Thêm bài học mới
         </button>
       </div>
@@ -260,7 +260,7 @@ const LessonManagement: React.FC = () => {
                     <div style={{ flex: 1, paddingRight: "8px" }}>
                       <strong style={{ fontSize: "14px", color: "#0369a1", display: "block" }}>{bg.TieuDe}</strong>
                       <span style={{ fontSize: "11px", color: "#0284c7" }}>
-                        {bg.LoaiBaiHoc} · Lớp: {bg.TenLop || bg.TenLesson}
+                        {bg.LoaiBaiHoc} · Lớp: {bg.TenLop || bg.TenBuoiHoc}
                       </span>
                     </div>
                     <button

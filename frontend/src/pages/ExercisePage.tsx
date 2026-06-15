@@ -1,4 +1,4 @@
-import "./exercisePage.css";
+import "./baitapPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiArrowLeft } from "react-icons/fi";
@@ -23,9 +23,9 @@ const ExercisePage = () => {
     if (!id) return;
     fetch(`http://localhost:5000/lesson/${id}`)
       .then(res => res.json())
-      .then(async (lessonData) => {
-        setLesson(Array.isArray(lessonData) ? lessonData[0] : lessonData);
-        const maLopHoc = lessonData.MaLopHoc;
+      .then(async (buoiHocData) => {
+        setLesson(Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData);
+        const maLopHoc = buoiHocData.MaLopHoc;
 
         // Lấy số học viên thực tế từ SINHVIEN_LOPHOC
         const countRes = await fetch(`http://localhost:5000/lophoc/${maLopHoc}/students/count`);
@@ -49,10 +49,10 @@ const ExercisePage = () => {
       .catch(err => console.log(err));
   }, [id]);
 
-  /* ===== LOAD EXERCISES ===== */
+  /* ===== LOAD BAITAPS ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/exercises/${id}`)
+    fetch(`http://localhost:5000/baitap/${id}`)
       .then(res => res.json())
       .then(data => setExercises(data))
       .catch(err => console.log(err));
@@ -62,12 +62,12 @@ const ExercisePage = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `http://localhost:5000/exercises/${selectedId}`;
+      const url = `http://localhost:5000/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
         setExercises(prev =>
-          prev.filter(e => Number(e.MaExercise) !== Number(selectedId))
+          prev.filter(e => Number(e.MaBaiTap) !== Number(selectedId))
         );
       } else {
         alert("Xóa thất bại: " + body);
@@ -96,7 +96,7 @@ const ExercisePage = () => {
       <div className="header-card">
         <div className="header-top">
           <div>
-            <h1>{lesson?.TenLesson}</h1>
+            <h1>{lesson?.TenBuoiHoc}</h1>
             <p>{lesson?.MoTa}</p>
             <p>
               <FiCalendar size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
@@ -156,7 +156,7 @@ const ExercisePage = () => {
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
 
-      {/* ===== EXERCISES ===== */}
+      {/* ===== BAITAPS ===== */}
       <div className="exercise-section">
         <h2>Danh sách bài tập</h2>
 
@@ -214,7 +214,7 @@ const ExercisePage = () => {
 
         <div className="exercise-grid">
           {filteredExercises.map((ex) => (
-            <div key={ex.MaExercise} className="exercise-card">
+            <div key={ex.MaBaiTap} className="exercise-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1a202c', wordBreak: 'break-word', flex: 1 }}>{ex.Title}</h4>
                 {ex.TrangThai !== 'practice' && (
@@ -240,14 +240,14 @@ const ExercisePage = () => {
               <div className="btn-group">
                 <button
                   className="outline-btn"
-                  onClick={() => navigate(`/exercise-detail/${ex.MaExercise}/${id}`)}
+                  onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
                 >
                   Xem chi tiết
                 </button>
                 <button
                   className="delete-btn"
                   onClick={() => {
-                    setSelectedId(Number(ex.MaExercise));
+                    setSelectedId(Number(ex.MaBaiTap));
                     setShowDeleteModal(true);
                   }}
                 >

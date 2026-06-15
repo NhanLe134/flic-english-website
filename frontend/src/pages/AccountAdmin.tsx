@@ -5,7 +5,7 @@ const API = "http://localhost:5000";
 
 const GV_PERMISSIONS = [
   { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
-  { code: "EXERCISE_CREATE", label: "Đăng bài tập" },
+  { code: "BAITAP_CREATE", label: "Đăng bài tập" },
   { code: "QUIZ_CREATE", label: "Đăng bài kiểm tra" },
   { code: "EXTRA_PRACTICE_CREATE", label: "Đăng bài luyện tập thêm" },
   { code: "DOCUMENT_CREATE_PENDING", label: "Đăng tài liệu" },
@@ -18,7 +18,7 @@ const QTND_PERMISSIONS = [
   { code: "CLASS_MANAGE", label: "Tạo & quản lý lớp" },
   { code: "STUDENT_ASSIGN", label: "Xếp lớp cho SV" },
   { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
-  { code: "EXERCISE_CREATE", label: "Đăng bài tập" },
+  { code: "BAITAP_CREATE", label: "Đăng bài tập" },
   { code: "QUIZ_CREATE", label: "Đăng bài kiểm tra" },
   { code: "EXTRA_PRACTICE_CREATE", label: "Đăng bài luyện tập thêm" },
   { code: "DOCUMENT_CREATE_DIRECT", label: "Đăng tài liệu" },

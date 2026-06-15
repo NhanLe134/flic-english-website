@@ -3,7 +3,7 @@ const { sql, poolPromise } = require("./config/db.js");
 async function getCols() {
     try {
         let pool = await poolPromise;
-        const tables = ['EXERCISE', 'TIENDOHOCTAP', 'DAPAN', 'CAUHOI', 'KETQUABAIKIEMTRA', 'LESSON'];
+        const tables = ['BAITAP', 'TIENDOHOCTAP', 'DAPAN', 'CAUHOI', 'KETQUABAIKIEMTRA', 'BUOIHOC'];
         
         for (const table of tables) {
             let result = await pool.request().query(`SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${table}'`);

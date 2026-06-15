@@ -61,7 +61,7 @@ const ClassDetail = () => {
       <div className="header-card">
         <div className="header-top">
           <div>
-            <h1>{lesson.TenLesson}</h1>
+            <h1>{lesson.TenBuoiHoc}</h1>
             <p>{lesson.MoTa}</p>
             <p>Mã lớp: B239B1</p>
             <p>

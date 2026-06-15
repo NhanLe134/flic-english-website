@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { FiUsers, FiTrendingUp, FiCheckSquare, FiArrowLeft, FiFileText } from "react-icons/fi";
 
 interface Lesson {
-  MaLesson: number;
-  TenLesson: string;
+  MaBuoiHoc: number;
+  TenBuoiHoc: string;
   MoTa: string;
   NgayBatDau: string;
   NgayKetThuc: string;
@@ -27,7 +27,7 @@ const LessonList = () => {
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/classes/${id}/lessons`)
+    fetch(`http://localhost:5000/classes/${id}/buoihoc`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
@@ -55,7 +55,7 @@ const LessonList = () => {
   }, [id]);
 
   const filteredLessons = lessons.filter((lesson) =>
-    lesson.TenLesson.toLowerCase().includes(searchTerm.toLowerCase())
+    lesson.TenBuoiHoc.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -162,12 +162,12 @@ const LessonList = () => {
       {/* LESSON GRID */}
       <div className="lesson-grid">
         {filteredLessons.map((lesson) => (
-          <div key={lesson.MaLesson} className="lesson-card">
-            <h3>{lesson.TenLesson}</h3>
+          <div key={lesson.MaBuoiHoc} className="lesson-card">
+            <h3>{lesson.TenBuoiHoc}</h3>
             <p className="lesson-desc">{lesson.MoTa}</p>
             <button
               className="lesson-btn"
-              onClick={() => navigate(`/class/${lesson.MaLesson}`, {
+              onClick={() => navigate(`/class/${lesson.MaBuoiHoc}`, {
                 state: { tenKhoaHoc, tenLop, maLopHoc: id } // ← thêm maLopHoc
               })}
             >

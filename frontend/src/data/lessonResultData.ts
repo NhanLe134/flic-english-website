@@ -1,4 +1,4 @@
-const lessonResultData = [
+const buoiHocResultData = [
   {
     id: 1,
     lesson: "Lesson 1",
@@ -37,4 +37,4 @@ const lessonResultData = [
   }
 ];
 
-export default lessonResultData;
+export default buoiHocResultData;

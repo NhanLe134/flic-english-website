@@ -376,7 +376,7 @@ export default function ApproveAdmin() {
           name: c.TenLop,
           schedule: c.LichHoc || '—',
           students: c.SoLuongHocVien || 0,
-          maxStudents: c.SiSoToiDa || 30,
+          maxStudents: c.SiSoToiDa,
           progress: c.TienDo || 0,
           lessonCount: c.SoBuoiHoc || 0,
           completed: !!c.HoanThanh,
@@ -613,15 +613,7 @@ export default function ApproveAdmin() {
     }
 
     if (!classEditForm.maLop) {
-      errors.maLop = "Vui lòng chọn trình độ cho lớp học!";
-      hasError = true;
-    }
-
-    if (!classEditForm.maxStudents) {
-      errors.maxStudents = "Vui lòng nhập sĩ số tối đa!";
-      hasError = true;
-    } else if (classEditForm.maxStudents <= 0) {
-      errors.maxStudents = "Sĩ số tối đa phải lớn hơn 0!";
+      errors.maLop = "Vui lòng chọn hoặc nhập 1 trình độ";
       hasError = true;
     }
 
@@ -639,7 +631,7 @@ export default function ApproveAdmin() {
         body: JSON.stringify({
           TenLop: classEditForm.name,
           LichHoc: finalSchedule,
-          SoLuongHocVien: classEditForm.maxStudents,
+          SoLuongHocVien: null,
           TrangThai: classEditForm.status,
           MaLop: classEditForm.maLop,
           teachers: classEditForm.teachers
@@ -712,15 +704,7 @@ export default function ApproveAdmin() {
     }
 
     if (!newClassForm.maLop) {
-      errors.maLop = "Vui lòng chọn trình độ cho lớp học!";
-      hasError = true;
-    }
-
-    if (!newClassForm.maxStudents) {
-      errors.maxStudents = "Vui lòng nhập sĩ số tối đa!";
-      hasError = true;
-    } else if (newClassForm.maxStudents <= 0) {
-      errors.maxStudents = "Sĩ số tối đa phải lớn hơn 0!";
+      errors.maLop = "Vui lòng chọn hoặc nhập 1 trình độ";
       hasError = true;
     }
 
@@ -739,7 +723,7 @@ export default function ApproveAdmin() {
           TenLop: newClassForm.name,
           MaLop: newClassForm.maLop,
           LichHoc: finalSchedule,
-          SoLuongHocVien: newClassForm.maxStudents,
+          SoLuongHocVien: null,
           teachers: newClassForm.teachers
         })
       });
@@ -1375,22 +1359,7 @@ export default function ApproveAdmin() {
                   )}
                 </div>
 
-                <div className="form-field-group">
-                  <label>Sĩ số tối đa <span className="required-star">*</span></label>
-                  <input
-                    type="number"
-                    min={1}
-                    className={addClassErrors.maxStudents ? "has-error" : ""}
-                    value={newClassForm.maxStudents}
-                    onChange={e => {
-                      setNewClassForm(p => ({ ...p, maxStudents: Number(e.target.value) }));
-                      setAddClassErrors(p => ({ ...p, maxStudents: '' }));
-                    }}
-                  />
-                  {addClassErrors.maxStudents && (
-                    <span className="form-field-error-text">{addClassErrors.maxStudents}</span>
-                  )}
-                </div>
+
                 <div className="form-field-group">
                   <label>Lịch học (Chọn các ngày học trong tuần)</label>
                   <div className="weekday-selection-row">
@@ -1590,22 +1559,7 @@ export default function ApproveAdmin() {
                   )}
                 </div>
 
-                <div className="form-field-group">
-                  <label>Sĩ số tối đa <span className="required-star">*</span></label>
-                  <input
-                    type="number"
-                    min={1}
-                    className={editClassErrors.maxStudents ? "has-error" : ""}
-                    value={classEditForm.maxStudents}
-                    onChange={e => {
-                      setClassEditForm(p => ({ ...p, maxStudents: Number(e.target.value) }));
-                      setEditClassErrors(p => ({ ...p, maxStudents: '' }));
-                    }}
-                  />
-                  {editClassErrors.maxStudents && (
-                    <span className="form-field-error-text">{editClassErrors.maxStudents}</span>
-                  )}
-                </div>
+
                 <div className="form-field-group">
                   <label>Lịch học (Chọn các ngày học trong tuần)</label>
                   <div className="weekday-selection-row">
@@ -1831,7 +1785,9 @@ export default function ApproveAdmin() {
                 )}
                 <div className="class-detail-field-item">
                   <span className="class-detail-label">Sĩ số tối đa</span>
-                  <div className="class-detail-value">{selectedClass.maxStudents} học viên</div>
+                  <div className="class-detail-value">
+                    {selectedClass.maxStudents ? `${selectedClass.maxStudents} học viên` : "Không giới hạn"}
+                  </div>
                 </div>
                 <div className="class-detail-field-item">
                   <span className="class-detail-label">Sĩ số hiện tại</span>

@@ -8,17 +8,17 @@ async function cleanup() {
     // 1. Delete student submissions related to mock exercises
     const r1 = await pool.request().query(`
       DELETE FROM BAINOP 
-      WHERE MaExercise IN (
-        SELECT MaExercise FROM EXERCISE WHERE Title LIKE '%[MOCK]%' OR Title LIKE '%Grammar Quiz: Conditional Sentences%'
+      WHERE MaBaiTap IN (
+        SELECT MaBaiTap FROM BAITAP WHERE Title LIKE '%[MOCK]%' OR Title LIKE '%Grammar Quiz: Conditional Sentences%'
       )
     `);
     console.log(`Deleted BAINOP records: ${r1.rowsAffected}`);
     
     // 2. Delete mock exercises by title
     const r2 = await pool.request().query(`
-      DELETE FROM EXERCISE WHERE Title LIKE '%[MOCK]%' OR Title LIKE '%Grammar Quiz: Conditional Sentences%'
+      DELETE FROM BAITAP WHERE Title LIKE '%[MOCK]%' OR Title LIKE '%Grammar Quiz: Conditional Sentences%'
     `);
-    console.log(`Deleted EXERCISE records: ${r2.rowsAffected}`);
+    console.log(`Deleted BAITAP records: ${r2.rowsAffected}`);
 
     // 3. Resolve mock classes to perform cascading deletes on lessons and lectures
     const mockClassIds = await pool.request().query("SELECT MaLopHoc FROM LOPHOC WHERE TenLop LIKE '%[MOCK]%'");
@@ -32,7 +32,7 @@ async function cleanup() {
         DELETE FROM BINHLUAN 
         WHERE MaBaiHoc IN (
           SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
-          WHERE MaLesson IN (SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (${idsStr}))
+          WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr}))
         )
       `);
       
@@ -40,37 +40,70 @@ async function cleanup() {
         DELETE FROM TIENDOHOCTAP 
         WHERE MaBaiHoc IN (
           SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
-          WHERE MaLesson IN (SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (${idsStr}))
+          WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr}))
         )
       `);
 
       await pool.request().query(`
         DELETE FROM BAINOP 
-        WHERE MaExercise IN (
-          SELECT MaExercise FROM EXERCISE 
+        WHERE MaBaiTap IN (
+          SELECT MaBaiTap FROM BAITAP 
           WHERE MaBaiHoc IN (
             SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
-            WHERE MaLesson IN (SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (${idsStr}))
+            WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr}))
           )
         )
       `);
 
       await pool.request().query(`
-        DELETE FROM EXERCISE 
+        DELETE FROM BAITAP 
         WHERE MaBaiHoc IN (
           SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
-          WHERE MaLesson IN (SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (${idsStr}))
+          WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr}))
         )
       `);
 
       await pool.request().query(`
         DELETE FROM BAIHOCKHOAHOC 
-        WHERE MaLesson IN (SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (${idsStr}))
+        WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr}))
+      `);
+
+      // Cascading delete mock exams
+      await pool.request().query(`
+        DELETE FROM DAPAN WHERE MaCauHoi IN (
+          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr})
+            )
+          )
+        )
+      `);
+
+      await pool.request().query(`
+        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr})
+          )
+        )
+      `);
+
+      await pool.request().query(`
+        DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr})
+          )
+        )
+      `);
+
+      await pool.request().query(`
+        DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (${idsStr})
+        )
       `);
 
       await pool.request().query(`DELETE FROM PHANCONGGIANGVIEN WHERE MaLopHoc IN (${idsStr})`);
       await pool.request().query(`DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc IN (${idsStr})`);
-      await pool.request().query(`DELETE FROM LESSON WHERE MaLopHoc IN (${idsStr})`);
+      await pool.request().query(`DELETE FROM BUOIHOC WHERE MaLopHoc IN (${idsStr})`);
       const rClass = await pool.request().query(`DELETE FROM LOPHOC WHERE MaLopHoc IN (${idsStr})`);
       console.log(`Deleted mock classes and all cascading references: ${rClass.rowsAffected}`);
     }

@@ -9,18 +9,18 @@ interface DraftLesson {
   LoaiBaiHoc: string;
   ThoiLuong: string;
   TrangThai: string;
-  TenLesson: string;
+  TenBuoiHoc: string;
   TenLop: string;
   TenKhoaHoc: string;
 }
 
 interface DraftExercise {
-  MaExercise: number;
+  MaBaiTap: number;
   Title: string;
   Type: string;
   CreatedDate: string;
   TrangThai: string;
-  TenLesson: string;
+  TenBuoiHoc: string;
   TenLop: string;
   TenKhoaHoc: string;
 }
@@ -76,7 +76,7 @@ const DraftsManagement = () => {
 
   const handleSubmitExercise = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/exercise/${id}/status`, {
+      const res = await fetch(`http://localhost:5000/baitap/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "pending" })
@@ -111,7 +111,7 @@ const DraftsManagement = () => {
   const handleDeleteExercise = async (id: number) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bản nháp này không?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/exercises/${id}`, {
+      const res = await fetch(`http://localhost:5000/baitap/${id}`, {
         method: "DELETE"
       });
       if (res.ok) {
@@ -127,17 +127,17 @@ const DraftsManagement = () => {
     if (activeTab === "lessons") {
       return lessons.filter((item) =>
         item.TieuDe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.TenLesson && item.TenLesson.toLowerCase().includes(searchTerm.toLowerCase()))
+        (item.TenBuoiHoc && item.TenBuoiHoc.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     } else if (activeTab === "exercises") {
       return exercises.filter((item) =>
         item.Title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.TenLesson && item.TenLesson.toLowerCase().includes(searchTerm.toLowerCase()))
+        (item.TenBuoiHoc && item.TenBuoiHoc.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     } else {
       return exams.filter((item) =>
         item.Title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.TenLesson && item.TenLesson.toLowerCase().includes(searchTerm.toLowerCase()))
+        (item.TenBuoiHoc && item.TenBuoiHoc.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
   };
@@ -212,7 +212,7 @@ const DraftsManagement = () => {
             <div className="dm-empty">Không có bản nháp nào được tìm thấy.</div>
           ) : (
             filteredItems.map((item: any) => {
-              const id = item.MaBaiHoc || item.MaExercise;
+              const id = item.MaBaiHoc || item.MaBaiTap;
               const title = item.TieuDe || item.Title;
               const typeLabel = item.LoaiBaiHoc || item.Type;
               const extraLabel = item.ThoiLuong ? `Thời lượng: ${item.ThoiLuong}` : `Ngày tạo: ${item.CreatedDate}`;
@@ -226,7 +226,7 @@ const DraftsManagement = () => {
                       <span>{extraLabel}</span>
                       {item.TenKhoaHoc && (
                         <span className="dm-meta-course">
-                          {item.TenKhoaHoc} &middot; {item.TenLop} &middot; {item.TenLesson}
+                          {item.TenKhoaHoc} &middot; {item.TenLop} &middot; {item.TenBuoiHoc}
                         </span>
                       )}
                     </div>

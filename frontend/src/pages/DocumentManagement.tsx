@@ -5,7 +5,7 @@ import { FiArrowLeft } from "react-icons/fi";
 
 const DocumentManagement = () => {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { buoiHocId } = useParams();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -40,11 +40,11 @@ const DocumentManagement = () => {
       const res = await fetch(`http://localhost:5000/tailieu/${docId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ MaLesson: lessonId })
+        body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
         // Refresh documents list
-        const dRes = await fetch(`http://localhost:5000/tailieu/${lessonId}`);
+        const dRes = await fetch(`http://localhost:5000/tailieu/${buoiHocId}`);
         const dData = await dRes.json();
         setDocuments(dData);
         setShowReuseModal(false);
@@ -59,12 +59,12 @@ const DocumentManagement = () => {
 
   /* ===== LOAD DATA ===== */
   useEffect(() => {
-    if (!lessonId) return;
-    fetch(`http://localhost:5000/tailieu/${lessonId}`)
+    if (!buoiHocId) return;
+    fetch(`http://localhost:5000/tailieu/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setDocuments(data))
       .catch(err => console.log(err));
-  }, [lessonId]);
+  }, [buoiHocId]);
 
   const filteredDocs = documents.filter(doc =>
     (doc.TieuDe + doc.MoTa).toLowerCase().includes(searchTerm.toLowerCase())
@@ -133,7 +133,7 @@ const DocumentManagement = () => {
         >
           + Chọn tài liệu có sẵn
         </button>
-        <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${lessonId}`)}>
+        <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
           + Thêm tài liệu
         </button>
       </div>
@@ -205,7 +205,7 @@ const DocumentManagement = () => {
                     <div style={{ flex: 1, paddingRight: "8px" }}>
                       <strong style={{ fontSize: "14px", color: "#0369a1", display: "block" }}>{doc.TieuDe}</strong>
                       <span style={{ fontSize: "11px", color: "#0284c7" }}>
-                        Lớp: {doc.TenLop || doc.TenLesson}
+                        Lớp: {doc.TenLop || doc.TenBuoiHoc}
                       </span>
                     </div>
                     <button

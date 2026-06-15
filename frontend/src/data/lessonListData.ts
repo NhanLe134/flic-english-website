@@ -1,4 +1,4 @@
-const lessonListData = [
+const buoiHocListData = [
   {
     id: 1,
     title: "Lesson 1",
@@ -41,4 +41,4 @@ const lessonListData = [
   }
 ];
 
-export default lessonListData;
+export default buoiHocListData;

@@ -5,22 +5,22 @@ import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
 const API = 'http://localhost:5000'
 
 interface ExerciseHeader {
-  MaExercise: number
+  MaBaiTap: number
   TenBai: string
-  TenLesson: string | null
+  TenBuoiHoc: string | null
   ThuTu: number | null
-  MaLesson: number | null
+  MaBuoiHoc: number | null
   MaLopHoc: number | null
   TenLop: string | null
 }
 
 interface LessonInfo {
-  MaLesson: number
-  TenLesson: string | null
+  MaBuoiHoc: number
+  TenBuoiHoc: string | null
   ThuTu: number | null
   MaLopHoc: number | null
   TenLop: string | null
-  ActiveLessonId: number | null
+  ActiveBuoiHocId: number | null
 }
 
 interface HocVien {
@@ -32,7 +32,7 @@ interface HocVien {
   lopKhoaHoc: string
   tenKhoa: string
   trangThai: "Đang học" | "Hoàn thành" | "Tạm dừng"
-  rawScores: Record<number, number | null> // MaExercise -> Diem
+  rawScores: Record<number, number | null> // MaBaiTap -> Diem
   diemTB: number | null
 }
 
@@ -84,7 +84,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     Promise.all([
       fetch(`${API}/baocao/hocvien`).then(r => r.json()),
       fetch(`${API}/baocao/baitap-headers`).then(r => r.json()),
-      fetch(`${API}/baocao/lessons`).then(r => r.json()),
+      fetch(`${API}/baocao/buoihoc`).then(r => r.json()),
     ])
       .then(([svData, headers, lessonsData]) => {
         const headerList: ExerciseHeader[] = Array.isArray(headers) ? headers : []
@@ -94,7 +94,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
         const mapped: HocVien[] = (Array.isArray(svData) ? svData : []).map((sv: any) => {
           const rawScores: Record<number, number | null> = {}
           headerList.forEach((h: any) => {
-            rawScores[h.MaExercise] = sv.baiTaps?.[h.MaExercise] ?? null
+            rawScores[h.MaBaiTap] = sv.baiTaps?.[h.MaBaiTap] ?? null
           })
 
           const submittedScores = Object.values(rawScores).filter((d): d is number => d !== null)
@@ -138,7 +138,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     const classLessons = allLessons.filter(l => l.TenLop === filterLop)
     if (classLessons.length === 0) return []
 
-    const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+    const activeLesson = classLessons.find(l => l.MaBuoiHoc === classLessons[0]?.ActiveBuoiHocId)
     const activeThuTu = activeLesson ? activeLesson.ThuTu : null
 
     const allBuoiNumbers = Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
@@ -155,7 +155,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     if (buoiExs.length === 0) return null
 
     const scores = buoiExs
-      .map(ex => hv.rawScores[ex.MaExercise])
+      .map(ex => hv.rawScores[ex.MaBaiTap])
       .filter((s): s is number => s !== null)
 
     if (scores.length === 0) return null
@@ -333,7 +333,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                   {uniqueBuois.map(b => {
                     const classLessons = allLessons.filter(l => l.TenLop === filterLop)
                     const lessonForBuoi = classLessons.find(l => l.ThuTu === b)
-                    const isActive = lessonForBuoi && classLessons[0]?.ActiveLessonId === lessonForBuoi.MaLesson
+                    const isActive = lessonForBuoi && classLessons[0]?.ActiveBuoiHocId === lessonForBuoi.MaBuoiHoc
                     return (
                       <th key={b}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
@@ -380,7 +380,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                             </span>
                           </td>
                           {uniqueBuois.map(b => {
-                            const hvActiveLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+                            const hvActiveLesson = classLessons.find(l => l.MaBuoiHoc === classLessons[0]?.ActiveBuoiHocId)
                             const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
                             if (hvActiveThuTu === null || b > hvActiveThuTu) {
@@ -427,10 +427,10 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                                             <div className={styles.chuaNop}>Không có bài tập</div>
                                           ) : (
                                             buoiExs.map(ex => {
-                                              const score = hv.rawScores[ex.MaExercise]
+                                              const score = hv.rawScores[ex.MaBaiTap]
                                               const hasScore = score !== null
                                               return (
-                                                <div key={ex.MaExercise} className={styles.exCard}>
+                                                <div key={ex.MaBaiTap} className={styles.exCard}>
                                                   <div className={styles.exCardContent}>
                                                     <span className={styles.exCardTitle}>{ex.TenBai}</span>
                                                   </div>

@@ -1,4 +1,4 @@
-import "./exerciseDetail.css";
+import "./baitapDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -8,7 +8,7 @@ interface Question { question: string; answers: string[]; correct: string; audio
 
 const ExerciseDetail = () => {
   const navigate = useNavigate();
-  const { id, lessonId } = useParams();
+  const { id, buoiHocId } = useParams();
 
   const [exercise, setExercise]       = useState<any>(null);
   const [lesson, setLesson]           = useState<any>(null);
@@ -111,13 +111,13 @@ const ExerciseDetail = () => {
 
   /* ===== LOAD DATA ===== */
   useEffect(() => {
-    if (!lessonId) return;
-    fetch(`http://localhost:5000/lesson/${lessonId}`).then(r => r.json()).then(setLesson).catch(console.log);
-  }, [lessonId]);
+    if (!buoiHocId) return;
+    fetch(`http://localhost:5000/lesson/${buoiHocId}`).then(r => r.json()).then(setLesson).catch(console.log);
+  }, [buoiHocId]);
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/exercise/${id}`).then(r => r.json()).then(setExercise).catch(console.log);
+    fetch(`http://localhost:5000/baitap/${id}`).then(r => r.json()).then(setExercise).catch(console.log);
   }, [id]);
 
   useEffect(() => {
@@ -217,14 +217,14 @@ const ExerciseDetail = () => {
       content = editContent;
     }
 
-    await fetch(`http://localhost:5000/exercise/${id}`, {
+    await fetch(`http://localhost:5000/baitap/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ Title: editTitle, Content: content, Questions: questionsStr, Vocabulary: vocabularyStr }),
     });
 
     // Reload exercise
-    const updated = await fetch(`http://localhost:5000/exercise/${id}`).then(r => r.json());
+    const updated = await fetch(`http://localhost:5000/baitap/${id}`).then(r => r.json());
     setExercise(updated);
     setShowSuccess(true);
     setTimeout(() => { setShowSuccess(false); setIsEdit(false); }, 2000);
@@ -400,7 +400,7 @@ const ExerciseDetail = () => {
       <div className="header-card">
         <div className="header-top">
           <div>
-            <h1>{lesson.TenLesson}</h1>
+            <h1>{lesson.TenBuoiHoc}</h1>
             <p>{lesson.MoTa}</p>
             <p>Mã lớp: B239B1</p>
             <p>📅 {lesson.NgayBatDau ? new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN") : "N/A"} - {lesson.NgayKetThuc ? new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN") : "N/A"}</p>

@@ -31,7 +31,7 @@ const LessonDiscussionPage = () => {
   /* ===== LOAD BÌNH LUẬN ===== */
   const loadComments = () => {
     if (!id) return;
-    fetch(`${API}/binhluan/lesson/${id}`)
+    fetch(`${API}/binhluan/buoihoc/${id}`)
       .then(r => r.json())
       .then(data => setComments(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -45,11 +45,11 @@ const LessonDiscussionPage = () => {
   const handlePostComment = async () => {
     if (!newComment.trim() || !id) return;
     try {
-      await fetch(`${API}/binhluan/lesson`, {
+      await fetch(`${API}/binhluan/buoihoc`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          MaLesson: Number(id),
+          MaBuoiHoc: Number(id),
           MaNguoiDung: user.MaNguoiDung,
           NoiDung: newComment.trim(),
           MaBinhLuanCha: null,
@@ -64,11 +64,11 @@ const LessonDiscussionPage = () => {
   const handleReply = async (parentId: number) => {
     if (!replyText.trim() || !id) return;
     try {
-      await fetch(`${API}/binhluan/lesson`, {
+      await fetch(`${API}/binhluan/buoihoc`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          MaLesson: Number(id),
+          MaBuoiHoc: Number(id),
           MaNguoiDung: user.MaNguoiDung,
           NoiDung: replyText.trim(),
           MaBinhLuanCha: parentId,

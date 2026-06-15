@@ -40,22 +40,22 @@ const CustomTooltip = ({ active, payload }: any) => {
 const API = 'http://localhost:5000'
 
 interface ExerciseHeader {
-  MaExercise: number
+  MaBaiTap: number
   TenBai: string
-  TenLesson: string | null
+  TenBuoiHoc: string | null
   ThuTu: number | null
-  MaLesson: number | null
+  MaBuoiHoc: number | null
   MaLopHoc: number | null
   TenLop: string | null
 }
 
 interface LessonInfo {
-  MaLesson: number
-  TenLesson: string | null
+  MaBuoiHoc: number
+  TenBuoiHoc: string | null
   ThuTu: number | null
   MaLopHoc: number | null
   TenLop: string | null
-  ActiveLessonId: number | null
+  ActiveBuoiHocId: number | null
 }
 
 interface StudentResult {
@@ -131,7 +131,7 @@ export default function BaoCaoKetQua() {
     Promise.all([
       fetch(`${API}/baocao/hocvien`).then(r => r.json()),
       fetch(`${API}/baocao/baitap-headers`).then(r => r.json()),
-      fetch(`${API}/baocao/lessons`).then(r => r.json()),
+      fetch(`${API}/baocao/buoihoc`).then(r => r.json()),
       fetch(`${API}/baocao/giangvien-all`).then(r => r.json()).catch(() => []),
     ])
       .then(([svData, headers, lessonsData, gvData]) => {
@@ -143,7 +143,7 @@ export default function BaoCaoKetQua() {
         const mapped: StudentResult[] = (Array.isArray(svData) ? svData : []).map((sv: any) => {
           const rawScores: Record<number, number | null> = {}
           headerList.forEach((h: any) => {
-            rawScores[h.MaExercise] = sv.baiTaps?.[h.MaExercise] ?? null
+            rawScores[h.MaBaiTap] = sv.baiTaps?.[h.MaBaiTap] ?? null
           })
 
           const submittedScores = Object.values(rawScores).filter((d): d is number => d !== null)
@@ -221,7 +221,7 @@ export default function BaoCaoKetQua() {
       const classLessons = allLessons.filter(l => l.TenLop === filterClass)
       if (classLessons.length === 0) return []
 
-      const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+      const activeLesson = classLessons.find(l => l.MaBuoiHoc === classLessons[0]?.ActiveBuoiHocId)
       const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
       if (activeThuTu === 0 || activeThuTu === -Infinity) return [] // Chưa đánh dấu thì không hiện buổi học nào
@@ -235,7 +235,7 @@ export default function BaoCaoKetQua() {
       lecturerClassNames.forEach(className => {
         const classLessons = allLessons.filter(l => l.TenLop === className)
         if (classLessons.length > 0) {
-          const activeLesson = classLessons.find(l => l.MaLesson === classLessons[0]?.ActiveLessonId)
+          const activeLesson = classLessons.find(l => l.MaBuoiHoc === classLessons[0]?.ActiveBuoiHocId)
           const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
           
           if (activeThuTu !== null && activeThuTu > 0) {
@@ -257,7 +257,7 @@ export default function BaoCaoKetQua() {
     if (buoiExs.length === 0) return null
 
     const scores = buoiExs
-      .map(ex => hv.rawScores[ex.MaExercise])
+      .map(ex => hv.rawScores[ex.MaBaiTap])
       .filter((s): s is number => s !== null)
 
     if (scores.length === 0) return null
@@ -576,7 +576,7 @@ export default function BaoCaoKetQua() {
                       </td>
                       {uniqueBuois.map(b => {
                         const hvLessons = allLessons.filter(l => l.TenLop === s.className)
-                        const hvActiveLesson = hvLessons.find(l => l.MaLesson === hvLessons[0]?.ActiveLessonId)
+                        const hvActiveLesson = hvLessons.find(l => l.MaBuoiHoc === hvLessons[0]?.ActiveBuoiHocId)
                         const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...hvLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
                         if (hvActiveThuTu === null || b > hvActiveThuTu) {

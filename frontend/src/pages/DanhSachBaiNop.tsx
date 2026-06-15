@@ -4,28 +4,28 @@ import { useState, useEffect } from "react";
 
 const DanhSachBaiNop = () => {
   const navigate = useNavigate();
-  const { maExercise } = useParams();
+  const { maBaiTap } = useParams();
 
   const [exercise, setExercise] = useState<any>(null);
   const [danhSach, setDanhSach] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
-  /* ===== LOAD EXERCISE ===== */
+  /* ===== LOAD BAITAP ===== */
   useEffect(() => {
-  if (!maExercise) return;
+  if (!maBaiTap) return;
 
-  const id = parseInt(maExercise.trim());
+  const id = parseInt(maBaiTap.trim());
 
-  fetch(`http://localhost:5000/exercise/${id}`)
+  fetch(`http://localhost:5000/baitap/${id}`)
     .then(res => res.json())
     .then(data => setExercise(data))
     .catch(err => console.log(err));
 
-  fetch(`http://localhost:5000/bainop/exercise/${id}`)
+  fetch(`http://localhost:5000/bainop/baitap/${id}`)
     .then(res => res.json())
     .then(data => setDanhSach(data))
     .catch(err => console.log(err));
-}, [maExercise]);
+}, [maBaiTap]);
 
   const filtered = danhSach.filter((b: any) =>
     b.HoTen?.toLowerCase().includes(search.toLowerCase()) ||

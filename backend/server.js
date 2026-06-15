@@ -10,6 +10,10 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
 // Tạo thư mục uploads nếu chưa có
 if (!fs.existsSync("./uploads")) {
   fs.mkdirSync("./uploads");
@@ -176,7 +180,7 @@ app.post("/qtv/lophoc", async (req, res) => {
       .input("TenLop", TenLop)
       .input("MaLop", MaLop)
       .input("LichHoc", LichHoc)
-      .input("SoLuongHocVien", SoLuongHocVien || 30)
+      .input("SoLuongHocVien", (SoLuongHocVien === undefined || SoLuongHocVien === null) ? null : SoLuongHocVien)
       .query(`
         INSERT INTO LOPHOC (TenLop, MaLop, LichHoc, SoLuongHocVien, TienDo) 
         VALUES (@TenLop, @MaLop, @LichHoc, @SoLuongHocVien, 0);
@@ -205,48 +209,129 @@ app.post("/qtv/lophoc", async (req, res) => {
     // 2. Nếu có yêu cầu sao chép lộ trình từ lớp cũ
     if (CopyFromClassId) {
       // Lấy toàn bộ các buổi học của lớp cũ
-      const oldLessonsResult = await pool.request()
+      const oldBuoiHocsResult = await pool.request()
         .input("CopyFromClassId", CopyFromClassId)
-        .query(`SELECT * FROM LESSON WHERE MaLopHoc = @CopyFromClassId`)
+        .query(`SELECT * FROM BUOIHOC WHERE MaLopHoc = @CopyFromClassId`)
 
-      for (const oldLesson of oldLessonsResult.recordset) {
+      for (const oldBuoiHoc of oldBuoiHocsResult.recordset) {
         // Tạo buổi học mới cho lớp mới
-        const newLessonResult = await pool.request()
-          .input("TenLesson", oldLesson.TenLesson)
+        const newBuoiHocResult = await pool.request()
+          .input("TenBuoiHoc", oldBuoiHoc.TenBuoiHoc)
           .input("NewMaLopHoc", newMaLopHoc)
-          .input("MoTa", oldLesson.MoTa || "")
-          .input("NgayBatDau", oldLesson.NgayBatDau || null)
-          .input("NgayKetThuc", oldLesson.NgayKetThuc || null)
-          .input("ThuTu", oldLesson.ThuTu || 1)
+          .input("MoTa", oldBuoiHoc.MoTa || "")
+          .input("NgayBatDau", oldBuoiHoc.NgayBatDau || null)
+          .input("NgayKetThuc", oldBuoiHoc.NgayKetThuc || null)
+          .input("ThuTu", oldBuoiHoc.ThuTu || 1)
           .query(`
-            INSERT INTO LESSON (TenLesson, MaLopHoc, MoTa, NgayBatDau, NgayKetThuc, ThuTu)
-            VALUES (@TenLesson, @NewMaLopHoc, @MoTa, @NgayBatDau, @NgayKetThuc, @ThuTu);
-            SELECT SCOPE_IDENTITY() AS MaLesson;
+            INSERT INTO BUOIHOC (TenBuoiHoc, MaLopHoc, MoTa, NgayBatDau, NgayKetThuc, ThuTu)
+            VALUES (@TenBuoiHoc, @NewMaLopHoc, @MoTa, @NgayBatDau, @NgayKetThuc, @ThuTu);
+            SELECT SCOPE_IDENTITY() AS MaBuoiHoc;
           `)
         
-        const newMaLesson = newLessonResult.recordset[0].MaLesson
+        const newMaBuoiHoc = newBuoiHocResult.recordset[0].MaBuoiHoc
 
-        // Lấy tất cả bài tập thuộc buổi học cũ
-        const oldExercisesResult = await pool.request()
-          .input("OldMaLesson", oldLesson.MaLesson)
-          .query(`SELECT * FROM EXERCISE WHERE MaLesson = @OldMaLesson`)
+        // Sao chép các bài giảng (BAIHOCKHOAHOC) thuộc buổi học cũ
+        const oldLecturesResult = await pool.request()
+          .input("OldMaBuoiHoc", oldBuoiHoc.MaBuoiHoc)
+          .query(`SELECT * FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @OldMaBuoiHoc`)
 
-        for (const oldEx of oldExercisesResult.recordset) {
-          // Tạo bài tập mới liên kết với buổi học mới
-          await pool.request()
-            .input("Title", oldEx.Title)
-            .input("Type", oldEx.Type)
-            .input("CreatedDate", oldEx.CreatedDate)
-            .input("NewMaLesson", newMaLesson)
-            .input("Content", oldEx.Content)
-            .input("Questions", oldEx.Questions)
-            .input("Vocabulary", oldEx.Vocabulary)
-            .input("AudioUrl", oldEx.AudioUrl)
-            .input("ShowAnswer", oldEx.ShowAnswer)
+        for (const oldLecture of oldLecturesResult.recordset) {
+          const newLectureResult = await pool.request()
+            .input("MaKhoaHoc", oldLecture.MaKhoaHoc)
+            .input("MaGiangVien", oldLecture.MaGiangVien)
+            .input("TieuDe", oldLecture.TieuDe)
+            .input("NoiDung", oldLecture.NoiDung || "")
+            .input("ThuTu", oldLecture.ThuTu || 1)
+            .input("LoaiBaiHoc", oldLecture.LoaiBaiHoc)
+            .input("ThoiLuong", oldLecture.ThoiLuong)
+            .input("TrangThai", oldLecture.TrangThai || "draft")
+            .input("NewMaBuoiHoc", newMaBuoiHoc)
+            .input("FileUrl", oldLecture.FileUrl || null)
             .query(`
-              INSERT INTO EXERCISE (Title, Type, CreatedDate, MaLesson, Content, Questions, Vocabulary, AudioUrl, ShowAnswer)
-              VALUES (@Title, @Type, @CreatedDate, @NewMaLesson, @Content, @Questions, @Vocabulary, @AudioUrl, @ShowAnswer)
+              INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, ThuTu, LoaiBaiHoc, ThoiLuong, TrangThai, MaBuoiHoc, FileUrl)
+              VALUES (@MaKhoaHoc, @MaGiangVien, @TieuDe, @NoiDung, @ThuTu, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @NewMaBuoiHoc, @FileUrl);
+              SELECT SCOPE_IDENTITY() AS MaBaiHoc;
             `)
+
+          const newMaBaiHoc = newLectureResult.recordset[0].MaBaiHoc
+
+          // Sao chép bài tập (BAITAP) thuộc bài giảng cũ
+          const oldBaiTapsResult = await pool.request()
+            .input("OldMaBaiHoc", oldLecture.MaBaiHoc)
+            .query(`SELECT * FROM BAITAP WHERE MaBaiHoc = @OldMaBaiHoc`)
+
+          for (const oldBaiTap of oldBaiTapsResult.recordset) {
+            await pool.request()
+              .input("Title", oldBaiTap.Title)
+              .input("Type", oldBaiTap.Type)
+              .input("CreatedDate", oldBaiTap.CreatedDate)
+              .input("NewMaBaiHoc", newMaBaiHoc)
+              .input("Content", oldBaiTap.Content)
+              .input("Questions", oldBaiTap.Questions)
+              .input("Vocabulary", oldBaiTap.Vocabulary)
+              .input("AudioUrl", oldBaiTap.AudioUrl)
+              .input("ShowAnswer", oldBaiTap.ShowAnswer)
+              .query(`
+                INSERT INTO BAITAP (Title, Type, CreatedDate, MaBaiHoc, Content, Questions, Vocabulary, AudioUrl, ShowAnswer)
+                VALUES (@Title, @Type, @CreatedDate, @NewMaBaiHoc, @Content, @Questions, @Vocabulary, @AudioUrl, @ShowAnswer)
+              `)
+          }
+        }
+
+        // Sao chép bài kiểm tra (BAIKIEMTRA) trực tiếp thuộc buổi học cũ
+        const oldExamsResult = await pool.request()
+          .input("OldMaBuoiHoc", oldBuoiHoc.MaBuoiHoc)
+          .query(`SELECT * FROM BAIKIEMTRA WHERE MaBuoiHoc = @OldMaBuoiHoc`)
+
+        for (const oldExam of oldExamsResult.recordset) {
+          const newExamResult = await pool.request()
+            .input("NewMaBuoiHoc", newMaBuoiHoc)
+            .input("MaGiangVien", oldExam.MaGiangVien)
+            .input("TenBai", oldExam.TenBai)
+            .input("ThoiGian", oldExam.ThoiGian)
+            .input("TongDiem", oldExam.TongDiem)
+            .query(`
+              INSERT INTO BAIKIEMTRA (MaBuoiHoc, MaGiangVien, TenBai, ThoiGian, TongDiem)
+              VALUES (@NewMaBuoiHoc, @MaGiangVien, @TenBai, @ThoiGian, @TongDiem);
+              SELECT SCOPE_IDENTITY() AS NewMaBaiKiemTra;
+            `)
+          
+          const newMaBaiKiemTra = newExamResult.recordset[0].NewMaBaiKiemTra;
+
+          // Sao chép câu hỏi (CAUHOI) và đáp án (DAPAN) của bài kiểm tra cũ
+          const oldQuestionsResult = await pool.request()
+            .input("OldMaBaiKiemTra", oldExam.MaBaiKiemTra)
+            .query(`SELECT * FROM CAUHOI WHERE MaBaiKiemTra = @OldMaBaiKiemTra`)
+
+          for (const oldQ of oldQuestionsResult.recordset) {
+            const newQResult = await pool.request()
+              .input("NewMaBaiKiemTra", newMaBaiKiemTra)
+              .input("NoiDung", oldQ.NoiDung)
+              .input("DapAnDung", oldQ.DapAnDung)
+              .input("LoaiCauHoi", oldQ.LoaiCauHoi)
+              .query(`
+                INSERT INTO CAUHOI (MaBaiKiemTra, NoiDung, DapAnDung, LoaiCauHoi)
+                VALUES (@NewMaBaiKiemTra, @NoiDung, @DapAnDung, @LoaiCauHoi);
+                SELECT SCOPE_IDENTITY() AS NewMaCauHoi;
+              `)
+            
+            const newMaCauHoi = newQResult.recordset[0].NewMaCauHoi;
+
+            const oldAnswersResult = await pool.request()
+              .input("OldMaCauHoi", oldQ.MaCauHoi)
+              .query(`SELECT * FROM DAPAN WHERE MaCauHoi = @OldMaCauHoi`)
+
+            for (const oldAns of oldAnswersResult.recordset) {
+              await pool.request()
+                .input("NewMaCauHoi", newMaCauHoi)
+                .input("NoiDung", oldAns.NoiDung)
+                .input("LaDapAnDung", oldAns.LaDapAnDung)
+                .query(`
+                  INSERT INTO DAPAN (MaCauHoi, NoiDung, LaDapAnDung)
+                  VALUES (@NewMaCauHoi, @NoiDung, @LaDapAnDung)
+                `)
+            }
+          }
         }
       }
     }
@@ -259,14 +344,14 @@ app.post("/qtv/lophoc", async (req, res) => {
 })
 
 // Tạo buổi học
-app.post("/qtv/lesson", async (req, res) => {
-  const { TenLesson, MaLopHoc, MoTa, NgayBatDau, NgayKetThuc, ThuTu } = req.body
+app.post("/qtv/buoihoc", async (req, res) => {
+  const { TenBuoiHoc, MaLopHoc, MoTa, NgayBatDau, NgayKetThuc, ThuTu } = req.body
   const pool = await poolPromise
   await pool.request()
-    .input("TenLesson", TenLesson).input("MaLopHoc", MaLopHoc)
+    .input("TenBuoiHoc", TenBuoiHoc).input("MaLopHoc", MaLopHoc)
     .input("MoTa", MoTa||"").input("NgayBatDau", NgayBatDau||null)
     .input("NgayKetThuc", NgayKetThuc||null).input("ThuTu", ThuTu||1)
-    .query(`INSERT INTO LESSON (TenLesson,MaLopHoc,MoTa,NgayBatDau,NgayKetThuc,ThuTu) VALUES (@TenLesson,@MaLopHoc,@MoTa,@NgayBatDau,@NgayKetThuc,@ThuTu)`)
+    .query(`INSERT INTO BUOIHOC (TenBuoiHoc,MaLopHoc,MoTa,NgayBatDau,NgayKetThuc,ThuTu) VALUES (@TenBuoiHoc,@MaLopHoc,@MoTa,@NgayBatDau,@NgayKetThuc,@ThuTu)`)
   res.json({ message: "Thêm buổi thành công" })
 })
 // Lấy toàn bộ bài giảng (BAIHOCKHOAHOC) kèm thông tin giáo viên và khóa học phục vụ duyệt bài
@@ -274,7 +359,7 @@ app.get("/qtv/baigiang", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.NoiDung, b.FileUrl, b.MaKhoaHoc, b.MaGiangVien, b.MaLesson,
+      SELECT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.NoiDung, b.FileUrl, b.MaKhoaHoc, b.MaGiangVien, b.MaBuoiHoc,
              n.HoTen AS TenGiangVien, k.TenKhoaHoc, k.TrinhDo AS CapDo,
              k.NgayTao AS NgayGui
       FROM BAIHOCKHOAHOC b
@@ -441,23 +526,23 @@ app.get("/course-detail/:id/classes", async (req, res) => {
           COALESCE((
             SELECT TOP 1 
               CASE 
-                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
               END
-            FROM LESSON active_ls 
-            WHERE active_ls.MaLesson = l.ActiveLessonId
+            FROM BUOIHOC active_bh 
+            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
           ), 0) AS TienDo,
-          COUNT(DISTINCT ls.MaLesson) AS SoBuoiHoc,
+          COUNT(DISTINCT ls.MaBuoiHoc) AS SoBuoiHoc,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
             WHERE sl.MaLopHoc = l.MaLopHoc
           ) AS SoLuongHocVien
         FROM LOPHOC l
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
-        LEFT JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc
+        LEFT JOIN BUOIHOC ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc, l.HoanThanh, l.TrangThai, l.SoLuongHocVien,
-                 l.ActiveLessonId, l.MaLop
+                 l.ActiveBuoiHocId, l.MaLop
       `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -475,11 +560,11 @@ app.get("/course-detail/:id/classes/:maNguoiDung", async (req, res) => {
           COALESCE((
             SELECT TOP 1 
               CASE 
-                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
               END
-            FROM LESSON active_ls 
-            WHERE active_ls.MaLesson = l.ActiveLessonId
+            FROM BUOIHOC active_bh 
+            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
           ), 0) AS TienDo,
           (
             SELECT COUNT(*) FROM SINHVIEN_LOPHOC sl
@@ -510,62 +595,62 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
 
         -- 3. Xóa bài nộp của học viên trong lớp
         DELETE FROM BAINOP 
-        WHERE MaExercise IN (
-          SELECT MaExercise FROM EXERCISE 
+        WHERE MaBaiTap IN (
+          SELECT MaBaiTap FROM BAITAP 
           WHERE MaBaiHoc IN (
-            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaLesson IN (
-              SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
+              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
             )
           )
         );
 
         -- 4. Xóa bài tập
-        DELETE FROM EXERCISE 
+        DELETE FROM BAITAP 
         WHERE MaBaiHoc IN (
-          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaLesson IN (
-            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
           )
         );
 
-        -- 5. Xóa đáp án bài kiểm tra thuộc lesson trong lớp
+        -- 5. Xóa đáp án bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM DAPAN WHERE MaCauHoi IN (
           SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
-            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
-              SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
             )
           )
         );
 
-        -- 6. Xóa câu hỏi bài kiểm tra thuộc lesson trong lớp
+        -- 6. Xóa câu hỏi bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
-            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
           )
         );
 
-        -- 7. Xóa kết quả bài kiểm tra thuộc lesson trong lớp
+        -- 7. Xóa kết quả bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
-            SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
           )
         );
 
-        -- 8. Xóa bài kiểm tra thuộc lesson trong lớp
-        DELETE FROM BAIKIEMTRA WHERE MaLesson IN (
-          SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+        -- 8. Xóa bài kiểm tra thuộc buổi học trong lớp
+        DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 9. Nullify ActiveLessonId in LOPHOC
-        UPDATE LOPHOC SET ActiveLessonId = NULL WHERE MaLopHoc = @id;
+        -- 9. Nullify ActiveBuoiHocId in LOPHOC
+        UPDATE LOPHOC SET ActiveBuoiHocId = NULL WHERE MaLopHoc = @id;
 
-        -- 10. Nullify MaLesson in BAIHOCKHOAHOC
-        UPDATE BAIHOCKHOAHOC SET MaLesson = NULL 
-        WHERE MaLesson IN (
-          SELECT MaLesson FROM LESSON WHERE MaLopHoc = @id
+        -- 10. Nullify MaBuoiHoc in BAIHOCKHOAHOC
+        UPDATE BAIHOCKHOAHOC SET MaBuoiHoc = NULL 
+        WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 11. Xóa các buổi học (LESSON)
-        DELETE FROM LESSON WHERE MaLopHoc = @id;
+        -- 11. Xóa các buổi học (BUOIHOC)
+        DELETE FROM BUOIHOC WHERE MaLopHoc = @id;
 
         -- 12. Xóa chính lớp học (LOPHOC)
         DELETE FROM LOPHOC WHERE MaLopHoc = @id;
@@ -581,7 +666,7 @@ app.put("/qtv/lophoc/:id", async (req, res) => {
     const pool = await poolPromise
     
     // Nếu chỉ truyền HoanThanh (chế độ toggle nhanh)
-    if (TenLop === undefined && HoanThanh !== undefined) {
+    if (TenLop === undefined && HoanThanh !== undefined && teachers === undefined) {
       const statusStr = HoanThanh ? "Đã hoàn thành" : "Đang diễn ra";
       await pool.request()
         .input("id", req.params.id)
@@ -595,27 +680,53 @@ app.put("/qtv/lophoc/:id", async (req, res) => {
       return res.json({ message: "Cập nhật trạng thái hoàn thành thành công" })
     }
 
-    let finalHoanThanh = HoanThanh !== undefined ? (HoanThanh ? 1 : 0) : 0;
-    let finalTrangThai = TrangThai;
-    if (TrangThai !== undefined) {
-      finalHoanThanh = (TrangThai === "Đã hoàn thành") ? 1 : 0;
-    } else if (HoanThanh !== undefined) {
-      finalTrangThai = HoanThanh ? "Đã hoàn thành" : "Đang diễn ra";
+    const fieldsToUpdate = [];
+    const updateRequest = pool.request();
+    updateRequest.input("id", req.params.id);
+
+    if (TenLop !== undefined) {
+      updateRequest.input("TenLop", TenLop);
+      fieldsToUpdate.push("TenLop = @TenLop");
+    }
+    if (LichHoc !== undefined) {
+      updateRequest.input("LichHoc", LichHoc);
+      fieldsToUpdate.push("LichHoc = @LichHoc");
+    }
+    if (SoLuongHocVien !== undefined) {
+      updateRequest.input("SoLuongHocVien", SoLuongHocVien);
+      fieldsToUpdate.push("SoLuongHocVien = @SoLuongHocVien");
+    }
+    if (MaLop !== undefined) {
+      updateRequest.input("MaLop", MaLop);
+      fieldsToUpdate.push("MaLop = @MaLop");
     }
 
-    await pool.request()
-      .input("id", req.params.id)
-      .input("TenLop", TenLop)
-      .input("LichHoc", LichHoc || "")
-      .input("SoLuongHocVien", SoLuongHocVien || 30)
-      .input("HoanThanh", finalHoanThanh)
-      .input("TrangThai", finalTrangThai || "Chưa bắt đầu")
-      .input("MaLop", MaLop || null)
-      .query(`
+    if (HoanThanh !== undefined || TrangThai !== undefined) {
+      let finalHoanThanh;
+      let finalTrangThai;
+
+      if (TrangThai !== undefined) {
+        finalTrangThai = TrangThai;
+        finalHoanThanh = (TrangThai === "Đã hoàn thành") ? 1 : 0;
+      } else {
+        finalHoanThanh = HoanThanh ? 1 : 0;
+        finalTrangThai = HoanThanh ? "Đã hoàn thành" : "Đang diễn ra";
+      }
+
+      updateRequest.input("HoanThanh", finalHoanThanh);
+      updateRequest.input("TrangThai", finalTrangThai);
+      fieldsToUpdate.push("HoanThanh = @HoanThanh");
+      fieldsToUpdate.push("TrangThai = @TrangThai");
+    }
+
+    if (fieldsToUpdate.length > 0) {
+      const query = `
         UPDATE LOPHOC 
-        SET TenLop=@TenLop, LichHoc=@LichHoc, SoLuongHocVien=@SoLuongHocVien, HoanThanh=@HoanThanh, TrangThai=@TrangThai, MaLop=COALESCE(@MaLop, MaLop)
-        WHERE MaLopHoc=@id
-      `)
+        SET ${fieldsToUpdate.join(", ")}
+        WHERE MaLopHoc = @id
+      `;
+      await updateRequest.query(query);
+    }
 
     // Cập nhật phân công giảng viên
     if (teachers !== undefined) {
@@ -662,84 +773,115 @@ app.get("/qtv/lophoc/:id/giangvien", async (req, res) => {
 });
 
 // Xóa buổi học
-app.delete("/qtv/lesson/:id", async (req, res) => {
+app.delete("/qtv/buoihoc/:id", async (req, res) => {
   try {
     const pool = await poolPromise
     await pool.request()
       .input("id", req.params.id)
-      .query(`DELETE FROM LESSON WHERE MaLesson = @id`)
+      .query(`DELETE FROM BUOIHOC WHERE MaBuoiHoc = @id`)
     res.json({ message: "Đã xóa buổi học" })
   } catch (err) { res.status(500).send(err.message) }
 })
-app.get("/classes/:id/lessons", async (req, res) => {
+app.get("/classes/:id/buoihoc", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("classId", req.params.id)
-      .query(`SELECT * FROM LESSON WHERE MaLopHoc = @classId ORDER BY ThuTu`);
+      .query(`SELECT * FROM BUOIHOC WHERE MaLopHoc = @classId ORDER BY ThuTu`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
-app.get("/lesson/:id", async (req, res) => {
+app.get("/buoihoc/:id", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
         SELECT l.*, lh.LichHoc, lh.SoLuongHocVien
-        FROM LESSON l
+        FROM BUOIHOC l
         JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
-        WHERE l.MaLesson = @id
+        WHERE l.MaBuoiHoc = @id
       `);
     res.json(result.recordset[0]);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
-app.get("/exercises/:lessonId", async (req, res) => {
+app.get("/baitap/:buoiHocId", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-      .input("lessonId", parseInt(req.params.lessonId))
-      .query(`SELECT MaExercise, Title, Type, CreatedDate FROM EXERCISE WHERE MaLesson = @lessonId`);
+      .input("buoiHocId", parseInt(req.params.buoiHocId))
+      .query(`
+        SELECT e.MaBaiTap, e.Title, e.Type, e.CreatedDate 
+        FROM BAITAP e
+        JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
+        WHERE bh.MaBuoiHoc = @buoiHocId
+      `);
     res.json(result.recordset);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
-app.get("/exercise/:id", async (req, res) => {
+app.get("/baitap/:id", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("id", parseInt(req.params.id))
-      .query(`SELECT MaExercise, Title, Type, CreatedDate, Content, Questions, Vocabulary FROM EXERCISE WHERE MaExercise = @id`);
+      .query(`SELECT MaBaiTap, Title, Type, CreatedDate, Content, Questions, Vocabulary FROM BAITAP WHERE MaBaiTap = @id`);
     res.json(result.recordset[0]);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
-app.post("/exercises", async (req, res) => {
+app.post("/baitap", async (req, res) => {
   try {
-    const { Title, Type, Content, Questions, CreatedDate, MaLesson } = req.body;
+    const { Title, Type, Content, Questions, CreatedDate, MaBuoiHoc, MaBaiHoc } = req.body;
     const pool = await poolPromise;
+    let targetMaBaiHoc = MaBaiHoc;
+
+    if (!targetMaBaiHoc && MaBuoiHoc) {
+      // Tìm bài giảng đầu tiên của buổi học này để gán
+      const bhResult = await pool.request()
+        .input("buoiHocId", MaBuoiHoc)
+        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+      if (bhResult.recordset.length > 0) {
+        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+      } else {
+        // Tạo bài giảng rỗng tạm thời cho buổi học
+        const insertBh = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`
+            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
+            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+          `);
+        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+      }
+    }
+
+    if (!targetMaBaiHoc) {
+      return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
+    }
+
     await pool.request()
       .input("Title", Title).input("Type", Type)
       .input("Content", Content || "").input("Questions", Questions || "")
-      .input("CreatedDate", CreatedDate).input("MaLesson", MaLesson)
-      .query(`INSERT INTO EXERCISE (Title, Type, Content, Questions, CreatedDate, MaLesson) VALUES (@Title, @Type, @Content, @Questions, @CreatedDate, @MaLesson)`);
+      .input("CreatedDate", CreatedDate).input("MaBaiHoc", targetMaBaiHoc)
+      .query(`INSERT INTO BAITAP (Title, Type, Content, Questions, CreatedDate, MaBaiHoc) VALUES (@Title, @Type, @Content, @Questions, @CreatedDate, @MaBaiHoc)`);
     res.json({ message: "Thêm bài tập thành công" });
-  } catch (err) { res.status(500).send("Lỗi server"); }
+  } catch (err) { res.status(500).send("Lỗi server: " + err.message); }
 });
-app.put("/exercise/:id", async (req, res) => {
+app.put("/baitap/:id", async (req, res) => {
   try {
     const { Questions } = req.body;
     const pool = await poolPromise;
     await pool.request()
       .input("id", parseInt(req.params.id))
       .input("Questions", Questions)
-      .query(`UPDATE EXERCISE SET Questions = @Questions WHERE MaExercise = @id`);
+      .query(`UPDATE BAITAP SET Questions = @Questions WHERE MaBaiTap = @id`);
     res.json({ message: "Cập nhật thành công" });
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
-app.delete("/exercises/:id", async (req, res) => {
+app.delete("/baitap/:id", async (req, res) => {
   try {
     const pool = await poolPromise;
     const id = parseInt(req.params.id);
@@ -747,12 +889,12 @@ app.delete("/exercises/:id", async (req, res) => {
     // Xóa bài nộp liên quan trước (foreign key)
     await pool.request()
       .input("id", id)
-      .query(`DELETE FROM BAINOP WHERE MaExercise = @id`);
+      .query(`DELETE FROM BAINOP WHERE MaBaiTap = @id`);
 
     // Sau đó mới xóa exercise
     await pool.request()
       .input("id", id)
-      .query(`DELETE FROM EXERCISE WHERE MaExercise = @id`);
+      .query(`DELETE FROM BAITAP WHERE MaBaiTap = @id`);
 
     res.json({ message: "Xóa bài tập thành công" });
   } catch (err) {
@@ -771,19 +913,19 @@ app.get("/baigiang/detail/:id", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-app.get("/baigiang/:lessonId", async (req, res) => {
+app.get("/baigiang/:buoiHocId", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-      .input("lessonId", req.params.lessonId)
-      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu FROM BAIHOCKHOAHOC WHERE MaLesson = @lessonId ORDER BY ThuTu`);
+      .input("buoiHocId", req.params.buoiHocId)
+      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
 
 app.post("/baigiang", async (req, res) => {
   try {
-    const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaLesson } = req.body;
+    const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc } = req.body;
     const pool = await poolPromise;
     await pool.request()
       .input("TieuDe", TieuDe)
@@ -795,9 +937,9 @@ app.post("/baigiang", async (req, res) => {
       .input("ThuTu", ThuTu || 1)
       .input("MaKhoaHoc", MaKhoaHoc)
       .input("MaGiangVien", MaGiangVien)
-      .input("MaLesson", MaLesson)
-      .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaLesson) 
-              VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaLesson)`);
+      .input("MaBuoiHoc", MaBuoiHoc)
+      .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc) 
+              VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc)`);
     res.json({ message: "Thêm bài giảng thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -821,29 +963,29 @@ app.put("/baigiang/:id/status", async (req, res) => {
     res.json({ message: "Cập nhật thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
-// ── Lấy bình luận theo LESSON (buổi học) ──
+// ── Lấy bình luận theo BUOIHOC (buổi học) ──
 // Thêm route này vào backend, đặt TRƯỚC route /binhluan/:maBaiHoc
-// ── Lấy bình luận theo LESSON ──
-app.get("/binhluan/lesson/:maLesson", async (req, res) => {
+// ── Lấy bình luận theo BUOIHOC ──
+app.get("/binhluan/buoihoc/:maBuoiHoc", async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Tự convert: nếu truyền vào là MaBaiHoc thì tìm MaLesson tương ứng
-    const lessonResult = await pool.request()
-      .input("id", req.params.maLesson)
+    // Tự convert: nếu truyền vào là MaBaiHoc thì tìm MaBuoiHoc tương ứng
+    const buoiHocResult = await pool.request()
+      .input("id", req.params.maBuoiHoc)
       .query(`
-        SELECT DISTINCT MaLesson FROM BAIHOCKHOAHOC
-        WHERE MaLesson = @id OR MaBaiHoc = @id
+        SELECT DISTINCT MaBuoiHoc FROM BAIHOCKHOAHOC
+        WHERE MaBuoiHoc = @id OR MaBaiHoc = @id
       `);
 
-    if (lessonResult.recordset.length === 0) {
+    if (buoiHocResult.recordset.length === 0) {
       return res.json([]);
     }
 
-    const maLesson = lessonResult.recordset[0].MaLesson;
+    const maBuoiHoc = buoiHocResult.recordset[0].MaBuoiHoc;
 
     const result = await pool.request()
-      .input("id", maLesson)
+      .input("id", maBuoiHoc)
       .query(`
         SELECT 
           b.MaBinhLuan, b.NoiDung, b.ThoiGian,
@@ -857,7 +999,7 @@ app.get("/binhluan/lesson/:maLesson", async (req, res) => {
         JOIN BAIHOCKHOAHOC bg ON b.MaBaiHoc = bg.MaBaiHoc
         JOIN NGUOIDUNG n ON b.MaNguoiDung = n.MaNguoiDung
         LEFT JOIN GIANGVIEN gv ON b.MaNguoiDung = gv.MaNguoiDung
-        WHERE bg.MaLesson = @id
+        WHERE bg.MaBuoiHoc = @id
         ORDER BY b.ThoiGian ASC
       `);
 
@@ -865,36 +1007,36 @@ app.get("/binhluan/lesson/:maLesson", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-// ── Gửi bình luận theo LESSON ──
-app.post("/binhluan/lesson", async (req, res) => {
+// ── Gửi bình luận theo BUOIHOC ──
+app.post("/binhluan/buoihoc", async (req, res) => {
   try {
-    const { MaLesson, MaNguoiDung, NoiDung, MaBinhLuanCha } = req.body;
+    const { MaBuoiHoc, MaNguoiDung, NoiDung, MaBinhLuanCha } = req.body;
     const pool = await poolPromise;
 
     // Convert nếu truyền vào là MaBaiHoc
-    const lessonResult = await pool.request()
-      .input("id", MaLesson)
+    const buoiHocResult = await pool.request()
+      .input("id", MaBuoiHoc)
       .query(`
-        SELECT DISTINCT MaLesson FROM BAIHOCKHOAHOC
-        WHERE MaLesson = @id OR MaBaiHoc = @id
+        SELECT DISTINCT MaBuoiHoc FROM BAIHOCKHOAHOC
+        WHERE MaBuoiHoc = @id OR MaBaiHoc = @id
       `);
 
-    if (lessonResult.recordset.length === 0) {
-      return res.status(400).json({ message: "Không tìm thấy lesson" });
+    if (buoiHocResult.recordset.length === 0) {
+      return res.status(400).json({ message: "Không tìm thấy buổi học" });
     }
 
-    const maLessonReal = lessonResult.recordset[0].MaLesson;
+    const maBuoiHocReal = buoiHocResult.recordset[0].MaBuoiHoc;
 
     const bgResult = await pool.request()
-      .input("MaLesson", maLessonReal)
+      .input("MaBuoiHoc", maBuoiHocReal)
       .query(`
         SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC
-        WHERE MaLesson = @MaLesson
+        WHERE MaBuoiHoc = @MaBuoiHoc
         ORDER BY MaBaiHoc ASC
       `);
 
     if (bgResult.recordset.length === 0) {
-      return res.status(400).json({ message: "Lesson chưa có bài giảng nào" });
+      return res.status(400).json({ message: "Buổi học chưa có bài giảng nào" });
     }
 
     const maBaiHoc = bgResult.recordset[0].MaBaiHoc;
@@ -962,7 +1104,7 @@ app.delete("/binhluan/:id", async (req, res) => {
 });
 
 /* ===== TÀI LIỆU ===== */
-// ⚠️ detail phải đặt TRƯỚC :lessonId
+// ⚠️ detail phải đặt TRƯỚC :buoiHocId
 app.get("/tailieu/detail/:id", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -974,12 +1116,12 @@ app.get("/tailieu/detail/:id", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-app.get("/tailieu/:lessonId", async (req, res) => {
+app.get("/tailieu/:buoiHocId", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-      .input("lessonId", req.params.lessonId)
-      .query(`SELECT MaTaiLieu, TieuDe, MoTa, NgayCapNhat FROM TAILIEU WHERE MaLesson = @lessonId ORDER BY NgayCapNhat DESC`);
+      .input("buoiHocId", req.params.buoiHocId)
+      .query(`SELECT MaTaiLieu, TieuDe, MoTa, NgayCapNhat FROM TAILIEU WHERE MaBuoiHoc = @buoiHocId ORDER BY NgayCapNhat DESC`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -996,15 +1138,15 @@ app.delete("/tailieu/:id", async (req, res) => {
 
 app.post("/tailieu", async (req, res) => {
   try {
-    const { TieuDe, MoTa, MaLesson, NoiDung, FileUrl } = req.body;
+    const { TieuDe, MoTa, MaBuoiHoc, NoiDung, FileUrl } = req.body;
     const pool = await poolPromise;
     await pool.request()
       .input("TieuDe", TieuDe)
       .input("MoTa", MoTa || "")
-      .input("MaLesson", MaLesson)
+      .input("MaBuoiHoc", MaBuoiHoc)
       .input("NoiDung", NoiDung || "")
       .input("FileUrl", FileUrl || "")
-      .query(`INSERT INTO TAILIEU (TieuDe, MoTa, MaLesson, NoiDung, FileUrl) VALUES (@TieuDe, @MoTa, @MaLesson, @NoiDung, @FileUrl)`);
+      .query(`INSERT INTO TAILIEU (TieuDe, MoTa, MaBuoiHoc, NoiDung, FileUrl) VALUES (@TieuDe, @MoTa, @MaBuoiHoc, @NoiDung, @FileUrl)`);
     res.json({ message: "Thêm tài liệu thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -1098,11 +1240,11 @@ app.get("/classes/:id/info", async (req, res) => {
           COALESCE((
             SELECT TOP 1 
               CASE 
-                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
               END
-            FROM LESSON active_ls 
-            WHERE active_ls.MaLesson = l.ActiveLessonId
+            FROM BUOIHOC active_bh 
+            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
           ), 0) AS TienDo,
           l.MaLop, kc.MoTa,
           k.TenKhoaHoc,
@@ -1114,7 +1256,7 @@ app.get("/classes/:id/info", async (req, res) => {
              WHERE pc.MaLopHoc = l.MaLopHoc),
             N'Chưa phân công'
           ) AS TenGiangVien,
-          l.ActiveLessonId AS ActiveLessonId
+          l.ActiveBuoiHocId AS ActiveBuoiHocId
         FROM LOPHOC l
         LEFT JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
         LEFT JOIN KHOAHOC k ON kc.MaKhoaHoc = k.MaKhoaHoc
@@ -1123,7 +1265,7 @@ app.get("/classes/:id/info", async (req, res) => {
     res.json(result.recordset[0] || null)
   } catch (err) { res.status(500).send(err.message) }
 })
-app.get("/lesson/:id/students", async (req, res) => {
+app.get("/buoihoc/:id/students", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -1132,7 +1274,7 @@ app.get("/lesson/:id/students", async (req, res) => {
         SELECT 
           s.MaSinhVien,
           n.HoTen,
-          -- Tiến độ = số bài kiểm tra đã làm / tổng số bài kiểm tra trong lesson
+          -- Tiến độ = số bài kiểm tra đã làm / tổng số bài kiểm tra trong buổi học
           CASE 
             WHEN total.TongBai = 0 THEN 0
             ELSE ROUND(CAST(COUNT(DISTINCT k.MaKetQua) AS FLOAT) / total.TongBai * 100, 0)
@@ -1145,20 +1287,18 @@ app.get("/lesson/:id/students", async (req, res) => {
           COUNT(DISTINCT k.MaKetQua) AS SoBaiDaLam
         FROM SINHVIEN s
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
-        -- Tổng số bài kiểm tra trong lesson
+        -- Tổng số bài kiểm tra trong buổi học
         CROSS JOIN (
           SELECT COUNT(bkt.MaBaiKiemTra) AS TongBai
           FROM BAIKIEMTRA bkt
-          JOIN BAIHOCKHOAHOC bhk ON bkt.MaBaiHoc = bhk.MaBaiHoc
-          WHERE bhk.MaLesson = @id
+          WHERE bkt.MaBuoiHoc = @id
         ) total
         -- Bài kiểm tra sinh viên đã làm trong lesson này
         LEFT JOIN KETQUABAIKIEMTRA k ON n.MaNguoiDung = k.MaSinhVien
           AND k.MaBaiKiemTra IN (
             SELECT bkt.MaBaiKiemTra 
             FROM BAIKIEMTRA bkt
-            JOIN BAIHOCKHOAHOC bhk ON bkt.MaBaiHoc = bhk.MaBaiHoc
-            WHERE bhk.MaLesson = @id
+            WHERE bkt.MaBuoiHoc = @id
           )
         GROUP BY s.MaSinhVien, n.HoTen, total.TongBai
         ORDER BY s.MaSinhVien
@@ -1204,11 +1344,11 @@ app.get("/students/:maSinhVien/tiendo", async (req, res) => {
         CROSS JOIN (
           SELECT COUNT(bhk.MaBaiHoc) AS TongBai
           FROM BAIHOCKHOAHOC bhk
-          WHERE bhk.MaLesson = 1  -- chỉ tính lesson 1
+          WHERE bhk.MaBuoiHoc = 1  -- chỉ tính buổi học 1
         ) total
         LEFT JOIN TIENDOHOCTAP t ON n.MaNguoiDung = t.MaSinhVien
           AND t.MaBaiHoc IN (
-            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaLesson = 1
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = 1
           )
         WHERE s.MaSinhVien = @maSinhVien
         GROUP BY s.MaSinhVien, total.TongBai
@@ -1216,12 +1356,12 @@ app.get("/students/:maSinhVien/tiendo", async (req, res) => {
     res.json(result.recordset[0] || { TienDo: 0 });
   } catch (err) { res.status(500).send(err.message); }
 });
-app.get("/students/:maSinhVien/tiendo/:lessonId", async (req, res) => {
+app.get("/students/:maSinhVien/tiendo/:buoiHocId", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("maSinhVien", req.params.maSinhVien)
-      .input("lessonId", req.params.lessonId)
+      .input("buoiHocId", req.params.buoiHocId)
       .query(`
         SELECT
           CASE
@@ -1230,15 +1370,17 @@ app.get("/students/:maSinhVien/tiendo/:lessonId", async (req, res) => {
           END AS TienDo
         FROM (
           SELECT COUNT(*) AS TongBai
-          FROM EXERCISE
-          WHERE MaLesson = @lessonId
+          FROM BAITAP e
+          JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
+          WHERE bh.MaBuoiHoc = @buoiHocId
         ) total
         CROSS JOIN (
-          SELECT COUNT(DISTINCT bn.MaExercise) AS SoNop
+          SELECT COUNT(DISTINCT bn.MaBaiTap) AS SoNop
           FROM BAINOP bn
-          JOIN EXERCISE e ON bn.MaExercise = e.MaExercise
+          JOIN BAITAP e ON bn.MaBaiTap = e.MaBaiTap
+          JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
           JOIN SINHVIEN sv ON bn.MaSinhVien = sv.MaNguoiDung
-          WHERE e.MaLesson = @lessonId
+          WHERE bh.MaBuoiHoc = @buoiHocId
           AND sv.MaSinhVien = @maSinhVien
         ) da_nop
       `);
@@ -1269,12 +1411,12 @@ app.put("/doi-mat-khau", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 // Lấy danh sách bài nộp theo exercise
-app.get("/bainop/exercise/:maExercise", async (req, res) => {
+app.get("/bainop/baitap/:maBaiTap", async (req, res) => {
   try {
     const pool = await poolPromise;
-    const maExercise = parseInt(req.params.maExercise.trim());
+    const maBaiTap = parseInt(req.params.maBaiTap.trim());
     const result = await pool.request()
-      .input("maExercise", maExercise)
+      .input("maBaiTap", maBaiTap)
       .query(`
         SELECT 
           b.MaBaiNop, b.NoiDung, b.NgayNop,
@@ -1283,7 +1425,7 @@ app.get("/bainop/exercise/:maExercise", async (req, res) => {
         FROM BAINOP b
         JOIN NGUOIDUNG n ON b.MaSinhVien = n.MaNguoiDung
         JOIN SINHVIEN s ON n.MaNguoiDung = s.MaNguoiDung
-        WHERE b.MaExercise = @maExercise
+        WHERE b.MaBaiTap = @maBaiTap
         ORDER BY b.NgayNop DESC
       `);
     res.json(result.recordset);
@@ -1298,7 +1440,7 @@ app.get("/bainop/:maBaiNop", async (req, res) => {
       .input("maBaiNop", req.params.maBaiNop)
       .query(`
         SELECT 
-          b.MaBaiNop, b.MaExercise, b.NoiDung,
+          b.MaBaiNop, b.MaBaiTap, b.NoiDung,
           b.NgayNop, b.Diem, b.NhanXet, b.TrangThai,
           s.MaSinhVien, n.HoTen
         FROM BAINOP b
@@ -1328,32 +1470,32 @@ app.put("/bainop/:maBaiNop/cham", async (req, res) => {
 // Nộp bài
 app.post("/bainop", async (req, res) => {
   try {
-    const { MaExercise, MaSinhVien, NoiDung, Diem, TrangThai } = req.body  // ← thêm Diem, TrangThai
+    const { MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai } = req.body  // ← thêm Diem, TrangThai
     const pool = await poolPromise
     const check = await pool.request()
-      .input("MaExercise", MaExercise).input("MaSinhVien", MaSinhVien)
-      .query(`SELECT * FROM BAINOP WHERE MaExercise=@MaExercise AND MaSinhVien=@MaSinhVien`)
+      .input("MaBaiTap", MaBaiTap).input("MaSinhVien", MaSinhVien)
+      .query(`SELECT * FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`)
     if (check.recordset.length > 0)
       return res.json({ message: "Đã nộp bài này rồi" })
     await pool.request()
-      .input("MaExercise", MaExercise).input("MaSinhVien", MaSinhVien)
+      .input("MaBaiTap", MaBaiTap).input("MaSinhVien", MaSinhVien)
       .input("NoiDung", NoiDung || "")
       .input("Diem", Diem ?? null)                          // ← thêm
       .input("TrangThai", TrangThai || "Chờ chấm")          // ← thêm
-      .query(`INSERT INTO BAINOP (MaExercise, MaSinhVien, NoiDung, Diem, TrangThai)
-              VALUES (@MaExercise, @MaSinhVien, @NoiDung, @Diem, @TrangThai)`)
+      .query(`INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai)
+              VALUES (@MaBaiTap, @MaSinhVien, @NoiDung, @Diem, @TrangThai)`)
     res.json({ message: "Nộp bài thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
 app.post("/bainop/tracnghiem", async (req, res) => {
   try {
-    const { MaExercise, MaSinhVien, DapAnChon } = req.body;
+    const { MaBaiTap, MaSinhVien, DapAnChon } = req.body;
     const pool = await poolPromise;
 
-    // Lấy đáp án đúng từ EXERCISE
+    // Lấy đáp án đúng từ BAITAP
     const exResult = await pool.request()
-      .input("MaExercise", MaExercise)
-      .query(`SELECT Questions FROM EXERCISE WHERE MaExercise = @MaExercise`);
+      .input("MaBaiTap", MaBaiTap)
+      .query(`SELECT Questions FROM BAITAP WHERE MaBaiTap = @MaBaiTap`);
 
     const questions = exResult.recordset[0]?.Questions || "";
 
@@ -1369,21 +1511,21 @@ app.post("/bainop/tracnghiem", async (req, res) => {
 
     // Kiểm tra đã nộp chưa
     const check = await pool.request()
-      .input("MaExercise", MaExercise)
+      .input("MaBaiTap", MaBaiTap)
       .input("MaSinhVien", MaSinhVien)
-      .query(`SELECT * FROM BAINOP WHERE MaExercise=@MaExercise AND MaSinhVien=@MaSinhVien`);
+      .query(`SELECT * FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
 
     if (check.recordset.length > 0)
       return res.json({ message: "Đã nộp bài này rồi", Diem: check.recordset[0].Diem });
 
     // Lưu kết quả
     await pool.request()
-      .input("MaExercise", MaExercise)
+      .input("MaBaiTap", MaBaiTap)
       .input("MaSinhVien", MaSinhVien)
       .input("NoiDung", `Đáp án chọn: ${DapAnChon}`)
       .input("Diem", diem)
-      .query(`INSERT INTO BAINOP (MaExercise, MaSinhVien, NoiDung, Diem, TrangThai)
-              VALUES (@MaExercise, @MaSinhVien, @NoiDung, @Diem, N'Đã chấm')`);
+      .query(`INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai)
+              VALUES (@MaBaiTap, @MaSinhVien, @NoiDung, @Diem, N'Đã chấm')`);
 
     res.json({ message: "Nộp bài thành công", Diem: diem, DapAnDung: dapAnDung });
   } catch (err) { res.status(500).send(err.message); }
@@ -1473,16 +1615,42 @@ app.put("/admin/khoahoc/:id/duyet", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-// ── POST /exercises/create ────────────────────────────────────────────────
-app.post("/exercises/create", async (req, res) => {
+// ── POST /baitap/create ────────────────────────────────────────────────
+app.post("/baitap/create", async (req, res) => {
   try {
     const {
       Title, Type, Content, Questions,
-      Vocabulary, CreatedDate, MaLesson,
+      Vocabulary, CreatedDate, MaBuoiHoc, MaBaiHoc,
       AudioUrl, ShowAnswer
     } = req.body;
 
     const pool = await poolPromise;
+    let targetMaBaiHoc = MaBaiHoc;
+
+    if (!targetMaBaiHoc && MaBuoiHoc) {
+      // Tìm bài giảng đầu tiên của buổi học này để gán
+      const bhResult = await pool.request()
+        .input("buoiHocId", MaBuoiHoc)
+        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+      if (bhResult.recordset.length > 0) {
+        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+      } else {
+        // Tạo bài giảng rỗng tạm thời cho buổi học
+        const insertBh = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`
+            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
+            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+          `);
+        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+      }
+    }
+
+    if (!targetMaBaiHoc) {
+      return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
+    }
+
     await pool.request()
       .input("Title",       Title)
       .input("Type",        Type)
@@ -1490,14 +1658,14 @@ app.post("/exercises/create", async (req, res) => {
       .input("Questions",   Questions   || "")
       .input("Vocabulary",  Vocabulary  || "")
       .input("CreatedDate", CreatedDate)
-      .input("MaLesson",    MaLesson)
+      .input("MaBaiHoc",    targetMaBaiHoc)
       .input("AudioUrl",    AudioUrl    || "")
       .input("ShowAnswer",  ShowAnswer  ? 1 : 0)
       .query(`
-        INSERT INTO EXERCISE
-          (Title, Type, Content, Questions, Vocabulary, CreatedDate, MaLesson, AudioUrl, ShowAnswer)
+        INSERT INTO BAITAP
+          (Title, Type, Content, Questions, Vocabulary, CreatedDate, MaBaiHoc, AudioUrl, ShowAnswer)
         VALUES
-          (@Title, @Type, @Content, @Questions, @Vocabulary, @CreatedDate, @MaLesson, @AudioUrl, @ShowAnswer)
+          (@Title, @Type, @Content, @Questions, @Vocabulary, @CreatedDate, @MaBaiHoc, @AudioUrl, @ShowAnswer)
       `);
 
     res.json({ message: "Thêm bài tập thành công" });
@@ -1522,6 +1690,19 @@ app.get("/dangky/pending", async (req, res) => {
       ORDER BY d.NgayDangKy DESC
     `)
     res.json(result.recordset)
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// Cập nhật trạng thái đăng ký học viên (Từ chối, Duyệt,...)
+app.put("/dangky/:id/status", async (req, res) => {
+  try {
+    const { TrangThai } = req.body
+    const pool = await poolPromise
+    await pool.request()
+      .input("id", req.params.id)
+      .input("TrangThai", TrangThai)
+      .query(`UPDATE DANGKYKHOAHOC SET TrangThai=@TrangThai WHERE MaDangKy=@id`)
+    res.json({ message: "Cập nhật trạng thái đăng ký thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
 
@@ -1589,6 +1770,23 @@ app.post("/qtv/lophoc/:id/ghidanh", async (req, res) => {
       .input("MaSinhVien", MaSinhVien)
       .query(`INSERT INTO SINHVIEN_LOPHOC (MaLopHoc, MaSinhVien, NgayGhiDanh, TrangThai)
               VALUES (@MaLopHoc, @MaSinhVien, GETDATE(), N'Đang học')`)
+
+    // Tự động cập nhật trạng thái đăng ký khóa học tương ứng thành 'Đã ghi danh'
+    await pool.request()
+      .input("MaLopHoc", req.params.id)
+      .input("MaSinhVien", MaSinhVien)
+      .query(`
+        UPDATE DANGKYKHOAHOC
+        SET TrangThai = N'Đã ghi danh'
+        WHERE MaSinhVien = @MaSinhVien 
+          AND MaKhoaHoc IN (
+              SELECT khct.MaKhoaHoc 
+              FROM LOPHOC lh
+              JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+              WHERE lh.MaLopHoc = @MaLopHoc
+          )
+      `)
+
     res.json({ message: "Đã ghi danh thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -1601,6 +1799,23 @@ app.delete("/qtv/lophoc/:id/ghidanh/:maSinhVien", async (req, res) => {
       .input("MaLopHoc", req.params.id)
       .input("MaSinhVien", req.params.maSinhVien)
       .query(`DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
+
+    // Tự động cập nhật lại trạng thái đăng ký khóa học tương ứng thành 'Chờ ghi danh'
+    await pool.request()
+      .input("MaLopHoc", req.params.id)
+      .input("MaSinhVien", req.params.maSinhVien)
+      .query(`
+        UPDATE DANGKYKHOAHOC
+        SET TrangThai = N'Chờ ghi danh'
+        WHERE MaSinhVien = @MaSinhVien 
+          AND MaKhoaHoc IN (
+              SELECT khct.MaKhoaHoc 
+              FROM LOPHOC lh
+              JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+              WHERE lh.MaLopHoc = @MaLopHoc
+          )
+      `)
+
     res.json({ message: "Đã hủy ghi danh" })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -1832,11 +2047,11 @@ app.get("/teacher/classes/:maNguoiDung", async (req, res) => {
           COALESCE((
             SELECT TOP 1 
               CASE 
-                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
               END
-            FROM LESSON active_ls 
-            WHERE active_ls.MaLesson = l.ActiveLessonId
+            FROM BUOIHOC active_bh 
+            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
           ), 0) AS TienDo,
           k.TenKhoaHoc
         FROM LOPHOC l
@@ -1851,7 +2066,7 @@ app.get("/teacher/classes/:maNguoiDung", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 // Kết quả học tập của lesson — chỉ sinh viên trong lớp GV phụ trách
-app.get("/lesson/:id/students/:maNguoiDung", async (req, res) => {
+app.get("/buoihoc/:id/students/:maNguoiDung", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -1861,7 +2076,7 @@ app.get("/lesson/:id/students/:maNguoiDung", async (req, res) => {
         SELECT 
           s.MaSinhVien,
           n.HoTen,
-          -- Tiến độ = số bài tập (EXERCISE) đã nộp / tổng số bài tập trong lesson
+          -- Tiến độ = số bài tập (BAITAP) đã nộp / tổng số bài tập trong buổi học
           CASE 
             WHEN total.TongBai = 0 THEN 0
             ELSE ROUND(CAST(COUNT(DISTINCT b.MaBaiNop) AS FLOAT) / total.TongBai * 100, 0)
@@ -1878,19 +2093,23 @@ app.get("/lesson/:id/students/:maNguoiDung", async (req, res) => {
         JOIN KHOAHOC kh ON d.MaKhoaHoc = kh.MaKhoaHoc
         JOIN KHOAHOCCHITIET kc ON kh.MaKhoaHoc = kc.MaKhoaHoc
         JOIN LOPHOC l ON kc.MaLop = l.MaLop
-        JOIN LESSON ls ON ls.MaLopHoc = l.MaLopHoc AND ls.MaLesson = @id
+        JOIN BUOIHOC ls ON ls.MaLopHoc = l.MaLopHoc AND ls.MaBuoiHoc = @id
         JOIN PHANCONGGIANGVIEN pc ON l.MaLopHoc = pc.MaLopHoc
         JOIN GIANGVIEN g ON pc.MaGiangVien = g.MaGiangVien
-        -- Tổng số bài tập trong lesson
+        -- Tổng số bài tập trong buổi học
         CROSS JOIN (
-          SELECT COUNT(MaExercise) AS TongBai
-          FROM EXERCISE
-          WHERE MaLesson = @id
+          SELECT COUNT(e.MaBaiTap) AS TongBai
+          FROM BAITAP e
+          JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
+          WHERE bh.MaBuoiHoc = @id
         ) total
         -- Bài tập sinh viên đã nộp trong lesson này
         LEFT JOIN BAINOP b ON b.MaSinhVien = n.MaNguoiDung
-          AND b.MaExercise IN (
-            SELECT MaExercise FROM EXERCISE WHERE MaLesson = @id
+          AND b.MaBaiTap IN (
+            SELECT e.MaBaiTap 
+            FROM BAITAP e
+            JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
+            WHERE bh.MaBuoiHoc = @id
           )
         WHERE g.MaNguoiDung = @maNguoiDung
         GROUP BY s.MaSinhVien, n.HoTen, total.TongBai
@@ -1928,40 +2147,40 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
 
         -- 3. Xóa bài nộp học viên
         DELETE FROM BAINOP 
-        WHERE MaExercise IN (
-          SELECT e.MaExercise 
-          FROM EXERCISE e 
+        WHERE MaBaiTap IN (
+          SELECT e.MaBaiTap 
+          FROM BAITAP e 
           WHERE e.MaBaiHoc IN (
             SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
           )
         );
 
         -- 4. Xóa bài tập
-        DELETE FROM EXERCISE 
+        DELETE FROM BAITAP 
         WHERE MaBaiHoc IN (
           SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
         );
 
-        -- 5. Nullify ActiveLessonId in LOPHOC
+        -- 5. Nullify ActiveBuoiHocId in LOPHOC
         UPDATE LOPHOC 
-        SET ActiveLessonId = NULL 
+        SET ActiveBuoiHocId = NULL 
         WHERE MaLop IN (
           SELECT MaLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id
         );
 
-        -- 6. Nullify MaLesson in BAIHOCKHOAHOC
+        -- 6. Nullify MaBuoiHoc in BAIHOCKHOAHOC
         UPDATE BAIHOCKHOAHOC 
-        SET MaLesson = NULL 
-        WHERE MaLesson IN (
-          SELECT ls.MaLesson 
-          FROM LESSON ls 
+        SET MaBuoiHoc = NULL 
+        WHERE MaBuoiHoc IN (
+          SELECT ls.MaBuoiHoc 
+          FROM BUOIHOC ls 
           JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc 
           JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
           WHERE kc.MaKhoaHoc = @id
         );
 
-        -- 7. Xóa các buổi học (LESSON)
-        DELETE FROM LESSON 
+        -- 7. Xóa các buổi học (BUOIHOC)
+        DELETE FROM BUOIHOC 
         WHERE MaLopHoc IN (
           SELECT l.MaLopHoc 
           FROM LOPHOC l
@@ -1978,8 +2197,8 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
         -- 10. Xóa các bảng liên quan đến bài thi/bài học trong khóa học
         DELETE FROM DAPAN WHERE MaCauHoi IN (
           SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
-            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
-              SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
                 SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
               )
             )
@@ -1987,23 +2206,23 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
         );
 
         DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
-            SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
               SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
             )
           )
         );
 
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaLesson IN (
-            SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
               SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
             )
           )
         );
 
-        DELETE FROM BAIKIEMTRA WHERE MaLesson IN (
-          SELECT MaLesson FROM LESSON WHERE MaLopHoc IN (
+        DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
             SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
           )
         );
@@ -2049,9 +2268,10 @@ app.get("/lophoc/:maLopHoc/tiendo", async (req, res) => {
           END AS TienDo
         FROM LOPHOC lh
         CROSS JOIN (
-          SELECT COUNT(e.MaExercise) AS TongBai
-          FROM EXERCISE e
-          JOIN LESSON l ON e.MaLesson = l.MaLesson
+          SELECT COUNT(e.MaBaiTap) AS TongBai
+          FROM BAITAP e
+          JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
+          JOIN BUOIHOC l ON bh.MaBuoiHoc = l.MaBuoiHoc
           WHERE l.MaLopHoc = @maLopHoc
         ) total
         CROSS JOIN (
@@ -2059,9 +2279,10 @@ app.get("/lophoc/:maLopHoc/tiendo", async (req, res) => {
           FROM SINHVIEN_LOPHOC sl
           WHERE sl.MaLopHoc = @maLopHoc
         ) sv
-        LEFT JOIN LESSON l ON l.MaLopHoc = lh.MaLopHoc
-        LEFT JOIN EXERCISE e ON e.MaLesson = l.MaLesson
-        LEFT JOIN BAINOP b ON b.MaExercise = e.MaExercise
+        LEFT JOIN BUOIHOC l ON l.MaLopHoc = lh.MaLopHoc
+        LEFT JOIN BAIHOCKHOAHOC bh ON bh.MaBuoiHoc = l.MaBuoiHoc
+        LEFT JOIN BAITAP e ON e.MaBaiHoc = bh.MaBaiHoc
+        LEFT JOIN BAINOP b ON b.MaBaiTap = e.MaBaiTap
         WHERE lh.MaLopHoc = @maLopHoc
         GROUP BY total.TongBai, sv.SoSinhVien
       `);
@@ -2185,30 +2406,30 @@ app.get("/baocao/diem-all", async (req, res) => {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        b.MaBaiNop, b.MaSinhVien, b.MaExercise, b.Diem, b.NgayNop
+        b.MaBaiNop, b.MaSinhVien, b.MaBaiTap, b.Diem, b.NgayNop
       FROM BAINOP b
     `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
 })
 
-// Cập nhật baitap-headers để kèm tên lesson, ThuTu và MaLesson
+// Cập nhật baitap-headers để kèm tên buổi học, ThuTu và MaBuoiHoc
 app.get("/baocao/baitap-headers", async (req, res) => {
   try {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        e.MaExercise, e.Title AS TenBai,
-        l.TenLesson AS TenLesson,
+        e.MaBaiTap, e.Title AS TenBai,
+        l.TenBuoiHoc AS TenBuoiHoc,
         l.ThuTu AS ThuTu,
-        l.MaLesson AS MaLesson,
+        l.MaBuoiHoc AS MaBuoiHoc,
         l.MaLopHoc AS MaLopHoc,
         lh.TenLop AS TenLop
-      FROM EXERCISE e
+      FROM BAITAP e
       LEFT JOIN BAIHOCKHOAHOC b ON e.MaBaiHoc = b.MaBaiHoc
-      LEFT JOIN LESSON l ON b.MaLesson = l.MaLesson
+      LEFT JOIN BUOIHOC l ON b.MaBuoiHoc = l.MaBuoiHoc
       LEFT JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
-      ORDER BY e.MaExercise
+      ORDER BY e.MaBaiTap
     `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -2251,7 +2472,7 @@ app.get("/baocao/hocvien", async (req, res) => {
     `)
 
     const diemResult = await pool.request().query(`
-      SELECT b.MaSinhVien, b.MaExercise, b.Diem
+      SELECT b.MaSinhVien, b.MaBaiTap, b.Diem
       FROM BAINOP b
       WHERE b.Diem IS NOT NULL
     `)
@@ -2260,7 +2481,7 @@ app.get("/baocao/hocvien", async (req, res) => {
     const diemMap = {}
     for (const row of diemResult.recordset) {
       if (!diemMap[row.MaSinhVien]) diemMap[row.MaSinhVien] = {}
-      diemMap[row.MaSinhVien][row.MaExercise] = row.Diem
+      diemMap[row.MaSinhVien][row.MaBaiTap] = row.Diem
     }
 
     // Lookup đúng theo MaSinhVien
@@ -2604,11 +2825,11 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
           COALESCE((
             SELECT TOP 1 
               CASE 
-                WHEN (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_ls.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM LESSON WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
               END
-            FROM LESSON active_ls 
-            WHERE active_ls.MaLesson = l.ActiveLessonId
+            FROM BUOIHOC active_bh 
+            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
           ), 0) AS TienDo,
           k.TenKhoaHoc,
           sl.TrangThai, sl.NgayGhiDanh
@@ -2629,20 +2850,21 @@ app.get("/student/free-content", async (req, res) => {
   try {
     const pool = await poolPromise
     const lectures = await pool.request().query("SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl FROM BAIHOCKHOAHOC WHERE IsFree = 1 OR HienThiTuDo = 1")
-    const exercises = await pool.request().query("SELECT MaExercise, Title, Type, TrangThai, Content, Questions FROM EXERCISE WHERE IsFree = 1 OR HienThiTuDo = 1")
+    const exercises = await pool.request().query("SELECT MaBaiTap, Title, Type, TrangThai, Content, Questions FROM BAITAP WHERE IsFree = 1 OR HienThiTuDo = 1")
     res.json({ lectures: lectures.recordset, exercises: exercises.recordset })
   } catch (err) { res.status(500).send(err.message) }
 })
 // Bài tập của lớp
-app.get("/classes/:id/exercises", async (req, res) => {
+app.get("/classes/:id/baitap", async (req, res) => {
   try {
     const pool = await poolPromise
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
-        SELECT e.MaExercise, e.Title, e.Type, e.MaLesson, l.ThuTu AS ThuTuLesson
-        FROM EXERCISE e
-        JOIN LESSON l ON e.MaLesson = l.MaLesson
+        SELECT e.MaBaiTap, e.Title, e.Type, bh.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc
+        FROM BAITAP e
+        JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
+        JOIN BUOIHOC l ON bh.MaBuoiHoc = l.MaBuoiHoc
         WHERE l.MaLopHoc = @id
         ORDER BY l.ThuTu
       `)
@@ -2657,9 +2879,9 @@ app.get("/classes/:id/tailieu", async (req, res) => {
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
-        SELECT t.MaTaiLieu, t.TieuDe, t.MoTa, t.FileUrl, t.MaLesson
+        SELECT t.MaTaiLieu, t.TieuDe, t.MoTa, t.FileUrl, t.MaBuoiHoc
         FROM TAILIEU t
-        JOIN LESSON l ON t.MaLesson = l.MaLesson
+        JOIN BUOIHOC l ON t.MaBuoiHoc = l.MaBuoiHoc
         WHERE l.MaLopHoc = @id
         ORDER BY l.ThuTu
       `)
@@ -2669,25 +2891,25 @@ app.get("/classes/:id/tailieu", async (req, res) => {
 
 app.get("/student/bainop/:maNguoiDung", async (req, res) => {
   try {
-    const { lessonId } = req.query  // nhận thêm ?lessonId=...
+    const { buoiHocId } = req.query  // nhận thêm ?buoiHocId=...
     const pool = await poolPromise
     
     let query = `
-      SELECT b.MaBaiNop, b.MaExercise, b.Diem, b.NgayNop, b.TrangThai,
-             e.Title AS TenBaiTap, COALESCE(e.MaLesson, bg.MaLesson) AS MaLesson
+      SELECT b.MaBaiNop, b.MaBaiTap, b.Diem, b.NgayNop, b.TrangThai,
+             e.Title AS TenBaiTap, bg.MaBuoiHoc AS MaBuoiHoc
       FROM BAINOP b
-      JOIN EXERCISE e ON b.MaExercise = e.MaExercise
+      JOIN BAITAP e ON b.MaBaiTap = e.MaBaiTap
       LEFT JOIN BAIHOCKHOAHOC bg ON e.MaBaiHoc = bg.MaBaiHoc
       WHERE b.MaSinhVien = @id
     `
     
-    // Nếu có lessonId thì lọc thêm
-    if (lessonId) {
-      query += ` AND COALESCE(e.MaLesson, bg.MaLesson) = @lessonId`
+    // Nếu có buoiHocId thì lọc thêm
+    if (buoiHocId) {
+      query += ` AND bg.MaBuoiHoc = @buoiHocId`
     }
     
     const request = pool.request().input("id", req.params.maNguoiDung)
-    if (lessonId) request.input("lessonId", lessonId)
+    if (buoiHocId) request.input("buoiHocId", buoiHocId)
     
     const result = await request.query(query)
     res.json(result.recordset)
@@ -2761,16 +2983,16 @@ app.post("/forgot-password", async (req, res) => {
 })
 
 // Cập nhật buổi học đang học của lớp
-app.put("/classes/:id/active-lesson", async (req, res) => {
-  const { activeLessonId } = req.body
+app.put("/classes/:id/active-buoihoc", async (req, res) => {
+  const { activeBuoiHocId } = req.body
   try {
     const pool = await poolPromise
     await pool.request()
       .input("classId", req.params.id)
-      .input("activeLessonId", activeLessonId || null)
+      .input("activeBuoiHocId", activeBuoiHocId || null)
       .query(`
         UPDATE LOPHOC 
-        SET ActiveLessonId = @activeLessonId 
+        SET ActiveBuoiHocId = @activeBuoiHocId 
         WHERE MaLopHoc = @classId
       `)
     res.json({ message: "Cập nhật buổi học đang học thành công" })
@@ -2778,13 +3000,13 @@ app.put("/classes/:id/active-lesson", async (req, res) => {
 })
 
 // Lấy tất cả lộ trình buổi học cho báo cáo kết quả QTV
-app.get("/baocao/lessons", async (req, res) => {
+app.get("/baocao/buoihoc", async (req, res) => {
   try {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        l.MaLesson, l.TenLesson, l.ThuTu, l.MaLopHoc, lh.TenLop, lh.ActiveLessonId
-      FROM LESSON l
+        l.MaBuoiHoc, l.TenBuoiHoc, l.ThuTu, l.MaLopHoc, lh.TenLop, lh.ActiveBuoiHocId
+      FROM BUOIHOC l
       LEFT JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
       ORDER BY l.ThuTu
     `)
@@ -2812,7 +3034,7 @@ app.get("/admin/users/:id/permissions", async (req, res) => {
       // Chuyển tên quyền thành code
       const codeMap = {
         'Đăng bài giảng': 'LECTURE_CREATE',
-        'Đăng bài tập': 'EXERCISE_CREATE',
+        'Đăng bài tập': 'BAITAP_CREATE',
         'Đăng bài kiểm tra': 'QUIZ_CREATE',
         'Đăng bài luyện tập thêm': 'EXTRA_PRACTICE_CREATE',
         'Đăng tài liệu': 'DOCUMENT_CREATE_PENDING',
@@ -2848,7 +3070,7 @@ app.post("/admin/users/:id/permissions", async (req, res) => {
       // Chuyển code sang TenQuyenHan
       const codeToNameMap = {
         'LECTURE_CREATE': 'Đăng bài giảng',
-        'EXERCISE_CREATE': 'Đăng bài tập',
+        'BAITAP_CREATE': 'Đăng bài tập',
         'QUIZ_CREATE': 'Đăng bài kiểm tra',
         'EXTRA_PRACTICE_CREATE': 'Đăng bài luyện tập thêm',
         'DOCUMENT_CREATE_PENDING': 'Đăng tài liệu',
@@ -2892,9 +3114,9 @@ app.get("/exercises/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT e.MaExercise, e.Title, e.Type, e.CreatedDate, l.TenLop, ls.TenLesson
-      FROM EXERCISE e
-      JOIN LESSON ls ON e.MaLesson = ls.MaLesson
+      SELECT DISTINCT e.MaBaiTap, e.Title, e.Type, e.CreatedDate, l.TenLop, ls.TenBuoiHoc
+      FROM BAITAP e
+      JOIN BUOIHOC ls ON e.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
     `;
     
@@ -2925,7 +3147,7 @@ app.get("/exercises/list/all", async (req, res) => {
     const request = pool.request();
     if (maNguoiDung) request.input("maNguoiDung", maNguoiDung);
     
-    const result = await request.query(query + " ORDER BY e.MaExercise DESC");
+    const result = await request.query(query + " ORDER BY e.MaBaiTap DESC");
     res.json(result.recordset);
   } catch (err) {
     res.status(500).send(err.message);
@@ -2938,9 +3160,9 @@ app.get("/tailieu/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenLesson
+      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc
       FROM TAILIEU t
-      JOIN LESSON ls ON t.MaLesson = ls.MaLesson
+      JOIN BUOIHOC ls ON t.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
     `;
     
@@ -2983,9 +3205,9 @@ app.get("/baigiang/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, l.TenLop, ls.TenLesson
+      SELECT DISTINCT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, l.TenLop, ls.TenBuoiHoc
       FROM BAIHOCKHOAHOC b
-      JOIN LESSON ls ON b.MaLesson = ls.MaLesson
+      JOIN BUOIHOC ls ON b.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
     `;
     
@@ -3025,13 +3247,13 @@ app.get("/baigiang/list/all", async (req, res) => {
 // Clone bài tập
 app.post("/exercises/:id/clone", async (req, res) => {
   try {
-    const { MaLesson } = req.body;
-    if (!MaLesson) return res.status(400).json({ message: "Thiếu MaLesson" });
+    const { MaBuoiHoc } = req.body;
+    if (!MaBuoiHoc) return res.status(400).json({ message: "Thiếu MaBuoiHoc" });
     const pool = await poolPromise;
     
     const orig = await pool.request()
       .input("id", req.params.id)
-      .query("SELECT * FROM EXERCISE WHERE MaExercise = @id");
+      .query("SELECT * FROM BAITAP WHERE MaBaiTap = @id");
     
     if (orig.recordset.length === 0) {
       return res.status(404).json({ message: "Không tìm thấy bài tập gốc" });
@@ -3047,7 +3269,7 @@ app.post("/exercises/:id/clone", async (req, res) => {
       .input("Questions", ex.Questions || "")
       .input("Vocabulary", ex.Vocabulary || "")
       .input("CreatedDate", today)
-      .input("MaLesson", MaLesson)
+      .input("MaBuoiHoc", MaBuoiHoc)
       .input("AudioUrl", ex.AudioUrl || "")
       .input("ShowAnswer", ex.ShowAnswer ? 1 : 0)
       .input("IsFree", ex.IsFree || 0)
@@ -3056,10 +3278,10 @@ app.post("/exercises/:id/clone", async (req, res) => {
       .input("KyNang", ex.KyNang || "")
       .input("DangBai", ex.DangBai || "")
       .query(`
-        INSERT INTO EXERCISE 
-          (Title, Type, Content, Questions, Vocabulary, CreatedDate, MaLesson, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai)
+        INSERT INTO BAITAP 
+          (Title, Type, Content, Questions, Vocabulary, CreatedDate, MaBuoiHoc, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai)
         VALUES 
-          (@Title, @Type, @Content, @Questions, @Vocabulary, @CreatedDate, @MaLesson, @AudioUrl, @ShowAnswer, @IsFree, @IsExam, @TrangThai, @KyNang, @DangBai)
+          (@Title, @Type, @Content, @Questions, @Vocabulary, @CreatedDate, @MaBuoiHoc, @AudioUrl, @ShowAnswer, @IsFree, @IsExam, @TrangThai, @KyNang, @DangBai)
       `);
       
     res.json({ message: "Sao chép bài tập thành công" });
@@ -3071,8 +3293,8 @@ app.post("/exercises/:id/clone", async (req, res) => {
 // Clone tài liệu
 app.post("/tailieu/:id/clone", async (req, res) => {
   try {
-    const { MaLesson } = req.body;
-    if (!MaLesson) return res.status(400).json({ message: "Thiếu MaLesson" });
+    const { MaBuoiHoc } = req.body;
+    if (!MaBuoiHoc) return res.status(400).json({ message: "Thiếu MaBuoiHoc" });
     const pool = await poolPromise;
     
     const orig = await pool.request()
@@ -3088,12 +3310,12 @@ app.post("/tailieu/:id/clone", async (req, res) => {
     await pool.request()
       .input("TieuDe", tl.TieuDe)
       .input("MoTa", tl.MoTa || "")
-      .input("MaLesson", MaLesson)
+      .input("MaBuoiHoc", MaBuoiHoc)
       .input("NoiDung", tl.NoiDung || "")
       .input("FileUrl", tl.FileUrl || "")
       .query(`
-        INSERT INTO TAILIEU (TieuDe, MoTa, MaLesson, NoiDung, FileUrl, NgayCapNhat)
-        VALUES (@TieuDe, @MoTa, @MaLesson, @NoiDung, @FileUrl, GETDATE())
+        INSERT INTO TAILIEU (TieuDe, MoTa, MaBuoiHoc, NoiDung, FileUrl, NgayCapNhat)
+        VALUES (@TieuDe, @MoTa, @MaBuoiHoc, @NoiDung, @FileUrl, GETDATE())
       `);
       
     res.json({ message: "Sao chép tài liệu thành công" });
@@ -3105,8 +3327,8 @@ app.post("/tailieu/:id/clone", async (req, res) => {
 // Clone bài giảng
 app.post("/baigiang/:id/clone", async (req, res) => {
   try {
-    const { MaLesson } = req.body;
-    if (!MaLesson) return res.status(400).json({ message: "Thiếu MaLesson" });
+    const { MaBuoiHoc } = req.body;
+    if (!MaBuoiHoc) return res.status(400).json({ message: "Thiếu MaBuoiHoc" });
     const pool = await poolPromise;
     
     const orig = await pool.request()
@@ -3129,10 +3351,10 @@ app.post("/baigiang/:id/clone", async (req, res) => {
       .input("ThuTu", bg.ThuTu || 1)
       .input("MaKhoaHoc", bg.MaKhoaHoc)
       .input("MaGiangVien", bg.MaGiangVien)
-      .input("MaLesson", MaLesson)
+      .input("MaBuoiHoc", MaBuoiHoc)
       .query(`
-        INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaLesson)
-        VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaLesson)
+        INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc)
+        VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc)
       `);
       
     res.json({ message: "Sao chép bài giảng thành công" });
@@ -3147,13 +3369,13 @@ const initDb = async () => {
     await pool.request().query(`
       IF NOT EXISTS (
           SELECT * FROM sys.columns 
-          WHERE object_id = OBJECT_ID('dbo.LOPHOC') AND name = 'ActiveLessonId'
+          WHERE object_id = OBJECT_ID('dbo.LOPHOC') AND name = 'ActiveBuoiHocId'
       )
       BEGIN
-          ALTER TABLE dbo.LOPHOC ADD ActiveLessonId INT NULL;
+          ALTER TABLE dbo.LOPHOC ADD ActiveBuoiHocId INT NULL;
       END
     `)
-    console.log("Database initialized successfully (ActiveLessonId checked/added).")
+    console.log("Database initialized successfully (ActiveBuoiHocId checked/added).")
   } catch (err) {
     console.error("Database initialization error:", err.message)
   }

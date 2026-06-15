@@ -19,7 +19,7 @@ import "@mdxeditor/editor/style.css";
 
 const AddLesson: React.FC = () => {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { buoiHocId } = useParams();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -91,7 +91,7 @@ const AddLesson: React.FC = () => {
         ThuTu: 1,
         MaKhoaHoc: 1,
         MaGiangVien: user.MaNguoiDung || 1,
-        MaLesson: Number(lessonId),
+        MaBuoiHoc: Number(buoiHocId),
         IsFree: isFree ? 1 : 0
       };
 

@@ -17,16 +17,16 @@ interface Student {
   NgayGhiDanh: string;
   TrangThai: string;
   MaNguoiDung: number;
-  scores: Record<number, StudentScore | null>; // MaExercise -> StudentScore
+  scores: Record<number, StudentScore | null>; // MaBaiTap -> StudentScore
   diemTB: number | null;
 }
 
 interface Exercise {
-  MaExercise: number;
+  MaBaiTap: number;
   TenBai: string;
-  TenLesson: string | null;
+  TenBuoiHoc: string | null;
   ThuTu: number | null;
-  MaLesson: number | null;
+  MaBuoiHoc: number | null;
   MaLopHoc: number | null;
   TenLop: string | null;
 }
@@ -66,23 +66,23 @@ const LessonResultPage = () => {
         setClassInfo(info);
         setLessons(Array.isArray(lessonsList) ? lessonsList : []);
 
-        // Filter and sort exercises for this class by lesson order (ThuTu) and then MaExercise
+        // Filter and sort exercises for this class by lesson order (ThuTu) and then MaBaiTap
         const classExs = (Array.isArray(headers) ? headers : [])
           .filter((h: any) => Number(h.MaLopHoc) === Number(id))
           .sort((a: any, b: any) => {
             if (a.ThuTu !== b.ThuTu) {
               return (a.ThuTu ?? 0) - (b.ThuTu ?? 0);
             }
-            return a.MaExercise - b.MaExercise;
+            return a.MaBaiTap - b.MaBaiTap;
           });
         setClassExercises(classExs);
 
-        // Map grades to a lookup map (MaNguoiDung -> MaExercise -> { Diem, MaBaiNop })
+        // Map grades to a lookup map (MaNguoiDung -> MaBaiTap -> { Diem, MaBaiNop })
         const gradesMap: Record<number, Record<number, { Diem: number | null, MaBaiNop: number | null }>> = {};
         if (Array.isArray(grades)) {
           grades.forEach((g: any) => {
             const userId = Number(g.MaSinhVien); // MaSinhVien field in BAINOP stores MaNguoiDung
-            const exId = Number(g.MaExercise);
+            const exId = Number(g.MaBaiTap);
             const score = g.Diem !== null ? Number(g.Diem) : null;
             const submissionId = g.MaBaiNop ? Number(g.MaBaiNop) : null;
             if (!gradesMap[userId]) {
@@ -97,7 +97,7 @@ const LessonResultPage = () => {
           const studentScores: Record<number, StudentScore | null> = {};
           classExs.forEach(ex => {
             const userId = Number(sv.MaNguoiDung);
-            const exId = ex.MaExercise;
+            const exId = ex.MaBaiTap;
             studentScores[exId] = (gradesMap[userId] && gradesMap[userId][exId] !== undefined)
               ? gradesMap[userId][exId]
               : null;
@@ -157,7 +157,7 @@ const LessonResultPage = () => {
   const uniqueBuois = useMemo(() => {
     if (lessons.length === 0) return [];
     
-    const activeLesson = lessons.find(l => l.MaLesson === classInfo?.ActiveLessonId);
+    const activeLesson = lessons.find(l => l.MaBuoiHoc === classInfo?.ActiveBuoiHocId);
     const activeThuTu = activeLesson ? activeLesson.ThuTu : null;
 
     const allBuoiNumbers = Array.from(new Set(lessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
@@ -183,10 +183,10 @@ const LessonResultPage = () => {
 
   const handleMarkActiveLesson = async (lessonId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/classes/${id}/active-lesson`, {
+      const res = await fetch(`http://localhost:5000/classes/${id}/active-buoihoc`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activeLessonId: lessonId })
+        body: JSON.stringify({ activeBuoiHocId: lessonId })
       });
       if (res.ok) {
         refetchClassInfo();
@@ -203,10 +203,10 @@ const LessonResultPage = () => {
     if (exsInBuoi.length === 0) return { status: "none", score: null };
 
     const scores = exsInBuoi
-      .map(ex => s.scores[ex.MaExercise]?.Diem)
+      .map(ex => s.scores[ex.MaBaiTap]?.Diem)
       .filter((d): d is number => d !== null);
 
-    const hasSubmission = exsInBuoi.some(ex => s.scores[ex.MaExercise]?.MaBaiNop !== null);
+    const hasSubmission = exsInBuoi.some(ex => s.scores[ex.MaBaiTap]?.MaBaiNop !== null);
 
     if (scores.length > 0) {
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -353,7 +353,7 @@ const LessonResultPage = () => {
                     <th>Trạng thái</th>
                     {uniqueBuois.map(b => {
                       const lessonForBuoi = lessons.find(l => l.ThuTu === b);
-                      const isActive = lessonForBuoi && classInfo?.ActiveLessonId === lessonForBuoi.MaLesson;
+                      const isActive = lessonForBuoi && classInfo?.ActiveBuoiHocId === lessonForBuoi.MaBuoiHoc;
                       return (
                         <th key={b}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
@@ -367,7 +367,7 @@ const LessonResultPage = () => {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (lessonForBuoi) {
-                                    handleMarkActiveLesson(lessonForBuoi.MaLesson);
+                                    handleMarkActiveLesson(lessonForBuoi.MaBuoiHoc);
                                   }
                                 }}
                               >
@@ -457,11 +457,11 @@ const LessonResultPage = () => {
                                               <div className="lrp-score-chuanop">Không có bài tập</div>
                                             ) : (
                                               buoiExs.map(ex => {
-                                                const scoreObj = s.scores[ex.MaExercise];
+                                                const scoreObj = s.scores[ex.MaBaiTap];
                                                 const hasScore = scoreObj && scoreObj.Diem !== null;
                                                 const hasSubmission = scoreObj && scoreObj.MaBaiNop !== null;
                                                 return (
-                                                  <div key={ex.MaExercise} className="lrp-details-ex-item">
+                                                  <div key={ex.MaBaiTap} className="lrp-details-ex-item">
                                                     <span className="ex-title">{ex.TenBai}</span>
                                                     <span className="ex-score">
                                                       {hasScore ? (

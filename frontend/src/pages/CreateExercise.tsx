@@ -137,7 +137,7 @@ const CreateExercise = () => {
       const res = await fetch(`http://localhost:5000/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ MaLesson: Number(id) })
+        body: JSON.stringify({ MaBuoiHoc: Number(id) })
       });
       if (res.ok) {
         setSuccessMessage("Sao chép bài tập thành công");
@@ -692,7 +692,7 @@ const CreateExercise = () => {
     setExamSections(copy);
   };
 
-  /* ===== CREATE & POST EXERCISE ===== */
+  /* ===== CREATE & POST BAITAP ===== */
   const handleCreate = async (statusOverride?: "draft" | "pending" | "published" | "practice") => {
     if (!title) { alert("Vui lòng nhập tiêu đề"); return; }
 
@@ -732,7 +732,7 @@ const CreateExercise = () => {
         mainAudioUrl = commonAudioUrl || questions[0]?.audioUrl || "";
       }
 
-      await fetch("http://localhost:5000/exercises/create", {
+      await fetch("http://localhost:5000/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -742,7 +742,7 @@ const CreateExercise = () => {
           Questions:   questionsStr,
           Vocabulary:  "", 
           CreatedDate: today,
-          MaLesson:    Number(id),
+          MaBuoiHoc:    Number(id),
           AudioUrl:    mainAudioUrl,
           ShowAnswer:  showAnswer ? 1 : 0,
           IsFree:      isFree ? 1 : 0,
@@ -784,7 +784,7 @@ const CreateExercise = () => {
 
       {/* HEADER CARD */}
       <div className="ce-header-card">
-        <h1>{lesson?.TenLesson || "Đang tải..."}</h1>
+        <h1>{lesson?.TenBuoiHoc || "Đang tải..."}</h1>
         <p>{lesson?.MoTa || ""}</p>
       </div>
 
@@ -869,18 +869,18 @@ const CreateExercise = () => {
               <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy bài tập nào.</div>
             ) : (
               allExistingEx.filter(ex => ex.Title?.toLowerCase().includes(reuseSearch.toLowerCase())).map((ex: any) => (
-                <div key={ex.MaExercise} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfaf7", padding: "15px", borderRadius: "10px", border: "1px solid #e0d4c3" }}>
+                <div key={ex.MaBaiTap} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfaf7", padding: "15px", borderRadius: "10px", border: "1px solid #e0d4c3" }}>
                   <div style={{ flex: 1, paddingRight: "15px", textAlign: "left" }}>
                     <strong style={{ fontSize: "16px", color: "#5a3e2b", display: "block" }}>{ex.Title}</strong>
                     <span style={{ fontSize: "12px", color: "#8b7e74" }}>
-                      Kỹ năng: {ex.KyNang || "—"} · Dạng: {ex.DangBai || "—"} · Lớp: {ex.TenLop} ({ex.TenLesson})
+                      Kỹ năng: {ex.KyNang || "—"} · Dạng: {ex.DangBai || "—"} · Lớp: {ex.TenLop} ({ex.TenBuoiHoc})
                     </span>
                   </div>
                   <button
                     type="button"
                     className="save-btn"
                     style={{ fontSize: "13px", padding: "8px 16px", width: "auto", margin: 0 }}
-                    onClick={() => handleReuseExercise(ex.MaExercise)}
+                    onClick={() => handleReuseExercise(ex.MaBaiTap)}
                   >
                     Chọn bài này
                   </button>
