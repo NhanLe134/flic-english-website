@@ -390,18 +390,6 @@ app.get("/my-courses/:maSinhVien", async (req, res) => {
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
-// QTV assign giáo viên vào khóa học
-app.put("/qtv/khoahoc/:id/assign-giaovien", async (req, res) => {
-  try {
-    const { MaGiaoVien } = req.body;
-    const pool = await poolPromise;
-    await pool.request()
-      .input("id", req.params.id)
-      .input("MaGiaoVien", MaGiaoVien)
-      .query(`UPDATE KHOAHOC SET MaGiaoVien=@MaGiaoVien WHERE MaKhoaHoc=@id`);
-    res.json({ message: "Đã assign giáo viên thành công" });
-  } catch (err) { res.status(500).send(err.message); }
-});
 
 // Lấy danh sách giảng viên cho dropdown
 app.get("/qtv/giangvien", async (req, res) => {
@@ -1510,49 +1498,6 @@ app.post("/bainop", async (req, res) => {
     res.json({ message: "Nộp bài thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
-app.post("/bainop/tracnghiem", async (req, res) => {
-  try {
-    const { MaBaiTap, MaSinhVien, DapAnChon } = req.body;
-    const pool = await poolPromise;
-
-    // Lấy đáp án đúng từ BAITAP
-    const exResult = await pool.request()
-      .input("MaBaiTap", MaBaiTap)
-      .query(`SELECT Questions FROM BAITAP WHERE MaBaiTap = @MaBaiTap`);
-
-    const questions = exResult.recordset[0]?.Questions || "";
-
-    // Lấy đáp án đúng — phần cuối sau "Đáp án đúng: "
-    const parts = questions.split("|");
-    const dapAnPart = parts.find(q => q.includes("Đáp án đúng:"));
-    const dapAnDung = dapAnPart
-      ? dapAnPart.replace("Đáp án đúng:", "").trim()
-      : null;
-
-    // Tính điểm: đúng = 10, sai = 0
-    const diem = DapAnChon === dapAnDung ? 10 : 0;
-
-    // Kiểm tra đã nộp chưa
-    const check = await pool.request()
-      .input("MaBaiTap", MaBaiTap)
-      .input("MaSinhVien", MaSinhVien)
-      .query(`SELECT * FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
-
-    if (check.recordset.length > 0)
-      return res.json({ message: "Đã nộp bài này rồi", Diem: check.recordset[0].Diem });
-
-    // Lưu kết quả
-    await pool.request()
-      .input("MaBaiTap", MaBaiTap)
-      .input("MaSinhVien", MaSinhVien)
-      .input("NoiDung", `Đáp án chọn: ${DapAnChon}`)
-      .input("Diem", diem)
-      .query(`INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai)
-              VALUES (@MaBaiTap, @MaSinhVien, @NoiDung, @Diem, N'Đã chấm')`);
-
-    res.json({ message: "Nộp bài thành công", Diem: diem, DapAnDung: dapAnDung });
-  } catch (err) { res.status(500).send(err.message); }
-});
 
 // ADMIN
 app.get("/admin/stats", async (req, res) => {
@@ -2737,29 +2682,6 @@ app.get("/courses/:id/detail", async (req, res) => {
         WHERE k.MaKhoaHoc = @id AND k.TrangThai = N'Đã duyệt'
       `)
     res.json(result.recordset[0] || null)
-  } catch (err) { res.status(500).send(err.message) }
-})
-app.post("/register-student", async (req, res) => {
-  try {
-    const { MaNguoiDung, MaSinhVien, Lop } = req.body
-    const pool = await poolPromise
-
-    // Kiểm tra MSSV đã tồn tại chưa
-    const check = await pool.request()
-      .input("MaSinhVien", MaSinhVien)
-      .query(`SELECT MaSinhVien FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien`)
-
-    if (check.recordset.length > 0)
-      return res.json({ message: "MSSV đã tồn tại" })
-
-    await pool.request()
-      .input("MaNguoiDung", MaNguoiDung)
-      .input("MaSinhVien", MaSinhVien)
-      .input("Lop", Lop || "")
-      .query(`INSERT INTO SINHVIEN (MaNguoiDung, MaSinhVien, Lop)
-              VALUES (@MaNguoiDung, @MaSinhVien, @Lop)`)
-
-    res.json({ message: "Tạo sinh viên thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
 // Lấy thông tin profile user
