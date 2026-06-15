@@ -544,6 +544,51 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       );
     }
 
+    // 12.5 GET FREE CONTENT FOR STUDENT TRIAL
+    if (urlStr.includes("/student/free-content")) {
+      return new Response(
+        JSON.stringify({
+          lectures: [
+            {
+              MaBaiHoc: 1,
+              TieuDe: "Học thử: Tiếng Anh giao tiếp cơ bản",
+              LoaiBaiHoc: "Video",
+              ThoiLuong: "20 phút",
+              NoiDung: "Chào mừng bạn đến với bài học thử giao tiếp cơ bản. Trong bài học này, bạn sẽ học cách chào hỏi và giới thiệu bản thân bằng tiếng Anh.",
+              FileUrl: "/coffee-shop.mp3"
+            },
+            {
+              MaBaiHoc: 2,
+              TieuDe: "Học thử: Từ vựng TOEIC thông dụng",
+              LoaiBaiHoc: "PDF",
+              ThoiLuong: "15 phút",
+              NoiDung: "### Tài liệu đọc hiểu Ngữ pháp nâng cao\n\nHọc viên tải tệp đính kèm bên dưới để đọc tài liệu chi tiết.\n\n* Nội dung ôn tập:\n  - Các dạng câu điều kiện (Conditional Sentences)\n  - Mệnh đề quan hệ (Relative Clauses)\n  - Câu bị động (Passive Voice)\n\nChúc các em ôn tập đạt kết quả tốt!",
+              FileUrl: "/job-interview.mp3"
+            }
+          ],
+          exercises: [
+            {
+              MaBaiTap: 1,
+              Title: "Bài tập thử: Trắc nghiệm ngữ pháp",
+              Type: "Reading",
+              KyNang: "Reading",
+              Content: "Chọn đáp án đúng nhất để hoàn thành câu.",
+              Questions: "### She ___ to school everyday.||A. go|B. goes|C. going|D. gone|Đáp án đúng: B"
+            },
+            {
+              MaBaiTap: 2,
+              Title: "Bài tập thử: Viết câu giao tiếp",
+              Type: "Writing",
+              KyNang: "Writing",
+              Content: "Dịch câu sau sang tiếng Anh: 'Tôi rất vui được gặp bạn ngày hôm nay.'",
+              Questions: ""
+            }
+          ]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // 13. GET BAITAP DETAILS
     if (urlStr.includes("/baitap/") && method === "GET") {
       const parts = urlStr.split("/");

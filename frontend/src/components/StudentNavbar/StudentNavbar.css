@@ -1,0 +1,291 @@
+.student-navbar {
+  background: white;
+  padding: 15px 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: 'Inter', sans-serif;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.student-navbar .nav-wrapper {
+  max-width: 100%;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.student-navbar .logo {
+  display: flex;
+  align-items: center;
+}
+
+.student-navbar .logo-img {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.student-navbar .navv-menu {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.student-navbar .navv-menu a,
+.student-navbar .nav-dropdown-trigger {
+  text-decoration: none;
+  color: #F95800;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  transition: color 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.student-navbar .navv-menu a:hover,
+.student-navbar .nav-dropdown-trigger:hover,
+.student-navbar .navv-menu a.active-link,
+.student-navbar .nav-dropdown-trigger.active-link {
+  color: #000080; /* Blue FLIC highlight */
+}
+
+/* User Box styling (Bỏ border bên ngoài, tên bên trái hình bên phải) */
+.student-navbar .user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  transition: opacity 0.2s ease;
+}
+
+.student-navbar .user-box:hover {
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.8;
+}
+
+.student-navbar .user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #F95800;
+}
+
+.student-navbar .user-name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.student-navbar .user-chevron {
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+.student-navbar .user-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown học thử & thi thử chuyên nghiệp (hover bridge) */
+.student-navbar .nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 10px; /* Cầu nối trong suốt khi hover */
+  background: transparent;
+  z-index: 1000;
+  border: none;
+  box-shadow: none;
+}
+
+.student-navbar .nav-dropdown::before {
+  display: none !important;
+}
+
+.student-navbar .nav-dropdown-inner {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  min-width: 185px;
+  border: 1px solid #f0e4d4;
+  animation: studentDropFadeIn 0.2s ease;
+}
+
+.student-navbar .nav-dropdown-inner a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a2010;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.student-navbar .nav-dropdown-inner a:hover {
+  background: #FFF2EB;
+  color: #F95800;
+}
+
+/* Dropdown thông tin user */
+.student-navbar .student-user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  padding-top: 10px; /* Cầu nối hover */
+  background: transparent;
+  z-index: 1000;
+  border: none;
+  box-shadow: none;
+}
+
+.student-navbar .student-user-dropdown-inner {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  animation: studentDropFadeIn 0.2s ease;
+}
+
+.student-navbar .dropdown-logout-item {
+  padding: 12px 18px;
+  font-size: 14px;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.student-navbar .dropdown-logout-item:hover {
+  background: #fef2f2;
+}
+
+/* Icon logout container */
+.logout-modal-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logout-modal-large-icon {
+  background: #fef2f2;
+  padding: 16px;
+  border-radius: 50%;
+  color: #ef4444 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Logout Modal */
+.logout-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.logout-modal-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logout-modal-emoji {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.logout-modal-title {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.logout-modal-text {
+  margin: 0 0 24px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.logout-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.logout-modal-cancel-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-modal-cancel-btn:hover {
+  background: #f8fafc;
+}
+
+.logout-modal-confirm-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #F95800;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-modal-confirm-btn:hover {
+  background: #dd4e00;
+}
+
+@keyframes modalScaleIn {
+  from { transform: scale(0.9) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes studentDropFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

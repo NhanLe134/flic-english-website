@@ -13,6 +13,51 @@ const LessonManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("Tất cả");
 
+  const [showReuseModal, setShowReuseModal] = useState(false);
+  const [allExistingLectures, setAllExistingLectures] = useState<any[]>([]);
+  const [reuseSearch, setReuseSearch] = useState("");
+
+  const openReuseModal = async () => {
+    setShowReuseModal(true);
+    try {
+      const userStr = sessionStorage.getItem("user");
+      let url = "http://localhost:5000/baigiang/list/all";
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.MaNguoiDung) {
+          url += `?maNguoiDung=${user.MaNguoiDung}`;
+        }
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      setAllExistingLectures(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReuseLecture = async (lectureId: number) => {
+    try {
+      const res = await fetch(`http://localhost:5000/baigiang/${lectureId}/clone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ MaBuoiHoc: buoiHocId })
+      });
+      if (res.ok) {
+        // Refresh lessons list
+        const lRes = await fetch(`http://localhost:5000/baigiang/${buoiHocId}`);
+        const lData = await lRes.json();
+        setLessons(lData);
+        setShowReuseModal(false);
+      } else {
+        const txt = await res.text();
+        alert("Không thể dùng lại bài giảng: " + txt);
+      }
+    } catch (err) {
+      alert("Lỗi kết nối: " + err);
+    }
+  };
+
   useEffect(() => {
     if (!buoiHocId) return;
     fetch(`http://localhost:5000/baigiang/${buoiHocId}`)
@@ -89,6 +134,18 @@ const LessonManagement: React.FC = () => {
           <option>PDF</option>
           <option>Writing</option>
         </select>
+        <button
+          className="add-btn"
+          onClick={openReuseModal}
+          style={{
+            background: "#0284c7",
+            color: "#fff",
+            border: "none",
+            marginRight: "8px"
+          }}
+        >
+          + Chọn bài giảng có sẵn
+        </button>
         <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
           + Thêm bài học mới
         </button>
@@ -170,6 +227,57 @@ const LessonManagement: React.FC = () => {
             <p>Bạn có chắc chắn muốn xóa bài học này?</p>
             <button className="confirm-btn" onClick={confirmDelete}>Xác nhận</button>
             <button className="cancel-btn" onClick={() => setShowModal(false)}>Không</button>
+          </div>
+        </div>
+      )}
+
+      {showReuseModal && (
+        <div className="baigiang-modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="modal" style={{ maxWidth: "600px", padding: "20px" }}>
+            <h3 style={{ marginBottom: "15px" }}>Chọn bài giảng có sẵn</h3>
+            
+            <input
+              type="text"
+              placeholder="Tìm kiếm bài giảng..."
+              value={reuseSearch}
+              onChange={e => setReuseSearch(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #ddd",
+                marginBottom: "15px",
+                boxSizing: "border-box"
+              }}
+            />
+
+            <div style={{ maxHeight: "300px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
+              {allExistingLectures.filter(bg => bg.TieuDe?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
+                <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy bài giảng nào.</div>
+              ) : (
+                allExistingLectures.filter(bg => bg.TieuDe?.toLowerCase().includes(reuseSearch.toLowerCase())).map((bg: any) => (
+                  <div key={bg.MaBaiHoc} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f0f9ff", padding: "10px", borderRadius: "8px", border: "1px solid #bae6fd" }}>
+                    <div style={{ flex: 1, paddingRight: "8px" }}>
+                      <strong style={{ fontSize: "14px", color: "#0369a1", display: "block" }}>{bg.TieuDe}</strong>
+                      <span style={{ fontSize: "11px", color: "#0284c7" }}>
+                        {bg.LoaiBaiHoc} · Lớp: {bg.TenLop || bg.TenBuoiHoc}
+                      </span>
+                    </div>
+                    <button
+                      className="confirm-btn"
+                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7" }}
+                      onClick={() => handleReuseLecture(bg.MaBaiHoc)}
+                    >
+                      Chọn
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
+              <button className="cancel-btn" style={{ margin: 0 }} onClick={() => setShowReuseModal(false)}>Đóng</button>
+            </div>
           </div>
         </div>
       )}

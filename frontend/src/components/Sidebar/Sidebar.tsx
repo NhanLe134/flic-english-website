@@ -1,11 +1,20 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./SidebarSV.css";
+import userAvatar from "../../assets/user.png";
 
 function SidebarSV() {
-  const [showMore, setShowMore]         = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  let currentUser: any = {};
+  try {
+    currentUser = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
+  } catch (e) {
+    console.error("Error parsing user from sessionStorage", e);
+  }
+  const hoTen = currentUser?.HoTen || "Học Viên";
 
   const handleLogout = () => {
     sessionStorage.removeItem("user");
@@ -15,41 +24,39 @@ function SidebarSV() {
 
   return (
     <div className="sidebar">
-      <ul>
+      {/* Logo Doanh Nghiệp */}
+      <div className="sidebar-logo">
+        <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} alt="FLIC logo" />
+      </div>
 
-        <li>
-          <Link to="/MyCourses">📚 Khóa học</Link>
+      {/* Profile Học Sinh */}
+      <div className="sidebar-profile">
+        <img src={userAvatar} alt="Student Avatar" className="sidebar-avatar" />
+        <div className="sidebar-user-info">
+          <div className="sidebar-user-name">{hoTen}</div>
+          <div className="sidebar-user-role">Học viên</div>
+        </div>
+      </div>
+
+      {/* Menu các chức năng */}
+      <ul className="sidebar-menu">
+        <li className={location.pathname === "/MyCourses" ? "active" : ""}>
+          <Link to="/MyCourses">🏫 Lớp học</Link>
         </li>
-
-
-
-        <li>
+        <li className={location.pathname === "/progress" ? "active" : ""}>
           <Link to="/progress">📊 Tiến độ</Link>
         </li>
-
-        <li>
+        <li className={location.pathname === "/profile-info" ? "active" : ""}>
           <Link to="/profile-info">👤 Hồ sơ</Link>
         </li>
-
-        <li className="sidebar-more-wrapper">
-          <div className="sidebar-more-trigger" onClick={() => setShowMore(!showMore)}>
-            ⋯ Xem thêm
-          </div>
-          {showMore && (
-            <div className="sidebar-dropdown">
-              <Link to="/settings" onClick={() => setShowMore(false)}>Cài đặt</Link>
-              <Link to="/help"     onClick={() => setShowMore(false)}>Trợ giúp</Link>
-              <div
-                className="sidebar-dropdown-item sidebar-logout"
-                onClick={() => { setShowMore(false); setShowLogoutModal(true); }} // ← mở modal
-              >
-                Đăng xuất
-              </div>
-            </div>
-          )}
-        </li>
-
       </ul>
+
+      {/* Nút Đăng xuất ở dưới cùng */}
+      <div className="sidebar-footer">
+        <button className="sidebar-logout-btn" onClick={() => setShowLogoutModal(true)}>
+          🚪 Đăng xuất
+        </button>
+      </div>
 
       {/* MODAL XÁC NHẬN ĐĂNG XUẤT */}
       {showLogoutModal && (
@@ -100,7 +107,6 @@ function SidebarSV() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -79,7 +79,7 @@ function AssignmentSuccess() {
                 className="as-btn-fill"
                 onClick={() => maLopHoc
                   ? navigate(`/course-detail/${maLopHoc}`)
-                  : navigate("/my-courses")
+                  : navigate("/MyCourses")
                 }
               >
                 Về khóa học

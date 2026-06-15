@@ -1,16 +1,12 @@
 const { sql, poolPromise } = require("./config/db.js");
 
-async function getCols() {
+async function checkData() {
     try {
         let pool = await poolPromise;
-        let result = await pool.request().query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'BAIKIEMTRA'");
-        console.log("BAIKIEMTRA:", result.recordset);
         
-        let result2 = await pool.request().query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'CAUHOI'");
-        console.log("CAUHOI:", result2.recordset);
-        
-        let result3 = await pool.request().query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'BAIHOCKHOAHOC'");
-        console.log("BAIHOCKHOAHOC:", result3.recordset);
+        let cols = await pool.request().query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'LOPHOC'");
+        console.log("=== LOPHOC COLUMNS ===");
+        console.log(cols.recordset);
 
         process.exit(0);
     } catch (err) {
@@ -19,4 +15,4 @@ async function getCols() {
     }
 }
 
-getCols();
+checkData();

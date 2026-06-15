@@ -273,7 +273,7 @@ export default function ApproveAdmin() {
     maLop: 0,
     teachers: {} as Record<number, number>
   });
-  const [addClassErrors, setAddClassErrors] = useState({ name: '' });
+  const [addClassErrors, setAddClassErrors] = useState({ name: '', maLop: '', maxStudents: '' });
 
   // State chỉnh sửa trình độ inline của từng khóa học
   const [editingLevelIndex, setEditingLevelIndex] = useState<number | null>(null);
@@ -295,7 +295,7 @@ export default function ApproveAdmin() {
     maLop: 0,
     teachers: {} as Record<number, number>
   });
-  const [editClassErrors, setEditClassErrors] = useState({ name: '' });
+  const [editClassErrors, setEditClassErrors] = useState({ name: '', maLop: '', maxStudents: '' });
 
   // Modal Chi tiết lớp học
   const [showClassDetailModal, setShowClassDetailModal] = useState(false);
@@ -597,21 +597,39 @@ export default function ApproveAdmin() {
       })
       .catch(() => { });
 
-    setEditClassErrors({ name: '' });
+    setEditClassErrors({ name: '', maLop: '', maxStudents: '' });
     setShowClassEditModal(true);
   };
 
   const saveEditedClass = async () => {
-    if (!classEditForm.name.trim()) {
-      setEditClassErrors({ name: "Vui lòng nhập tên lớp học!" });
-      return;
-    }
-    setEditClassErrors({ name: '' });
     if (!editingClass) return;
+
+    let hasError = false;
+    const errors = { name: '', maLop: '', maxStudents: '' };
+
+    if (!classEditForm.name.trim()) {
+      errors.name = "Vui lòng nhập tên lớp học!";
+      hasError = true;
+    }
+
     if (!classEditForm.maLop) {
-      alert("Vui lòng chọn trình độ cho lớp học!");
+      errors.maLop = "Vui lòng chọn trình độ cho lớp học!";
+      hasError = true;
+    }
+
+    if (!classEditForm.maxStudents) {
+      errors.maxStudents = "Vui lòng nhập sĩ số tối đa!";
+      hasError = true;
+    } else if (classEditForm.maxStudents <= 0) {
+      errors.maxStudents = "Sĩ số tối đa phải lớn hơn 0!";
+      hasError = true;
+    }
+
+    if (hasError) {
+      setEditClassErrors(errors);
       return;
     }
+    setEditClassErrors({ name: '', maLop: '', maxStudents: '' });
     try {
       const finalSchedule = serializeSchedule(classEditForm.days, classEditForm.daySchedules);
 
@@ -685,15 +703,32 @@ export default function ApproveAdmin() {
 
   // ── Lưu lớp học mới ──
   const saveNewClass = async () => {
+    let hasError = false;
+    const errors = { name: '', maLop: '', maxStudents: '' };
+
     if (!newClassForm.name.trim()) {
-      setAddClassErrors({ name: "Vui lòng nhập tên lớp học!" });
-      return;
+      errors.name = "Vui lòng nhập tên lớp học!";
+      hasError = true;
     }
-    setAddClassErrors({ name: "" });
+
     if (!newClassForm.maLop) {
-      alert("Vui lòng chọn trình độ cho lớp học!");
+      errors.maLop = "Vui lòng chọn trình độ cho lớp học!";
+      hasError = true;
+    }
+
+    if (!newClassForm.maxStudents) {
+      errors.maxStudents = "Vui lòng nhập sĩ số tối đa!";
+      hasError = true;
+    } else if (newClassForm.maxStudents <= 0) {
+      errors.maxStudents = "Sĩ số tối đa phải lớn hơn 0!";
+      hasError = true;
+    }
+
+    if (hasError) {
+      setAddClassErrors(errors);
       return;
     }
+    setAddClassErrors({ name: '', maLop: '', maxStudents: '' });
     try {
       const finalSchedule = serializeSchedule(newClassForm.days, newClassForm.daySchedules);
 
@@ -1046,7 +1081,7 @@ export default function ApproveAdmin() {
                                         maLop: defaultMaLop,
                                         teachers: {}
                                       });
-                                      setAddClassErrors({ name: '' });
+                                      setAddClassErrors({ name: '', maLop: '', maxStudents: '' });
                                       setShowAddClassModal(true);
                                     }}
                                   >
@@ -1309,7 +1344,7 @@ export default function ApproveAdmin() {
                     value={newClassForm.name}
                     onChange={e => {
                       setNewClassForm(p => ({ ...p, name: e.target.value }));
-                      setAddClassErrors({ name: '' });
+                      setAddClassErrors(p => ({ ...p, name: '' }));
                     }}
                     placeholder="VD: Lớp IELTS-01"
                   />
@@ -1321,8 +1356,12 @@ export default function ApproveAdmin() {
                 <div className="form-field-group">
                   <label>Trình độ <span className="required-star">*</span></label>
                   <select
+                    className={addClassErrors.maLop ? "has-error" : ""}
                     value={newClassForm.maLop || ''}
-                    onChange={e => setNewClassForm(p => ({ ...p, maLop: Number(e.target.value) }))}
+                    onChange={e => {
+                      setNewClassForm(p => ({ ...p, maLop: Number(e.target.value) }));
+                      setAddClassErrors(p => ({ ...p, maLop: '' }));
+                    }}
                   >
                     <option value="">-- Chọn trình độ --</option>
                     {(courseDetailsMap[expandedCourse || 0] || []).map(d => (
@@ -1331,16 +1370,26 @@ export default function ApproveAdmin() {
                       </option>
                     ))}
                   </select>
+                  {addClassErrors.maLop && (
+                    <span className="form-field-error-text">{addClassErrors.maLop}</span>
+                  )}
                 </div>
 
                 <div className="form-field-group">
-                  <label>Sĩ số tối đa</label>
+                  <label>Sĩ số tối đa <span className="required-star">*</span></label>
                   <input
                     type="number"
                     min={1}
+                    className={addClassErrors.maxStudents ? "has-error" : ""}
                     value={newClassForm.maxStudents}
-                    onChange={e => setNewClassForm(p => ({ ...p, maxStudents: Number(e.target.value) }))}
+                    onChange={e => {
+                      setNewClassForm(p => ({ ...p, maxStudents: Number(e.target.value) }));
+                      setAddClassErrors(p => ({ ...p, maxStudents: '' }));
+                    }}
                   />
+                  {addClassErrors.maxStudents && (
+                    <span className="form-field-error-text">{addClassErrors.maxStudents}</span>
+                  )}
                 </div>
                 <div className="form-field-group">
                   <label>Lịch học (Chọn các ngày học trong tuần)</label>
@@ -1510,7 +1559,7 @@ export default function ApproveAdmin() {
                     value={classEditForm.name}
                     onChange={e => {
                       setClassEditForm(p => ({ ...p, name: e.target.value }));
-                      setEditClassErrors({ name: '' });
+                      setEditClassErrors(p => ({ ...p, name: '' }));
                     }}
                     placeholder="VD: Lớp IELTS-01"
                   />
@@ -1522,8 +1571,12 @@ export default function ApproveAdmin() {
                 <div className="form-field-group">
                   <label>Trình độ <span className="required-star">*</span></label>
                   <select
+                    className={editClassErrors.maLop ? "has-error" : ""}
                     value={classEditForm.maLop || ''}
-                    onChange={e => setClassEditForm(p => ({ ...p, maLop: Number(e.target.value) }))}
+                    onChange={e => {
+                      setClassEditForm(p => ({ ...p, maLop: Number(e.target.value) }));
+                      setEditClassErrors(p => ({ ...p, maLop: '' }));
+                    }}
                   >
                     <option value="">-- Chọn trình độ --</option>
                     {(courseDetailsMap[expandedCourse || 0] || []).map(d => (
@@ -1532,11 +1585,26 @@ export default function ApproveAdmin() {
                       </option>
                     ))}
                   </select>
+                  {editClassErrors.maLop && (
+                    <span className="form-field-error-text">{editClassErrors.maLop}</span>
+                  )}
                 </div>
 
                 <div className="form-field-group">
-                  <label>Sĩ số tối đa</label>
-                  <input type="number" min={1} value={classEditForm.maxStudents} onChange={e => setClassEditForm(p => ({ ...p, maxStudents: Number(e.target.value) }))} />
+                  <label>Sĩ số tối đa <span className="required-star">*</span></label>
+                  <input
+                    type="number"
+                    min={1}
+                    className={editClassErrors.maxStudents ? "has-error" : ""}
+                    value={classEditForm.maxStudents}
+                    onChange={e => {
+                      setClassEditForm(p => ({ ...p, maxStudents: Number(e.target.value) }));
+                      setEditClassErrors(p => ({ ...p, maxStudents: '' }));
+                    }}
+                  />
+                  {editClassErrors.maxStudents && (
+                    <span className="form-field-error-text">{editClassErrors.maxStudents}</span>
+                  )}
                 </div>
                 <div className="form-field-group">
                   <label>Lịch học (Chọn các ngày học trong tuần)</label>
