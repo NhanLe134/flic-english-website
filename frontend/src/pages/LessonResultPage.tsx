@@ -235,6 +235,13 @@ const LessonResultPage = () => {
       "Điểm trung bình"
     ];
 
+    const rows = filteredStudents.map(s => {
+      const rowData: Record<string, any> = {
+        "Mã sinh viên": s.MaSinhVien,
+        "Họ tên": s.HoTen,
+        "Lớp/khóa": classInfo?.TenLop || "—",
+        "Trạng thái": s.TrangThai || "—",
+      };
       uniqueBuois.forEach(b => {
         const res = getStudentBuoiStatus(s, b);
         rowData[`Buổi ${b}`] = res.status === "graded" ? res.score : res.status === "pending" ? "Chờ chấm" : "Chưa nộp";
