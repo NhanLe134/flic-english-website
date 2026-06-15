@@ -305,7 +305,7 @@ export default function ProfilePage() {
           {/* Header & Nút Thao Tác */}
           <div className="details-header-row">
             <div className="title-area">
-              <h1>HỒ SƠ CÁ NHÂN</h1>
+              <h1>Hồ sơ cá nhân</h1>
               <p>Quản lý và cập nhật thông tin cá nhân của bạn</p>
             </div>
             
@@ -482,13 +482,32 @@ export default function ProfilePage() {
 
               <div className="modal-form-group">
                 <label className="modal-form-label">Ngày sinh</label>
-                <input
-                  type="date"
-                  name="NgaySinh"
-                  value={editForm.NgaySinh}
-                  onChange={handleInputChange}
-                  className="modal-form-input"
-                />
+                <div className="modal-date-input-wrapper">
+                  <input
+                    type="text"
+                    readOnly
+                    value={editForm.NgaySinh ? editForm.NgaySinh.split('-').reverse().join('/') : ""}
+                    className="modal-form-input"
+                    placeholder="Chọn ngày sinh"
+                    onClick={(e) => {
+                      const dateInput = e.currentTarget.nextElementSibling as HTMLInputElement;
+                      if (dateInput) {
+                        try {
+                          dateInput.showPicker();
+                        } catch (err) {
+                          dateInput.focus();
+                        }
+                      }
+                    }}
+                  />
+                  <input
+                    type="date"
+                    name="NgaySinh"
+                    value={editForm.NgaySinh}
+                    onChange={handleInputChange}
+                    className="modal-date-hidden-input"
+                  />
+                </div>
               </div>
 
               <div className="modal-form-group">
