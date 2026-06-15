@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 interface Pair { left: string; right: string; }
-interface MCQuestion { question: string; options: { label: string; text: string }[]; correct: string; }
-interface Question { question: string; answers: string[]; correct: string; }
+interface MCQuestion { question: string; options: { label: string; text: string }[]; correct: string; audioUrl?: string; }
+interface Question { question: string; answers: string[]; correct: string; audioUrl?: string; }
 
 const ExerciseDetail = () => {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ const ExerciseDetail = () => {
   const normalizedType: string =
     ["writing", "reading", "essay"].includes(exType)     ? "essay"      :
     ["multiple", "quiz", "trắc nghiệm"].includes(exType) ? "multiple"   :
-    ["listening", "nghe"].includes(exType)               ? "listening"  :
+    ["listening", "nghe", "listening-mcq"].includes(exType) ? "listening" :
     ["matching", "ghép"].includes(exType)                ? "matching"   :
     ["connect", "nối"].includes(exType)                  ? "connect"    :
     ["ordering", "sắp xếp"].includes(exType)             ? "ordering"   :
@@ -69,6 +69,24 @@ const ExerciseDetail = () => {
   const isMC = normalizedType === "multiple" || normalizedType === "listening";
   const parseMCQuestions = (raw: string): MCQuestion[] => {
     if (!raw) return [];
+    if (raw.trim().startsWith("[")) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.map((q: any) => ({
+            question: q.question || "",
+            options: (q.answers || []).map((text: string, idx: number) => ({
+              label: ["A", "B", "C", "D"][idx],
+              text: text || ""
+            })),
+            correct: q.correct || "A",
+            audioUrl: q.audioUrl || ""
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to parse MCQuestions JSON", e);
+      }
+    }
     if (raw.includes("###") || raw.includes("||")) {
       return raw.split("###").map(block => {
         const parts = block.split("||");
@@ -122,9 +140,10 @@ const ExerciseDetail = () => {
         question: q.question,
         answers: ["A","B","C","D"].map(l => q.options.find(o => o.label === l)?.text || ""),
         correct: q.correct,
+        audioUrl: q.audioUrl || "",
       })));
     } else {
-      setEditQuestions([{ question: "", answers: ["","","",""], correct: "A" }]);
+      setEditQuestions([{ question: "", answers: ["","","",""], correct: "A", audioUrl: "" }]);
     }
 
     // Pairs
@@ -152,10 +171,29 @@ const ExerciseDetail = () => {
     let vocabularyStr = "";
 
     if (normalizedType === "multiple" || normalizedType === "listening") {
-      questionsStr = editQuestions.map(q => {
-        const ans = q.answers.map((a, i) => `${["A","B","C","D"][i]}. ${a}`).join("|");
-        return `${q.question}||${ans}|Đáp án đúng: ${q.correct}`;
-      }).join("###");
+      const isOriginalJson = exercise.Questions && exercise.Questions.trim().startsWith("[");
+      if (isOriginalJson) {
+        let parsedOrig: any[] = [];
+        try {
+          parsedOrig = JSON.parse(exercise.Questions);
+        } catch (e) {}
+
+        const updatedQuestions = editQuestions.map((eq, idx) => {
+          const origQ = parsedOrig[idx] || {};
+          return {
+            ...origQ,
+            question: eq.question,
+            answers: eq.answers,
+            correct: eq.correct
+          };
+        });
+        questionsStr = JSON.stringify(updatedQuestions);
+      } else {
+        questionsStr = editQuestions.map(q => {
+          const ans = q.answers.map((a, i) => `${["A","B","C","D"][i]}. ${a}`).join("|");
+          return `${q.question}||${ans}|Đáp án đúng: ${q.correct}`;
+        }).join("###");
+      }
       content = editContent;
     }
     if (normalizedType === "essay") {
@@ -450,6 +488,11 @@ const ExerciseDetail = () => {
               {mcQuestions.length > 0 ? mcQuestions.map((q: MCQuestion, qi: number) => (
                 <div key={qi} className="question-block" style={{ marginBottom: 20 }}>
                   <p style={{ fontWeight: 700, color: "#5a3e2b", marginBottom: 8 }}>Câu {qi+1}: {q.question}</p>
+                  {q.audioUrl && !exercise.AudioUrl && (
+                    <audio controls style={{ width: "100%", marginBottom: 10 }}>
+                      <source src={`http://localhost:5000${q.audioUrl}`} />
+                    </audio>
+                  )}
                   {q.options.length > 0 ? q.options.map(opt => (
                     <p key={opt.label} style={{ padding: "7px 14px", borderRadius: 8, marginBottom: 5, background: opt.label === q.correct ? "#f0fdf4" : "#fafafa", border: `1px solid ${opt.label === q.correct ? "#86efac" : "#e0d8cc"}`, color: opt.label === q.correct ? "#16a34a" : "#444", fontWeight: opt.label === q.correct ? 600 : 400 }}>
                       {opt.label}. {opt.text} {opt.label === q.correct && "✓"}

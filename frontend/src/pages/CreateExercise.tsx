@@ -14,6 +14,8 @@ interface Question {
   vocabPairs?: { word: string; meaning: string }[];
   fillInAnswers?: string[];
   sentences?: string[];
+  level?: string;
+  correctSentence?: string;
 }
 
 interface ExamSection {
@@ -76,6 +78,7 @@ const CreateExercise = () => {
   // States for Exam Builder
   const [examDuration, setExamDuration] = useState(50);
   const [examStartTime, setExamStartTime] = useState("");
+  const [commonAudioUrl, setCommonAudioUrl] = useState("");
   const [examSections, setExamSections] = useState<ExamSection[]>([
     {
       type: "listening-mcq",
@@ -156,7 +159,7 @@ const CreateExercise = () => {
     }
   };
 
-  const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>, secIdx?: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -175,31 +178,32 @@ const CreateExercise = () => {
         text = await file.text();
       }
 
-      processScannedText(text);
+      processScannedText(text, secIdx);
     } catch (err) {
       alert("Lỗi khi đọc file: " + err);
     }
   };
 
-  const processScannedText = (text: string) => {
+  const processScannedText = (text: string, secIdx?: number) => {
     if (!text.trim()) {
       alert("File trống hoặc không đọc được nội dung.");
       return;
     }
 
-    const isReading = kyNang === "Doc" || kyNang === "Đọc";
+    const targetType = secIdx !== undefined ? examSections[secIdx].type : type;
 
-    if (isReading) {
+    // 1. Dạng Đọc hiểu chia đôi màn hình (reading-split)
+    if (targetType === "reading-split") {
       let passage = "";
       let questionsText = text;
       
-      const passageMarker = /\[(?:Bài đọc|Reading|Passage)\]\s*([\s\S]*?)(?=\[Câu hỏi\]|Câu\s*\d+|Question\s*\d+|$)/i;
+      const passageMarker = /\[(?:Bài đọc|Reading|Passage)\]\s*([\s\S]*?)(?=\[(?:Câu hỏi|Questions)\]|Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)]|$)/i;
       const match = text.match(passageMarker);
       if (match) {
         passage = match[1].trim();
         questionsText = text.replace(match[0], "");
       } else {
-        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+)/i;
+        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
         const parts = text.split(qBoundary);
         if (parts.length > 0) {
           passage = parts[0].trim();
@@ -208,7 +212,7 @@ const CreateExercise = () => {
       }
 
       const subQuestions: any[] = [];
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+)/i;
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
       const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
       
       for (const block of qBlocks) {
@@ -242,7 +246,25 @@ const CreateExercise = () => {
         subQuestions.push({ question: questionText, answers, correct });
       }
 
-      if (type === "reading-split") {
+      if (secIdx !== undefined) {
+        const copy = [...examSections];
+        copy[secIdx].content = passage;
+        copy[secIdx].questions = subQuestions.map(sq => ({
+          question: sq.question,
+          answers: sq.answers,
+          correct: sq.correct,
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: "",
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""]
+        }));
+        setExamSections(copy);
+        alert(`Đã quét và điền thành công phần thi Đọc hiểu (Phần ${secIdx + 1}) với ${subQuestions.length} câu hỏi!`);
+      } else {
         setQuestions([
           {
             question: "",
@@ -259,25 +281,14 @@ const CreateExercise = () => {
             subQuestions: subQuestions
           }
         ]);
-      } else {
-        const parsedExs = subQuestions.map(sq => ({
-          question: sq.question,
-          answers: sq.answers,
-          correct: sq.correct,
-          explanation: "",
-          audioUrl: "",
-          imageUrl: "",
-          text: passage,
-          prompt: "",
-          vocabPairs: [{ word: "", meaning: "" }],
-          fillInAnswers: [],
-          sentences: [""]
-        }));
-        if (parsedExs.length > 0) setQuestions(parsedExs);
+        alert("Đã quét thành công bài đọc và " + subQuestions.length + " câu hỏi!");
       }
-      alert("Đã quét thành công bài đọc và " + subQuestions.length + " câu hỏi!");
-    } else {
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+)/i;
+      return;
+    }
+
+    // 2. Dạng trắc nghiệm (multiple, listening-mcq, writing-tense-mcq, reading-vocab-mcq)
+    if (["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq"].includes(targetType)) {
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
       
@@ -332,12 +343,178 @@ const CreateExercise = () => {
       }
 
       if (parsed.length > 0) {
-        setQuestions(parsed);
-        alert(`Đã quét thành công ${parsed.length} câu hỏi!`);
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = parsed;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsed.length} câu hỏi trắc nghiệm!`);
+        } else {
+          setQuestions(parsed);
+          alert(`Đã quét thành công ${parsed.length} câu hỏi trắc nghiệm!`);
+        }
       } else {
         alert("Không thể phân tích câu hỏi nào. Vui lòng kiểm tra lại định dạng file.");
       }
+      return;
     }
+
+    // 3. Dạng Nghe chép chính tả (listening-dictation) & Luyện phát âm (speaking-pronounce)
+    if (targetType === "listening-dictation" || targetType === "speaking-pronounce") {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const parsed = lines.map(line => ({
+        question: "",
+        answers: ["", "", "", ""],
+        correct: "A",
+        explanation: "",
+        audioUrl: "",
+        imageUrl: "",
+        text: line,
+        prompt: "",
+        vocabPairs: [{ word: "", meaning: "" }],
+        fillInAnswers: [],
+        sentences: [""]
+      }));
+
+      if (parsed.length > 0) {
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = parsed;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsed.length} câu mẫu!`);
+        } else {
+          setQuestions(parsed);
+          alert(`Đã quét thành công ${parsed.length} câu mẫu!`);
+        }
+      } else {
+        alert("File trống hoặc không có nội dung hợp lệ.");
+      }
+      return;
+    }
+
+    // 4. Sắp xếp câu thành đoạn văn (writing-order-sentences)
+    if (targetType === "writing-order-sentences") {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (lines.length > 0) {
+        const parsedQuestion = {
+          question: "",
+          answers: ["", "", "", ""],
+          correct: "A",
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: "",
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: lines
+        };
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = [parsedQuestion];
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} đoạn văn gồm ${lines.length} câu!`);
+        } else {
+          setQuestions([parsedQuestion]);
+          alert(`Đã quét thành công đoạn văn gồm ${lines.length} câu!`);
+        }
+      } else {
+        alert("File trống hoặc không có nội dung hợp lệ.");
+      }
+      return;
+    }
+
+    // 5. Sắp xếp từ thành câu (writing-order-words)
+    if (targetType === "writing-order-words") {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const parsed: any[] = [];
+      for (let i = 0; i < lines.length; i += 2) {
+        const promptLine = lines[i] || "";
+        const correctLine = lines[i + 1] || "";
+        if (correctLine) {
+          parsed.push({
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            explanation: "",
+            audioUrl: "",
+            imageUrl: "",
+            text: correctLine,
+            prompt: promptLine,
+            vocabPairs: [{ word: "", meaning: "" }],
+            fillInAnswers: [],
+            sentences: [""]
+          });
+        }
+      }
+
+      if (parsed.length > 0) {
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = parsed;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsed.length} câu sắp xếp từ!`);
+        } else {
+          setQuestions(parsed);
+          alert(`Đã quét thành công ${parsed.length} câu sắp xếp từ!`);
+        }
+      } else {
+        alert("Định dạng file không đúng hoặc không đủ 2 dòng.");
+      }
+      return;
+    }
+
+    // 6. Điền từ vào đoạn văn (listening-fill-in)
+    if (targetType === "listening-fill-in") {
+      let passage = "";
+      let answersText = "";
+      const ansMarker = /\[(?:Đáp án|Answers|Keys)\]\s*([\s\S]*?)$/i;
+      const match = text.match(ansMarker);
+      if (match) {
+        answersText = match[1].trim();
+        passage = text.replace(match[0], "").replace(/\[(?:Đoạn văn|Passage)\]/i, "").trim();
+      } else {
+        passage = text.trim();
+      }
+
+      const fillInAnswers: string[] = [];
+      const ansLines = answersText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      for (const line of ansLines) {
+        const m = line.match(/^\d+\s*[\.\:\-]?\s*(.*)/);
+        if (m) {
+          fillInAnswers.push(m[1].trim());
+        } else {
+          fillInAnswers.push(line);
+        }
+      }
+
+      const parsedQuestion = {
+        question: "",
+        answers: ["", "", "", ""],
+        correct: "A",
+        explanation: "",
+        audioUrl: "",
+        imageUrl: "",
+        text: passage,
+        prompt: "",
+        vocabPairs: [{ word: "", meaning: "" }],
+        fillInAnswers: fillInAnswers,
+        sentences: [""]
+      };
+
+      if (secIdx !== undefined) {
+        const copy = [...examSections];
+        copy[secIdx].content = passage;
+        copy[secIdx].questions = [parsedQuestion];
+        setExamSections(copy);
+        alert(`Đã quét và điền thành công Phần ${secIdx + 1} đoạn văn điền từ!`);
+      } else {
+        setQuestions([parsedQuestion]);
+        alert("Đã quét thành công đoạn văn và danh sách đáp án!");
+      }
+      return;
+    }
+
+    alert("Dạng bài tập này chưa được hỗ trợ quét file tự động.");
   };
 
   /* ===== FILE UPLOAD HELPER ===== */
@@ -365,6 +542,7 @@ const CreateExercise = () => {
     setDangBai(db);
     const targetType = mapDangBaiToType(db);
     setType(targetType);
+    setCommonAudioUrl("");
     
     // Reset questions state with proper initial structure
     setQuestions([
@@ -460,10 +638,35 @@ const CreateExercise = () => {
     }
   };
 
+  const handleExamQuestionFileUpload = async (secIdx: number, qIdx: number, field: "audioUrl" | "imageUrl", file: File) => {
+    try {
+      const url = await uploadFile(file);
+      const copy = [...examSections];
+      if (copy[secIdx].questions && copy[secIdx].questions[qIdx]) {
+        (copy[secIdx].questions[qIdx] as any)[field] = url;
+      }
+      setExamSections(copy);
+    } catch (err) {
+      alert("Lỗi khi tải file lên");
+    }
+  };
+
   const addQuestionToSection = (secIdx: number) => {
     const copy = [...examSections];
     if (!copy[secIdx].questions) copy[secIdx].questions = [];
-    copy[secIdx].questions.push({ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" });
+    copy[secIdx].questions.push({
+      question: "",
+      answers: ["", "", "", ""],
+      correct: "A",
+      explanation: "",
+      audioUrl: "",
+      imageUrl: "",
+      text: "",
+      prompt: "",
+      vocabPairs: [{ word: "", meaning: "" }],
+      fillInAnswers: [],
+      sentences: [""]
+    });
     setExamSections(copy);
   };
 
@@ -523,12 +726,12 @@ const CreateExercise = () => {
           deadline: deadline || null,
           description: questions[0]?.question || "",
           imageUrl: questions[0]?.imageUrl || "",
-          audioUrl: questions[0]?.audioUrl || ""
+          audioUrl: commonAudioUrl || questions[0]?.audioUrl || ""
         };
         contentStr = JSON.stringify(contentMeta);
         // Serialize the array of questions
         questionsStr = JSON.stringify(questions);
-        mainAudioUrl = questions[0]?.audioUrl || "";
+        mainAudioUrl = commonAudioUrl || questions[0]?.audioUrl || "";
       }
 
       await fetch("http://localhost:5000/baitap/create", {
@@ -640,13 +843,13 @@ const CreateExercise = () => {
             boxShadow: activeTab === "reuse" ? "0 1px 3px rgba(0,0,0,0.12)" : "none"
           }}
         >
-          Chọn bài tập có sẵn
+          BT có sẵn
         </button>
       </div>
 
       {activeTab === "reuse" ? (
         <div className="exercise-editor" style={{ padding: "20px" }}>
-          <h3 style={{ marginBottom: "15px", color: "#5a3e2b" }}>Chọn bài tập có sẵn</h3>
+          <h3 style={{ marginBottom: "15px", color: "#5a3e2b" }}>BT có sẵn</h3>
           
           <input
             type="text"
@@ -692,25 +895,120 @@ const CreateExercise = () => {
         /* EXERCISE EDITOR */
         <div className="exercise-editor">
           {/* NÚT QUÉT FILE CÂU HỎI */}
-          <div style={{
-            background: "#fdfbf7",
-            border: "1.5px dashed #d97706",
-            borderRadius: "10px",
-            padding: "15px",
-            marginBottom: "20px",
-            textAlign: "left"
-          }}>
-            <h4 style={{ margin: "0 0 5px 0", color: "#d97706", fontSize: "15px" }}>Quét câu hỏi từ file Word (.docx) hoặc Text (.txt)</h4>
-            <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#666" }}>
-              Hỗ trợ quét tự động câu hỏi trắc nghiệm MCQ, bài đọc Reading và các tùy chọn câu hỏi đáp án.
-            </p>
-            <input
-              type="file"
-              accept=".txt,.docx"
-              onChange={handleFileScan}
-              style={{ fontSize: "13px" }}
-            />
-          </div>
+          {["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
+            <div style={{
+              background: "#fdfbf7",
+              border: "1.5px dashed #d97706",
+              borderRadius: "10px",
+              padding: "15px",
+              marginBottom: "20px",
+              textAlign: "left"
+            }}>
+              <h4 style={{ margin: "0 0 5px 0", color: "#d97706", fontSize: "15px" }}>Quét câu hỏi từ file Word (.docx) hoặc Text (.txt)</h4>
+              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#666" }}>
+                Hệ thống hỗ trợ tự động điền thông tin cho dạng bài <strong>{dangBai}</strong>. Vui lòng định dạng file theo mẫu dưới đây để quét chính xác nhất:
+              </p>
+              
+              {/* Dynamic Instructions Box */}
+              <div style={{
+                background: "#f4ede4",
+                padding: "10px 12px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontFamily: "monospace",
+                whiteSpace: "pre-wrap",
+                color: "#5a3e2b",
+                marginBottom: "12px",
+                borderLeft: "4px solid #d97706",
+                lineHeight: "1.4"
+              }}>
+                {type === "multiple" || type === "listening-mcq" || type === "writing-tense-mcq" || type === "reading-vocab-mcq" ? (
+                  `Mẫu file Trắc nghiệm MCQ (Có thể tạo nhiều câu liên tiếp):\n` +
+                  `Câu 1: What is the capital of France?\n` +
+                  `A. London\n` +
+                  `B. Paris\n` +
+                  `C. Rome\n` +
+                  `D. Berlin\n` +
+                  `Đáp án đúng: B\n` +
+                  `Giải thích: Paris là thủ đô nước Pháp (tùy chọn)\n\n` +
+                  `Câu 2: How many colors are there in a rainbow?\n` +
+                  `A. 5\n` +
+                  `B. 6\n` +
+                  `C. 7\n` +
+                  `D. 8\n` +
+                  `Đáp án đúng: C`
+                ) : type === "reading-split" ? (
+                  `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều câu hỏi liên tiếp):\n` +
+                  `[Bài đọc]\n` +
+                  `This is the reading passage text. You can write paragraphs here...\n\n` +
+                  `[Câu hỏi]\n` +
+                  `Câu 1: What is this passage about?\n` +
+                  `A. French history\n` +
+                  `B. Science\n` +
+                  `C. Capital cities\n` +
+                  `D. Sports\n` +
+                  `Đáp án đúng: C\n\n` +
+                  `Câu 2: Which word is closest in meaning to 'commence'?\n` +
+                  `A. stop\n` +
+                  `B. begin\n` +
+                  `C. delay\n` +
+                  `D. continue\n` +
+                  `Đáp án đúng: B`
+                ) : type === "listening-dictation" ? (
+                  `Mẫu file Nghe chép chính tả (Mỗi dòng là một câu, hỗ trợ nhiều câu):\n` +
+                  `Hello, welcome to our class.\n` +
+                  `I am learning English today.\n` +
+                  `Practicing listening is very important.`
+                ) : type === "speaking-pronounce" ? (
+                  `Mẫu file Luyện phát âm (Mỗi dòng là một câu/từ, hỗ trợ nhiều câu):\n` +
+                  `Hello, beautiful world!\n` +
+                  `English pronunciation\n` +
+                  `Thank you very much`
+                ) : type === "writing-order-words" ? (
+                  `Mẫu file Sắp xếp từ (Tạo nhiều câu bằng cách viết các cặp dòng liên tiếp):\n` +
+                  `Tôi thích học tiếng Anh.\n` +
+                  `I like learning English.\n` +
+                  `Thời tiết hôm nay rất đẹp.\n` +
+                  `The weather is very nice today.\n` +
+                  `Tôi là học sinh.\n` +
+                  `I am a student.`
+                ) : type === "writing-order-sentences" ? (
+                  `Mẫu file Sắp xếp câu thành đoạn văn (Mỗi dòng là một câu theo đúng thứ tự):\n` +
+                  `First, download the app.\n` +
+                  `Second, create your account.\n` +
+                  `Finally, start practicing.`
+                ) : type === "listening-fill-in" ? (
+                  `Mẫu file Điền từ vào đoạn văn (Đoạn văn chứa các ký hiệu ô trống [1], [2],...):\n` +
+                  `[Đoạn văn]\n` +
+                  `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
+                  `[Đáp án]\n` +
+                  `1. supermarket\n` +
+                  `2. apples`
+                ) : ""}
+              </div>
+              
+              <input
+                type="file"
+                accept=".txt,.docx"
+                onChange={handleFileScan}
+                style={{ fontSize: "13px" }}
+              />
+            </div>
+          ) : (
+            <div style={{
+              background: "#f9f9f9",
+              border: "1.5px dashed #ccc",
+              borderRadius: "10px",
+              padding: "15px",
+              marginBottom: "20px",
+              textAlign: "left"
+            }}>
+              <h4 style={{ margin: "0 0 5px 0", color: "#777", fontSize: "15px" }}>Quét câu hỏi từ file</h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "#888" }}>
+                ⚠️ Dạng bài tập <strong>{dangBai}</strong> yêu cầu thiết lập thủ công các tệp đa phương tiện (ảnh/ghi âm) hoặc đề bài tự luận trực tiếp trên giao diện và không hỗ trợ tính năng quét từ file Word.
+              </p>
+            </div>
+          )}
 
           <input
             className="exercise-title"
@@ -763,7 +1061,7 @@ const CreateExercise = () => {
               onChange={e => setDeadline(e.target.value)}
             />
           </div>
-          <div style={{ display: "flex", gap: "50px", alignItems: "center", paddingTop: "20px" }}>
+          <div style={{ display: "flex", gap: "50px", alignItems: "center", paddingTop: "20px", paddingLeft: "10px" }}>
             <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
               <input
                 type="checkbox"
@@ -781,7 +1079,7 @@ const CreateExercise = () => {
                 onChange={(e) => setIsExam(e.target.checked)}
                 style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
               />
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>Đặt làm bài kiểm tra (Exam)</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>Đặt làm bài kiểm tra</span>
             </label>
           </div>
         </div>
@@ -845,52 +1143,190 @@ const CreateExercise = () => {
                       style={{ width: '100%', marginTop: 4, marginBottom: 0 }}
                       value={sec.type}
                       onChange={e => {
+                        const val = e.target.value;
                         const copy = [...examSections];
-                        copy[secIdx].type = e.target.value;
+                        copy[secIdx].type = val;
                         // Reset properties based on type
-                        if (e.target.value === "listening-mcq" || e.target.value === "reading-split") {
-                          copy[secIdx].questions = [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }];
+                        if (val === "speaking-topic" || val === "writing-essay") {
+                          copy[secIdx].questions = [];
                           copy[secIdx].content = "";
                         } else {
-                          copy[secIdx].questions = [];
+                          copy[secIdx].questions = [{
+                            question: "",
+                            answers: ["", "", "", ""],
+                            correct: "A",
+                            explanation: "",
+                            audioUrl: "",
+                            imageUrl: "",
+                            text: "",
+                            prompt: "",
+                            vocabPairs: [{ word: "", meaning: "" }],
+                            fillInAnswers: [],
+                            sentences: [""]
+                          }];
                           copy[secIdx].content = "";
                         }
                         setExamSections(copy);
                       }}
                     >
-                      <option value="listening-mcq">Listening (Nghe trắc nghiệm)</option>
-                      <option value="reading-split">Reading (Đọc hiểu chia đôi màn hình)</option>
-                      <option value="speaking-topic">Speaking (Nói theo chủ đề)</option>
-                      <option value="writing-essay">Writing (Viết luận tự luận)</option>
+                      <option value="listening-mcq">Nghe: Nghe audio trắc nghiệm</option>
+                      <option value="listening-image">Nghe: Hình ảnh chọn đáp án</option>
+                      <option value="listening-dictation">Nghe: Nghe chép chính tả</option>
+                      <option value="listening-fill-in">Nghe: Điền từ vào đoạn văn</option>
+                      <option value="speaking-pronounce">Nói: Luyện phát âm (tự động check)</option>
+                      <option value="speaking-topic">Nói: Nói theo chủ đề (ghi âm nộp GV)</option>
+                      <option value="reading-split">Đọc: Trắc nghiệm đọc hiểu (chia đôi màn hình)</option>
+                      <option value="reading-vocab-mcq">Đọc: Bài tập từ vựng</option>
+                      <option value="writing-order-words">Viết: Sắp xếp từ thành câu</option>
+                      <option value="writing-tense-mcq">Viết: Trắc nghiệm xác định thì</option>
+                      <option value="writing-essay">Viết: Viết đoạn văn ngắn</option>
+                      <option value="writing-order-sentences">Viết: Sắp xếp câu thành đoạn văn</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Section Specific Inputs */}
-                {sec.type === "listening-mcq" && (
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 File nghe cho phần này</label>
+                {/* NÚT QUÉT FILE CÂU HỎI CHO PHẦN THI */}
+                {["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(sec.type) ? (
+                  <div style={{
+                    background: "#fdfbf7",
+                    border: "1.5px dashed #d97706",
+                    borderRadius: "10px",
+                    padding: "15px",
+                    margin: "10px 0 20px 0",
+                    textAlign: "left"
+                  }}>
+                    <h5 style={{ margin: "0 0 5px 0", color: "#d97706", fontSize: "14px" }}>Quét câu hỏi cho Phần {secIdx + 1} (.docx / .txt)</h5>
+                    <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#666" }}>
+                      * Quét và tự động nhập nhanh toàn bộ câu hỏi cho phần thi này. Mẫu định dạng file của dạng <strong>{sec.type}</strong>:
+                    </p>
+                    <div style={{
+                      background: "#f4ede4",
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontFamily: "monospace",
+                      whiteSpace: "pre-wrap",
+                      color: "#5a3e2b",
+                      marginBottom: "10px",
+                      borderLeft: "4px solid #d97706",
+                      lineHeight: "1.4"
+                    }}>
+                      {sec.type === "multiple" || sec.type === "listening-mcq" || sec.type === "writing-tense-mcq" || sec.type === "reading-vocab-mcq" ? (
+                        `Mẫu file Trắc nghiệm MCQ:\n` +
+                        `Câu 1: What is the capital of France?\n` +
+                        `A. London\n` +
+                        `B. Paris\n` +
+                        `C. Rome\n` +
+                        `D. Berlin\n` +
+                        `Đáp án đúng: B`
+                      ) : sec.type === "reading-split" ? (
+                        `Mẫu file Đọc chia đôi màn hình:\n` +
+                        `[Bài đọc]\n` +
+                        `This is the reading passage text. You can write paragraphs here...\n\n` +
+                        `[Câu hỏi]\n` +
+                        `Câu 1: What is this passage about?\n` +
+                        `A. French history\n` +
+                        `B. Science\n` +
+                        `C. Capital cities\n` +
+                        `D. Sports\n` +
+                        `Đáp án đúng: C`
+                      ) : sec.type === "listening-dictation" ? (
+                        `Mẫu file Nghe chép chính tả:\n` +
+                        `Mỗi dòng trong file là một câu trả lời chính xác. Ví dụ:\n` +
+                        `Hello, welcome to our class.\n` +
+                        `I am learning English today.`
+                      ) : sec.type === "speaking-pronounce" ? (
+                        `Mẫu file Luyện phát âm:\n` +
+                        `Mỗi dòng là một từ hoặc câu mẫu. Ví dụ:\n` +
+                        `Hello, beautiful world!\n` +
+                        `English pronunciation`
+                      ) : sec.type === "writing-order-words" ? (
+                        `Mẫu file Sắp xếp từ:\n` +
+                        `Tôi thích học tiếng Anh.\n` +
+                        `I like learning English.\n` +
+                        `Thời tiết hôm nay rất đẹp.\n` +
+                        `The weather is very nice today.`
+                      ) : sec.type === "writing-order-sentences" ? (
+                        `Mẫu file Sắp xếp câu thành đoạn văn:\n` +
+                        `First, download the app.\n` +
+                        `Second, create your account.\n` +
+                        `Finally, start practicing.`
+                      ) : sec.type === "listening-fill-in" ? (
+                        `Mẫu file Điền từ vào đoạn văn:\n` +
+                        `[Đoạn văn]\n` +
+                        `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
+                        `[Đáp án]\n` +
+                        `1. supermarket\n` +
+                        `2. apples`
+                      ) : ""}
+                    </div>
                     <input
                       type="file"
-                      accept="audio/*"
-                      onChange={async e => {
-                        if (e.target.files && e.target.files[0]) {
-                          await handleExamSectionUpload(secIdx, "audioUrl", e.target.files[0]);
-                        }
-                      }}
-                      style={{ display: "block", marginTop: 5, marginBottom: 15 }}
+                      accept=".txt,.docx"
+                      onChange={e => handleFileScan(e, secIdx)}
+                      style={{ fontSize: "12px" }}
                     />
-                    {sec.audioUrl && <p style={{ color: "green", fontSize: 13 }}>✓ Đã tải lên: {sec.audioUrl}</p>}
+                  </div>
+                ) : (
+                  <div style={{
+                    background: "#f9f9f9",
+                    border: "1.5px dashed #ccc",
+                    borderRadius: "10px",
+                    padding: "10px 15px",
+                    margin: "10px 0 20px 0",
+                    textAlign: "left"
+                  }}>
+                    <h5 style={{ margin: "0 0 5px 0", color: "#777", fontSize: "14px" }}>Quét câu hỏi cho Phần {secIdx + 1}</h5>
+                    <p style={{ margin: 0, fontSize: "11px", color: "#888" }}>
+                      ⚠️ Dạng phần thi <strong>{sec.type}</strong> không hỗ trợ quét từ file Word. Vui lòng thiết lập thủ công.
+                    </p>
+                  </div>
+                )}
 
-                    {/* Section MCQ List */}
+                {/* Section Specific Inputs */}
+                {(sec.type === "listening-mcq" || sec.type === "writing-tense-mcq" || sec.type === "reading-vocab-mcq") && (
+                  <div>
+                    {sec.type === "listening-mcq" && (
+                      <div style={{ marginBottom: 15 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 File nghe chung cho phần này (Tùy chọn)</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamSectionUpload(secIdx, "audioUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5, marginBottom: 15 }}
+                        />
+                        {sec.audioUrl && <p style={{ color: "green", fontSize: 13 }}>✓ Đã tải lên: {sec.audioUrl}</p>}
+                      </div>
+                    )}
+
                     {sec.questions?.map((q, qIdx) => (
                       <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
                         <div className="question-block-header">
                           <h5>Câu hỏi {qIdx + 1}</h5>
                           {sec.questions && sec.questions.length > 1 && (
-                            <button className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
                           )}
                         </div>
+                        {sec.type === "listening-mcq" && (
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Audio riêng cho câu này (Tùy chọn)</label>
+                            <input
+                              type="file"
+                              accept="audio/*"
+                              onChange={async e => {
+                                if (e.target.files && e.target.files[0]) {
+                                  await handleExamQuestionFileUpload(secIdx, qIdx, "audioUrl", e.target.files[0]);
+                                }
+                              }}
+                              style={{ display: "block", marginTop: 5 }}
+                            />
+                            {q.audioUrl && <p style={{ color: "green", fontSize: 11 }}>✓ Đã tải: {q.audioUrl}</p>}
+                          </div>
+                        )}
                         <input
                           type="text"
                           placeholder="Câu hỏi"
@@ -921,9 +1357,316 @@ const CreateExercise = () => {
                           <option value="C">Đáp án đúng: C</option>
                           <option value="D">Đáp án đúng: D</option>
                         </select>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án (tùy chọn)"
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
                       </div>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi trắc nghiệm</button>
+                  </div>
+                )}
+
+                {sec.type === "listening-image" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Hình ảnh đề bài</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamQuestionFileUpload(secIdx, qIdx, "imageUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                        />
+                        {q.imageUrl && <img src={q.imageUrl} alt="Listening section image" style={{ maxHeight: 120, display: "block", marginBottom: 10 }} />}
+
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Audio câu trả lời</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamQuestionFileUpload(secIdx, qIdx, "audioUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                        />
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+
+                        <select
+                          className="exercise-type"
+                          style={{ width: "100%" }}
+                          value={q.correct}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "correct", e.target.value)}
+                        >
+                          <option value="A">Đáp án đúng: A</option>
+                          <option value="B">Đáp án đúng: B</option>
+                          <option value="C">Đáp án đúng: C</option>
+                          <option value="D">Đáp án đúng: D</option>
+                        </select>
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi hình ảnh</button>
+                  </div>
+                )}
+
+                {sec.type === "listening-dictation" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamQuestionFileUpload(secIdx, qIdx, "audioUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                        />
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Nội dung văn bản đúng</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Nhập văn bản đáp án đúng..."
+                          value={q.text || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "text", e.target.value)}
+                        />
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu nghe chép chính tả</button>
+                  </div>
+                )}
+
+                {sec.type === "listening-fill-in" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamQuestionFileUpload(secIdx, qIdx, "audioUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5, marginBottom: 10 }}
+                        />
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đoạn văn (Dùng [1], [2]... để tạo ô trống)</label>
+                        <textarea
+                          className="exercise-content"
+                          rows={3}
+                          placeholder="Yesterday, I went to the [1] and bought [2]..."
+                          value={q.text || ""}
+                          onChange={e => {
+                            const val = e.target.value;
+                            const blanksCount = (val.match(/\[\d+\]/g) || []).length;
+                            const currentAnswers = q.fillInAnswers || [];
+                            const nextAnswers = Array.from({ length: blanksCount }).map((_, i) => currentAnswers[i] || "");
+                            
+                            const copy = [...examSections];
+                            if (copy[secIdx].questions) {
+                              copy[secIdx].questions[qIdx].text = val;
+                              copy[secIdx].questions[qIdx].fillInAnswers = nextAnswers;
+                            }
+                            setExamSections(copy);
+                          }}
+                        />
+
+                        {q.fillInAnswers && q.fillInAnswers.length > 0 && (
+                          <div style={{ marginTop: 10 }}>
+                            <p style={{ fontSize: 12, fontWeight: 600, color: "#a33d2c" }}>Đáp án ô điền:</p>
+                            {q.fillInAnswers.map((ans: string, aIdx: number) => (
+                              <input
+                                key={aIdx}
+                                type="text"
+                                className="exercise-content"
+                                style={{ margin: "4px 0" }}
+                                placeholder={`Đáp án ô trống [${aIdx + 1}]`}
+                                value={ans}
+                                onChange={e => {
+                                  const copy = [...examSections];
+                                  if (copy[secIdx].questions && copy[secIdx].questions[qIdx].fillInAnswers) {
+                                    copy[secIdx].questions[qIdx].fillInAnswers[aIdx] = e.target.value;
+                                  }
+                                  setExamSections(copy);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi điền từ</button>
+                  </div>
+                )}
+
+                {sec.type === "speaking-pronounce" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Từ vựng / Câu mẫu phát âm</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Ví dụ: Hello, beautiful world!"
+                          value={q.text || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "text", e.target.value)}
+                        />
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Cấp độ</label>
+                        <select
+                          className="exercise-type"
+                          style={{ width: "100%", marginTop: 4 }}
+                          value={q.level || "Đọc theo câu"}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "level", e.target.value)}
+                        >
+                          <option value="Luyện âm đơn">Luyện âm đơn (Phoneme)</option>
+                          <option value="Đọc từ theo âm">Đọc từ theo âm (Word)</option>
+                          <option value="Đọc theo câu">Đọc theo câu (Sentence)</option>
+                        </select>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Hướng dẫn học viên (tùy chọn)"
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu luyện phát âm</button>
+                  </div>
+                )}
+
+                {sec.type === "writing-order-words" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu gợi ý / Câu gốc (tiếng Việt)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Con mèo đang ngủ trên giường."
+                          value={q.text || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "text", e.target.value)}
+                        />
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Câu tiếng Anh hoàn chỉnh</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="The cat is sleeping on the bed"
+                          value={q.correctSentence || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "correctSentence", e.target.value)}
+                        />
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu sắp xếp từ</button>
+                  </div>
+                )}
+
+                {sec.type === "writing-order-sentences" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div className="question-block-header">
+                          <h5>Câu hỏi {qIdx + 1}</h5>
+                          {sec.questions && sec.questions.length > 1 && (
+                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
+                          )}
+                        </div>
+                        <p style={{ fontSize: 12, color: "#888", marginBottom: 5 }}>Nhập các câu của đoạn văn theo thứ tự đúng logic:</p>
+                        {q.sentences?.map((sText, sIdx) => (
+                          <div key={sIdx} style={{ display: "flex", gap: 10, alignItems: "center", margin: "4px 0" }}>
+                            <span style={{ fontSize: 12, fontWeight: 600 }}>Câu {sIdx + 1}</span>
+                            <input
+                              type="text"
+                              className="exercise-content"
+                              style={{ marginTop: 0 }}
+                              value={sText}
+                              onChange={e => {
+                                const copy = [...examSections];
+                                if (copy[secIdx].questions && copy[secIdx].questions[qIdx].sentences) {
+                                  copy[secIdx].questions[qIdx].sentences[sIdx] = e.target.value;
+                                }
+                                setExamSections(copy);
+                              }}
+                            />
+                            {q.sentences && q.sentences.length > 1 && (
+                              <button
+                                type="button"
+                                className="remove-btn"
+                                style={{ padding: "2px 6px" }}
+                                onClick={() => {
+                                  const copy = [...examSections];
+                                  if (copy[secIdx].questions && copy[secIdx].questions[qIdx].sentences) {
+                                    copy[secIdx].questions[qIdx].sentences = copy[secIdx].questions[qIdx].sentences.filter((_, i) => i !== sIdx);
+                                  }
+                                  setExamSections(copy);
+                                }}
+                              >✕</button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="add-content"
+                          style={{ padding: "4px 12px", marginTop: 8 }}
+                          onClick={() => {
+                            const copy = [...examSections];
+                            if (copy[secIdx].questions && copy[secIdx].questions[qIdx]) {
+                              if (!copy[secIdx].questions[qIdx].sentences) {
+                                copy[secIdx].questions[qIdx].sentences = [];
+                              }
+                              copy[secIdx].questions[qIdx].sentences.push("");
+                            }
+                            setExamSections(copy);
+                          }}
+                        >+ Thêm câu tiếp theo</button>
+                      </div>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu sắp xếp câu</button>
                   </div>
                 )}
 
@@ -1042,6 +1785,58 @@ const CreateExercise = () => {
           <div style={{ borderTop: "2px solid #e6caa5", marginTop: 25, paddingTop: 20 }}>
             <h3 style={{ color: "#a33d2c", marginBottom: 15 }}>📝 Danh sách Câu Hỏi ({dangBai})</h3>
 
+            {type === "listening-mcq" && (
+              <div style={{
+                background: "#fdf8f5",
+                border: "2px dashed #e6caa5",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "20px"
+              }}>
+                <h4 style={{ color: "#5a3e2b", marginTop: 0, marginBottom: 8, fontSize: "15px" }}>🎵 File nghe chung cho toàn bộ bài tập (Tùy chọn)</h4>
+                <p style={{ color: "#777", fontSize: "12px", marginTop: 0, marginBottom: 12 }}>
+                  * Nếu tải lên file nghe chung ở đây, các câu hỏi sẽ dùng chung audio này. Học viên sẽ nghe từ trình phát chung ở đầu bài.
+                  Nếu không tải ở đây, bạn có thể tải audio riêng cho từng câu hỏi phía dưới.
+                </p>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={async e => {
+                    if (e.target.files && e.target.files[0]) {
+                      try {
+                        const url = await uploadFile(e.target.files[0]);
+                        setCommonAudioUrl(url);
+                      } catch (err) {
+                        alert("Lỗi khi tải file nghe chung lên");
+                      }
+                    }
+                  }}
+                  style={{ display: "block" }}
+                />
+                {commonAudioUrl && (
+                  <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
+                    <p style={{ color: "green", fontSize: 13, fontWeight: "bold", margin: 0 }}>✓ Đã tải file nghe chung:</p>
+                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://localhost:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
+                    <button
+                      type="button"
+                      onClick={() => setCommonAudioUrl("")}
+                      style={{
+                        background: "#ff4d4f",
+                        color: "#fff",
+                        border: "none",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontSize: "11px"
+                      }}
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {questions.map((q, qIndex) => (
               <div key={qIndex} className="question-block" style={{ border: "2px solid #e6caa5" }}>
                 <div className="question-block-header">
@@ -1123,9 +1918,14 @@ const CreateExercise = () => {
                               handleQuestionFileUpload(qIndex, "audioUrl", e.target.files[0]);
                             }
                           }}
+                          disabled={!!commonAudioUrl}
                           style={{ display: "block", marginTop: 5 }}
                         />
-                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải: {q.audioUrl}</p>}
+                        {commonAudioUrl ? (
+                          <p style={{ color: "#F95800", fontSize: 12, marginTop: 5 }}>⚠️ Đang dùng file nghe chung ở đầu bài tập</p>
+                        ) : q.audioUrl ? (
+                          <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>✓ Đã tải: {q.audioUrl}</p>
+                        ) : null}
                       </div>
                     )}
 
