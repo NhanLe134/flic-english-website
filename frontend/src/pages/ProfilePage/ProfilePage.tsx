@@ -293,7 +293,7 @@ export default function ProfilePage() {
 
           <div className="student-card-footer">
             <div className="footer-meta-item">
-              <span className="meta-label">MÃ HỌC VIÊN</span>
+              <span className="meta-label">Mã học viên</span>
               <span className="meta-value font-code">{profile.MaSinhVien}</span>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function ProfilePage() {
           {/* Header & Nút Thao Tác */}
           <div className="details-header-row">
             <div className="title-area">
-              <h1>HỒ SƠ CÁ NHÂN</h1>
+              <h1>Hồ sơ cá nhân</h1>
               <p>Quản lý và cập nhật thông tin cá nhân của bạn</p>
             </div>
             
@@ -326,7 +326,7 @@ export default function ProfilePage() {
             <div className="fields-grid-layout">
               {/* Mã học viên (hệ thống) */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">MÃ HỌC VIÊN (HỆ THỐNG TẠO)</span>
+                <span className="field-meta-label">Mã học viên (Hệ thống tạo)</span>
                 <span className="field-display-value font-code bold-text color-navy">
                   <FiHash className="inline-icon" /> {profile.MaSinhVien}
                 </span>
@@ -334,7 +334,7 @@ export default function ProfilePage() {
 
               {/* Mã sinh viên (trường) */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">MÃ SỐ SINH VIÊN (TRƯỜNG)</span>
+                <span className="field-meta-label">Mã số sinh viên (Trường)</span>
                 <span className="field-display-value bold-text">
                   <FiHash className="inline-icon" /> {profile.MSSV || "—"}
                 </span>
@@ -342,13 +342,13 @@ export default function ProfilePage() {
 
               {/* Họ tên */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">HỌ VÀ TÊN</span>
+                <span className="field-meta-label">Họ và tên</span>
                 <span className="field-display-value bold-text">{profile.HoTen}</span>
               </div>
 
               {/* Email */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">EMAIL LIÊN HỆ</span>
+                <span className="field-meta-label">Email liên hệ</span>
                 <span className="field-display-value">
                   <FiMail className="inline-icon" /> {profile.Email || "—"}
                 </span>
@@ -356,13 +356,13 @@ export default function ProfilePage() {
 
               {/* Giới tính */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">GIỚI TÍNH</span>
+                <span className="field-meta-label">Giới tính</span>
                 <span className="field-display-value">{profile.GioiTinh || "—"}</span>
               </div>
 
               {/* Ngày sinh */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">NGÀY SINH</span>
+                <span className="field-meta-label">Ngày sinh</span>
                 <span className="field-display-value">
                   <FiCalendar className="inline-icon" /> {formatDate(profile.NgaySinh)}
                 </span>
@@ -370,7 +370,7 @@ export default function ProfilePage() {
 
               {/* Lớp / Trường */}
               <div className="form-field-wrapper span-2">
-                <span className="field-meta-label">LỚP / TRƯỜNG ĐANG THEO HỌC</span>
+                <span className="field-meta-label">Lớp / Trường đang theo học</span>
                 <span className="field-display-value">
                   <FiHome className="inline-icon" /> {profile.Lop || "—"}
                 </span>
@@ -388,7 +388,7 @@ export default function ProfilePage() {
             <div className="fields-grid-layout">
               {/* Khóa học đã đăng ký */}
               <div className="form-field-wrapper span-2">
-                <span className="field-meta-label">KHÓA HỌC HIỆN TẠI</span>
+                <span className="field-meta-label">Khóa học hiện tại</span>
                 <span className="field-display-value course-highlight-text">
                   {profile.TenKhoaHoc || "Chưa đăng ký khóa học nào"}
                 </span>
@@ -396,7 +396,7 @@ export default function ProfilePage() {
 
               {/* Ngày đăng ký */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">NGÀY ĐĂNG KÝ HỌC</span>
+                <span className="field-meta-label">Ngày đăng ký học</span>
                 <span className="field-display-value">
                   <FiCalendar className="inline-icon" /> {formatDate(profile.NgayDangKy)}
                 </span>
@@ -404,7 +404,7 @@ export default function ProfilePage() {
 
               {/* Trạng thái học */}
               <div className="form-field-wrapper">
-                <span className="field-meta-label">TRẠNG THÁI HỌC TẬP</span>
+                <span className="field-meta-label">Trạng thái học tập</span>
                 <span className="field-display-value status-pill-badge text-active">
                   <FiActivity className="inline-icon" /> Đang theo học
                 </span>
@@ -482,13 +482,32 @@ export default function ProfilePage() {
 
               <div className="modal-form-group">
                 <label className="modal-form-label">Ngày sinh</label>
-                <input
-                  type="date"
-                  name="NgaySinh"
-                  value={editForm.NgaySinh}
-                  onChange={handleInputChange}
-                  className="modal-form-input"
-                />
+                <div className="modal-date-input-wrapper">
+                  <input
+                    type="text"
+                    readOnly
+                    value={editForm.NgaySinh ? editForm.NgaySinh.split('-').reverse().join('/') : ""}
+                    className="modal-form-input"
+                    placeholder="Chọn ngày sinh"
+                    onClick={(e) => {
+                      const dateInput = e.currentTarget.nextElementSibling as HTMLInputElement;
+                      if (dateInput) {
+                        try {
+                          dateInput.showPicker();
+                        } catch (err) {
+                          dateInput.focus();
+                        }
+                      }
+                    }}
+                  />
+                  <input
+                    type="date"
+                    name="NgaySinh"
+                    value={editForm.NgaySinh}
+                    onChange={handleInputChange}
+                    className="modal-date-hidden-input"
+                  />
+                </div>
               </div>
 
               <div className="modal-form-group">
