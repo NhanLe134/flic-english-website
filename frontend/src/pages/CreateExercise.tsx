@@ -258,7 +258,7 @@ const CreateExercise = () => {
     setExamSections(copy);
   };
 
-  /* ===== CREATE & POST EXERCISE ===== */
+  /* ===== CREATE & POST BAITAP ===== */
   const handleCreate = async (statusOverride?: "draft" | "pending" | "published" | "practice") => {
     if (!title) { alert("Vui lòng nhập tiêu đề"); return; }
 
@@ -298,7 +298,7 @@ const CreateExercise = () => {
         mainAudioUrl = questions[0]?.audioUrl || "";
       }
 
-      await fetch("http://localhost:5000/exercises/create", {
+      await fetch("http://localhost:5000/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -308,7 +308,7 @@ const CreateExercise = () => {
           Questions:   questionsStr,
           Vocabulary:  "", 
           CreatedDate: today,
-          MaLesson:    Number(id),
+          MaBuoiHoc:    Number(id),
           AudioUrl:    mainAudioUrl,
           ShowAnswer:  showAnswer ? 1 : 0,
           IsFree:      isFree ? 1 : 0,
@@ -345,7 +345,7 @@ const CreateExercise = () => {
 
       {/* HEADER CARD */}
       <div className="ce-header-card">
-        <h1>{lesson?.TenLesson || "Đang tải..."}</h1>
+        <h1>{lesson?.TenBuoiHoc || "Đang tải..."}</h1>
         <p>{lesson?.MoTa || ""}</p>
       </div>
 
@@ -357,7 +357,7 @@ const CreateExercise = () => {
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
 
-      {/* EXERCISE EDITOR */}
+      {/* BAITAP EDITOR */}
       <div className="exercise-editor">
         <input
           className="exercise-title"

@@ -74,9 +74,9 @@ function DocDetail() {
 
               {/* Thông tin tài liệu */}
               <div style={{ display:"flex", gap:16, flexWrap:"wrap", marginBottom:20 }}>
-                {doc.TenLesson && (
+                {doc.TenBuoiHoc && (
                   <span style={{ background:"#fff3e0", color:"#e87722", padding:"4px 12px", borderRadius:20, fontSize:13, fontWeight:600 }}>
-                    📅 {doc.TenLesson}
+                    📅 {doc.TenBuoiHoc}
                   </span>
                 )}
                 {doc.NgayCapNhat && (

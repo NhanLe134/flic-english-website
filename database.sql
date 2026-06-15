@@ -47,7 +47,7 @@ CREATE TABLE [dbo].[BAIHOCKHOAHOC](
 	[LoaiBaiHoc] [nvarchar](50) NULL,
 	[ThoiLuong] [nvarchar](50) NULL,
 	[TrangThai] [nvarchar](20) NULL,
-	[MaLesson] [int] NULL,
+	[MaBuoiHoc] [int] NULL,
 	[FileUrl] [nvarchar](500) NULL,
 PRIMARY KEY CLUSTERED 
 (
@@ -87,7 +87,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[BAIKIEMTRA](
 	[MaBaiKiemTra] [int] IDENTITY(1,1) NOT NULL,
-	[MaBaiHoc] [int] NOT NULL,
+	[MaBuoiHoc] [int] NULL,
 	[MaGiangVien] [int] NOT NULL,
 	[TenBai] [nvarchar](255) NOT NULL,
 	[ThoiGian] [int] NULL,
@@ -105,7 +105,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[BAINOP](
 	[MaBaiNop] [int] IDENTITY(1,1) NOT NULL,
-	[MaExercise] [int] NOT NULL,
+	[MaBaiTap] [int] NOT NULL,
 	[MaSinhVien] [nvarchar](50) NULL,
 	[NoiDung] [nvarchar](max) NULL,
 	[NgayNop] [datetime] NULL,
@@ -203,17 +203,17 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[EXERCISE]    Script Date: 07/04/2026 7:40:10 PM ******/
+/****** Object:  Table [dbo].[BAITAP]    Script Date: 07/04/2026 7:40:10 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[EXERCISE](
-	[MaExercise] [int] IDENTITY(1,1) NOT NULL,
+CREATE TABLE [dbo].[BAITAP](
+	[MaBaiTap] [int] IDENTITY(1,1) NOT NULL,
 	[Title] [nvarchar](255) NULL,
 	[Type] [nvarchar](100) NULL,
 	[CreatedDate] [nvarchar](50) NULL,
-	[MaLesson] [int] NULL,
+	[MaBaiHoc] [int] NULL,
 	[Content] [nvarchar](max) NULL,
 	[Questions] [nvarchar](max) NULL,
 	[Vocabulary] [nvarchar](max) NULL,
@@ -221,7 +221,7 @@ CREATE TABLE [dbo].[EXERCISE](
 	[ShowAnswer] [bit] NULL,
 PRIMARY KEY CLUSTERED 
 (
-	[MaExercise] ASC
+	[MaBaiTap] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
@@ -317,14 +317,14 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LESSON]    Script Date: 07/04/2026 7:40:10 PM ******/
+/****** Object:  Table [dbo].[BUOIHOC]    Script Date: 07/04/2026 7:40:10 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[LESSON](
-	[MaLesson] [int] IDENTITY(1,1) NOT NULL,
-	[TenLesson] [nvarchar](255) NULL,
+CREATE TABLE [dbo].[BUOIHOC](
+	[MaBuoiHoc] [int] IDENTITY(1,1) NOT NULL,
+	[TenBuoiHoc] [nvarchar](255) NULL,
 	[MaLopHoc] [int] NULL,
 	[MoTa] [nvarchar](500) NULL,
 	[NgayBatDau] [date] NULL,
@@ -332,7 +332,7 @@ CREATE TABLE [dbo].[LESSON](
 	[ThuTu] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
-	[MaLesson] ASC
+	[MaBuoiHoc] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -448,7 +448,7 @@ CREATE TABLE [dbo].[TAILIEU](
 	[TieuDe] [nvarchar](255) NOT NULL,
 	[MoTa] [nvarchar](max) NULL,
 	[NgayCapNhat] [datetime] NULL,
-	[MaLesson] [int] NULL,
+	[MaBuoiHoc] [int] NULL,
 	[NoiDung] [nvarchar](max) NULL,
 	[FileUrl] [nvarchar](500) NULL,
 PRIMARY KEY CLUSTERED 
@@ -517,9 +517,9 @@ SET IDENTITY_INSERT [dbo].[ADMIN] OFF
 GO
 SET IDENTITY_INSERT [dbo].[BAIHOCKHOAHOC] ON 
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (3, 1, 1, N'Từ vựng TOEIC cơ bản', N'Học 500 từ vựng nền tảng TOEIC', 1, N'Video', N'45 phút', N'published', 1, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (3, 1, 1, N'Từ vựng TOEIC cơ bản', N'Học 500 từ vựng nền tảng TOEIC', 1, N'Video', N'45 phút', N'published', 1, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (4, 1, 1, N'Bài tập từ vựng', N'
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (4, 1, 1, N'Bài tập từ vựng', N'
 <h2>🎯 Learning Objectives</h2>
 <p>By the end of this lesson, learners will be able to:</p>
 <ul>
@@ -549,51 +549,51 @@ INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], 
 </table>
 ', 2, N'PDF', N'30 phút', N'published', 1, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (5, 1, 1, N'Thì hiện tại đơn', N'Cấu trúc và cách dùng thì hiện tại đơn', 1, N'Video', N'45 phút', N'published', 2, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (5, 1, 1, N'Thì hiện tại đơn', N'Cấu trúc và cách dùng thì hiện tại đơn', 1, N'Video', N'45 phút', N'published', 2, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (6, 1, 1, N'Thì hiện tại tiếp diễn', N'Cấu trúc và cách dùng', 2, N'PDF', N'30 phút', N'draft', 2, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (6, 1, 1, N'Thì hiện tại tiếp diễn', N'Cấu trúc và cách dùng', 2, N'PDF', N'30 phút', N'draft', 2, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (7, 1, 1, N'Listening Part 1 - Hình ảnh', N'Mô tả hình ảnh trong TOEIC', 1, N'Video', N'50 phút', N'published', 3, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (7, 1, 1, N'Listening Part 1 - Hình ảnh', N'Mô tả hình ảnh trong TOEIC', 1, N'Video', N'50 phút', N'published', 3, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (8, 1, 1, N'Bài tập Listening Part 1', N'Luyện nghe mô tả tranh', 2, N'Writing', N'40 phút', N'draft', 3, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (8, 1, 1, N'Bài tập Listening Part 1', N'Luyện nghe mô tả tranh', 2, N'Writing', N'40 phút', N'draft', 3, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (9, 1, 1, N'Listening Part 2 - Hỏi đáp', N'Các dạng câu hỏi trong Part 2', 1, N'Video', N'45 phút', N'published', 4, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (9, 1, 1, N'Listening Part 2 - Hỏi đáp', N'Các dạng câu hỏi trong Part 2', 1, N'Video', N'45 phút', N'published', 4, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (10, 1, 1, N'Bài tập Listening Part 2', N'Luyện tập hỏi đáp ngắn', 2, N'PDF', N'35 phút', N'draft', 4, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (10, 1, 1, N'Bài tập Listening Part 2', N'Luyện tập hỏi đáp ngắn', 2, N'PDF', N'35 phút', N'draft', 4, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (11, 1, 1, N'Reading Part 5 - Ngữ pháp', N'Điền từ vào chỗ trống', 1, N'Video', N'50 phút', N'published', 5, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (11, 1, 1, N'Reading Part 5 - Ngữ pháp', N'Điền từ vào chỗ trống', 1, N'Video', N'50 phút', N'published', 5, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (12, 1, 1, N'Bài tập Reading Part 5', N'Luyện tập ngữ pháp', 2, N'PDF', N'40 phút', N'draft', 5, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (12, 1, 1, N'Bài tập Reading Part 5', N'Luyện tập ngữ pháp', 2, N'PDF', N'40 phút', N'draft', 5, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (13, 1, 1, N'Reading Part 6 - Điền đoạn', N'Kỹ thuật điền đoạn văn', 1, N'Video', N'50 phút', N'published', 6, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (13, 1, 1, N'Reading Part 6 - Điền đoạn', N'Kỹ thuật điền đoạn văn', 1, N'Video', N'50 phút', N'published', 6, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (14, 1, 1, N'Bài tập Reading Part 6', N'Luyện tập điền đoạn', 2, N'Writing', N'40 phút', N'draft', 6, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (14, 1, 1, N'Bài tập Reading Part 6', N'Luyện tập điền đoạn', 2, N'Writing', N'40 phút', N'draft', 6, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (15, 1, 1, N'Listening Part 3 - Hội thoại', N'Nghe hội thoại và trả lời câu hỏi', 1, N'Video', N'55 phút', N'published', 7, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (15, 1, 1, N'Listening Part 3 - Hội thoại', N'Nghe hội thoại và trả lời câu hỏi', 1, N'Video', N'55 phút', N'published', 7, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (16, 1, 1, N'Bài tập Listening Part 3', N'Luyện nghe hội thoại', 2, N'PDF', N'40 phút', N'draft', 7, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (16, 1, 1, N'Bài tập Listening Part 3', N'Luyện nghe hội thoại', 2, N'PDF', N'40 phút', N'draft', 7, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (17, 1, 1, N'Bài nói ngắn', N'Luyện kỹ năng nói ngắn', 1, N'Video', N'45 phút', N'published', 8, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (17, 1, 1, N'Bài nói ngắn', N'Luyện kỹ năng nói ngắn', 1, N'Video', N'45 phút', N'published', 8, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (18, 1, 1, N'Bài tập nói', N'Thực hành nói theo chủ đề', 2, N'Writing', N'35 phút', N'draft', 8, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (18, 1, 1, N'Bài tập nói', N'Thực hành nói theo chủ đề', 2, N'Writing', N'35 phút', N'draft', 8, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (19, 1, 1, N'Reading Part 7 - Đọc hiểu', N'Kỹ thuật đọc hiểu đoạn dài', 1, N'Video', N'60 phút', N'published', 9, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (19, 1, 1, N'Reading Part 7 - Đọc hiểu', N'Kỹ thuật đọc hiểu đoạn dài', 1, N'Video', N'60 phút', N'published', 9, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (20, 1, 1, N'Bài tập Reading Part 7', N'Luyện đọc hiểu', 2, N'PDF', N'45 phút', N'draft', 9, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (20, 1, 1, N'Bài tập Reading Part 7', N'Luyện đọc hiểu', 2, N'PDF', N'45 phút', N'draft', 9, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (21, 1, 1, N'Ôn tập giữa khóa', N'Ôn tập toàn bộ nội dung đã học', 1, N'PDF', N'60 phút', N'published', 10, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (21, 1, 1, N'Ôn tập giữa khóa', N'Ôn tập toàn bộ nội dung đã học', 1, N'PDF', N'60 phút', N'published', 10, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (22, 1, 1, N'Kiểm tra giữa khóa', N'Bài kiểm tra thực hành', 2, N'Writing', N'60 phút', N'published', 10, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (22, 1, 1, N'Kiểm tra giữa khóa', N'Bài kiểm tra thực hành', 2, N'Writing', N'60 phút', N'published', 10, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (23, 1, 1, N'Luyện đề tổng hợp', N'Làm full bộ đề TOEIC mẫu', 1, N'PDF', N'90 phút', N'published', 11, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (23, 1, 1, N'Luyện đề tổng hợp', N'Làm full bộ đề TOEIC mẫu', 1, N'PDF', N'90 phút', N'published', 11, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (24, 1, 1, N'Giải đề và chữa bài', N'Phân tích và sửa lỗi', 2, N'Video', N'60 phút', N'published', 11, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (24, 1, 1, N'Giải đề và chữa bài', N'Phân tích và sửa lỗi', 2, N'Video', N'60 phút', N'published', 11, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (25, 1, 1, N'Final TOEIC Test', N'Bài thi cuối khóa', 1, N'Writing', N'120 phút', N'published', 12, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (25, 1, 1, N'Final TOEIC Test', N'Bài thi cuối khóa', 1, N'Writing', N'120 phút', N'published', 12, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (26, 1, 1, N'Tổng kết khóa học', N'Nhận xét và định hướng tiếp theo', 2, N'Video', N'30 phút', N'published', 12, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (26, 1, 1, N'Tổng kết khóa học', N'Nhận xét và định hướng tiếp theo', 2, N'Video', N'30 phút', N'published', 12, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (27, 1, 1, N'English Listening', N'
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (27, 1, 1, N'English Listening', N'
 <div class="card">
   <h3>🎯 Learning Objectives</h3>
   <p>By the end of this lesson, learners will be able to:</p>
@@ -675,11 +675,11 @@ INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], 
 </div>
 ', 3, N'PDF', N'20 phút', N'published', 1, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (28, 1, 1, N'Conversation Basics', N'Hội thoại cơ bản hằng ngày', 4, N'Video', N'18 phút', N'draft', 1, NULL)
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (28, 1, 1, N'Conversation Basics', N'Hội thoại cơ bản hằng ngày', 4, N'Video', N'18 phút', N'draft', 1, NULL)
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (37, 1, 1, N'Giới thiệu bản thân', N'', 1, N'Video', N' phút', N'published', 3, N'http://localhost:5000/uploads/1774840374130-f38377f1-acd5-40fa-ac2b-e9a7a75c7271.mp4')
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (37, 1, 1, N'Giới thiệu bản thân', N'', 1, N'Video', N' phút', N'published', 3, N'http://localhost:5000/uploads/1774840374130-f38377f1-acd5-40fa-ac2b-e9a7a75c7271.mp4')
 GO
-INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaLesson], [FileUrl]) VALUES (40, 1, 1, N'INTRODUCING YOURSELF', N'# ## 🎯 Learning Objectives
+INSERT [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc], [MaKhoaHoc], [MaGiangVien], [TieuDe], [NoiDung], [ThuTu], [LoaiBaiHoc], [ThoiLuong], [TrangThai], [MaBuoiHoc], [FileUrl]) VALUES (40, 1, 1, N'INTRODUCING YOURSELF', N'# ## 🎯 Learning Objectives
 
 
 
@@ -853,31 +853,31 @@ SET IDENTITY_INSERT [dbo].[BAIHOCMO] OFF
 GO
 SET IDENTITY_INSERT [dbo].[BAIKIEMTRA] ON 
 GO
-INSERT [dbo].[BAIKIEMTRA] ([MaBaiKiemTra], [MaBaiHoc], [MaGiangVien], [TenBai], [ThoiGian], [TongDiem]) VALUES (1, 3, 1, N'Kiểm tra từ vựng TOEIC', 30, 10)
+INSERT [dbo].[BAIKIEMTRA] ([MaBaiKiemTra], [MaBuoiHoc], [MaGiangVien], [TenBai], [ThoiGian], [TongDiem]) VALUES (1, 1, 1, N'Kiểm tra từ vựng TOEIC', 30, 10)
 GO
-INSERT [dbo].[BAIKIEMTRA] ([MaBaiKiemTra], [MaBaiHoc], [MaGiangVien], [TenBai], [ThoiGian], [TongDiem]) VALUES (2, 4, 1, N'Bài tập từ vựng', 30, 10)
+INSERT [dbo].[BAIKIEMTRA] ([MaBaiKiemTra], [MaBuoiHoc], [MaGiangVien], [TenBai], [ThoiGian], [TongDiem]) VALUES (2, 1, 1, N'Bài tập từ vựng', 30, 10)
 GO
 SET IDENTITY_INSERT [dbo].[BAIKIEMTRA] OFF
 GO
 SET IDENTITY_INSERT [dbo].[BAINOP] ON 
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (1, 1, N'10', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), 6, N'', N'Đã chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (1, 1, N'10', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), 6, N'', N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (2, 1, N'11', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), 10, N'', N'Đã chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (2, 1, N'11', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), 10, N'', N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (3, 1, N'12', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (3, 1, N'12', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (4, 1, N'13', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (4, 1, N'13', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (5, 1, N'14', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (5, 1, N'14', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (6, 1, N'15', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (6, 1, N'15', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (7, 1, N'16', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (7, 1, N'16', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (8, 1, N'17', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (8, 1, N'17', N'This summer I went to Da Nang with my family. We visited many beautiful beaches and enjoyed delicious seafood. It was a wonderful experience.', CAST(N'2026-03-20T10:01:38.990' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (9, 1, N'30', N'1. 1. Bạn đã đi đâu?
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (9, 1, N'30', N'1. 1. Bạn đã đi đâu?
 Trả lời: uhwd
 
 2. 2. Bạn làm gì?
@@ -886,7 +886,7 @@ Trả lời: jshf
 3. 3. Bạn thích điều gì nhất?
 Trả lời: uehru', CAST(N'2026-03-23T09:26:37.770' AS DateTime), 2.9, N'', N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (10, 9, N'30', N'Câu 1: She ___ to school every day.
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (10, 9, N'30', N'Câu 1: She ___ to school every day.
 Chọn: B | Đúng: B | ✓
 
 Câu 2: He ___ TV when I called.
@@ -901,7 +901,7 @@ Chọn: C | Đúng: C | ✓
 Câu 5: By 2030, she ___ her degree.
 Chọn: B | Đúng: D | ✗', CAST(N'2026-03-23T09:40:08.073' AS DateTime), 4, NULL, N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (11, 1, N'4', N'1. 1. Bạn đã đi những đâu?
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (11, 1, N'4', N'1. 1. Bạn đã đi những đâu?
 Trả lời: ihioeqe
 
 2. 2. Bạn làm gì?
@@ -910,7 +910,7 @@ Trả lời: ìheio
 3. 3. Bạn thích điều gì nhất?
 Trả lời: ogoprw', CAST(N'2026-03-25T20:00:00.483' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (12, 3, N'30', N'1. 1. Who are talking?
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (12, 3, N'30', N'1. 1. Who are talking?
 Trả lời: teid
 
 2. 2. What is topic?
@@ -919,24 +919,24 @@ Trả lời: ru
 3. 3. What is result?
 Trả lời: ra', CAST(N'2026-03-25T20:02:01.307' AS DateTime), 3, N'uhfufh', N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (13, 10, N'30', N'Câu 1: What is the capital of Vietnam?
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (13, 10, N'30', N'Câu 1: What is the capital of Vietnam?
 Chọn: A | Đúng: A | ✓
 
 Câu 2: Which animal is a mammal?
 Chọn: B | Đúng: B | ✓', CAST(N'2026-03-26T14:05:15.217' AS DateTime), 10, NULL, N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (14, 13, N'30', N'mặt trời', CAST(N'2026-03-26T14:30:12.673' AS DateTime), 10, N'', N'Đã chấm')
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (14, 13, N'30', N'mặt trời', CAST(N'2026-03-26T14:30:12.673' AS DateTime), 10, N'', N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (15, 16, N'30', N'gdyad → kjzhcw (Đúng: jbke)
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (15, 16, N'30', N'gdyad → kjzhcw (Đúng: jbke)
 iheafwir → jbke (Đúng: kjzhcw)', CAST(N'2026-03-27T02:22:08.450' AS DateTime), 10, N'', N'Đã chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (16, 14, N'30', N'1. Câu 1
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (16, 14, N'30', N'1. Câu 1
 Trả lời: hyy
 
 2. Câu 2
 Trả lời: uqowh', CAST(N'2026-03-27T10:26:46.733' AS DateTime), NULL, NULL, N'Chờ chấm')
 GO
-INSERT [dbo].[BAINOP] ([MaBaiNop], [MaExercise], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (17, 15, N'30', N'Thứ tự đã sắp xếp: a, b, c, d, e
+INSERT [dbo].[BAINOP] ([MaBaiNop], [MaBaiTap], [MaSinhVien], [NoiDung], [NgayNop], [Diem], [NhanXet], [TrangThai]) VALUES (17, 15, N'30', N'Thứ tự đã sắp xếp: a, b, c, d, e
 Thứ tự đúng: a, b, c, d, e', CAST(N'2026-03-27T13:37:18.417' AS DateTime), 10, N'', N'Đã chấm')
 GO
 SET IDENTITY_INSERT [dbo].[BAINOP] OFF
@@ -995,45 +995,45 @@ INSERT [dbo].[DANGKYKHOAHOC] ([MaDangKy], [MaKhoaHoc], [MaSinhVien], [NgayDangKy
 GO
 SET IDENTITY_INSERT [dbo].[DANGKYKHOAHOC] OFF
 GO
-SET IDENTITY_INSERT [dbo].[EXERCISE] ON 
+SET IDENTITY_INSERT [dbo].[BAITAP] ON 
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (1, N'Essay: My Summer Vacation', N'Writing', N'2025-11-07', 1, N'Hè này bạn đã có những kỷ niệm đáng nhớ không? Hãy viết một đoạn văn ngắn kể về kỳ nghỉ hè của bạn. Bạn đã đi đâu, làm gì và cảm thấy thế nào? Đừng quên chia sẻ những điều thú vị mà bạn đã trải qua trong mùa hè năm nay nhé!', N'1. Bạn đã đi những đâu?|2. Bạn làm gì?|3. Bạn thích điều gì nhất?', N'Memorable::đáng nhớ - worth remembering|Experience::trải nghiệm - something you do or live through|Holiday::kỳ nghỉ - a period of time away from work or school|Adventure::phiêu lưu - an exciting or unusual experience', NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (1, N'Essay: My Summer Vacation', N'Writing', N'2025-11-07', 3, N'Hè này bạn đã có những kỷ niệm đáng nhớ không? Hãy viết một đoạn văn ngắn kể về kỳ nghỉ hè của bạn. Bạn đã đi đâu, làm gì và cảm thấy thế nào? Đừng quên chia sẻ những điều thú vị mà bạn đã trải qua trong mùa hè năm nay nhé!', N'1. Bạn đã đi những đâu?|2. Bạn làm gì?|3. Bạn thích điều gì nhất?', N'Memorable::đáng nhớ - worth remembering|Experience::trải nghiệm - something you do or live through|Holiday::kỳ nghỉ - a period of time away from work or school|Adventure::phiêu lưu - an exciting or unusual experience', NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (2, N'Reading: The Ocean World', N'Reading', N'2025-11-05', 1, N'The ocean covers more than 70% of the Earth''s surface and is home to millions of living creatures. From tiny plankton to giant whales, each organism plays an important role in the balance of marine life. Coral reefs are often called the "rainforests of the sea" because they are rich in biodiversity. They provide shelter and food for many species of fish and sea animals. However, pollution, overfishing, and climate change are major threats to ocean life. Protecting our oceans means protecting our planet. By reducing plastic use, saving energy, and supporting clean-up activities, we can help keep the ocean world healthy for future generations.', N'1. What percentage of the Earth''s surface is covered by oceans?|2. Why are coral reefs called "the rainforests of the sea"?|3. What are some threats to ocean life mentioned in the passage?|4. How can people help protect the ocean?|5. What message does the passage want to share?', N'Biodiversity::variety of different living things|Plankton::very small organisms that float in the sea|Pollution::damage caused to the environment|Species::a group of living things that share similar features', NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (2, N'Reading: The Ocean World', N'Reading', N'2025-11-05', 3, N'The ocean covers more than 70% of the Earth''s surface and is home to millions of living creatures. From tiny plankton to giant whales, each organism plays an important role in the balance of marine life. Coral reefs are often called the "rainforests of the sea" because they are rich in biodiversity. They provide shelter and food for many species of fish and sea animals. However, pollution, overfishing, and climate change are major threats to ocean life. Protecting our oceans means protecting our planet. By reducing plastic use, saving energy, and supporting clean-up activities, we can help keep the ocean world healthy for future generations.', N'1. What percentage of the Earth''s surface is covered by oceans?|2. Why are coral reefs called "the rainforests of the sea"?|3. What are some threats to ocean life mentioned in the passage?|4. How can people help protect the ocean?|5. What message does the passage want to share?', N'Biodiversity::variety of different living things|Plankton::very small organisms that float in the sea|Pollution::damage caused to the environment|Species::a group of living things that share similar features', NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (3, N'Listening Practice', N'Listening', N'2025-11-04', 1, N'Listen to the conversation and answer questions...', N'1. Who are talking?|2. What is topic?|3. What is result?', N'Conversation::cuộc trò chuyện - a talk between two or more people|Topic::chủ đề - the subject of a discussion|Result::kết quả - the outcome of something|Opinion::ý kiến - a personal view or judgment', NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (3, N'Listening Practice', N'Listening', N'2025-11-04', 3, N'Listen to the conversation and answer questions...', N'1. Who are talking?|2. What is topic?|3. What is result?', N'Conversation::cuộc trò chuyện - a talk between two or more people|Topic::chủ đề - the subject of a discussion|Result::kết quả - the outcome of something|Opinion::ý kiến - a personal view or judgment', NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (4, N'Vocabulary Quiz: Food & Drinks', N'Vocabulary', N'2025-11-02', 1, N'Choose the correct vocabulary about food and drinks...', N'1. Apple is a...?|2. Water is a...?|3. Rice is a...?', N'Fruit::trái cây - the sweet product of a plant|Vegetable::rau củ - a plant used as food|Beverage::đồ uống - any drinkable liquid|Grain::ngũ cốc - seeds used as food like rice and wheat', NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (4, N'Vocabulary Quiz: Food & Drinks', N'Vocabulary', N'2025-11-02', 3, N'Choose the correct vocabulary about food and drinks...', N'1. Apple is a...?|2. Water is a...?|3. Rice is a...?', N'Fruit::trái cây - the sweet product of a plant|Vegetable::rau củ - a plant used as food|Beverage::đồ uống - any drinkable liquid|Grain::ngũ cốc - seeds used as food like rice and wheat', NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (5, N'Grammar: Present Simple', N'Grammar', N'2025-11-08', 2, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (5, N'Grammar: Present Simple', N'Grammar', N'2025-11-08', 5, NULL, NULL, NULL, NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (6, N'Listening: Daily Conversations', N'Listening', N'2025-11-09', 2, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (6, N'Listening: Daily Conversations', N'Listening', N'2025-11-09', 5, NULL, NULL, NULL, NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (7, N'Reading: Short Stories', N'Reading', N'2025-11-10', 3, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (7, N'Reading: Short Stories', N'Reading', N'2025-11-10', 7, NULL, NULL, NULL, NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (8, N'Vocabulary: Travel', N'Vocabulary', N'2025-11-11', 3, NULL, NULL, NULL, NULL, NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (8, N'Vocabulary: Travel', N'Vocabulary', N'2025-11-11', 7, NULL, NULL, NULL, NULL, NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (9, N'Grammar Quiz: Tenses', N'multiple', N'Mar 23 2026  9:39AM', 2, N'Chọn đáp án đúng cho mỗi câu hỏi về các thì trong tiếng Anh.', N'She ___ to school every day.||A. go|B. goes|C. went|D. going|Đáp án đúng: B###He ___ TV when I called.||A. watched|B. watches|C. was watching|D. is watching|Đáp án đúng: C###I ___ here for 5 years.||A. lived|B. live|C. am living|D. have lived|Đáp án đúng: D###They ___ the project tomorrow.||A. finish|B. finished|C. will finish|D. are finish|Đáp án đúng: C###By 2030, she ___ her degree.||A. will complete|B. completes|C. completed|D. will have completed|Đáp án đúng: D', N'', N'', NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (9, N'Grammar Quiz: Tenses', N'multiple', N'Mar 23 2026  9:39AM', 5, N'Chọn đáp án đúng cho mỗi câu hỏi về các thì trong tiếng Anh.', N'She ___ to school every day.||A. go|B. goes|C. went|D. going|Đáp án đúng: B###He ___ TV when I called.||A. watched|B. watches|C. was watching|D. is watching|Đáp án đúng: C###I ___ here for 5 years.||A. lived|B. live|C. am living|D. have lived|Đáp án đúng: D###They ___ the project tomorrow.||A. finish|B. finished|C. will finish|D. are finish|Đáp án đúng: C###By 2030, she ___ her degree.||A. will complete|B. completes|C. completed|D. will have completed|Đáp án đúng: D', N'', N'', NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (10, N'Basic English Test', N'multiple', N'2026-03-26', 1, N'', N'What is the capital of Vietnam?||A. HaNoi|B. HoChiMinh|C. DaNang|D. Hue|Đáp án đúng: A###Which animal is a mammal?||A. Shark|B. Dolphin|C. Octopus|D. Crab|Đáp án đúng: B', NULL, N'', NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (10, N'Basic English Test', N'multiple', N'2026-03-26', 3, N'', N'What is the capital of Vietnam?||A. HaNoi|B. HoChiMinh|C. DaNang|D. Hue|Đáp án đúng: A###Which animal is a mammal?||A. Shark|B. Dolphin|C. Octopus|D. Crab|Đáp án đúng: B', NULL, N'', NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (13, N'Mixed Skills Practice', N'connect', N'2026-03-26', 1, N'', N'Sun::mặt trời|moon::mặt trăng', NULL, N'', NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (13, N'Mixed Skills Practice', N'connect', N'2026-03-26', 3, N'', N'Sun::mặt trời|moon::mặt trăng', NULL, N'', NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (14, N'guegfoewu', N'essay', N'2026-03-26', 1, N'ygihfiejska
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (14, N'guegfoewu', N'essay', N'2026-03-26', 1, N'ygihfiejska
 ---
 Câu 1
 ---
 Câu 2', N'', NULL, N'', NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (15, N'abc', N'ordering', N'2026-03-26', 1, N'a,b,c,d,e', N'', NULL, N'', NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (15, N'abc', N'ordering', N'2026-03-26', 3, N'a,b,c,d,e', N'', NULL, N'', NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (16, N'acbd', N'matching', N'2026-03-26', 1, N'', N'gdyad::jbke|iheafwir::kjzhcw', NULL, N'', NULL)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (16, N'acbd', N'matching', N'2026-03-26', 3, N'', N'gdyad::jbke|iheafwir::kjzhcw', NULL, N'', NULL)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (18, N'Listening Practice: Daily Life', N'listening', N'Mar 28 2026  7:00PM', 3, N'Listen to the conversation and answer the questions.', N'What are they talking about?||A. Weather|B. Food|C. School|D. Sports|Đáp án đúng: B###Where does the conversation take place?||A. At home|B. At school|C. At a restaurant|D. At a park|Đáp án đúng: C###What does the man order?||A. Coffee|B. Tea|C. Juice|D. Water|Đáp án đúng: A', N'conversation::cuộc hội thoại|order::gọi món|restaurant::nhà hàng', N'', 0)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (18, N'Listening Practice: Daily Life', N'listening', N'Mar 28 2026  7:00PM', 7, N'Listen to the conversation and answer the questions.', N'What are they talking about?||A. Weather|B. Food|C. School|D. Sports|Đáp án đúng: B###Where does the conversation take place?||A. At home|B. At school|C. At a restaurant|D. At a park|Đáp án đúng: C###What does the man order?||A. Coffee|B. Tea|C. Juice|D. Water|Đáp án đúng: A', N'conversation::cuộc hội thoại|order::gọi món|restaurant::nhà hàng', N'', 0)
 GO
-INSERT [dbo].[EXERCISE] ([MaExercise], [Title], [Type], [CreatedDate], [MaLesson], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (19, N'Speaking Practice: Introduce Yourself', N'speaking', N'Mar 28 2026  7:00PM', 3, N'Introduce yourself in English', N'My name is John. I am twenty years old. I am a student at a university in Ho Chi Minh City.', N'', N'', 0)
+INSERT [dbo].[BAITAP] ([MaBaiTap], [Title], [Type], [CreatedDate], [MaBuoiHoc], [Content], [Questions], [Vocabulary], [AudioUrl], [ShowAnswer]) VALUES (19, N'Speaking Practice: Introduce Yourself', N'speaking', N'Mar 28 2026  7:00PM', 7, N'Introduce yourself in English', N'My name is John. I am twenty years old. I am a student at a university in Ho Chi Minh City.', N'', N'', 0)
 GO
-SET IDENTITY_INSERT [dbo].[EXERCISE] OFF
+SET IDENTITY_INSERT [dbo].[BAITAP] OFF
 GO
 SET IDENTITY_INSERT [dbo].[GIANGVIEN] ON 
 GO
@@ -1137,33 +1137,33 @@ INSERT [dbo].[KHOAHOCCHITIET] ([MaLop], [TenLop], [MoTa], [HocPhi], [ThoiLuong],
 GO
 SET IDENTITY_INSERT [dbo].[KHOAHOCCHITIET] OFF
 GO
-SET IDENTITY_INSERT [dbo].[LESSON] ON 
+SET IDENTITY_INSERT [dbo].[BUOIHOC] ON 
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (1, N'Buổi 1: Từ vựng nền tảng', 1, N'Học từ vựng cơ bản TOEIC', CAST(N'2026-03-15' AS Date), CAST(N'2026-03-21' AS Date), 1)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (1, N'Buổi 1: Từ vựng nền tảng', 1, N'Học từ vựng cơ bản TOEIC', CAST(N'2026-03-15' AS Date), CAST(N'2026-03-21' AS Date), 1)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (2, N'Buổi 2: Ngữ pháp - Thì hiện tại', 1, N'Ôn tập thì hiện tại đơn và tiếp diễn', CAST(N'2026-03-22' AS Date), CAST(N'2026-03-23' AS Date), 2)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (2, N'Buổi 2: Ngữ pháp - Thì hiện tại', 1, N'Ôn tập thì hiện tại đơn và tiếp diễn', CAST(N'2026-03-22' AS Date), CAST(N'2026-03-23' AS Date), 2)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (3, N'Buổi 3: Listening Part 1', 1, N'Mô tả tranh', CAST(N'2026-03-24' AS Date), CAST(N'2026-03-25' AS Date), 3)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (3, N'Buổi 3: Listening Part 1', 1, N'Mô tả tranh', CAST(N'2026-03-24' AS Date), CAST(N'2026-03-25' AS Date), 3)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (4, N'Buổi 4: Listening Part 2', 1, N'Hỏi - đáp ngắn', CAST(N'2026-03-26' AS Date), CAST(N'2026-03-27' AS Date), 4)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (4, N'Buổi 4: Listening Part 2', 1, N'Hỏi - đáp ngắn', CAST(N'2026-03-26' AS Date), CAST(N'2026-03-27' AS Date), 4)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (5, N'Buổi 5: Reading Part 5', 1, N'Hoàn thành câu', CAST(N'2026-03-28' AS Date), CAST(N'2026-03-29' AS Date), 5)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (5, N'Buổi 5: Reading Part 5', 1, N'Hoàn thành câu', CAST(N'2026-03-28' AS Date), CAST(N'2026-03-29' AS Date), 5)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (6, N'Buổi 6: Reading Part 6', 1, N'Điền đoạn văn', CAST(N'2026-03-30' AS Date), CAST(N'2026-03-31' AS Date), 6)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (6, N'Buổi 6: Reading Part 6', 1, N'Điền đoạn văn', CAST(N'2026-03-30' AS Date), CAST(N'2026-03-31' AS Date), 6)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (7, N'Buổi 7: Listening Part 3', 1, N'Hội thoại', CAST(N'2026-04-01' AS Date), CAST(N'2026-04-02' AS Date), 7)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (7, N'Buổi 7: Listening Part 3', 1, N'Hội thoại', CAST(N'2026-04-01' AS Date), CAST(N'2026-04-02' AS Date), 7)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (8, N'Buổi 8: Listening Part 4', 1, N'Bài nói ngắn', CAST(N'2026-04-03' AS Date), CAST(N'2026-04-04' AS Date), 8)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (8, N'Buổi 8: Listening Part 4', 1, N'Bài nói ngắn', CAST(N'2026-04-03' AS Date), CAST(N'2026-04-04' AS Date), 8)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (9, N'Buổi 9: Reading Part 7', 1, N'Đọc hiểu đoạn dài', CAST(N'2026-04-05' AS Date), CAST(N'2026-04-06' AS Date), 9)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (9, N'Buổi 9: Reading Part 7', 1, N'Đọc hiểu đoạn dài', CAST(N'2026-04-05' AS Date), CAST(N'2026-04-06' AS Date), 9)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (10, N'Buổi 10: Kiểm tra giữa khóa', 1, N'Test giữa khóa TOEIC', CAST(N'2026-04-07' AS Date), CAST(N'2026-04-08' AS Date), 10)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (10, N'Buổi 10: Kiểm tra giữa khóa', 1, N'Test giữa khóa TOEIC', CAST(N'2026-04-07' AS Date), CAST(N'2026-04-08' AS Date), 10)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (11, N'Buổi 11: Luyện đề tổng hợp', 1, N'Practice full test', CAST(N'2026-04-09' AS Date), CAST(N'2026-04-10' AS Date), 11)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (11, N'Buổi 11: Luyện đề tổng hợp', 1, N'Practice full test', CAST(N'2026-04-09' AS Date), CAST(N'2026-04-10' AS Date), 11)
 GO
-INSERT [dbo].[LESSON] ([MaLesson], [TenLesson], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (12, N'Buổi 12: Thi cuối khóa', 1, N'Final TOEIC Test', CAST(N'2026-04-11' AS Date), CAST(N'2026-04-12' AS Date), 12)
+INSERT [dbo].[BUOIHOC] ([MaBuoiHoc], [TenBuoiHoc], [MaLopHoc], [MoTa], [NgayBatDau], [NgayKetThuc], [ThuTu]) VALUES (12, N'Buổi 12: Thi cuối khóa', 1, N'Final TOEIC Test', CAST(N'2026-04-11' AS Date), CAST(N'2026-04-12' AS Date), 12)
 GO
-SET IDENTITY_INSERT [dbo].[LESSON] OFF
+SET IDENTITY_INSERT [dbo].[BUOIHOC] OFF
 GO
 SET IDENTITY_INSERT [dbo].[LOPHOC] ON 
 GO
@@ -1349,7 +1349,7 @@ SET IDENTITY_INSERT [dbo].[SINHVIEN_LOPHOC] OFF
 GO
 SET IDENTITY_INSERT [dbo].[TAILIEU] ON 
 GO
-INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaLesson], [NoiDung], [FileUrl]) VALUES (1, N'Grammar Handbook – Level B1', N'Tổng hợp các điểm ngữ pháp quan trọng từ A2–B1', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Present Perfect Tense
+INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaBuoiHoc], [NoiDung], [FileUrl]) VALUES (1, N'Grammar Handbook – Level B1', N'Tổng hợp các điểm ngữ pháp quan trọng từ A2–B1', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Present Perfect Tense
 
 Structure:
 S + have/has + V3
@@ -1362,7 +1362,7 @@ Usage:
 - Diễn tả hành động xảy ra trong quá khứ nhưng còn liên quan đến hiện tại.
 - Diễn tả kinh nghiệm.', NULL)
 GO
-INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaLesson], [NoiDung], [FileUrl]) VALUES (2, N'Vocabulary Builder – Daily Life', N'Ôn tập từ vựng chủ đề cuộc sống hàng ngày kèm ví dụ.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Morning Routine – Thói quen buổi sáng
+INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaBuoiHoc], [NoiDung], [FileUrl]) VALUES (2, N'Vocabulary Builder – Daily Life', N'Ôn tập từ vựng chủ đề cuộc sống hàng ngày kèm ví dụ.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Morning Routine – Thói quen buổi sáng
 
 1. Wake up: thức dậy
 Example: I usually wake up at 6 a.m.
@@ -1379,7 +1379,7 @@ Example: She takes a shower before breakfast.
 5. Have breakfast: ăn sáng
 Example: They have breakfast together.', NULL)
 GO
-INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaLesson], [NoiDung], [FileUrl]) VALUES (3, N'Listening Practice Guide', N'30 đoạn hội thoại luyện nghe và phân tích từ vựng khó.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Listening Practice
+INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaBuoiHoc], [NoiDung], [FileUrl]) VALUES (3, N'Listening Practice Guide', N'30 đoạn hội thoại luyện nghe và phân tích từ vựng khó.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Listening Practice
 
 Listen to the dialogue and answer the questions.
 
@@ -1391,7 +1391,7 @@ Questions
 1. What time does he wake up?
 2. What does he do after waking up?', NULL)
 GO
-INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaLesson], [NoiDung], [FileUrl]) VALUES (4, N'Speaking Tips – Confident Conversations', N'15 mẹo giúp nói tiếng Anh tự nhiên và lưu loát hơn.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Tips for Speaking English
+INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaBuoiHoc], [NoiDung], [FileUrl]) VALUES (4, N'Speaking Tips – Confident Conversations', N'15 mẹo giúp nói tiếng Anh tự nhiên và lưu loát hơn.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Tips for Speaking English
 
 - Practice speaking every day.
 - Don''t be afraid of making mistakes.
@@ -1402,7 +1402,7 @@ Example Conversation
 A: How are you today?
 B: I''m fine, thank you.', NULL)
 GO
-INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaLesson], [NoiDung], [FileUrl]) VALUES (5, N'Reading Skills Workbook – Intermediate', N'Bài đọc ngắn rèn kỹ năng hiểu ý chính & chi tiết.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Reading Practice
+INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaBuoiHoc], [NoiDung], [FileUrl]) VALUES (5, N'Reading Skills Workbook – Intermediate', N'Bài đọc ngắn rèn kỹ năng hiểu ý chính & chi tiết.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Reading Practice
 
 Read the passage and answer the questions.
 
@@ -1413,7 +1413,7 @@ Questions
 1. Where does Anna live?
 2. How does she go to work?', NULL)
 GO
-INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaLesson], [NoiDung], [FileUrl]) VALUES (6, N'Writing Templates – Academic & General', N'Mẫu viết luận, thư, báo cáo chuẩn TOEIC.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Email Writing Template
+INSERT [dbo].[TAILIEU] ([MaTaiLieu], [TieuDe], [MoTa], [NgayCapNhat], [MaBuoiHoc], [NoiDung], [FileUrl]) VALUES (6, N'Writing Templates – Academic & General', N'Mẫu viết luận, thư, báo cáo chuẩn TOEIC.', CAST(N'2026-03-18T12:09:06.287' AS DateTime), 1, N'Email Writing Template
 
 Dear Mr. Smith,
 
@@ -1523,7 +1523,7 @@ ALTER TABLE [dbo].[DANGKYKHOAHOC] ADD  DEFAULT ('Active') FOR [TrangThai]
 GO
 ALTER TABLE [dbo].[DUYETBAIDANG] ADD  DEFAULT (getdate()) FOR [NgayDuyet]
 GO
-ALTER TABLE [dbo].[EXERCISE] ADD  DEFAULT ((0)) FOR [ShowAnswer]
+ALTER TABLE [dbo].[BAITAP] ADD  DEFAULT ((0)) FOR [ShowAnswer]
 GO
 ALTER TABLE [dbo].[KETQUABAIKIEMTRA] ADD  DEFAULT (getdate()) FOR [ThoiGianLamBai]
 GO
@@ -1555,22 +1555,22 @@ GO
 ALTER TABLE [dbo].[BAIHOCKHOAHOC]  WITH CHECK ADD FOREIGN KEY([MaKhoaHoc])
 REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc])
 GO
-ALTER TABLE [dbo].[BAIHOCKHOAHOC]  WITH CHECK ADD  CONSTRAINT [FK_BaiHocKhoaHoc_Lesson] FOREIGN KEY([MaLesson])
-REFERENCES [dbo].[LESSON] ([MaLesson])
+ALTER TABLE [dbo].[BAIHOCKHOAHOC]  WITH CHECK ADD  CONSTRAINT [FK_BaiHocKhoaHoc_BuoiHoc] FOREIGN KEY([MaBuoiHoc])
+REFERENCES [dbo].[BUOIHOC] ([MaBuoiHoc])
 GO
-ALTER TABLE [dbo].[BAIHOCKHOAHOC] CHECK CONSTRAINT [FK_BaiHocKhoaHoc_Lesson]
+ALTER TABLE [dbo].[BAIHOCKHOAHOC] CHECK CONSTRAINT [FK_BaiHocKhoaHoc_BuoiHoc]
 GO
 ALTER TABLE [dbo].[BAIHOCMO]  WITH CHECK ADD FOREIGN KEY([MaNguoiDung])
 REFERENCES [dbo].[NGUOIDUNG] ([MaNguoiDung])
 GO
-ALTER TABLE [dbo].[BAIKIEMTRA]  WITH CHECK ADD FOREIGN KEY([MaBaiHoc])
-REFERENCES [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc])
+ALTER TABLE [dbo].[BAIKIEMTRA]  WITH CHECK ADD FOREIGN KEY([MaBuoiHoc])
+REFERENCES [dbo].[BUOIHOC] ([MaBuoiHoc])
 GO
 ALTER TABLE [dbo].[BAIKIEMTRA]  WITH CHECK ADD FOREIGN KEY([MaGiangVien])
 REFERENCES [dbo].[GIANGVIEN] ([MaGiangVien])
 GO
-ALTER TABLE [dbo].[BAINOP]  WITH CHECK ADD FOREIGN KEY([MaExercise])
-REFERENCES [dbo].[EXERCISE] ([MaExercise])
+ALTER TABLE [dbo].[BAINOP]  WITH CHECK ADD FOREIGN KEY([MaBaiTap])
+REFERENCES [dbo].[BAITAP] ([MaBaiTap])
 GO
 ALTER TABLE [dbo].[BINHLUAN]  WITH CHECK ADD FOREIGN KEY([MaBaiHoc])
 REFERENCES [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc])
@@ -1593,10 +1593,10 @@ GO
 ALTER TABLE [dbo].[DUYETBAIDANG]  WITH CHECK ADD FOREIGN KEY([MaBaiDang])
 REFERENCES [dbo].[BAIDANG] ([MaBaiDang])
 GO
-ALTER TABLE [dbo].[EXERCISE]  WITH CHECK ADD  CONSTRAINT [FK_Exercise_Lesson] FOREIGN KEY([MaLesson])
-REFERENCES [dbo].[LESSON] ([MaLesson])
+ALTER TABLE [dbo].[BAITAP]  WITH CHECK ADD  CONSTRAINT [FK_BaiTap_BaiHocKhoaHoc] FOREIGN KEY([MaBaiHoc])
+REFERENCES [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc])
 GO
-ALTER TABLE [dbo].[EXERCISE] CHECK CONSTRAINT [FK_Exercise_Lesson]
+ALTER TABLE [dbo].[BAITAP] CHECK CONSTRAINT [FK_BaiTap_BaiHocKhoaHoc]
 GO
 ALTER TABLE [dbo].[GIANGVIEN]  WITH CHECK ADD FOREIGN KEY([MaNguoiDung])
 REFERENCES [dbo].[NGUOIDUNG] ([MaNguoiDung])
@@ -1618,7 +1618,7 @@ GO
 ALTER TABLE [dbo].[KYNANG]  WITH CHECK ADD FOREIGN KEY([MaBaiHocMo])
 REFERENCES [dbo].[BAIHOCMO] ([MaBaiHocMo])
 GO
-ALTER TABLE [dbo].[LESSON]  WITH CHECK ADD FOREIGN KEY([MaLopHoc])
+ALTER TABLE [dbo].[BUOIHOC]  WITH CHECK ADD FOREIGN KEY([MaLopHoc])
 REFERENCES [dbo].[LOPHOC] ([MaLopHoc])
 GO
 ALTER TABLE [dbo].[LOPHOC]  WITH CHECK ADD FOREIGN KEY([MaLop])
@@ -1647,8 +1647,8 @@ GO
 ALTER TABLE [dbo].[SINHVIEN_LOPHOC]  WITH CHECK ADD FOREIGN KEY([MaSinhVien])
 REFERENCES [dbo].[SINHVIEN] ([MaSinhVien])
 GO
-ALTER TABLE [dbo].[TAILIEU]  WITH CHECK ADD FOREIGN KEY([MaLesson])
-REFERENCES [dbo].[LESSON] ([MaLesson])
+ALTER TABLE [dbo].[TAILIEU]  WITH CHECK ADD FOREIGN KEY([MaBuoiHoc])
+REFERENCES [dbo].[BUOIHOC] ([MaBuoiHoc])
 GO
 ALTER TABLE [dbo].[TIENDOHOCTAP]  WITH CHECK ADD FOREIGN KEY([MaBaiHoc])
 REFERENCES [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc])

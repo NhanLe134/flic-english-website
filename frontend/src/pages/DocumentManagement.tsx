@@ -5,7 +5,7 @@ import { FiArrowLeft } from "react-icons/fi";
 
 const DocumentManagement = () => {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { buoiHocId } = useParams();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -14,12 +14,12 @@ const DocumentManagement = () => {
 
   /* ===== LOAD DATA ===== */
   useEffect(() => {
-    if (!lessonId) return;
-    fetch(`http://localhost:5000/tailieu/${lessonId}`)
+    if (!buoiHocId) return;
+    fetch(`http://localhost:5000/tailieu/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setDocuments(data))
       .catch(err => console.log(err));
-  }, [lessonId]);
+  }, [buoiHocId]);
 
   const filteredDocs = documents.filter(doc =>
     (doc.TieuDe + doc.MoTa).toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,7 +76,7 @@ const DocumentManagement = () => {
             </svg>
           </button>
         </form>
-        <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${lessonId}`)}>
+        <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
           + Thêm tài liệu
         </button>
       </div>

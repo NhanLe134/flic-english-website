@@ -23,8 +23,8 @@ function CourseDetailSV() {
     setLoading(true)
     Promise.all([
       fetch(`${API}/classes/${id}/info`).then(r => r.json()),
-      fetch(`${API}/classes/${id}/lessons`).then(r => r.json()),
-      fetch(`${API}/classes/${id}/exercises`).then(r => r.json()),
+      fetch(`${API}/classes/${id}/buoihoc`).then(r => r.json()),
+      fetch(`${API}/classes/${id}/baitap`).then(r => r.json()),
       fetch(`${API}/classes/${id}/tailieu`).then(r => r.json()),
       fetch(`${API}/student/bainop/${user.MaNguoiDung}`).then(r => r.json()),
     ])
@@ -44,26 +44,26 @@ function CourseDetailSV() {
     { label: "Tất cả buổi", value: "all" },
     ...lessons.map(l => ({
       label: `Buổi ${l.ThuTu} – ${l.NgayBatDau ? new Date(l.NgayBatDau).toLocaleDateString("vi-VN") : ""}`,
-      value: String(l.MaLesson)
+      value: String(l.MaBuoiHoc)
     }))
   ]
 
-  const filterBySession = <T extends { MaLesson?: number }>(arr: T[]) =>
-    arr.filter(item => selectedSession === "all" || String(item.MaLesson) === selectedSession)
+  const filterBySession = <T extends { MaBuoiHoc?: number }>(arr: T[]) =>
+    arr.filter(item => selectedSession === "all" || String(item.MaBuoiHoc) === selectedSession)
 
-  const filterBySearch = <T extends { TieuDe?: string; Title?: string; TenLesson?: string }>(arr: T[]) =>
+  const filterBySearch = <T extends { TieuDe?: string; Title?: string; TenBuoiHoc?: string }>(arr: T[]) =>
     arr.filter(item => {
-      const name = item.TieuDe || item.Title || item.TenLesson || ""
+      const name = item.TieuDe || item.Title || item.TenBuoiHoc || ""
       return name.toLowerCase().includes(searchText.toLowerCase())
     })
 
-  const filteredLessons = filterBySearch(filterBySession(lessons.map(l => ({ ...l, MaLesson: l.MaLesson }))))
+  const filteredLessons = filterBySearch(filterBySession(lessons.map(l => ({ ...l, MaBuoiHoc: l.MaBuoiHoc }))))
   const filteredBaiTaps = filterBySearch(filterBySession(baiTaps))
   const filteredTaiLieu = filterBySearch(filterBySession(taiLieus))
 
   // Tiến độ bài tập đã nộp
   const baiNopMap: Record<number, any> = {}
-  baiNops.forEach((b: any) => { baiNopMap[b.MaExercise] = b })
+  baiNops.forEach((b: any) => { baiNopMap[b.MaBaiTap] = b })
 
   const hienTai   = new Date()
   const buoiDaHoc = lessons.filter(l => l.NgayKetThuc && new Date(l.NgayKetThuc) < hienTai).length
@@ -129,18 +129,18 @@ function CourseDetailSV() {
                 {filteredLessons.length === 0
                   ? <p className="cd-empty">Không có bài học nào.</p>
                   : filteredLessons.map((l: any) => (
-                    <div className="cd-lesson" key={l.MaLesson}>
+                    <div className="cd-lesson" key={l.MaBuoiHoc}>
                       <div className="cd-lesson-left">
                         <div className="cd-lesson-icon video">📖</div>
                         <div>
-                          <p className="cd-lesson-title">{l.TenLesson}</p>
+                          <p className="cd-lesson-title">{l.TenBuoiHoc}</p>
                           <p className="cd-lesson-date">
                             <span className="cd-lesson-num sm">Buổi {l.ThuTu}</span>
                             &nbsp;📅 {l.NgayBatDau ? new Date(l.NgayBatDau).toLocaleDateString("vi-VN") : "—"}
                           </p>
                         </div>
                       </div>
-                      <button className="cd-btn-orange" onClick={() => navigate(`/lesson-detail/${id}/${l.MaLesson}`)}>
+                      <button className="cd-btn-orange" onClick={() => navigate(`/lesson-detail/${id}/${l.MaBuoiHoc}`)}>
                         Xem
                       </button>
                     </div>
@@ -161,13 +161,13 @@ function CourseDetailSV() {
                 {filteredBaiTaps.length === 0
                   ? <p className="cd-empty">Không có bài tập nào.</p>
                   : filteredBaiTaps.map((t: any) => {
-                    const nop = baiNopMap[t.MaExercise]
+                    const nop = baiNopMap[t.MaBaiTap]
                     const daNop = !!nop
                     return (
-                      <div className="cd-task" key={t.MaExercise}>
+                      <div className="cd-task" key={t.MaBaiTap}>
                         <div>
                           <div className="cd-task-top">
-                            <span className="cd-lesson-num sm">Buổi {t.ThuTuLesson}</span>
+                            <span className="cd-lesson-num sm">Buổi {t.ThuTuBuoiHoc}</span>
                             <p className="cd-task-title">{t.Title}</p>
                           </div>
                           <p className="cd-task-type">{t.Type}</p>
@@ -180,7 +180,7 @@ function CourseDetailSV() {
                         {daNop
                           ? <span className="cd-done-check">✓</span>
                           : <button className="cd-btn-green"
-                              onClick={() => navigate(`/exercise/${t.MaExercise}`, { state: { maLopHoc: id } })}>
+                              onClick={() => navigate(`/baitap/${t.MaBaiTap}`, { state: { maLopHoc: id } })}>
                               Làm bài
                             </button>
                         }

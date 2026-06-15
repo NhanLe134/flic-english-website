@@ -99,14 +99,14 @@ function App() {
           <Route path="/lessonlist/:id" element={<LessonList />} />
           <Route path="/class/:id" element={<ClassDetail />} />
           <Route path="/create-exercise/:id" element={<CreateExercise />} />
-          <Route path="/exercise-detail/:id/:lessonId" element={<ExerciseDetail />} />
-          <Route path="/danh-sach-bai-nop/:maExercise" element={<DanhSachBaiNop />} />
+          <Route path="/baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
+          <Route path="/danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="/cham-bai/:maBaiNop" element={<ChamBaiPage />} />
-          <Route path="/quan-ly-bai-giang/:lessonId" element={<LessonManagement />} />
+          <Route path="/quan-ly-bai-giang/:buoiHocId" element={<LessonManagement />} />
           <Route path="/bai-giang/:id" element={<LessonDetail />} />
-          <Route path="/them-bai-giang/:lessonId" element={<AddLesson />} />
-          <Route path="/documents/:lessonId" element={<DocumentManagement />} />
-          <Route path="/them-tai-lieu/:lessonId" element={<AddDocument />} />
+          <Route path="/them-bai-giang/:buoiHocId" element={<AddLesson />} />
+          <Route path="/documents/:buoiHocId" element={<DocumentManagement />} />
+          <Route path="/them-tai-lieu/:buoiHocId" element={<AddDocument />} />
           <Route path="/quan-ly-tai-lieu/:id" element={<DocumentDetail />} />
 
           {/* PROFILE */}
@@ -161,13 +161,13 @@ function App() {
           <Route path="/class-detail/:id" element={<ClassDetailSV />} />
           <Route path="/course-detail/:id" element={<CourseDetailSV />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
-          <Route path="/lesson-detail/:maLopHoc/:maLesson" element={<LessonDetailSV />} />
+          <Route path="/lesson-detail/:maLopHoc/:maBuoiHoc" element={<LessonDetailSV />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/assignments" element={<Assignments />} />
-          <Route path="/exercise/:id" element={<AssignmentDetail />} />
+          <Route path="/baitap/:id" element={<AssignmentDetail />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />
           <Route path="/essay-detail" element={<EssayDetail />} />

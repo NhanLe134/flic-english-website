@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 
 const AddDocument = () => {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { buoiHocId } = useParams();
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [title, setTitle] = useState("");
@@ -69,7 +69,7 @@ const AddDocument = () => {
           MoTa: description || "Tài liệu mới",
           NoiDung: content,
           FileUrl: fileUrl,
-          MaLesson: Number(lessonId),
+          MaBuoiHoc: Number(buoiHocId),
           TrangThai: status,
           MaGiangVien: user.MaNguoiDung || null
         })

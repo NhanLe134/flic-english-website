@@ -11,7 +11,7 @@ const db = {
   submissions: [
     {
       MaBaiNop: 1001,
-      MaExercise: 1,
+      MaBaiTap: 1,
       HoTen: "Nguyễn Văn An",
       MaSinhVien: "SV01",
       FileUrl: "",
@@ -24,7 +24,7 @@ const db = {
     },
     {
       MaBaiNop: 1002,
-      MaExercise: 1,
+      MaBaiTap: 1,
       HoTen: "Trần Thị Bích",
       MaSinhVien: "SV02",
       FileUrl: "",
@@ -37,7 +37,7 @@ const db = {
     },
     {
       MaBaiNop: 1003,
-      MaExercise: 1,
+      MaBaiTap: 1,
       HoTen: "Lê Hoàng Nam",
       MaSinhVien: "SV03",
       FileUrl: "",
@@ -50,7 +50,7 @@ const db = {
     },
     {
       MaBaiNop: 1004,
-      MaExercise: 2,
+      MaBaiTap: 2,
       HoTen: "Phạm Minh Tuấn",
       MaSinhVien: "SV04",
       FileUrl: "",
@@ -63,7 +63,7 @@ const db = {
     },
     {
       MaBaiNop: 9999,
-      MaExercise: 1,
+      MaBaiTap: 1,
       HoTen: "Học Viên Giả Định",
       MaSinhVien: "SV_MOCK_TEST",
       FileUrl: "",
@@ -113,7 +113,7 @@ const db = {
         FileUrl: "",
         MaKhoaHoc: 2,
         MaGiangVien: 1,
-        MaLesson: 1,
+        MaBuoiHoc: 1,
         TenGiangVien: "Nguyễn Văn A",
         TenKhoaHoc: "IELTS Speaking Band 7",
         CapDo: "IELTS 6.5+",
@@ -140,7 +140,7 @@ const db = {
     exercises: [
       {
         id: 1,
-        MaExercise: 10,
+        MaBaiTap: 10,
         TieuDe: "Bài tập tự luận: Trình bày quan điểm cá nhân về Fast Food",
         Title: "Bài tập tự luận: Trình bày quan điểm cá nhân về Fast Food",
         Type: "Writing",
@@ -172,20 +172,20 @@ const db = {
   },
   exercisesList: [
     {
-      MaExercise: 1,
+      MaBaiTap: 1,
       Title: "Bài tập 1: Ngữ pháp cơ bản",
       Type: "Writing",
       TrangThai: "published",
       CreatedDate: "2026-03-02T10:00:00.000Z",
-      MaLesson: 1
+      MaBuoiHoc: 1
     },
     {
-      MaExercise: 2,
+      MaBaiTap: 2,
       Title: "Bài tập 2: Luyện kỹ năng đọc TOEIC Part 5",
       Type: "Reading",
       TrangThai: "published",
       CreatedDate: "2026-03-04T12:00:00.000Z",
-      MaLesson: 1
+      MaBuoiHoc: 1
     }
   ]
 };
@@ -352,28 +352,28 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     }
 
     // 7. GET LESSONS FOR CLASS
-    if (urlStr.includes("/classes/") && urlStr.endsWith("/lessons")) {
+    if (urlStr.includes("/classes/") && urlStr.endsWith("/buoihoc")) {
       return new Response(
         JSON.stringify([
           {
-            MaLesson: 1,
-            TenLesson: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            MaBuoiHoc: 1,
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
             MoTa: "Ôn tập các thì hiện tại đơn, hiện tại tiếp diễn và hoàn thành.",
             NgayBatDau: "2026-03-01T00:00:00.000Z",
             NgayKetThuc: "2026-03-07T00:00:00.000Z",
             ThuTu: 1
           },
           {
-            MaLesson: 2,
-            TenLesson: "Buổi 2: Từ vựng TOEIC Part 5 & 6",
+            MaBuoiHoc: 2,
+            TenBuoiHoc: "Buổi 2: Từ vựng TOEIC Part 5 & 6",
             MoTa: "Cung cấp hơn 50 từ vựng cốt lõi về chủ đề kinh doanh và công sở.",
             NgayBatDau: "2026-03-08T00:00:00.000Z",
             NgayKetThuc: "2026-03-14T00:00:00.000Z",
             ThuTu: 2
           },
           {
-            MaLesson: 3,
-            TenLesson: "Buổi 3: Luyện nghe Part 1 & 2",
+            MaBuoiHoc: 3,
+            TenBuoiHoc: "Buổi 3: Luyện nghe Part 1 & 2",
             MoTa: "Kỹ năng làm bài trắc nghiệm nghe hình ảnh và hội thoại ngắn.",
             NgayBatDau: "2026-03-15T00:00:00.000Z",
             NgayKetThuc: "2026-03-21T00:00:00.000Z",
@@ -390,10 +390,10 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       const id = parseInt(parts[parts.length - 1]);
       return new Response(
         JSON.stringify({
-          MaLesson: id,
-          TenLesson: `Buổi ${id}: Chuyên đề ngữ pháp & luyện đề`,
+          MaBuoiHoc: id,
+          TenBuoiHoc: `Buổi ${id}: Chuyên đề ngữ pháp & luyện đề`,
           MoTa: `Mô tả nội dung học chi tiết cho buổi học số ${id}`,
-          ActiveLessonId: 1,
+          ActiveBuoiHocId: 1,
           ThuTu: id,
           MaLopHoc: 101,
           NgayBatDau: "2026-03-01T00:00:00.000Z",
@@ -404,26 +404,26 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       );
     }
 
-    // 8.1 GET EXERCISES BY LESSON ID
-    if (urlStr.includes("/exercises/") && !urlStr.includes("/create") && method === "GET") {
-      const match = urlStr.match(/\/exercises\/(\d+)/);
-      const lessonId = match ? Number(match[1]) : 1;
-      const list = db.exercisesList.filter(ex => ex.MaLesson === lessonId);
+    // 8.1 GET BAITAPS BY LESSON ID
+    if (urlStr.includes("/baitap/") && !urlStr.includes("/create") && method === "GET") {
+      const match = urlStr.match(/\/baitap\/(\d+)/);
+      const buoiHocId = match ? Number(match[1]) : 1;
+      const list = db.exercisesList.filter(ex => ex.MaBuoiHoc === buoiHocId);
       return new Response(
         JSON.stringify(list),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // 8.1b CREATE EXERCISE
-    if (urlStr.includes("/exercises/create") && method === "POST") {
+    // 8.1b CREATE BAITAP
+    if (urlStr.includes("/baitap/create") && method === "POST") {
       const newEx = {
-        MaExercise: db.exercisesList.length + 100,
+        MaBaiTap: db.exercisesList.length + 100,
         Title: bodyObj?.Title || "Không có tiêu đề",
         Type: bodyObj?.Type || "Writing",
         TrangThai: bodyObj?.TrangThai || "published",
         CreatedDate: bodyObj?.CreatedDate || new Date().toISOString(),
-        MaLesson: Number(bodyObj?.MaLesson) || 1
+        MaBuoiHoc: Number(bodyObj?.MaBuoiHoc) || 1
       };
       db.exercisesList.push(newEx);
 
@@ -431,7 +431,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       if (newEx.TrangThai === "pending") {
         db.approvals.exercises.push({
           id: db.approvals.exercises.length + 1,
-          MaExercise: newEx.MaExercise,
+          MaBaiTap: newEx.MaBaiTap,
           TieuDe: newEx.Title,
           Title: newEx.Title,
           Type: newEx.Type,
@@ -544,13 +544,13 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       );
     }
 
-    // 13. GET EXERCISE DETAILS
-    if (urlStr.includes("/exercise/") && method === "GET") {
+    // 13. GET BAITAP DETAILS
+    if (urlStr.includes("/baitap/") && method === "GET") {
       const parts = urlStr.split("/");
       const id = parts[parts.length - 1];
       return new Response(
         JSON.stringify({
-          MaExercise: parseInt(id) || 1,
+          MaBaiTap: parseInt(id) || 1,
           TenBai: `Bài tập thực hành TOEIC #${id}`,
           LoaiBaiHoc: "Tự luận",
           Content: "Hãy viết một đoạn văn ngắn (150 từ) kể về kỳ nghỉ hè đáng nhớ nhất của bạn.",
@@ -560,25 +560,25 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
           DangBai: "Essay",
           FileUrl: "",
           Vocabulary: "vacation, memory, beach, travel",
-          TenLesson: "Buổi 1: Ngữ pháp cơ bản",
+          TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản",
           ThuTu: 1
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // 14. GET SUBMISSIONS FOR EXERCISE
-    if (urlStr.includes("/bainop/exercise/")) {
+    // 14. GET SUBMISSIONS FOR BAITAP
+    if (urlStr.includes("/bainop/baitap/")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
       return new Response(
-        JSON.stringify(db.submissions.filter((s) => s.MaExercise === id || id === 1)),
+        JSON.stringify(db.submissions.filter((s) => s.MaBaiTap === id || id === 1)),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
 
     // 15. GET SUBMISSION DETAIL
-    if (urlStr.includes("/bainop/") && method === "GET" && !urlStr.includes("/exercise/")) {
+    if (urlStr.includes("/bainop/") && method === "GET" && !urlStr.includes("/baitap/")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
       const sub = db.submissions.find((s) => s.MaBaiNop === id) || db.submissions[0];
@@ -644,7 +644,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     // 20. ACTIVE LESSON
     if (urlStr.includes("/active-lesson")) {
       return new Response(
-        JSON.stringify({ ActiveLessonId: 1 }),
+        JSON.stringify({ ActiveBuoiHocId: 1 }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -677,18 +677,18 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/baocao/baitap-headers")) {
       return new Response(
         JSON.stringify([
-          { MaExercise: 1, TenBai: "Bài tập 1: Ngữ pháp", TenLesson: "Buổi 1: Ngữ pháp - Thì hiện tại", ThuTu: 1, MaLesson: 1, MaLopHoc: 101, TenLop: "TOEIC-01" },
-          { MaExercise: 2, TenBai: "Bài tập 2: Reading", TenLesson: "Buổi 2: Ngữ pháp - Thì quá khứ", ThuTu: 2, MaLesson: 2, MaLopHoc: 101, TenLop: "TOEIC-01" }
+          { MaBaiTap: 1, TenBai: "Bài tập 1: Ngữ pháp", TenBuoiHoc: "Buổi 1: Ngữ pháp - Thì hiện tại", ThuTu: 1, MaBuoiHoc: 1, MaLopHoc: 101, TenLop: "TOEIC-01" },
+          { MaBaiTap: 2, TenBai: "Bài tập 2: Reading", TenBuoiHoc: "Buổi 2: Ngữ pháp - Thì quá khứ", ThuTu: 2, MaBuoiHoc: 2, MaLopHoc: 101, TenLop: "TOEIC-01" }
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    if (urlStr.includes("/baocao/lessons")) {
+    if (urlStr.includes("/baocao/buoihoc")) {
       return new Response(
         JSON.stringify([
-          { MaLesson: 1, TenLesson: "Buổi 1", ThuTu: 1, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveLessonId: 1 },
-          { MaLesson: 2, TenLesson: "Buổi 2", ThuTu: 2, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveLessonId: 1 }
+          { MaBuoiHoc: 1, TenBuoiHoc: "Buổi 1", ThuTu: 1, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveBuoiHocId: 1 },
+          { MaBuoiHoc: 2, TenBuoiHoc: "Buổi 2", ThuTu: 2, MaLopHoc: 101, TenLop: "TOEIC-01", ActiveBuoiHocId: 1 }
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
@@ -699,7 +699,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         JSON.stringify(db.submissions.map(s => ({
           MaBaiNop: s.MaBaiNop,
           MaSinhVien: s.MaSinhVien,
-          MaExercise: s.MaExercise,
+          MaBaiTap: s.MaBaiTap,
           Diem: s.Diem,
           NgayNop: s.NgayNop
         }))),
@@ -722,7 +722,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       );
     }
 
-    if (urlStr.includes("/qtv/exercises") && method === "GET") {
+    if (urlStr.includes("/qtv/baitap") && method === "GET") {
       return new Response(
         JSON.stringify(db.approvals.exercises),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -740,7 +740,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (
       (urlStr.includes("/baigiang/") && urlStr.includes("/status")) ||
       (urlStr.includes("/baihocmo/") && urlStr.includes("/duyet")) ||
-      (urlStr.includes("/exercise/") && urlStr.includes("/status")) ||
+      (urlStr.includes("/baitap/") && urlStr.includes("/status")) ||
       (urlStr.includes("/tailieu/") && urlStr.includes("/status"))
     ) {
       // Find and update item status in db
@@ -751,7 +751,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         db.approvals.baigiang.forEach(item => item.TrangThai = newStatus);
       } else if (urlStr.includes("/baihocmo/")) {
         db.approvals.baihocmo.forEach(item => item.TrangThai = newStatus);
-      } else if (urlStr.includes("/exercise/")) {
+      } else if (urlStr.includes("/baitap/")) {
         db.approvals.exercises.forEach(item => item.TrangThai = newStatus);
       } else if (urlStr.includes("/tailieu/")) {
         db.approvals.tailieu.forEach(item => item.TrangThai = newStatus);

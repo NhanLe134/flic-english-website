@@ -20,7 +20,7 @@ const getActiveMenu = (pathname: string) => {
     pathname.startsWith("/class") ||
     pathname.startsWith("/bai-tap") ||
     pathname.startsWith("/create-exercise") ||
-    pathname.startsWith("/exercise-detail") ||
+    pathname.startsWith("/baitap-detail") ||
     pathname.startsWith("/quan-ly-bai-giang") ||
     pathname.startsWith("/lesson/") ||
     pathname.startsWith("/lesson-discussion") ||

@@ -16,7 +16,7 @@ function ClassDetailSV() {
     setLoading(true)
     Promise.all([
       fetch(`${API}/classes/${id}/info`).then(r => r.json()),
-      fetch(`${API}/classes/${id}/lessons`).then(r => r.json()),
+      fetch(`${API}/classes/${id}/buoihoc`).then(r => r.json()),
     ])
       .then(([info, lessonsData]) => {
         setLopInfo(info)
@@ -178,7 +178,7 @@ function ClassDetailSV() {
                 const isCurrent = ngayBD && ngayBD <= hienTai && ngayKT && ngayKT >= hienTai
 
                 return (
-                  <div className={`cld-tl-item ${isDone ? "done" : ""}`} key={lesson.MaLesson}>
+                  <div className={`cld-tl-item ${isDone ? "done" : ""}`} key={lesson.MaBuoiHoc}>
                     <div className="cld-tl-left">
                       <div className={`cld-tl-dot ${isDone ? "done" : isCurrent ? "current" : ""}`}>
                         {isDone ? "✓" : lesson.ThuTu || i + 1}
@@ -194,7 +194,7 @@ function ClassDetailSV() {
                       <div className="cld-tl-header">
                         <div>
                           <span className="cld-tl-session">Buổi {lesson.ThuTu || i + 1}</span>
-                          <h4 className="cld-tl-lesson">{lesson.TenLesson}</h4>
+                          <h4 className="cld-tl-lesson">{lesson.TenBuoiHoc}</h4>
                         </div>
                         <span className="cld-tl-date">
                           📅 {ngayBD ? ngayBD.toLocaleDateString("vi-VN") : "—"}

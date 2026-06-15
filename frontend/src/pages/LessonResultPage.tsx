@@ -17,16 +17,16 @@ interface Student {
   NgayGhiDanh: string;
   TrangThai: string;
   MaNguoiDung: number;
-  scores: Record<number, StudentScore | null>; // MaExercise -> StudentScore
+  scores: Record<number, StudentScore | null>; // MaBaiTap -> StudentScore
   diemTB: number | null;
 }
 
 interface Exercise {
-  MaExercise: number;
+  MaBaiTap: number;
   TenBai: string;
-  TenLesson: string | null;
+  TenBuoiHoc: string | null;
   ThuTu: number | null;
-  MaLesson: number | null;
+  MaBuoiHoc: number | null;
   MaLopHoc: number | null;
   TenLop: string | null;
 }
@@ -55,23 +55,23 @@ const LessonResultPage = () => {
       .then(([info, sinhVienList, headers, grades]) => {
         setClassInfo(info);
 
-        // Filter and sort exercises for this class by lesson order (ThuTu) and then MaExercise
+        // Filter and sort exercises for this class by lesson order (ThuTu) and then MaBaiTap
         const classExs = (Array.isArray(headers) ? headers : [])
           .filter((h: any) => Number(h.MaLopHoc) === Number(id))
           .sort((a: any, b: any) => {
             if (a.ThuTu !== b.ThuTu) {
               return (a.ThuTu ?? 0) - (b.ThuTu ?? 0);
             }
-            return a.MaExercise - b.MaExercise;
+            return a.MaBaiTap - b.MaBaiTap;
           });
         setClassExercises(classExs);
 
-        // Map grades to a lookup map (MaNguoiDung -> MaExercise -> { Diem, MaBaiNop })
+        // Map grades to a lookup map (MaNguoiDung -> MaBaiTap -> { Diem, MaBaiNop })
         const gradesMap: Record<number, Record<number, { Diem: number | null, MaBaiNop: number | null }>> = {};
         if (Array.isArray(grades)) {
           grades.forEach((g: any) => {
             const userId = Number(g.MaSinhVien); // MaSinhVien field in BAINOP stores MaNguoiDung
-            const exId = Number(g.MaExercise);
+            const exId = Number(g.MaBaiTap);
             const score = g.Diem !== null ? Number(g.Diem) : null;
             const submissionId = g.MaBaiNop ? Number(g.MaBaiNop) : null;
             if (!gradesMap[userId]) {
@@ -86,7 +86,7 @@ const LessonResultPage = () => {
           const studentScores: Record<number, StudentScore | null> = {};
           classExs.forEach(ex => {
             const userId = Number(sv.MaNguoiDung);
-            const exId = ex.MaExercise;
+            const exId = ex.MaBaiTap;
             studentScores[exId] = (gradesMap[userId] && gradesMap[userId][exId] !== undefined)
               ? gradesMap[userId][exId]
               : null;
@@ -165,7 +165,7 @@ const LessonResultPage = () => {
         "Trạng thái": s.TrangThai || "—",
       };
       classExercises.forEach(ex => {
-        const scoreObj = s.scores[ex.MaExercise];
+        const scoreObj = s.scores[ex.MaBaiTap];
         rowData[`Buổi ${ex.ThuTu ?? 0}: ${ex.TenBai}`] = (scoreObj && scoreObj.Diem !== null) ? scoreObj.Diem : "Chưa nộp";
       });
       rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
@@ -274,7 +274,7 @@ const LessonResultPage = () => {
                     <th>Giới tính</th>
                     <th>Trạng thái</th>
                     {classExercises.map(ex => (
-                      <th key={ex.MaExercise} title={ex.TenBai}>
+                      <th key={ex.MaBaiTap} title={ex.TenBai}>
                         B{ex.ThuTu ?? 0}: {ex.TenBai}
                       </th>
                     ))}
@@ -302,11 +302,11 @@ const LessonResultPage = () => {
                           </span>
                         </td>
                         {classExercises.map(ex => {
-                          const scoreObj = s.scores[ex.MaExercise];
+                          const scoreObj = s.scores[ex.MaBaiTap];
                           const hasScore = scoreObj && scoreObj.Diem !== null;
                           const hasSubmission = scoreObj && scoreObj.MaBaiNop !== null;
                           return (
-                            <td key={ex.MaExercise}>
+                            <td key={ex.MaBaiTap}>
                               {hasScore ? (
                                 <span 
                                   className={`lrp-score-badge ${getDiemClass(scoreObj.Diem)} ${hasSubmission ? "clickable-badge" : ""}`}

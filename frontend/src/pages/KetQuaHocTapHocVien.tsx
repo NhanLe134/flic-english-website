@@ -9,8 +9,8 @@ const KetQuaHocTapHocVien = () => {
   const { id } = useParams(); // id này là MaSinhVien lấy từ URL
   const location = useLocation();
   
-  // Lấy lessonId từ state truyền sang, nếu không có mặc định là 1
-  const lessonId = location.state?.lessonId || 1;
+  // Lấy buoiHocId từ state truyền sang, nếu không có mặc định là 1
+  const buoiHocId = location.state?.buoiHocId || 1;
 
   const [student, setStudent] = useState<any>(null);
   const [baiNops, setBaiNops] = useState<any[]>([]);
@@ -23,7 +23,7 @@ const KetQuaHocTapHocVien = () => {
 
   Promise.all([
     fetch(`${API}/students/${id}`).then((r) => r.json()),
-    fetch(`${API}/students/${id}/tiendo/${lessonId}`).then((r) => r.json()),
+    fetch(`${API}/students/${id}/tiendo/${buoiHocId}`).then((r) => r.json()),
   ])
     .then(([svData, tienDoData]) => {
       setStudent(svData);
@@ -31,7 +31,7 @@ const KetQuaHocTapHocVien = () => {
 
       // Sửa ở đây: dùng MaNguoiDung thay vì id
       const maNguoiDung = svData?.MaNguoiDung;
-      return fetch(`${API}/student/bainop/${maNguoiDung}?lessonId=${lessonId}`).then((r) => r.json());
+      return fetch(`${API}/student/bainop/${maNguoiDung}?buoiHocId=${buoiHocId}`).then((r) => r.json());
     })
     .then((nopData) => {
       setBaiNops(Array.isArray(nopData) ? nopData : []);
@@ -40,7 +40,7 @@ const KetQuaHocTapHocVien = () => {
       console.error("Lỗi khi tải dữ liệu:", err);
     })
     .finally(() => setLoading(false));
-}, [id, lessonId]);
+}, [id, buoiHocId]);
 
   // Logic tính toán điểm trung bình
   const baiCoDiem = baiNops.filter((b) => b.Diem !== null && b.Diem !== undefined);

@@ -5,7 +5,7 @@ import "./lessonManagement.css";
 
 const LessonManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { lessonId } = useParams();
+  const { buoiHocId } = useParams();
 
   const [lessons, setLessons] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -14,12 +14,12 @@ const LessonManagement: React.FC = () => {
   const [filterType, setFilterType] = useState("Tất cả");
 
   useEffect(() => {
-    if (!lessonId) return;
-    fetch(`http://localhost:5000/baigiang/${lessonId}`)
+    if (!buoiHocId) return;
+    fetch(`http://localhost:5000/baigiang/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
-  }, [lessonId]);
+  }, [buoiHocId]);
 
   const handleDeleteClick = (id: number) => {
     setSelectedId(id);
@@ -89,7 +89,7 @@ const LessonManagement: React.FC = () => {
           <option>PDF</option>
           <option>Writing</option>
         </select>
-        <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${lessonId}`)}>
+        <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
           + Thêm bài học mới
         </button>
       </div>

@@ -18,7 +18,7 @@ interface BaiGiangItem {
   FileUrl: string;
   MaKhoaHoc: number;
   MaGiangVien: number;
-  MaLesson: number;
+  MaBuoiHoc: number;
   TenGiangVien: string;
   TenKhoaHoc: string;
   CapDo: string;
@@ -63,7 +63,7 @@ export default function DuyetBaiQTV() {
     Promise.all([
       fetch(`${API}/qtv/baigiang`).then((r) => r.json()),
       fetch(`${API}/baihocmo`).then((r) => r.json()),
-      fetch(`${API}/qtv/exercises`).then((r) => r.json()),
+      fetch(`${API}/qtv/baitap`).then((r) => r.json()),
     ])
       .then(([bg, bhm, bt]) => {
         setBaiGiangData(Array.isArray(bg) ? bg : []);
@@ -107,7 +107,7 @@ export default function DuyetBaiQTV() {
       } else if (activeTab === "baihocmo") {
         endpoint = `${API}/baihocmo/${item.MaBaiHocMo}/duyet`;
       } else if (activeTab === "baitap") {
-        endpoint = `${API}/exercise/${item.MaExercise}/status`;
+        endpoint = `${API}/baitap/${item.MaBaiTap}/status`;
       } else if (activeTab === "tailieu") {
         endpoint = `${API}/tailieu/${item.MaTaiLieu}/status`;
       }

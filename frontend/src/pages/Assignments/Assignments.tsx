@@ -46,7 +46,7 @@ function Assignments() {
         const allExercises: any[] = []
         for (const cls of classList) {
           try {
-            const res  = await fetch(`${API}/classes/${cls.MaLopHoc}/exercises`)
+            const res  = await fetch(`${API}/classes/${cls.MaLopHoc}/baitap`)
             const data = await res.json()
             if (Array.isArray(data)) {
               data.forEach(e => allExercises.push({ ...e, TenLop: cls.TenLop, TenKhoaHoc: cls.TenKhoaHoc, MaLopHoc: cls.MaLopHoc }))
@@ -59,13 +59,13 @@ function Assignments() {
       .finally(() => setLoading(false))
   }, [maNguoiDung])
 
-  // Map bài nộp theo MaExercise
+  // Map bài nộp theo MaBaiTap
   const nopMap: Record<number, any> = {}
-  baiNops.forEach(b => { nopMap[b.MaExercise] = b })
+  baiNops.forEach(b => { nopMap[b.MaBaiTap] = b })
 
   // Build assignment list
   const assignments = exercises.map(e => {
-    const nop     = nopMap[e.MaExercise]
+    const nop     = nopMap[e.MaBaiTap]
     const daNop   = !!nop
     const daCham  = nop?.TrangThai === "Đã chấm"
     const status  = daNop ? (daCham ? "Đã chấm" : "Đã nộp") : "Chưa làm"
@@ -125,7 +125,7 @@ function Assignments() {
     }
 
     return {
-      MaExercise:   e.MaExercise,
+      MaBaiTap:   e.MaBaiTap,
       title:        e.Title,
       type:         isExam ? "Exam (Bài kiểm tra)" : (e.Type || "Bài tập"),
       status,
@@ -220,7 +220,7 @@ function Assignments() {
                     : "Không tìm thấy bài tập nào."}
                 </p>
               ) : filtered.map(a => (
-                <div className="asgn-card" key={a.MaExercise}>
+                <div className="asgn-card" key={a.MaBaiTap}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
                     <p className="asgn-card-type">{a.type}</p>
                     {a.TenLop && (
@@ -254,7 +254,7 @@ function Assignments() {
                   <button
                     className={`asgn-btn ${a.buttonDisabled ? "asgn-btn-disabled" : a.status !== "Chưa làm" ? "asgn-btn-outline" : "asgn-btn-fill"}`}
                     disabled={a.buttonDisabled}
-                    onClick={() => !a.buttonDisabled && navigate(`/exercise/${a.MaExercise}`, {
+                    onClick={() => !a.buttonDisabled && navigate(`/baitap/${a.MaBaiTap}`, {
                       state: { maLopHoc: a.MaLopHoc }
                     })}
                     style={a.buttonDisabled ? { background: "#d1d5db", color: "#9ca3af", borderColor: "#d1d5db", cursor: "default", boxShadow: "none" } : undefined}

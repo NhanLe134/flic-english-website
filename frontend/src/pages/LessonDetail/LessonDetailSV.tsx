@@ -6,7 +6,7 @@ const API = "http://localhost:5000";
 
 function LessonDetailSV() {
   const navigate = useNavigate();
-  const { maLopHoc, maLesson } = useParams();
+  const { maLopHoc, maBuoiHoc } = useParams();
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   const [lessonInfo, setLessonInfo] = useState<any>(null);
@@ -22,12 +22,12 @@ function LessonDetailSV() {
   const [deleteId, setDeleteId]     = useState<number | null>(null);
 
   useEffect(() => {
-    if (!maLesson) return;
+    if (!maBuoiHoc) return;
     setLoading(true);
     Promise.all([
-      fetch(`${API}/lesson/${maLesson}`).then(r => r.json()),
-      fetch(`${API}/baigiang/${maLesson}?role=Sinh Viên`).then(r => r.json()),
-      fetch(`${API}/tailieu/${maLesson}?role=Sinh Viên`).then(r => r.json()),
+      fetch(`${API}/lesson/${maBuoiHoc}`).then(r => r.json()),
+      fetch(`${API}/baigiang/${maBuoiHoc}?role=Sinh Viên`).then(r => r.json()),
+      fetch(`${API}/tailieu/${maBuoiHoc}?role=Sinh Viên`).then(r => r.json()),
     ])
       .then(([lesson, baigiangData, tailieu]) => {
         setLessonInfo(lesson);
@@ -42,11 +42,11 @@ function LessonDetailSV() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [maLesson]);
+  }, [maBuoiHoc]);
 
   const loadComments = () => {
-    if (!maLesson) return;
-    fetch(`${API}/binhluan/lesson/${maLesson}`)
+    if (!maBuoiHoc) return;
+    fetch(`${API}/binhluan/buoihoc/${maBuoiHoc}`)
       .then(r => r.json())
       .then(data => setComments(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -54,20 +54,20 @@ function LessonDetailSV() {
 
   useEffect(() => {
     loadComments();
-  }, [maLesson]);
+  }, [maBuoiHoc]);
 
   const initials = user.HoTen
     ? user.HoTen.split(" ").slice(-2).map((w: string) => w[0]).join("").toUpperCase()
     : "SV";
 
   const handlePostComment = async () => {
-    if (!newComment.trim() || !maLesson) return;
+    if (!newComment.trim() || !maBuoiHoc) return;
     try {
-      await fetch(`${API}/binhluan/lesson`, {
+      await fetch(`${API}/binhluan/buoihoc`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          MaLesson: Number(maLesson),
+          MaBuoiHoc: Number(maBuoiHoc),
           MaNguoiDung: user.MaNguoiDung,
           NoiDung: newComment.trim(),
           MaBinhLuanCha: null
@@ -79,13 +79,13 @@ function LessonDetailSV() {
   };
 
   const handleReply = async (parentId: number) => {
-    if (!replyText.trim() || !maLesson) return;
+    if (!replyText.trim() || !maBuoiHoc) return;
     try {
-      await fetch(`${API}/binhluan/lesson`, {
+      await fetch(`${API}/binhluan/buoihoc`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          MaLesson: Number(maLesson),
+          MaBuoiHoc: Number(maBuoiHoc),
           MaNguoiDung: user.MaNguoiDung,
           NoiDung: replyText.trim(),
           MaBinhLuanCha: parentId
@@ -132,14 +132,14 @@ function LessonDetailSV() {
               Lớp học
             </span>
             <span>›</span>
-            <span className="ld2-active">{lessonInfo?.TenLesson || "Bài học"}</span>
+            <span className="ld2-active">{lessonInfo?.TenBuoiHoc || "Bài học"}</span>
           </nav>
 
           {/* Lesson info */}
           <div className="ld2-lesson-info">
             <div className="ld2-lesson-icon">📖</div>
             <div>
-              <p className="ld2-lesson-title">{lessonInfo?.TenLesson || "—"}</p>
+              <p className="ld2-lesson-title">{lessonInfo?.TenBuoiHoc || "—"}</p>
               <p className="ld2-lesson-date">
                 📅 {lessonInfo?.NgayBatDau
                   ? new Date(lessonInfo.NgayBatDau).toLocaleDateString("vi-VN")
@@ -175,7 +175,7 @@ function LessonDetailSV() {
                           onClick={() => {
                             setActiveBaiHoc(b.MaBaiHoc);
                             navigate(`/bai-giangSV/${b.MaBaiHoc}`, {
-                              state: { fromStudent: true, maLopHoc, maLesson }
+                              state: { fromStudent: true, maLopHoc, maBuoiHoc }
                             });
                           }}
                         >
@@ -197,7 +197,7 @@ function LessonDetailSV() {
           <div className="ld2-video-wrap">
             <div className="ld2-video-player">
               <div className="ld2-play-icon">▶</div>
-              <p className="ld2-video-label">{lessonInfo?.TenLesson || "Bài học"}</p>
+              <p className="ld2-video-label">{lessonInfo?.TenBuoiHoc || "Bài học"}</p>
               <p className="ld2-video-sub">
                 {baiGiangs.length > 0
                   ? "Chọn bài giảng từ danh sách bên trên để xem"
@@ -219,7 +219,7 @@ function LessonDetailSV() {
                       onClick={() => {
                         setActiveBaiHoc(b.MaBaiHoc);
                         navigate(`/bai-giang/${b.MaBaiHoc}`, {
-                          state: { fromStudent: true, maLopHoc, maLesson }
+                          state: { fromStudent: true, maLopHoc, maBuoiHoc }
                         });
                       }}
                     >

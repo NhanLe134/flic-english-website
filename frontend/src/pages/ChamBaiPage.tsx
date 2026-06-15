@@ -23,7 +23,7 @@ const ChamBaiPage = () => {
         setBaiNop(data);
         if (data.Diem !== null && data.Diem !== undefined) setDiem(data.Diem.toString());
         if (data.NhanXet) setNhanXet(data.NhanXet);
-        return fetch(`http://localhost:5000/exercise/${data.MaExercise}`);
+        return fetch(`http://localhost:5000/baitap/${data.MaBaiTap}`);
       })
       .then(res => res.json())
       .then(data => setExercise(data))

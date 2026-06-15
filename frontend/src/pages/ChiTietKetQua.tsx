@@ -5,7 +5,7 @@ import "./chitietketqua.css";
 
 const ChiTietKetQua = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // id = MaLesson
+  const { id } = useParams(); // id = MaBuoiHoc
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,8 +26,8 @@ const ChiTietKetQua = () => {
       fetch(`http://localhost:5000/lesson/${id}`).then(r => r.json()),
       fetch(`http://localhost:5000/lesson/${id}/students/${maNguoiDung}`).then(r => r.json())
     ])
-      .then(([lessonData, studentData]) => {
-        setLessonInfo(lessonData);
+      .then(([buoiHocData, studentData]) => {
+        setLessonInfo(buoiHocData);
         setStudents(Array.isArray(studentData) ? studentData : []);
       })
       .catch(err => console.log(err))
@@ -77,7 +77,7 @@ const ChiTietKetQua = () => {
       <div className="lesson-header">
         <button className="back-btn" onClick={() => navigate(-1)}>← Quay lại</button>
         <div className="lesson-title">
-          <h1>{loading ? "Đang tải..." : lessonInfo?.TenLesson || "—"}</h1>
+          <h1>{loading ? "Đang tải..." : lessonInfo?.TenBuoiHoc || "—"}</h1>
           <h2>{lessonInfo?.MoTa || ""}</h2>
         </div>
         <div style={{ width: 90 }} />
@@ -159,7 +159,7 @@ const ChiTietKetQua = () => {
                       <button
                         className="view-btn"
                         onClick={() => navigate(`/xem-ket-qua/${sv.MaSinhVien}`, {
-                          state: { lessonId: id }
+                          state: { buoiHocId: id }
                         })}
                       >
                         Xem
