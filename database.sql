@@ -415,6 +415,7 @@ CREATE TABLE [dbo].[SINHVIEN](
 	[MaNguoiDung] [int] NOT NULL,
 	[Lop] [nvarchar](50) NULL,
 	[MaSinhVien] [nvarchar](20) NOT NULL,
+	[BietDanh] [nvarchar](100) NULL,
  CONSTRAINT [PK_SINHVIEN] PRIMARY KEY CLUSTERED 
 (
 	[MaSinhVien] ASC
