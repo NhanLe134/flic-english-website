@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap');
+
 .premium-profile-viewport {
   width: 100%;
   min-height: calc(100vh - 80px);
@@ -190,10 +192,10 @@
 }
 
 .meta-label {
-  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
   font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.8px;
+  color: #000080;
 }
 
 .meta-value {
@@ -325,11 +327,10 @@
 }
 
 .field-meta-label {
-  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
   font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  color: #000080;
 }
 
 .field-display-value {
@@ -474,11 +475,10 @@
 }
 
 .modal-form-label {
-  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
   font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #000080;
 }
 
 .modal-form-input,
