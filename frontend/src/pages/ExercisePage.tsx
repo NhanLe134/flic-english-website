@@ -18,10 +18,9 @@ const ExercisePage = () => {
 
 
 
-  /* ===== LOAD LESSON + LỚP ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/lesson/${id}`)
+    fetch(`http://localhost:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (buoiHocData) => {
         setLesson(Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData);

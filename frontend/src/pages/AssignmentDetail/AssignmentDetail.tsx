@@ -29,29 +29,29 @@ function AssignmentDetail() {
 
   // Solving states
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  const [mcAnswers, setMcAnswers] = useState<Record<number, string>>({}); // mapped by questionIdx
-  const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({}); // mapped by questionIdx
-  const [fillInAnswers, setFillInAnswers] = useState<Record<number, string[]>>({}); // questionIdx -> list of answers
-  const [orderedWords, setOrderedWords] = useState<Record<number, string[]>>({}); // questionIdx -> words
-  const [shuffledWords, setShuffledWords] = useState<Record<number, string[]>>({}); // questionIdx -> words
-  const [shuffledSentences, setShuffledSentences] = useState<Record<number, string[]>>({}); // questionIdx -> sentences
+  const [mcAnswers, setMcAnswers] = useState<Record<string | number, string>>({}); // mapped by questionIdx
+  const [essayAnswers, setEssayAnswers] = useState<Record<string | number, string>>({}); // mapped by questionIdx
+  const [fillInAnswers, setFillInAnswers] = useState<Record<string | number, string[]>>({}); // questionIdx -> list of answers
+  const [orderedWords, setOrderedWords] = useState<Record<string | number, string[]>>({}); // questionIdx -> words
+  const [shuffledWords, setShuffledWords] = useState<Record<string | number, string[]>>({}); // questionIdx -> words
+  const [shuffledSentences, setShuffledSentences] = useState<Record<string | number, string[]>>({}); // questionIdx -> sentences
 
   // Multi-audio limit track
-  const [listenCounts, setListenCounts] = useState<Record<number, number>>({});
+  const [listenCounts, setListenCounts] = useState<Record<string | number, number>>({});
 
   // Multiple Voice Recordings (mapped by questionIndex)
-  const [recordedBlobs, setRecordedBlobs] = useState<Record<number, Blob>>({});
-  const [recordedUrls, setRecordedUrls] = useState<Record<number, string>>({});
-  const [isRecording, setIsRecording] = useState<Record<number, boolean>>({});
-  const [recordSeconds, setRecordSeconds] = useState<Record<number, number>>({});
+  const [recordedBlobs, setRecordedBlobs] = useState<Record<string | number, Blob>>({});
+  const [recordedUrls, setRecordedUrls] = useState<Record<string | number, string>>({});
+  const [isRecording, setIsRecording] = useState<Record<string | number, boolean>>({});
+  const [recordSeconds, setRecordSeconds] = useState<Record<string | number, number>>({});
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<any>(null);
 
   // Web Speech API
-  const [spokenTexts, setSpokenTexts] = useState<Record<number, string>>({});
-  const [speechScores, setSpeechScores] = useState<Record<number, number | null>>({});
-  const [isListeningSTT, setIsListeningSTT] = useState<Record<number, boolean>>({});
+  const [spokenTexts, setSpokenTexts] = useState<Record<string | number, string>>({});
+  const [speechScores, setSpeechScores] = useState<Record<string | number, number | null>>({});
+  const [isListeningSTT, setIsListeningSTT] = useState<Record<string | number, boolean>>({});
   const recognitionRef = useRef<any>(null);
 
   // Exam state
@@ -166,9 +166,9 @@ function AssignmentDetail() {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      fetch(`${API}/baitap/${id}`).then(r => r.json()),
+      fetch(`${API}/exercise/${id}`).then(r => r.json()),
       maLopHoc ? fetch(`${API}/classes/${maLopHoc}/info`).then(r => r.json()) : Promise.resolve(null),
-      fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()),
+      fetch(`${API}/bainop/exercise/${id}`).then(r => r.json()),
     ])
       .then(([exData, lopData, nopData]) => {
         setExercise(exData);
@@ -185,9 +185,10 @@ function AssignmentDetail() {
               const subObj = JSON.parse(contentText);
               if (subObj.isExam) {
                 // Populate exam responses
-                const loadedAnswers: Record<number, string> = {};
-                const loadedEssay: Record<number, string> = {};
-                const loadedUrls: Record<number, string> = {};
+                const loadedAnswers: Record<string | number, string> = {};
+                const loadedEssay: Record<string | number, string> = {};
+                const loadedUrls: Record<string | number, string> = {};
+                const loadedFillIn: Record<string | number, string[]> = {};
                 subObj.sections.forEach((sec: any, sIdx: number) => {
                   if (sec.type === "listening-mcq" || sec.type === "reading-split") {
                     Object.keys(sec.answers || {}).forEach((qIdxStr) => {
@@ -198,11 +199,24 @@ function AssignmentDetail() {
                   } else if (sec.type === "speaking-topic") {
                     loadedUrls[sIdx] = sec.audioUrl;
                     loadedEssay[sIdx] = sec.note;
+                  } else if (sec.questions) {
+                    sec.questions.forEach((q: any) => {
+                      const qIdx = q.questionIdx;
+                      const key = `${sIdx}_${qIdx}`;
+                      if (q.chosenAnswer) loadedAnswers[key] = q.chosenAnswer;
+                      if (q.essayText) loadedEssay[key] = q.essayText;
+                      if (q.audioUrl) loadedUrls[key] = q.audioUrl;
+                      if (q.fillInAnswers) loadedFillIn[key] = q.fillInAnswers;
+                      if (q.spokenText) setSpokenTexts(prev => ({ ...prev, [key]: q.spokenText }));
+                      if (q.speechScore) setSpeechScores(prev => ({ ...prev, [key]: q.speechScore }));
+                      if (q.sentences) setShuffledSentences(prev => ({ ...prev, [key]: q.sentences }));
+                    });
                   }
                 });
                 setMcAnswers(loadedAnswers);
                 setEssayAnswers(loadedEssay);
                 setRecordedUrls(loadedUrls);
+                setFillInAnswers(loadedFillIn);
               } else {
                 // Populate regular questions responses
                 const loadedAnswers: Record<number, string> = {};
@@ -251,7 +265,35 @@ function AssignmentDetail() {
         }
       });
     }
-  }, [questionsList, submitted, exercise]);
+    // Shuffling for exam sections
+    if (isExam && parsedContent.sections && !submitted) {
+      parsedContent.sections.forEach((sec: any, sIdx: number) => {
+        if (sec.questions) {
+          sec.questions.forEach((q: any, qIdx: number) => {
+            const key = `${sIdx}_${qIdx}`;
+            if (sec.type === "writing-order-words") {
+              const sentence = q.correctSentence || q.text || "";
+              const words = sentence.split(/\s+/).map((w: string) => w.trim().replace(/[^a-zA-Z0-9']/g, "")).filter(Boolean);
+              setShuffledWords(prev => {
+                if (prev[key]) return prev;
+                return { ...prev, [key]: [...words].sort(() => Math.random() - 0.5) };
+              });
+              setOrderedWords(prev => {
+                if (prev[key]) return prev;
+                return { ...prev, [key]: [] };
+              });
+            }
+            if (sec.type === "writing-order-sentences") {
+              setShuffledSentences(prev => {
+                if (prev[key]) return prev;
+                return { ...prev, [key]: [...(q.sentences || [])].sort(() => Math.random() - 0.5) };
+              });
+            }
+          });
+        }
+      });
+    }
+  }, [questionsList, parsedContent, submitted, exercise, isExam]);
 
   // Exam Start/Countdown ticks
   useEffect(() => {
@@ -336,7 +378,7 @@ function AssignmentDetail() {
   };
 
   // RECORDING FUNCTIONS
-  const startRecording = async (idx: number) => {
+  const startRecording = async (idx: number | string) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -360,14 +402,14 @@ function AssignmentDetail() {
     }
   };
 
-  const stopRecording = (idx: number) => {
+  const stopRecording = (idx: number | string) => {
     mediaRecorderRef.current?.stop();
     setIsRecording(prev => ({ ...prev, [idx]: false }));
     clearInterval(timerRef.current);
   };
 
   // WEB SPEECH Recognizer
-  const startSpeechRecognition = (idx: number, expectedText: string) => {
+  const startSpeechRecognition = (idx: number | string, expectedText: string) => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Trình duyệt không hỗ trợ nhận diện giọng nói. Vui lòng dùng Chrome!");
@@ -390,7 +432,7 @@ function AssignmentDetail() {
     recognition.start();
   };
 
-  const stopSpeechRecognition = (idx: number) => {
+  const stopSpeechRecognition = (idx: number | string) => {
     recognitionRef.current?.stop();
     setIsListeningSTT(prev => ({ ...prev, [idx]: false }));
   };
@@ -432,6 +474,61 @@ function AssignmentDetail() {
               }
               sectionResponse.audioUrl = url || recordedUrls[secIdx] || "";
               sectionResponse.note = essayAnswers[secIdx] || "";
+            } else if (sec.questions) {
+              sectionResponse.questions = await Promise.all(
+                sec.questions.map(async (q: any, qIdx: number) => {
+                  const key = `${secIdx}_${qIdx}`;
+                  const qResult: any = { questionIdx: qIdx, type: sec.type };
+
+                  if (sec.type === "listening-image") {
+                    const ans = mcAnswers[key] || "";
+                    qResult.chosenAnswer = ans;
+                    qResult.correctAnswer = q.correct || "A";
+                    qResult.score = ans === (q.correct || "A") ? 10 : 0;
+                  } else if (sec.type === "listening-dictation") {
+                    const textAns = essayAnswers[key] || "";
+                    qResult.essayText = textAns;
+                    qResult.correctText = q.text;
+                    qResult.score = calcDictationScore(textAns, q.text || "");
+                  } else if (sec.type === "listening-fill-in") {
+                    const stdAnswers = fillInAnswers[key] || [];
+                    const correctAnswers = q.fillInAnswers || [];
+                    let matched = 0;
+                    correctAnswers.forEach((ans: string, i: number) => {
+                      if ((stdAnswers[i] || "").trim().toLowerCase() === ans.toLowerCase()) matched++;
+                    });
+                    qResult.fillInAnswers = stdAnswers;
+                    qResult.correctAnswers = correctAnswers;
+                    qResult.score = correctAnswers.length > 0 ? (matched / correctAnswers.length) * 10 : 0;
+                  } else if (sec.type === "speaking-pronounce") {
+                    qResult.spokenText = spokenTexts[key] || "";
+                    qResult.correctText = q.text;
+                    qResult.score = speechScores[key] || 0;
+                  } else if (sec.type === "writing-order-words") {
+                    const stdSent = (orderedWords[key] || []).join(" ").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                    const correctSent = (q.correctSentence || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                    qResult.essayText = (orderedWords[key] || []).join(" ");
+                    qResult.correctText = q.correctSentence;
+                    qResult.score = stdSent === correctSent ? 10 : 0;
+                  } else if (sec.type === "writing-order-sentences") {
+                    const stdSents = shuffledSentences[key] || [];
+                    const correctSents = q.sentences || [];
+                    let placed = 0;
+                    stdSents.forEach((s, idx) => {
+                      if (s === correctSents[idx]) placed++;
+                    });
+                    qResult.sentences = stdSents;
+                    qResult.score = correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
+                  } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
+                    const ans = mcAnswers[key] || "";
+                    qResult.chosenAnswer = ans;
+                    qResult.correctAnswer = q.correct;
+                    qResult.score = ans === q.correct ? 10 : 0;
+                  }
+
+                  return qResult;
+                })
+              );
             }
 
             return sectionResponse;
@@ -452,6 +549,49 @@ function AssignmentDetail() {
             });
           } else if (sec.type === "writing-essay" || sec.type === "speaking-topic") {
             isFullyAutoGraded = false; // Requires teacher grading
+          } else if (sec.questions) {
+            sec.questions.forEach((q: any, qIdx: number) => {
+              const key = `${secIdx}_${qIdx}`;
+              if (sec.type === "listening-image") {
+                const ans = mcAnswers[key] || "";
+                if (ans === (q.correct || "A")) totalExamPoints += 10;
+                examGradableQuestions++;
+              } else if (sec.type === "listening-dictation") {
+                const textAns = essayAnswers[key] || "";
+                totalExamPoints += calcDictationScore(textAns, q.text || "");
+                examGradableQuestions++;
+              } else if (sec.type === "listening-fill-in") {
+                const stdAnswers = fillInAnswers[key] || [];
+                const correctAnswers = q.fillInAnswers || [];
+                let matched = 0;
+                correctAnswers.forEach((ans: string, i: number) => {
+                  if ((stdAnswers[i] || "").trim().toLowerCase() === ans.toLowerCase()) matched++;
+                });
+                totalExamPoints += correctAnswers.length > 0 ? (matched / correctAnswers.length) * 10 : 0;
+                examGradableQuestions++;
+              } else if (sec.type === "speaking-pronounce") {
+                totalExamPoints += speechScores[key] || 0;
+                examGradableQuestions++;
+              } else if (sec.type === "writing-order-words") {
+                const stdSent = (orderedWords[key] || []).join(" ").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                const correctSent = (q.correctSentence || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (stdSent === correctSent) totalExamPoints += 10;
+                examGradableQuestions++;
+              } else if (sec.type === "writing-order-sentences") {
+                const stdSents = shuffledSentences[key] || [];
+                const correctSents = q.sentences || [];
+                let placed = 0;
+                stdSents.forEach((s, idx) => {
+                  if (s === correctSents[idx]) placed++;
+                });
+                totalExamPoints += correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
+                examGradableQuestions++;
+              } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
+                const ans = mcAnswers[key] || "";
+                if (ans === q.correct) totalExamPoints += 10;
+                examGradableQuestions++;
+              }
+            });
           }
         });
 
@@ -463,7 +603,7 @@ function AssignmentDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            MaBaiTap: parseInt(id!),
+            MaExercise: parseInt(id!),
             MaSinhVien: maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: examFinalScore,
@@ -591,7 +731,7 @@ function AssignmentDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            MaBaiTap: parseInt(id!),
+            MaExercise: parseInt(id!),
             MaSinhVien: maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: finalScore,
@@ -686,7 +826,7 @@ function AssignmentDetail() {
     if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
       return (
         <div>
-          {q.audioUrl && (
+          {q.audioUrl && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
             <div style={{ marginBottom: 12 }}>
               <audio controls style={{ width: "100%" }}>
                 <source src={`${API}${q.audioUrl}`} />
@@ -993,6 +1133,237 @@ function AssignmentDetail() {
     return null;
   };
 
+  const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
+    const key = `${sIdx}_${qIdx}`;
+
+    if (secType === "listening-mcq" || secType === "writing-tense-mcq" || secType === "reading-vocab-mcq") {
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          {q.audioUrl && (
+            <div style={{ marginBottom: 12 }}>
+              <audio controls style={{ width: "100%" }}>
+                <source src={`${API}${q.audioUrl}`} />
+              </audio>
+            </div>
+          )}
+          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
+          {renderMCQBlock(q, qIdx, `${sIdx}`)}
+        </div>
+      );
+    }
+
+    if (secType === "listening-image") {
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Listening image visual" style={{ maxWidth: "100%", maxHeight: 300, display: "block", margin: "0 auto 12px", borderRadius: 8 }} />}
+          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
+          {renderMCQBlock({ question: "Chọn đáp án đúng theo hình ảnh và âm thanh:", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx, `${sIdx}`)}
+        </div>
+      );
+    }
+
+    if (secType === "listening-dictation") {
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
+          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và viết lại chính xác:</p>
+          {submitted ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ background: "#fafafa", border: "1px solid #e0d8cc", borderRadius: 8, padding: 12 }}>
+                <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Bạn viết:</p>
+                <p style={{ margin: 0, fontWeight: 700 }}>"{essayAnswers[key] || ""}"</p>
+              </div>
+              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12 }}>
+                <p style={{ margin: 0, fontSize: 13, color: "#16a34a" }}>Đáp án đúng:</p>
+                <p style={{ margin: 0, color: "#15803d", fontWeight: 700 }}>"{q.text}"</p>
+              </div>
+            </div>
+          ) : (
+            <textarea
+              className="ad-q-input"
+              disabled={!examStarted || examEnded}
+              value={essayAnswers[key] || ""}
+              onChange={e => setEssayAnswers(prev => ({ ...prev, [key]: e.target.value }))}
+              placeholder="Nhập những gì bạn nghe được..."
+              rows={3}
+            />
+          )}
+        </div>
+      );
+    }
+
+    if (secType === "listening-fill-in") {
+      const parts = (q.text || "").split(/(\[\d+\])/g);
+      const correctAnswers = q.fillInAnswers || [];
+
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
+          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và điền vào ô trống:</p>
+          <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
+            {parts.map((part: string, idx: number) => {
+              const match = part.match(/^\[(\d+)\]$/);
+              if (match) {
+                const blankIdx = parseInt(match[1]) - 1;
+                const stdAns = (fillInAnswers[key] || [])[blankIdx] || "";
+                const correctAns = correctAnswers[blankIdx] || "";
+                const isCorrect = submitted && stdAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
+
+                return (
+                  <span key={idx} style={{ display: "inline-block", margin: "0 4px" }}>
+                    <input
+                      type="text"
+                      disabled={submitted || !examStarted || examEnded}
+                      value={stdAns}
+                      onChange={e => {
+                        const copyAnswers = [...(fillInAnswers[key] || [])];
+                        copyAnswers[blankIdx] = e.target.value;
+                        setFillInAnswers(prev => ({ ...prev, [key]: copyAnswers }));
+                      }}
+                      style={{
+                        padding: "2px 6px", borderRadius: 4, textAlign: "center", width: 100,
+                        border: `1.5px solid ${submitted ? (isCorrect ? "#22c55e" : "#ef4444") : "#e87722"}`,
+                        background: submitted ? (isCorrect ? "#f0fdf4" : "#fef2f2") : "#fff"
+                      }}
+                    />
+                    {submitted && !isCorrect && <span style={{ fontSize: 11, color: "#16a34a", display: "block" }}>({correctAns})</span>}
+                  </span>
+                );
+              }
+              return <span key={idx}>{part}</span>;
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (secType === "speaking-pronounce") {
+      const speechScore = speechScores[key];
+      const spokenText = spokenTexts[key] || "";
+      const isList = isListeningSTT[key];
+
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 10 }}>🎯 Cấp độ: {q.level}</span>
+          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, marginBottom: 12 }}>
+            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600 }}>🗣️ Đọc câu sau:</p>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e3a8a" }}>{q.text}</p>
+          </div>
+
+          {!submitted ? (
+            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center" }}>
+              {isList ? (
+                <div>
+                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Đang nhận âm...</span>
+                  <button onClick={() => stopSpeechRecognition(key)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Dừng</button>
+                </div>
+              ) : (
+                <button disabled={!examStarted || examEnded} onClick={() => startSpeechRecognition(key, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700 }}>🎙️ Bấm để nói</button>
+              )}
+              {spokenText && (
+                <div style={{ marginTop: 15, textAlign: "left" }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Nhận âm: "{spokenText}"</p>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Điểm: {speechScore}/10</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
+              <p style={{ margin: 0 }}><strong>Bạn đọc:</strong> "{spokenText || "—"}"</p>
+              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Điểm chấm tự động:</strong> {speechScore}/10</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (secType === "writing-order-words") {
+      const sWords = shuffledWords[key] || [];
+      const oWords = orderedWords[key] || [];
+
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Gợi ý:</p>
+            <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
+          </div>
+
+          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
+            {oWords.map((w, i) => (
+              <span key={i} onClick={() => {
+                if (submitted) return;
+                setOrderedWords(prev => ({ ...prev, [key]: oWords.filter((_, idx) => idx !== i) }));
+                setShuffledWords(prev => ({ ...prev, [key]: [...sWords, w] }));
+              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
+            ))}
+          </div>
+
+          {!submitted && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {sWords.map((w, i) => (
+                <span key={i} onClick={() => {
+                  setOrderedWords(prev => ({ ...prev, [key]: [...oWords, w] }));
+                  setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== i) }));
+                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
+              ))}
+            </div>
+          )}
+
+          {submitted && (
+            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
+              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (secType === "writing-order-sentences") {
+      const sSents = shuffledSentences[key] || [];
+      const correctSentences = q.sentences || [];
+
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {sSents.map((sent, idx) => {
+              return (
+                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
+                  <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
+                  <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
+                  {!submitted && (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button disabled={idx === 0 || !examStarted || examEnded} onClick={() => {
+                        const copy = [...sSents];
+                        const tmp = copy[idx];
+                        copy[idx] = copy[idx - 1];
+                        copy[idx - 1] = tmp;
+                        setShuffledSentences(prev => ({ ...prev, [key]: copy }));
+                      }}>▲</button>
+                      <button disabled={idx === sSents.length - 1 || !examStarted || examEnded} onClick={() => {
+                        const copy = [...sSents];
+                        const tmp = copy[idx];
+                        copy[idx] = copy[idx + 1];
+                        copy[idx + 1] = tmp;
+                        setShuffledSentences(prev => ({ ...prev, [key]: copy }));
+                      }}>▼</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (secType === "reading-split") {
+      return renderMCQBlock(q, qIdx, `${sIdx}`);
+    }
+
+    return null;
+  };
+
   return (
     <div className="ad-content">
       <button className="ad-back" onClick={() => navigate(-1)}>← Quay lại</button>
@@ -1118,32 +1489,6 @@ function AssignmentDetail() {
                   <div key={sIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}>
                     <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
 
-                    {sec.type === "listening-mcq" && (
-                      <div>
-                        {sec.audioUrl && (
-                          <div style={{ marginBottom: 20 }}>
-                            <audio controls style={{ width: "100%" }}><source src={`${API}${sec.audioUrl}`} /></audio>
-                          </div>
-                        )}
-                        {sec.questions.map((q: any, qIdx: number) => (
-                          renderMCQBlock(q, qIdx, `${sIdx}`)
-                        ))}
-                      </div>
-                    )}
-
-                    {sec.type === "reading-split" && (
-                      <div style={{ display: "flex", gap: 20, height: 500 }}>
-                        <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
-                          <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{sec.content}</p>
-                        </div>
-                        <div style={{ flex: 1, overflowY: "auto" }}>
-                          {sec.questions.map((q: any, qIdx: number) => (
-                            renderMCQBlock(q, qIdx, `${sIdx}`)
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {sec.type === "writing-essay" && (
                       <div>
                         <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
@@ -1203,6 +1548,32 @@ function AssignmentDetail() {
                         />
                       </div>
                     )}
+
+                    {sec.type === "reading-split" && (
+                      <div style={{ display: "flex", gap: 20, height: 500 }}>
+                        <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
+                          <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{sec.content}</p>
+                        </div>
+                        <div style={{ flex: 1, overflowY: "auto" }}>
+                          {sec.questions?.map((q: any, qIdx: number) => (
+                            renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {sec.type !== "writing-essay" && sec.type !== "speaking-topic" && sec.type !== "reading-split" && (
+                      <div>
+                        {sec.audioUrl && (
+                          <div style={{ marginBottom: 20 }}>
+                            <audio controls style={{ width: "100%" }}><source src={`${API}${sec.audioUrl}`} /></audio>
+                          </div>
+                        )}
+                        {sec.questions?.map((q: any, qIdx: number) => (
+                          renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1212,6 +1583,22 @@ function AssignmentDetail() {
       ) : (
         /* ────────────────── REGULAR MULTI-QUESTION SOLVER ────────────────── */
         <div>
+          {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq" && (
+            <div style={{
+              background: "#fff",
+              border: "1px solid #e0d4c3",
+              padding: "16px 20px",
+              borderRadius: 12,
+              marginBottom: 16,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+            }}>
+              <h4 style={{ margin: "0 0 10px 0", color: "#5a3e2b", fontSize: "14px", fontWeight: 600 }}>🎵 File nghe chung cho toàn bộ bài tập:</h4>
+              <audio controls style={{ width: "100%" }}>
+                <source src={`${API}${exercise.AudioUrl}`} />
+              </audio>
+            </div>
+          )}
+
           {/* Progress pagination indicators */}
           {questionsList.length > 1 && (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15, background: "#fafafa", padding: "10px 16px", borderRadius: 8, border: "1px solid #e0d8cc" }}>
@@ -1283,7 +1670,7 @@ function AssignmentDetail() {
         )}
       </div>
     </div>
-  );
+  )
 }
 
 export default AssignmentDetail;

@@ -32,7 +32,7 @@ interface HocVien {
   lopKhoaHoc: string
   tenKhoa: string
   trangThai: "Đang học" | "Hoàn thành" | "Tạm dừng"
-  rawScores: Record<number, number | null> // MaBaiTap -> Diem
+  rawScores: Record<number, number | string | null> // MaBaiTap -> Diem / Status
   diemTB: number | null
 }
 
@@ -92,12 +92,12 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
         setAllLessons(Array.isArray(lessonsData) ? lessonsData : [])
         
         const mapped: HocVien[] = (Array.isArray(svData) ? svData : []).map((sv: any) => {
-          const rawScores: Record<number, number | null> = {}
+          const rawScores: Record<number, number | string | null> = {}
           headerList.forEach((h: any) => {
             rawScores[h.MaBaiTap] = sv.baiTaps?.[h.MaBaiTap] ?? null
           })
 
-          const submittedScores = Object.values(rawScores).filter((d): d is number => d !== null)
+          const submittedScores = Object.values(rawScores).filter((d): d is number => typeof d === 'number')
           const diemTB = submittedScores.length > 0
             ? Math.round((submittedScores.reduce((a, b) => a + b, 0) / submittedScores.length) * 100) / 100
             : null
@@ -151,18 +151,50 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   }, [allLessons, filterLop])
 
   const getBuoiAvg = (hv: HocVien, buoiNum: number) => {
-    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum)
+    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
     if (buoiExs.length === 0) return null
 
     const scores = buoiExs
       .map(ex => hv.rawScores[ex.MaBaiTap])
-      .filter((s): s is number => s !== null)
+      .filter((s): s is number => s !== null && typeof s === 'number')
 
     if (scores.length === 0) return null
 
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length
     return Math.round(avg * 10) / 10
   }
+
+  const getBuoiStatusOrAvg = (hv: HocVien, buoiNum: number) => {
+    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
+    if (buoiExs.length === 0) return { status: "none", val: null }
+
+    const scores = buoiExs
+      .map(ex => hv.rawScores[ex.MaBaiTap])
+      .filter((s): s is number => s !== null && typeof s === 'number')
+
+    if (scores.length > 0) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length
+      return { status: "graded", val: Math.round(avg * 10) / 10 }
+    }
+
+    const hasPending = buoiExs.some(ex => hv.rawScores[ex.MaBaiTap] === "Cần chấm")
+    if (hasPending) {
+      return { status: "pending", val: "Cần chấm" }
+    }
+
+    return { status: "chuanop", val: "Chưa nộp" }
+  }
+
+  const exercisesByBuoi = useMemo(() => {
+    const groups: Record<number, ExerciseHeader[]> = {}
+    activeHeaders.forEach(ex => {
+      if (ex.ThuTu !== null) {
+        if (!groups[ex.ThuTu]) groups[ex.ThuTu] = []
+        groups[ex.ThuTu].push(ex)
+      }
+    })
+    return groups
+  }, [activeHeaders])
 
   const khoaList = ["Tất cả khóa học", ...Array.from(new Set(data.map(h => h.tenKhoa)))]
   const lopList = useMemo(() => {
@@ -326,6 +358,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}></th>
                   <th>MÃ SINH VIÊN</th>
                   <th>HỌ TÊN</th>
                   <th>LỚP/KHÓA</th>
@@ -351,7 +384,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={5 + uniqueBuois.length} className={styles.empty}>
+                    <td colSpan={6 + uniqueBuois.length} className={styles.empty}>
                       Không có dữ liệu.
                     </td>
                   </tr>
@@ -359,6 +392,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                   paginatedData.map(hv => {
                     const isExpanded = expandedStudents.has(hv.id)
                     const classLessons = allLessons.filter(l => l.TenLop === hv.lopKhoaHoc)
+                    const maxExCount = Math.max(...uniqueBuois.map(b => exercisesByBuoi[b]?.length || 0), 0)
                     return (
                       <Fragment key={hv.id}>
                         <tr 
@@ -366,6 +400,11 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                           onClick={() => toggleExpandStudent(hv.id)}
                           style={{ cursor: 'pointer' }}
                         >
+                          <td style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}>
+                            <span style={{ fontSize: '10px', color: '#666', display: 'inline-block', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>
+                              ▶
+                            </span>
+                          </td>
                           <td className={styles.maHV}>{hv.maHV}</td>
                           <td>
                             <p className={styles.tenHV}>{hv.hoTen}</p>
@@ -387,17 +426,20 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                               return <td key={b} className={styles.emptyVal}>—</td>
                             }
 
-                            const avg = getBuoiAvg(hv, b)
+                            const res = getBuoiStatusOrAvg(hv, b)
                             const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
                             if (!hasExs) {
                               return <td key={b} className={styles.emptyVal}>—</td>
                             }
                             return (
                               <td key={b}>
-                                {avg !== null
-                                  ? <span className={`${styles.diemBadge} ${diemColor(avg)}`}>{avg}</span>
-                                  : <span className={styles.chuaNop}>Chưa nộp</span>
-                                }
+                                {res.status === "graded" ? (
+                                  <span className={`${styles.diemBadge} ${diemColor(res.val as number)}`}>{res.val}</span>
+                                ) : res.status === "pending" ? (
+                                  <span className={styles.diemBadge} style={{ background: '#ffe6cc', color: '#d35400', fontSize: '11px', fontWeight: 600 }}>Cần chấm</span>
+                                ) : (
+                                  <span className={styles.chuaNop}>Chưa nộp</span>
+                                )}
                               </td>
                             )
                           })}
@@ -412,49 +454,47 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                           </td>
                         </tr>
                         {isExpanded && (
-                          <tr className={styles.expandRow}>
-                            <td colSpan={5 + uniqueBuois.length}>
-                              <div className={styles.detailsContainer}>
-                                <h4 className={styles.detailsTitle}>Chi tiết bài tập của {hv.hoTen}</h4>
-                                <div className={styles.detailsGrid}>
-                                  {uniqueBuois.map(b => {
-                                    const buoiExs = activeHeaders.filter(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
-                                    return (
-                                      <div key={b} className={styles.buoiCard}>
-                                        <h5>Buổi {b}</h5>
-                                        <div className={styles.buoiExList}>
-                                          {buoiExs.length === 0 ? (
-                                            <div className={styles.chuaNop}>Không có bài tập</div>
+                          maxExCount > 0 ? (
+                            Array.from({ length: maxExCount }).map((_, i) => (
+                              <tr key={`sub-${hv.id}-${i}`} style={{ background: '#fbfbfb' }}>
+                                <td colSpan={5}></td>
+                                {uniqueBuois.map(b => {
+                                  const exList = exercisesByBuoi[b] || []
+                                  const ex = exList[i]
+                                  if (!ex) return <td key={b}></td>
+
+                                  const scoreVal = hv.rawScores[ex.MaBaiTap]
+                                  return (
+                                    <td key={b} style={{ padding: '6px 8px', borderBottom: '1px solid #f3f4f6' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                          <span style={{ fontWeight: 600, fontSize: '12.5px', color: '#1e293b' }}>{ex.TenBai}</span>
+                                          <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>{hv.tenKhoa}</span>
+                                        </div>
+                                        <div>
+                                          {scoreVal !== null && typeof scoreVal === 'number' ? (
+                                            <span className={`${styles.diemBadgeMini} ${diemColor(scoreVal)}`}>{scoreVal}</span>
+                                          ) : scoreVal === 'Cần chấm' ? (
+                                            <span className={styles.diemBadgeMini} style={{ background: '#ffe6cc', color: '#d35400', fontSize: '11px', fontWeight: 600 }}>Cần chấm</span>
                                           ) : (
-                                            buoiExs.map(ex => {
-                                              const score = hv.rawScores[ex.MaBaiTap]
-                                              const hasScore = score !== null
-                                              return (
-                                                <div key={ex.MaBaiTap} className={styles.exCard}>
-                                                  <div className={styles.exCardContent}>
-                                                    <span className={styles.exCardTitle}>{ex.TenBai}</span>
-                                                  </div>
-                                                  <div className={styles.exCardBadge}>
-                                                    {hasScore ? (
-                                                      <span className={`${styles.diemBadgeMini} ${diemColor(score)}`}>
-                                                        {score}
-                                                      </span>
-                                                    ) : (
-                                                      <span className={styles.chuaNopMini}>Chưa nộp</span>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              )
-                                            })
+                                            <span className={styles.chuaNopMini}>Chưa nộp</span>
                                           )}
                                         </div>
                                       </div>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
+                                    </td>
+                                  )
+                                })}
+                                <td></td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr style={{ background: '#fbfbfb' }}>
+                              <td colSpan={5}></td>
+                              <td colSpan={uniqueBuois.length + 1} style={{ textAlign: 'center', color: '#bbb', fontSize: '12.5px', padding: '12px' }}>
+                                Không có bài tập nào.
+                              </td>
+                            </tr>
+                          )
                         )}
                       </Fragment>
                     )

@@ -23,8 +23,8 @@ const ChiTietKetQua = () => {
     const maNguoiDung = user.MaNguoiDung;
 
     Promise.all([
-      fetch(`http://localhost:5000/lesson/${id}`).then(r => r.json()),
-      fetch(`http://localhost:5000/lesson/${id}/students/${maNguoiDung}`).then(r => r.json())
+      fetch(`http://localhost:5000/buoihoc/${id}`).then(r => r.json()),
+      fetch(`http://localhost:5000/buoihoc/${id}/students/${maNguoiDung}`).then(r => r.json())
     ])
       .then(([buoiHocData, studentData]) => {
         setLessonInfo(buoiHocData);

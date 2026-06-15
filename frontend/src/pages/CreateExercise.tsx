@@ -108,7 +108,7 @@ const CreateExercise = () => {
   /* ===== LOAD LESSON ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/lesson/${id}`)
+    fetch(`http://localhost:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
