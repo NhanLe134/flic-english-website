@@ -442,7 +442,7 @@ const ChamBaiPage = () => {
 
                   {sec.type === "writing-order-sentences" && (
                     <div>
-                      {exerciseSection?.questions?.map((q: any, qIdx: number) => {
+                      {exerciseSection?.questions?.map((_: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
                         return (
                           <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>

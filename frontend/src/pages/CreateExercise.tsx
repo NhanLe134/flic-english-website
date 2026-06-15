@@ -14,6 +14,8 @@ interface Question {
   vocabPairs?: { word: string; meaning: string }[];
   fillInAnswers?: string[];
   sentences?: string[];
+  level?: string;
+  correctSentence?: string;
 }
 
 interface ExamSection {
@@ -1494,8 +1496,10 @@ const CreateExercise = () => {
                             const nextAnswers = Array.from({ length: blanksCount }).map((_, i) => currentAnswers[i] || "");
                             
                             const copy = [...examSections];
-                            copy[secIdx].questions[qIdx].text = val;
-                            copy[secIdx].questions[qIdx].fillInAnswers = nextAnswers;
+                            if (copy[secIdx].questions) {
+                              copy[secIdx].questions[qIdx].text = val;
+                              copy[secIdx].questions[qIdx].fillInAnswers = nextAnswers;
+                            }
                             setExamSections(copy);
                           }}
                         />
