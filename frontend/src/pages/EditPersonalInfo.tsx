@@ -1,9 +1,11 @@
 import "./editPersonalInfo.css";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAvatar } from "../context/AvatarContext";
 
 const EditPersonalInfo = () => {
   const navigate = useNavigate();
+  const { setAvatar } = useAvatar();
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
     HoTen: "",
@@ -35,7 +37,7 @@ const EditPersonalInfo = () => {
           ChuyenMon: data.ChuyenMon || "",
           KinhNghiem: data.KinhNghiem || "",
           GioiThieu: data.GioiThieu || "",
-          avatar: "",
+          avatar: data.AnhDaiDien || "",
         });
       })
       .catch(err => console.log(err));
@@ -45,12 +47,26 @@ const EditPersonalInfo = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, avatar: reader.result as string });
-      reader.readAsDataURL(file);
+      try {
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
+
+        const uploadRes = await fetch("http://localhost:5000/upload", {
+          method: "POST",
+          body: formDataUpload
+        });
+        if (!uploadRes.ok) throw new Error("Upload thất bại");
+
+        const uploadData = await uploadRes.json();
+        const fileUrl = `http://localhost:5000${uploadData.url}`;
+        setFormData(prev => ({ ...prev, avatar: fileUrl }));
+      } catch (err) {
+        console.error("Lỗi upload ảnh:", err);
+        alert("Lỗi khi tải ảnh đại diện lên máy chủ");
+      }
     }
   };
 
@@ -74,13 +90,16 @@ const EditPersonalInfo = () => {
           ChuyenMon: formData.ChuyenMon,
           KinhNghiem: formData.KinhNghiem,
           GioiThieu: formData.GioiThieu,
+          AnhDaiDien: formData.avatar,
         })
       });
 
       // Cập nhật lại localStorage để Header và Sidebar hiển thị đúng ngay
       user.HoTen = formData.HoTen;
       user.Email = formData.Email;
+      user.AnhDaiDien = formData.avatar;
       sessionStorage.setItem("user", JSON.stringify(user));
+      setAvatar(formData.avatar);
 
       setShowPopup(true);
       setTimeout(() => navigate("/thong-tin-ca-nhan"), 1500);

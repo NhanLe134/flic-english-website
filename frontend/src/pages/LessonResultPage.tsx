@@ -60,7 +60,7 @@ const LessonResultPage = () => {
       fetch(`http://localhost:5000/lophoc/${id}/sinhvien`).then(r => r.json()),
       fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
       fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
-      fetch(`http://localhost:5000/classes/${id}/lessons`).then(r => r.json()),
+      fetch(`http://localhost:5000/classes/${id}/buoihoc`).then(r => r.json()),
     ])
       .then(([info, sinhVienList, headers, grades, lessonsList]) => {
         setClassInfo(info);
