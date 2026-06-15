@@ -1,17 +1,33 @@
 import "./studentList.css";
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 const StudentList: React.FC = () => {
-  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [lopFilter, setLopFilter] = useState(""); // lọc theo lớp
   const [loading, setLoading] = useState(true);
+
+  const [showModal, setShowModal] = useState(false);
+  const [selectedStudentDetails, setSelectedStudentDetails] = useState<any>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  const handleViewStudent = (maSinhVien: string) => {
+    if (!maSinhVien) return;
+    const trimmedId = maSinhVien.trim();
+    setShowModal(true);
+    setModalLoading(true);
+    fetch(`http://localhost:5000/students/${trimmedId}`)
+      .then(res => res.json())
+      .then(data => {
+        setSelectedStudentDetails(data);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setModalLoading(false));
+  };
 
   const studentsPerPage = 10;
 
@@ -185,7 +201,7 @@ const StudentList: React.FC = () => {
                     <td>
                       <button
                         className="view-btn"
-                        onClick={() => navigate(`/xem-hoc-vien/${student.MaSinhVien ? student.MaSinhVien.trim() : ""}`)}
+                        onClick={() => handleViewStudent(student.MaSinhVien)}
                       >
                         Xem
                       </button>
@@ -214,6 +230,101 @@ const StudentList: React.FC = () => {
               <span style={{ fontSize: 28, color: "#2ecc71" }}>✔</span>
             </div>
             <p>Đã tải file thành công</p>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '500px',
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                border: 'none',
+                background: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#667085'
+              }}
+            >
+              ×
+            </button>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 700, color: '#101828' }}>
+              Thông tin cá nhân học viên
+            </h3>
+            {modalLoading ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: '#667085' }}>Đang tải thông tin...</div>
+            ) : selectedStudentDetails ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Mã sinh viên:</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.MaSinhVien}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Họ và tên:</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.HoTen}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Giới tính:</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.GioiTinh || "—"}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Ngày sinh:</span>
+                  <span style={{ color: '#475467' }}>
+                    {selectedStudentDetails.NgaySinh ? new Date(selectedStudentDetails.NgaySinh).toLocaleDateString("vi-VN") : "—"}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Email:</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.Email || "—"}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Lớp:</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.Lop || "—"}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Khóa học:</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.TenKhoaHoc || "—"}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+                  <button 
+                    onClick={() => setShowModal(false)}
+                    style={{
+                      padding: '8px 16px',
+                      background: '#f2f4f7',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      color: '#344054'
+                    }}
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '24px', color: '#d92d20' }}>Không thể tải thông tin học viên.</div>
+            )}
           </div>
         </div>
       )}

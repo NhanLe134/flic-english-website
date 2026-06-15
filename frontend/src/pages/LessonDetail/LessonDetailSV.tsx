@@ -25,7 +25,7 @@ function LessonDetailSV() {
     if (!maBuoiHoc) return;
     setLoading(true);
     Promise.all([
-      fetch(`${API}/lesson/${maBuoiHoc}`).then(r => r.json()),
+      fetch(`${API}/buoihoc/${maBuoiHoc}`).then(r => r.json()),
       fetch(`${API}/baigiang/${maBuoiHoc}?role=Sinh Viên`).then(r => r.json()),
       fetch(`${API}/tailieu/${maBuoiHoc}?role=Sinh Viên`).then(r => r.json()),
     ])

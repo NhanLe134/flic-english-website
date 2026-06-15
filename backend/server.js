@@ -2474,14 +2474,13 @@ app.get("/baocao/hocvien", async (req, res) => {
     const diemResult = await pool.request().query(`
       SELECT b.MaSinhVien, b.MaBaiTap, b.Diem
       FROM BAINOP b
-      WHERE b.Diem IS NOT NULL
     `)
 
     // Gom điểm theo MaSinhVien từ BAINOP
     const diemMap = {}
     for (const row of diemResult.recordset) {
       if (!diemMap[row.MaSinhVien]) diemMap[row.MaSinhVien] = {}
-      diemMap[row.MaSinhVien][row.MaBaiTap] = row.Diem
+      diemMap[row.MaSinhVien][row.MaBaiTap] = row.Diem !== null ? row.Diem : "Cần chấm"
     }
 
     // Lookup đúng theo MaSinhVien

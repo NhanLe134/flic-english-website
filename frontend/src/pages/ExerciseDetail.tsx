@@ -112,7 +112,7 @@ const ExerciseDetail = () => {
   /* ===== LOAD DATA ===== */
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://localhost:5000/lesson/${buoiHocId}`).then(r => r.json()).then(setLesson).catch(console.log);
+    fetch(`http://localhost:5000/buoihoc/${buoiHocId}`).then(r => r.json()).then(setLesson).catch(console.log);
   }, [buoiHocId]);
 
   useEffect(() => {

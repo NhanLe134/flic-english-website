@@ -14,7 +14,7 @@ const ClassDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/lesson/${id}`)
+    fetch(`http://localhost:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (data) => {
         console.log("lesson data:", data);
@@ -119,7 +119,7 @@ const ClassDetail = () => {
 
       {/* ===== TABS ===== */}
       <div className="tabs">
-        <button className="tab active" onClick={() => navigate("/class/1")}>Tổng quan</button>
+        <button className="tab active" onClick={() => navigate(`/class/${id}`)}>Tổng quan</button>
         <button className="tab" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
         <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>

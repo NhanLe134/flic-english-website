@@ -852,7 +852,7 @@ export default function CoursePageQTV() {
 
   const deleteLesson = (buoiHocId: number) => {
     confirmAction('Bạn có chắc chắn muốn xóa buổi học này?', async () => {
-      await fetch(`${API}/qtv/lesson/${buoiHocId}`, { method: 'DELETE' })
+      await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
       setLessons(prev => prev.filter(l => l.id !== buoiHocId))
       setToast('Đã xóa buổi học!')
     })
