@@ -786,7 +786,17 @@ app.get("/classes/:id/buoihoc", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("classId", req.params.id)
-      .query(`SELECT * FROM BUOIHOC WHERE MaLopHoc = @classId ORDER BY ThuTu`);
+      .query(`SELECT *, MaBuoiHoc AS MaLesson, TenBuoiHoc AS TenLesson FROM BUOIHOC WHERE MaLopHoc = @classId ORDER BY ThuTu`);
+    res.json(result.recordset);
+  } catch (err) { res.status(500).send("Lỗi server"); }
+});
+
+app.get("/classes/:id/lessons", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("classId", req.params.id)
+      .query(`SELECT *, MaBuoiHoc AS MaLesson, TenBuoiHoc AS TenLesson FROM BUOIHOC WHERE MaLopHoc = @classId ORDER BY ThuTu`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
@@ -1267,7 +1277,12 @@ app.get("/classes/:id/info", async (req, res) => {
              WHERE pc.MaLopHoc = l.MaLopHoc),
             N'Chưa phân công'
           ) AS TenGiangVien,
-          l.ActiveBuoiHocId AS ActiveBuoiHocId
+          l.ActiveBuoiHocId AS ActiveBuoiHocId,
+          l.ActiveBuoiHocId AS ActiveLessonId,
+          kc.TrangThai AS TrangThaiKhoaHoc,
+          l.TrangThai AS TrangThaiLopHoc,
+          (SELECT MIN(NgayBatDau) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) AS NgayBatDau,
+          (SELECT MAX(NgayKetThuc) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) AS NgayKetThuc
         FROM LOPHOC l
         LEFT JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
         LEFT JOIN KHOAHOC k ON kc.MaKhoaHoc = k.MaKhoaHoc
@@ -2757,6 +2772,15 @@ app.get("/users/:id/courses", async (req, res) => {
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
 })
+// Lấy toàn bộ danh sách lớp học để ghi danh
+app.get("/student/all-classes", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    const result = await pool.request().query("SELECT MaLopHoc, TenLop FROM LOPHOC ORDER BY TenLop")
+    res.json(result.recordset)
+  } catch (err) { res.status(500).send(err.message) }
+})
+
 // Lấy danh sách lớp của sinh viên
 app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
   try {
@@ -2823,7 +2847,7 @@ app.get("/classes/:id/tailieu", async (req, res) => {
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
-        SELECT t.MaTaiLieu, t.TieuDe, t.MoTa, t.FileUrl, t.MaBuoiHoc
+        SELECT t.MaTaiLieu, t.TieuDe, t.MoTa, t.FileUrl, t.MaBuoiHoc, t.MaBuoiHoc AS MaLesson
         FROM TAILIEU t
         JOIN BUOIHOC l ON t.MaBuoiHoc = l.MaBuoiHoc
         WHERE l.MaLopHoc = @id
