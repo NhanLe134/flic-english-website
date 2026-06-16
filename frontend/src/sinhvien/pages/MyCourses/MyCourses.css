@@ -728,96 +728,8 @@
   border-color: #94a3b8;
 }
 
-
-/* ── TRIAL / GUEST VIEW ── */
-.trial-mode-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.trial-welcome-banner {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1px solid #fde68a;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.05);
-}
-
-.trial-welcome-banner h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #b45309;
-  margin: 0 0 8px 0;
-}
-
-.trial-welcome-banner p {
-  font-size: 14px;
-  color: #78350f;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* Trial cards grid */
-.mc-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.trial-card {
-  border: 1px solid #f0e4d4;
-  border-radius: 16px;
-  background-color: #ffffff;
-}
-
-.trial-badge {
-  display: inline-block;
-  font-size: 10px;
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.trial-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #eff6ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.trial-desc {
-  font-size: 13px;
-  color: #64748b;
-  margin: 12px 0;
-  line-height: 1.5;
-  min-height: 40px;
-}
-
-.trial-empty-box {
-  background: #faf9f6;
-  border: 1px dashed #f0e4d4;
-  border-radius: 14px;
-  padding: 40px;
-  text-align: center;
-  color: #64748b;
-  font-size: 14px;
-}
-
 /* Responsive Overrides */
 @media (max-width: 1024px) {
-  .mc-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .mc-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -836,9 +748,6 @@
     gap: 16px;
   }
   .mc-lesson-content-grid {
-    grid-template-columns: 1fr;
-  }
-  .mc-grid {
     grid-template-columns: 1fr;
   }
 }
