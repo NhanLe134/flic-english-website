@@ -25,8 +25,6 @@ function MyCourses() {
   const userId = user.MaNguoiDung;
 
   const [classes, setClasses] = useState<any[]>([]);
-  const [freeLectures, setFreeLectures] = useState<any[]>([]);
-  const [freeExercises, setFreeExercises] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showEnrollModal, setShowEnrollModal] = useState(false);
@@ -141,18 +139,6 @@ function MyCourses() {
     }
   };
 
-  const fetchFreeContent = () => {
-    fetch(`${API}/student/free-content`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data) {
-          setFreeLectures(Array.isArray(data.lectures) ? data.lectures : []);
-          setFreeExercises(Array.isArray(data.exercises) ? data.exercises : []);
-        }
-      })
-      .catch((err) => console.error("Error fetching free content", err))
-      .finally(() => setLoading(false));
-  };
 
   const handleEnrollSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,7 +187,7 @@ function MyCourses() {
     const userId = user.MaNguoiDung;
 
     if (!userId) {
-      fetchFreeContent();
+      setLoading(false);
       return;
     }
 
@@ -230,15 +216,11 @@ function MyCourses() {
       .then((data) => {
         const classList = Array.isArray(data) ? data : [];
         setClasses(classList);
-        if (classList.length === 0) {
-          fetchFreeContent();
-        } else {
-          setLoading(false);
-        }
+        setLoading(false);
       })
       .catch(() => {
         setClasses([]);
-        fetchFreeContent();
+        setLoading(false);
       });
   }, []);
 
@@ -266,84 +248,37 @@ function MyCourses() {
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Đang tải...</div>
         ) : classes.length === 0 ? (
-          /* Trial / Try-out view for unregistered students */
-          <div className="trial-mode-container">
-            <div className="trial-welcome-banner">
-              <h2>Chương trình học thử miễn phí</h2>
-              <p>Bạn chưa ghi danh vào lớp học nào. Hãy trải nghiệm thử các bài giảng và bài tập miễn phí dưới đây để làm quen với hệ thống!</p>
+          <div className="mc-empty-state" style={{
+            background: "#ffffff",
+            border: "1px solid #f0e4d4",
+            borderRadius: "20px",
+            padding: "48px 32px",
+            textAlign: "center",
+            boxShadow: "0 10px 30px rgba(0, 0, 128, 0.02)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+            maxWidth: "500px",
+            margin: "40px auto 0 auto"
+          }}>
+            <div style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "#FFF2EB",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#F95800",
+              fontSize: "24px"
+            }}>
+              <FaBookOpen />
             </div>
-
-            {/* Trial Lectures Section */}
-            <div className="mc-section-label" style={{ marginTop: 24 }}>
-              <span>Bài giảng học thử</span>
-              <span className="mc-count-pill">{freeLectures.length} bài</span>
-            </div>
-
-            {freeLectures.length === 0 ? (
-              <div className="trial-empty-box">Hiện tại chưa có bài giảng học thử nào được cập nhật.</div>
-            ) : (
-              <div className="mc-grid" style={{ marginBottom: 40 }}>
-                {freeLectures.map((l, i) => (
-                  <div className="mc-card trial-card" key={`lec-${l.MaBaiHoc}`} style={{ animationDelay: `${i * 60}ms` }}>
-                    <div className="mc-card-header">
-                      <div>
-                        <span className="trial-badge">Học thử</span>
-                        <h3 className="mc-card-name" style={{ marginTop: 8 }}>{l.TieuDe}</h3>
-                        <span className="mc-card-code" style={{ background: "#eff6ff", color: "#1d4ed8" }}>{l.LoaiBaiHoc} · {l.ThoiLuong || "N/A"}</span>
-                      </div>
-                      <div className="trial-icon-wrap"><FaBookOpen style={{ color: "#3b82f6" }} /></div>
-                    </div>
-                    <p className="trial-desc">
-                      {l.NoiDung ? l.NoiDung.slice(0, 100) + (l.NoiDung.length > 100 ? "..." : "") : "Tài liệu học thử của khóa học."}
-                    </p>
-                    <Link
-                      to={`/bai-giangSV/${l.MaBaiHoc}`}
-                      state={{ maLopHoc: null }}
-                      className="mc-access-btn"
-                      style={{ background: "#3b82f6" }}
-                    >
-                      Học ngay
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Trial Exercises Section */}
-            <div className="mc-section-label">
-              <span>Bài tập thực hành thử</span>
-              <span className="mc-count-pill">{freeExercises.length} bài</span>
-            </div>
-
-            {freeExercises.length === 0 ? (
-              <div className="trial-empty-box">Hiện tại chưa có bài tập học thử nào được cập nhật.</div>
-            ) : (
-              <div className="mc-grid">
-                {freeExercises.map((e, i) => (
-                  <div className="mc-card trial-card" key={`ex-${e.MaExercise}`} style={{ animationDelay: `${i * 60}ms` }}>
-                    <div className="mc-card-header">
-                      <div>
-                        <span className="trial-badge" style={{ background: "#fef3c7", color: "#d97706" }}>Luyện tập</span>
-                        <h3 className="mc-card-name" style={{ marginTop: 8 }}>{e.Title}</h3>
-                        <span className="mc-card-code" style={{ background: "#ecfdf5", color: "#059669" }}>{e.Type}</span>
-                      </div>
-                      <div className="trial-icon-wrap" style={{ background: "#fef3c7" }}><FaPenNib style={{ color: "#d97706" }} /></div>
-                    </div>
-                    <p className="trial-desc">
-                      {e.Content ? e.Content.slice(0, 100) + (e.Content.length > 100 ? "..." : "") : "Bài tập rèn luyện kỹ năng nâng cao."}
-                    </p>
-                    <Link
-                      to={`/exercise/${e.MaExercise}`}
-                      state={{ maLopHoc: null }}
-                      className="mc-access-btn"
-                      style={{ background: "#10b981" }}
-                    >
-                      Làm bài
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
+            <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#000080", margin: 0 }}>Bạn chưa tham gia lớp học nào</h3>
+            <p style={{ fontSize: "14px", color: "#64748b", margin: 0, lineHeight: 1.6 }}>
+              Vui lòng nhấn nút <strong>"Ghi danh vào lớp"</strong> ở góc trên bên phải và nhập mã lớp học để tham gia khóa học.
+            </p>
           </div>
         ) : (
           /* Normal Registered Classes View */
@@ -432,7 +367,7 @@ function MyCourses() {
                           }).filter((l: any) => l.hasContent);
 
                           if (uncompletedLessons.length === 0) {
-                            return <div className="mc-details-empty">🎉 Tuyệt vời! Bạn đã hoàn thành tất cả các nội dung trong lớp học này.</div>;
+                            return <div className="mc-details-empty">Bạn đã hoàn thành tất cả các nội dung trong lớp học này.</div>;
                           }
 
                           return (
