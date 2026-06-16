@@ -4,7 +4,7 @@ import { FiSearch } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
-type ContentType = "baigiang" | "baihocmo" | "baitap";
+type ContentType = "baigiang" | "baitap";
 type ApprovalStatus = "Chờ duyệt" | "Đã duyệt" | "Từ chối";
 
 interface BaiGiangItem {
@@ -25,22 +25,6 @@ interface BaiGiangItem {
   NgayGui: string;
 }
 
-interface BaiHocMoItem {
-  id: number;
-  MaBaiHocMo: number;
-  TieuDe: string;
-  MoTa: string;
-  KyNang: string;
-  CapDo: string;
-  LoaiBaiHoc: string;
-  NoiDung: string;
-  FileUrl: string;
-  LinkUrl: string;
-  TrangThai: string;
-  TenNguoiTao: string;
-  NgayTao: string;
-}
-
 export default function DuyetBaiQTV() {
   const [activeTab, setActiveTab] = useState<ContentType>("baigiang");
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
@@ -48,7 +32,6 @@ export default function DuyetBaiQTV() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   
   const [baiGiangData, setBaiGiangData] = useState<BaiGiangItem[]>([]);
-  const [baiHocMoData, setBaiHocMoData] = useState<BaiHocMoItem[]>([]);
   const [baiTapData, setBaiTapData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
@@ -62,12 +45,10 @@ export default function DuyetBaiQTV() {
     setLoading(true);
     Promise.all([
       fetch(`${API}/qtv/baigiang`).then((r) => r.json()),
-      fetch(`${API}/baihocmo`).then((r) => r.json()),
       fetch(`${API}/qtv/baitap`).then((r) => r.json()),
     ])
-      .then(([bg, bhm, bt]) => {
+      .then(([bg, bt]) => {
         setBaiGiangData(Array.isArray(bg) ? bg : []);
-        setBaiHocMoData(Array.isArray(bhm) ? bhm : []);
         setBaiTapData(Array.isArray(bt) ? bt : []);
       })
       .catch((err) => console.error("Error loading data:", err))
@@ -104,8 +85,6 @@ export default function DuyetBaiQTV() {
       let endpoint = "";
       if (activeTab === "baigiang") {
         endpoint = `${API}/baigiang/${item.MaBaiHoc}/status`;
-      } else if (activeTab === "baihocmo") {
-        endpoint = `${API}/baihocmo/${item.MaBaiHocMo}/duyet`;
       } else if (activeTab === "baitap") {
         endpoint = `${API}/baitap/${item.MaBaiTap}/status`;
       } else if (activeTab === "tailieu") {
@@ -115,9 +94,9 @@ export default function DuyetBaiQTV() {
       // Status values mapped for backend
       let statusVal = "";
       if (status === "Đã duyệt") {
-        statusVal = (activeTab === "baigiang" || activeTab === "baitap") ? "published" : "Hoạt động";
+        statusVal = "published";
       } else {
-        statusVal = (activeTab === "baigiang" || activeTab === "baitap") ? "rejected" : "Từ chối";
+        statusVal = "rejected";
       }
 
       const res = await fetch(endpoint, {
@@ -153,7 +132,6 @@ export default function DuyetBaiQTV() {
   // Filter current tab data
   const currentData =
     activeTab === "baigiang" ? baiGiangData :
-    activeTab === "baihocmo" ? baiHocMoData :
     baiTapData;
 
   const filteredData = currentData.filter((item: any) => {
@@ -301,8 +279,7 @@ export default function DuyetBaiQTV() {
                       <td>{item.TenGiangVien || item.TenNguoiTao || "—"}</td>
                       <td>
                         {activeTab === "baigiang" ? `Bài giảng (${item.LoaiBaiHoc || "Lý thuyết"})` :
-                         activeTab === "baihocmo" ? "Bài học kỹ năng" :
-                         activeTab === "baitap" ? `Bài tập (${item.Type})` :
+                         activeTab === "baitap" ? `${item.Type}` :
                          "Tài liệu"}
                       </td>
                       <td>
@@ -356,7 +333,6 @@ export default function DuyetBaiQTV() {
                     disabled
                     value={
                       activeTab === "baigiang" ? "Bài giảng" :
-                      activeTab === "baihocmo" ? "Bài học kỹ năng" :
                       activeTab === "baitap" ? "Bài tập / Bài kiểm tra" :
                       "Tài liệu học tập"
                     }
@@ -413,7 +389,6 @@ export default function DuyetBaiQTV() {
                     rows={4}
                     value={
                       activeTab === "baigiang" ? selectedItem.NoiDung || "Chưa có nội dung chi tiết." :
-                      activeTab === "baihocmo" ? selectedItem.MoTa || "Chưa có mô tả." :
                       selectedItem.MoTa || "Chưa có mô tả tài liệu."
                     }
                   />
