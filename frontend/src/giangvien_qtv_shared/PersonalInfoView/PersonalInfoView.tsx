@@ -1,9 +1,11 @@
 import "./PersonalInfoView.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAvatar } from "../../context/AvatarContext";
 
 const PersonalInfoView = () => {
   const navigate = useNavigate();
+  const { avatar } = useAvatar();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ const PersonalInfoView = () => {
         {/* LEFT CARD */}
         <div className="piv-sidebar-card">
           <div className="piv-avatar-wrapper">
-            {data.Avatar ? (
-              <img src={data.Avatar} alt="avatar" />
+            {avatar || data.AnhDaiDien ? (
+              <img src={avatar || data.AnhDaiDien} alt="avatar" />
             ) : (
               <div className="piv-avatar-initial">{data.HoTen?.charAt(0).toUpperCase()}</div>
             )}
