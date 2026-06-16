@@ -1485,7 +1485,8 @@ app.put("/bainop/:maBaiNop/cham", async (req, res) => {
 // Nộp bài
 app.post("/bainop", async (req, res) => {
   try {
-    const { MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai } = req.body  // ← thêm Diem, TrangThai
+    const { MaSinhVien, NoiDung, Diem, TrangThai } = req.body;
+    const MaBaiTap = req.body.MaBaiTap || req.body.MaExercise;
     const pool = await poolPromise
     const check = await pool.request()
       .input("MaBaiTap", MaBaiTap).input("MaSinhVien", MaSinhVien)
@@ -1504,7 +1505,8 @@ app.post("/bainop", async (req, res) => {
 })
 app.post("/bainop/tracnghiem", async (req, res) => {
   try {
-    const { MaBaiTap, MaSinhVien, DapAnChon } = req.body;
+    const { MaSinhVien, DapAnChon } = req.body;
+    const MaBaiTap = req.body.MaBaiTap || req.body.MaExercise;
     const pool = await poolPromise;
 
     // Lấy đáp án đúng từ BAITAP
@@ -2845,15 +2847,19 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien,
-          COALESCE((
-            SELECT TOP 1 
-              CASE 
-                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
-              END
-            FROM BUOIHOC active_bh 
-            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
-          ), 0) AS TienDo,
+          COALESCE(
+            (
+              SELECT TOP 1 
+                CASE 
+                  WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                  ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                END
+              FROM BUOIHOC active_bh 
+              WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
+            ),
+            l.TienDo,
+            0
+          ) AS TienDo,
           k.TenKhoaHoc,
           sl.TrangThai, sl.NgayGhiDanh
         FROM SINHVIEN_LOPHOC sl
