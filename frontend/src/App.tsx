@@ -50,7 +50,6 @@ import BaoCaoKetQua from "./admin/pages/BaoCaoKetQua/BaoCaoKetQua"
 import QTVLayout from "./qtv/layout/QTVLayout"
 import DuyetBaiQTV from "./qtv/pages/DuyetBaiQTV/DuyetBaiQTV"
 import CoursePageQTV from "./qtv/pages/CoursePageQTV/CoursePageQTV"
-/* Sinh viên */
 import CourseRegister from "./sinhvien/pages/CourseRegister/CourseRegister"
 import Profile from "./sinhvien/pages/Profile/Profile"
 import ProfilePage from "./sinhvien/pages/ProfilePage/ProfilePage"
@@ -73,6 +72,7 @@ import BaiGiangSV from "./sinhvien/pages/LessonDetail/BaiGiangSV"
 import StudentLayout from "./sinhvien/layout/StudentLayout"
 import HocThuSV from "./sinhvien/pages/HocThuSV"
 import TestThuSV from "./sinhvien/pages/TestThuSV"
+import TestExamPage from "./sinhvien/pages/TestExamPage"
 
 function App() {
   return (
@@ -159,6 +159,7 @@ function App() {
           <Route path="/course-register" element={<CourseRegister />} />
           <Route path="/hoc-thu-sv" element={<HocThuSV />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
+          <Route path="/test-exam/:testId" element={<TestExamPage />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />
