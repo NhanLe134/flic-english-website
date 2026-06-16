@@ -1,7 +1,7 @@
 import "./PersonalInfoView.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useAvatar } from "../context/AvatarContext";
+import { useAvatar } from "../../context/AvatarContext";
 
 const PersonalInfoView = () => {
   const navigate = useNavigate();

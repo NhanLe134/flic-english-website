@@ -1,7 +1,7 @@
 import "./EditPersonalInfo.css";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAvatar } from "../context/AvatarContext";
+import { useAvatar } from "../../context/AvatarContext";
 
 const EditPersonalInfo = () => {
   const navigate = useNavigate();
