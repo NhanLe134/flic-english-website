@@ -14,6 +14,39 @@ interface BaiTest {
   TrangThai: string;
 }
 
+const STATIC_TESTS = [
+  {
+    MaBaiTest: 1,
+    TieuDe: "VSTEP B1 - Đề thi mẫu số 1",
+    MoTa: "Đề thi thử VSTEP trình độ B1 bao gồm đầy đủ 4 kỹ năng: Nghe, Đọc, Viết và Nói.",
+    TongThoiGian: 177,
+    CapDo: "B1",
+    LoaiBai: "VSTEP",
+    NgayTao: "2026-01-10T00:00:00.000Z",
+    TrangThai: "published"
+  },
+  {
+    MaBaiTest: 2,
+    TieuDe: "VSTEP B2 - Đề thi mẫu số 2",
+    MoTa: "Đề thi thử VSTEP trình độ B2 với câu hỏi nâng cao hơn cho cả 4 kỹ năng.",
+    TongThoiGian: 177,
+    CapDo: "B2",
+    LoaiBai: "VSTEP",
+    NgayTao: "2026-02-15T00:00:00.000Z",
+    TrangThai: "published"
+  },
+  {
+    MaBaiTest: 3,
+    TieuDe: "TOEIC Practice Test - Full Exam",
+    MoTa: "Đề thi thử TOEIC đầy đủ với phần Listening và Reading chuẩn format quốc tế.",
+    TongThoiGian: 120,
+    CapDo: "Intermediate",
+    LoaiBai: "TOEIC",
+    NgayTao: "2026-03-01T00:00:00.000Z",
+    TrangThai: "published"
+  }
+];
+
 export default function TestThuSV() {
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,10 +56,8 @@ export default function TestThuSV() {
 
   useEffect(() => {
     if ((location.state as any)?.submitted) setSubmitted(true);
-    fetch("http://localhost:5000/tests")
-      .then(r => r.json())
-      .then(data => { setTests(data); setLoading(false); })
-      .catch(() => setLoading(false));
+    setTests(STATIC_TESTS);
+    setLoading(false);
   }, [location]);
 
   const formatTime = (minutes: number) => {

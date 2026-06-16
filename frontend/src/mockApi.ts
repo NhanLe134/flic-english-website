@@ -237,7 +237,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         return new Response(
           JSON.stringify({
             MaNguoiDung: 100,
-            HoTen: "Học viên Nguyễn Văn C",
+            HoTen: "Lê Nhàn",
             TenDangNhap: "student",
             Email: "student@flic.edu.vn"
           }),
