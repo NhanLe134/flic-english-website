@@ -188,11 +188,13 @@ svg:active {
 
 .searchWrap {
   margin-bottom: 0;
+  flex: 2;
+  min-width: 250px;
 }
 
 .searchBox {
   display: flex;
-  max-width: 380px;
+  width: 100%;
 }
 
 .searchBox input {
@@ -246,6 +248,8 @@ svg:active {
   background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
   background-position: right 12px center;
   background-size: 13px;
+  flex: 1;
+  min-width: 160px;
 }
 
 
@@ -260,14 +264,13 @@ svg:active {
   border-radius: 14px;
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.07);
   overflow-x: auto;
-  width: max-content;
-  max-width: 100%;
+  width: 100%;
 }
 
 
 /* ── Table ── */
 .table {
-  width: auto;
+  width: 100%;
   border-collapse: collapse;
 }
 

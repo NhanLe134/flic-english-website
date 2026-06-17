@@ -1,5 +1,6 @@
 import "./ClassDetailSV.css";
-import { Link, useParams } from "react-router-dom";
+import "../LessonDetail/LessonDetailSV.css";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   FaCalendarAlt,
@@ -9,7 +10,12 @@ import {
   FaBook,
   FaCheck,
   FaChevronRight,
-  FaListUl
+  FaListUl,
+  FaPlayCircle,
+  FaFileAlt,
+  FaPencilAlt,
+  FaClipboardCheck,
+  FaInfoCircle
 } from "react-icons/fa";
 
 const API = "http://localhost:5000";
@@ -45,11 +51,23 @@ interface Lesson {
 export default function ClassDetailSV() {
   const { id } = useParams<{ id: string }>();
   const classId = Number(id);
+  const navigate = useNavigate();
 
   const [info, setInfo] = useState<ClassInfo | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
+  const [lessonDetails, setLessonDetails] = useState<Record<number, {
+    loading: boolean;
+    baiGiangs: any[];
+    taiLieus: any[];
+    practices: any[];
+    exams: any[];
+    activeBaiHoc: number | null;
+    activeTab: string;
+  }>>({});
 
   useEffect(() => {
     if (isNaN(classId)) {
@@ -92,6 +110,92 @@ export default function ClassDetailSV() {
 
     fetchData();
   }, [classId]);
+
+  // Toggle accordion and fetch data for the lesson
+  const handleToggleLesson = async (lessonId: number) => {
+    if (expandedLessonId === lessonId) {
+      setExpandedLessonId(null);
+      return;
+    }
+
+    setExpandedLessonId(lessonId);
+
+    if (lessonDetails[lessonId]) return;
+
+    setLessonDetails(prev => ({
+      ...prev,
+      [lessonId]: {
+        loading: true,
+        baiGiangs: [],
+        taiLieus: [],
+        practices: [],
+        exams: [],
+        activeBaiHoc: null,
+        activeTab: "lectures"
+      }
+    }));
+
+    try {
+      const [baigiangData, tailieuData, baitapData] = await Promise.all([
+        fetch(`${API}/baigiang/${lessonId}?role=Sinh Viên`).then(r => r.json()),
+        fetch(`${API}/tailieu/${lessonId}?role=Sinh Viên`).then(r => r.json()),
+        fetch(`${API}/baitap/${lessonId}`).then(r => r.json())
+      ]);
+
+      const published = Array.isArray(baigiangData)
+        ? baigiangData.filter((b: any) => b.TrangThai === "published")
+        : [];
+      const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
+      const baiTaps = Array.isArray(baitapData) ? baitapData : [];
+
+      const practices = baiTaps.filter((ex: any) => {
+        const isTest = ex.IsExam === 1 || ex.IsExam === true || ex.Type?.toLowerCase() === "exam" || ex.Type?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+        return !isTest;
+      });
+      const exams = baiTaps.filter((ex: any) => {
+        const isTest = ex.IsExam === 1 || ex.IsExam === true || ex.Type?.toLowerCase() === "exam" || ex.Type?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+        return isTest;
+      });
+
+      const activeBaiHoc = published.length > 0 ? published[0].MaBaiHoc : null;
+
+      setLessonDetails(prev => ({
+        ...prev,
+        [lessonId]: {
+          loading: false,
+          baiGiangs: published,
+          taiLieus,
+          practices,
+          exams,
+          activeBaiHoc,
+          activeTab: "lectures"
+        }
+      }));
+    } catch (err) {
+      console.error("Error loading lesson details:", err);
+      setLessonDetails(prev => ({
+        ...prev,
+        [lessonId]: {
+          ...prev[lessonId],
+          loading: false
+        }
+      }));
+    }
+  };
+
+  const handleTabChange = (lessonId: number, tabName: string) => {
+    setLessonDetails(prev => {
+      const item = prev[lessonId];
+      if (!item) return prev;
+      return {
+        ...prev,
+        [lessonId]: {
+          ...item,
+          activeTab: tabName
+        }
+      };
+    });
+  };
 
   // Helper date formatter
   const formatDate = (dateStr?: string) => {
@@ -236,6 +340,7 @@ export default function ClassDetailSV() {
               const idx = (lessons.length - 1) - indexInReversed;
               const isCompleted = idx < completedCount;
               const isCurrent = idx === completedCount;
+              const isExpanded = expandedLessonId === lesson.MaLesson;
 
               let markerClass = "cd-timeline-marker cd-marker-upcoming";
               let markerContent: React.ReactNode = idx + 1;
@@ -248,6 +353,8 @@ export default function ClassDetailSV() {
                 markerContent = idx + 1;
               }
 
+              const detail = lessonDetails[lesson.MaLesson];
+
               return (
                 <div
                   key={lesson.MaLesson}
@@ -256,22 +363,278 @@ export default function ClassDetailSV() {
                   {/* Timeline node marker */}
                   <div className={markerClass}>{markerContent}</div>
 
-                  {/* Lesson detail card */}
-                  <Link
-                    to={`/lesson-detail/${info.MaLopHoc}/${lesson.MaLesson}`}
-                    className="cd-session-card"
-                  >
-                    <div className="cd-session-left">
-                      <h4 className="cd-session-title">{lesson.TenLesson}</h4>
+                  {/* Lesson detail card container */}
+                  <div className={`cd-session-container ${isExpanded ? "expanded" : ""}`}>
+                    {/* Header (clickable to toggle) */}
+                    <div
+                      className="cd-session-card"
+                      onClick={() => handleToggleLesson(lesson.MaLesson)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="cd-session-left">
+                        <h4 className="cd-session-title">{lesson.TenLesson}</h4>
+                      </div>
+                      <div className="cd-session-right">
+                        <span className="cd-session-date">
+                          <FaCalendarAlt size={12} />
+                          {formatDate(lesson.NgayBatDau)}
+                        </span>
+                        <FaChevronRight
+                          className="cd-session-chevron"
+                          style={{
+                            transform: isExpanded ? "rotate(90deg)" : "none",
+                            transition: "transform 0.2s ease"
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="cd-session-right">
-                      <span className="cd-session-date">
-                        <FaCalendarAlt size={12} />
-                        {formatDate(lesson.NgayBatDau)}
-                      </span>
-                      <FaChevronRight className="cd-session-chevron" />
-                    </div>
-                  </Link>
+
+                    {/* Expanded Body containing Tabs and Contents */}
+                    {isExpanded && (
+                      <div className="cd-session-expanded-body">
+                        {(!detail || detail.loading) ? (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#999", padding: "30px 0" }}>
+                            <div className="cd-spinner" style={{ width: "24px", height: "24px", borderWidth: "3px" }}></div>
+                            <span style={{ marginLeft: "10px" }}>Đang tải nội dung buổi học...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Tabs Navigation */}
+                            <div className="ld2-tabs" style={{ marginTop: "15px" }}>
+                              <button
+                                className={`ld2-tab-btn ${detail.activeTab === 'lectures' ? 'active' : ''}`}
+                                onClick={() => handleTabChange(lesson.MaLesson, 'lectures')}
+                              >
+                                <FaPlayCircle className="ld2-tab-icon" />
+                                <span>Bài giảng</span>
+                                <span className="ld2-tab-badge">{detail.baiGiangs.length}</span>
+                              </button>
+                              <button
+                                className={`ld2-tab-btn ${detail.activeTab === 'documents' ? 'active' : ''}`}
+                                onClick={() => handleTabChange(lesson.MaLesson, 'documents')}
+                              >
+                                <FaFileAlt className="ld2-tab-icon" />
+                                <span>Tài liệu</span>
+                                <span className="ld2-tab-badge">{detail.taiLieus.length}</span>
+                              </button>
+                              <button
+                                className={`ld2-tab-btn ${detail.activeTab === 'practices' ? 'active' : ''}`}
+                                onClick={() => handleTabChange(lesson.MaLesson, 'practices')}
+                              >
+                                <FaPencilAlt className="ld2-tab-icon" />
+                                <span>Luyện tập</span>
+                                <span className="ld2-tab-badge">{detail.practices.length}</span>
+                              </button>
+                              <button
+                                className={`ld2-tab-btn ${detail.activeTab === 'exams' ? 'active' : ''}`}
+                                onClick={() => handleTabChange(lesson.MaLesson, 'exams')}
+                              >
+                                <FaClipboardCheck className="ld2-tab-icon" />
+                                <span>Kiểm tra</span>
+                                <span className="ld2-tab-badge">{detail.exams.length}</span>
+                              </button>
+                            </div>
+
+                            {/* Tabs Content */}
+                            <div className="ld2-tab-pane">
+                              {detail.activeTab === 'lectures' && (
+                                <div className="ld2-tab-content anim-fade-in">
+                                  {detail.baiGiangs.length > 0 ? (
+                                    <>
+                                      <div className="ld2-table-wrap">
+                                        <table className="ld2-table">
+                                          <thead>
+                                            <tr>
+                                              <th>#</th>
+                                              <th>Tên bài giảng</th>
+                                              <th>Loại</th>
+                                              <th>Thời lượng</th>
+                                              <th>Hành động</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {detail.baiGiangs.map((b, i) => (
+                                              <tr key={b.MaBaiHoc}>
+                                                <td>{i + 1}</td>
+                                                <td><strong>{b.TieuDe}</strong></td>
+                                                <td><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
+                                                <td>{b.ThoiLuong || "—"}</td>
+                                                <td>
+                                                  <button
+                                                    className="ld2-open-btn"
+                                                    onClick={() => {
+                                                      navigate(`/bai-giangSV/${b.MaBaiHoc}`, {
+                                                        state: { fromStudent: true, maLopHoc: info.MaLopHoc, maBuoiHoc: lesson.MaLesson }
+                                                      });
+                                                    }}
+                                                  >
+                                                    Xem
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+
+                                      <div className="ld2-video-wrap">
+                                        <div className="ld2-video-player">
+                                          <div className="ld2-play-icon" onClick={() => {
+                                            if (detail.activeBaiHoc) {
+                                              navigate(`/bai-giangSV/${detail.activeBaiHoc}`, {
+                                                state: { fromStudent: true, maLopHoc: info.MaLopHoc, maBuoiHoc: lesson.MaLesson }
+                                              });
+                                            }
+                                          }}>▶</div>
+                                          <p className="ld2-video-label">{lesson.TenLesson || "Bài học"}</p>
+                                          <p className="ld2-video-sub">
+                                            {detail.activeBaiHoc ? "Bấm phát video hoặc Xem để bắt đầu học" : "Chọn bài giảng từ danh sách trên để xem"}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="ld2-empty-state">
+                                      <div className="ld2-empty-icon"><FaInfoCircle /></div>
+                                      <p className="ld2-empty-text">Chưa có bài giảng nào được xuất bản cho buổi học này.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {detail.activeTab === 'documents' && (
+                                <div className="ld2-tab-content anim-fade-in">
+                                  {detail.taiLieus.length > 0 ? (
+                                    <div className="ld2-docs-grid">
+                                      {detail.taiLieus.map((t, idx) => (
+                                        <div
+                                          key={t.MaTaiLieu}
+                                          className="ld2-doc-card"
+                                          onClick={() => navigate(`/doc-detail/${t.MaTaiLieu}`)}
+                                        >
+                                          <div className="ld2-doc-icon-wrapper">
+                                            <FaFileAlt className="ld2-doc-icon" />
+                                          </div>
+                                          <div className="ld2-doc-info">
+                                            <h4 className="ld2-doc-title">{t.TieuDe || `Tài liệu số ${idx + 1}`}</h4>
+                                            <p className="ld2-doc-desc">{t.MoTa || "Tài liệu học tập đính kèm buổi học"}</p>
+                                          </div>
+                                          <div className="ld2-doc-action">
+                                            <button className="ld2-doc-btn">Xem chi tiết</button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="ld2-empty-state">
+                                      <div className="ld2-empty-icon"><FaInfoCircle /></div>
+                                      <p className="ld2-empty-text">Chưa có tài liệu đính kèm nào cho buổi học này.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {detail.activeTab === 'practices' && (
+                                <div className="ld2-tab-content anim-fade-in">
+                                  {detail.practices.length > 0 ? (
+                                    <div className="ld2-table-wrap">
+                                      <table className="ld2-table">
+                                        <thead>
+                                          <tr>
+                                            <th>#</th>
+                                            <th>Tên bài tập</th>
+                                            <th>Phân loại</th>
+                                            <th>Ngày tạo</th>
+                                            <th>Hành động</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {detail.practices.map((ex: any, i: number) => (
+                                            <tr key={ex.MaBaiTap}>
+                                              <td>{i + 1}</td>
+                                              <td><strong>{ex.Title}</strong></td>
+                                              <td><span className="ld2-type-badge" style={{ background: '#fff7ed', color: '#ea580c' }}>{ex.Type || "Practice"}</span></td>
+                                              <td>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                              <td>
+                                                <button
+                                                  className="ld2-open-btn"
+                                                  style={{ background: '#F95800' }}
+                                                  onClick={() => {
+                                                    navigate(`/baitap/${ex.MaBaiTap}`, {
+                                                      state: { maLopHoc: info.MaLopHoc }
+                                                    });
+                                                  }}
+                                                >
+                                                  Làm bài
+                                                </button>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  ) : (
+                                    <div className="ld2-empty-state">
+                                      <div className="ld2-empty-icon"><FaInfoCircle /></div>
+                                      <p className="ld2-empty-text">Chưa có bài tập luyện tập nào cho buổi học này.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {detail.activeTab === 'exams' && (
+                                <div className="ld2-tab-content anim-fade-in">
+                                  {detail.exams.length > 0 ? (
+                                    <div className="ld2-table-wrap">
+                                      <table className="ld2-table">
+                                        <thead>
+                                          <tr>
+                                            <th>#</th>
+                                            <th>Tên bài kiểm tra</th>
+                                            <th>Phân loại</th>
+                                            <th>Ngày tạo</th>
+                                            <th>Hành động</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {detail.exams.map((ex: any, i: number) => (
+                                            <tr key={ex.MaBaiTap}>
+                                              <td>{i + 1}</td>
+                                              <td><strong>{ex.Title}</strong></td>
+                                              <td><span className="ld2-type-badge" style={{ background: '#f0fdf4', color: '#16a34a' }}>{ex.Type || "Exam"}</span></td>
+                                              <td>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                              <td>
+                                                <button
+                                                  className="ld2-open-btn"
+                                                  style={{ background: '#16a34a' }}
+                                                  onClick={() => {
+                                                    navigate(`/baitap/${ex.MaBaiTap}`, {
+                                                      state: { maLopHoc: info.MaLopHoc }
+                                                    });
+                                                  }}
+                                                >
+                                                  Làm bài
+                                                </button>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  ) : (
+                                    <div className="ld2-empty-state">
+                                      <div className="ld2-empty-icon"><FaInfoCircle /></div>
+                                      <p className="ld2-empty-text">Chưa có bài kiểm tra nào cho buổi học này.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

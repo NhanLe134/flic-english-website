@@ -69,6 +69,11 @@ const LessonList = () => {
       alert("Vui lòng nhập tên buổi học!");
       return;
     }
+    const minOrder = Math.max(1, lessons.length);
+    if (lessonForm.order < minOrder) {
+      alert(`Thứ tự buổi học không được nhỏ hơn số buổi hiện có ở lớp này (${lessons.length})!`);
+      return;
+    }
     try {
       const res = await fetch("http://localhost:5000/qtv/buoihoc", {
         method: "POST",
@@ -103,6 +108,17 @@ const LessonList = () => {
       console.error(err);
       alert("Lỗi server khi thêm buổi học");
     }
+  };
+
+  const handleOpenAddModal = () => {
+    setLessonForm({
+      title: "",
+      desc: "",
+      startDate: "",
+      endDate: "",
+      order: lessons.length > 0 ? lessons.length + 1 : 1
+    });
+    setShowAddModal(true);
   };
 
   useEffect(() => {
@@ -242,7 +258,7 @@ const LessonList = () => {
         <button
           type="button"
           className="create-lesson-btn"
-          onClick={() => setShowAddModal(true)}
+          onClick={handleOpenAddModal}
           style={{
             height: "40px",
             padding: "0 20px",
@@ -379,7 +395,7 @@ const LessonList = () => {
               <label>Thứ tự</label>
               <input 
                 type="number" 
-                min={1} 
+                min={Math.max(1, lessons.length)} 
                 value={lessonForm.order} 
                 onChange={e => setLessonForm(p => ({...p, order: Number(e.target.value)}))} 
               />

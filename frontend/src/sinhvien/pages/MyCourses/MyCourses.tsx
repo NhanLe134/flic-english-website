@@ -50,7 +50,7 @@ function MyCourses() {
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          const ids = new Set<number>(data.map((sub: any) => sub.MaExercise));
+          const ids = new Set<number>(data.map((sub: any) => sub.MaBaiTap));
           setSubmittedExerciseIds(ids);
         }
       })
@@ -85,12 +85,18 @@ function MyCourses() {
       // Fetch lessons, exercises, and documents in parallel
       const [lessonsRes, exercisesRes, tailieuRes] = await Promise.all([
         fetch(`${API}/classes/${classId}/lessons`).then(r => r.json()),
-        fetch(`${API}/classes/${classId}/exercises`).then(r => r.json()),
+        fetch(`${API}/classes/${classId}/baitap`).then(r => r.json()),
         fetch(`${API}/classes/${classId}/tailieu`).then(r => r.json())
       ]);
 
       const lessonsList = Array.isArray(lessonsRes) ? lessonsRes : [];
-      const exercisesList = Array.isArray(exercisesRes) ? exercisesRes : [];
+      const exercisesList = Array.isArray(exercisesRes)
+        ? exercisesRes.map((ex: any) => ({
+            ...ex,
+            MaExercise: ex.MaBaiTap,
+            MaLesson: ex.MaBuoiHoc
+          }))
+        : [];
       const documentsList = Array.isArray(tailieuRes) ? tailieuRes : [];
 
       // Fetch lectures for all lessons in parallel
@@ -346,7 +352,10 @@ function MyCourses() {
                             <span>Đang tải danh sách bài học cần hoàn thiện...</span>
                           </div>
                         ) : (() => {
-                          const uncompletedLessons = (details?.lessons || []).map((l: any, idx: number) => {
+                          const totalLessons = (details?.lessons || []).length;
+                          const activeLessons = details?.lessons || [];
+
+                          const uncompletedLessons = activeLessons.map((l: any, idx: number) => {
                             const lectures = (details.lecturesMap[l.MaLesson] || []).filter(
                               (lec: any) => localStorage.getItem(`completed_lecture_${userId}_${lec.MaBaiHoc}`) !== "true"
                             );
@@ -365,6 +374,10 @@ function MyCourses() {
                               hasContent: lectures.length > 0 || exercises.length > 0 || documents.length > 0
                             };
                           }).filter((l: any) => l.hasContent);
+
+                          if (totalLessons === 0) {
+                            return <div className="mc-details-empty">Lớp học chưa cập nhật buổi học.</div>;
+                          }
 
                           if (uncompletedLessons.length === 0) {
                             return <div className="mc-details-empty">Bạn đã hoàn thành tất cả các nội dung trong lớp học này.</div>;
@@ -403,7 +416,7 @@ function MyCourses() {
                                         const isTest = ex.Type?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
                                         return (
                                           <Link
-                                            to={`/exercise/${ex.MaExercise}`}
+                                            to={`/baitap/${ex.MaExercise}`}
                                             state={{ maLopHoc: c.MaLopHoc }}
                                             className={`mc-item-card exercise-item ${isTest ? "test-item" : ""}`}
                                             key={ex.MaExercise}

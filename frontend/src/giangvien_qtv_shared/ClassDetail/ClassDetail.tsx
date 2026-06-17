@@ -1,7 +1,11 @@
 import "./ClassDetail.css";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiFileText, FiArrowLeft } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiArrowLeft, FiMonitor, FiClock, FiBook } from "react-icons/fi";
+import LessonManagement from "../LessonManagement/LessonManagement";
+import DocumentManagement from "../DocumentManagement/DocumentManagement";
+
+type ActiveTab = "exercises" | "lectures" | "documents";
 
 const ClassDetail = () => {
   const navigate = useNavigate();
@@ -11,16 +15,18 @@ const ClassDetail = () => {
   const [lesson, setLesson] = useState<any>(null);
   const [teacherName, setTeacherName] = useState<string>("Đang tải...");
   const [studentCount, setStudentCount] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("exercises");
+  const [exerciseSearch, setExerciseSearch] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "homework" | "exam">("all");
+  const [exercises, setExercises] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
     fetch(`http://localhost:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (data) => {
-        console.log("lesson data:", data);
         setLesson(data);
 
-        // Lấy MaLopHoc từ lesson data thay vì location.state
         const maLopHoc = data.MaLopHoc ?? location.state?.maLopHoc;
         if (maLopHoc) {
           const countRes = await fetch(`http://localhost:5000/lophoc/${maLopHoc}/students/count`);
@@ -29,7 +35,7 @@ const ClassDetail = () => {
         }
       })
       .catch(err => console.log(err));
-  }, [id]);
+  }, [id, location.state?.maLopHoc]);
 
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
@@ -42,113 +48,219 @@ const ClassDetail = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!id) return;
+
+    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log("ClassDetail exercises fetched:", data);
+        setExercises(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error("ClassDetail exercises fetch error:", err));
+  }, [id]);
+
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
-  const documents = [
-    "Giáo trình Unit 1-10.pdf",
-    "Bài tập thực hành.pdf",
-    "Từ vựng tổng hợp.pdf",
-  ];
+  const filteredExercises = exercises.filter((ex) => {
+    const matchesSearch = ex.Title?.toLowerCase().includes(exerciseSearch.toLowerCase());
+    const isExam = ex.IsExam === 1 || ex.Type === "exam";
+
+    if (filterType === "homework") {
+      return matchesSearch && !isExam;
+    }
+    if (filterType === "exam") {
+      return matchesSearch && isExam;
+    }
+    return matchesSearch;
+  });
+
+
+
+  const renderSearchIcon = () => (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+
 
   return (
     <div className="cd2-wrapper">
       <span className="cd2-back-btn" onClick={() => navigate(-1)}>
-        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
         Quay lại
       </span>
 
-      {/* ===== HEADER CARD ===== */}
       <div className="header-card">
-        <div className="header-top">
-          <div>
-            <h1>{lesson.TenBuoiHoc}</h1>
-            <p>{lesson.MoTa}</p>
-            <p>Mã lớp: B239B1</p>
-            <p>
-              <FiCalendar size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
-              {new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
-              {new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
-            </p>
+        <div className="cd-left-content">
+          <h1>{lesson.TenBuoiHoc}</h1>
+          <p className="cd-class-desc">{lesson.MoTa}</p>
+
+          <div className="info-row">
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper teacher-icon">
+                <FiMonitor size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Giáo viên</p>
+                <b>{teacherName}</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper calendar-icon">
+                <FiClock size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Lịch học</p>
+                <b>{lesson.LichHoc}</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper students-icon">
+                <FiUsers size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Số học viên</p>
+                <b>{studentCount} học viên</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper status-icon">
+                <FiBook size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Trạng thái</p>
+                <b>Đang học</b>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div className="cd-right-content">
           <span className="status-badge">Đang học</span>
+          <span className="cd-class-id">Mã lớp: B239B1</span>
+          <span className="cd-class-dates">
+            <FiCalendar size={13} style={{ marginRight: 6 }} />
+            {new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} - {new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
+          </span>
         </div>
-
-        <div className="info-row">
-          <div className="info-item">
-            <div className="cd2-icon-wrapper teacher-icon">
-              <FiUser size={18} />
-            </div>
-            <div>
-              <p className="label">Giáo viên</p>
-              <b>{teacherName}</b>
-            </div>
-          </div>
-
-          <div className="info-item">
-            <div className="cd2-icon-wrapper calendar-icon">
-              <FiCalendar size={18} />
-            </div>
-            <div>
-              <p className="label">Lịch học</p>
-              <b>{lesson.LichHoc}</b>
-            </div>
-          </div>
-
-          <div className="info-item">
-            <div className="cd2-icon-wrapper students-icon">
-              <FiUsers size={18} />
-            </div>
-            <div>
-              <p className="label">Số học viên</p>
-              <b>{studentCount}</b>
-            </div>
-          </div>
-
-          <div className="info-item">
-            <div className="cd2-icon-wrapper status-icon">
-              <FiBookOpen size={18} />
-            </div>
-            <div>
-              <p className="label">Trạng thái</p>
-              <b>Đang học</b>
-            </div>
-          </div>
-        </div>
-
       </div>
 
-      {/* ===== TABS ===== */}
       <div className="tabs">
-        <button className="tab active" onClick={() => navigate(`/class/${id}`)}>Tổng quan</button>
-        <button className="tab" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
-        <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
-        <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
+        <button className={`tab ${activeTab === "exercises" ? "active" : ""}`} onClick={() => setActiveTab("exercises")}>
+          Bài tập
+        </button>
+        <button className={`tab ${activeTab === "lectures" ? "active" : ""}`} onClick={() => setActiveTab("lectures")}>
+          Bài giảng
+        </button>
+        <button className={`tab ${activeTab === "documents" ? "active" : ""}`} onClick={() => setActiveTab("documents")}>
+          Tài liệu
+        </button>
       </div>
 
-      {/* COURSE DESCRIPTION */}
-      <div className="card">
-        <h3>Mô tả khóa học</h3>
-        <p>Khóa học tiếng Anh cơ bản dành cho học viên mới bắt đầu. Tập trung vào giao tiếp và ngữ pháp cơ bản.</p>
-        <h4>Mục tiêu khóa học:</h4>
-        <ul>
-          <li>Nắm vững 500 từ vựng cơ bản</li>
-          <li>Hiểu và sử dụng các thì cơ bản</li>
-          <li>Giao tiếp trong các tình huống hằng ngày</li>
-          <li>Đọc hiểu văn bản đơn giản</li>
-        </ul>
-      </div>
+      {activeTab === "exercises" && (
+        <div className="lesson-tab-section">
+          <h2>Danh sách bài tập</h2>
 
-      {/* DOCUMENTS */}
-      <div className="card">
-        <h3>Tài liệu khóa học</h3>
-        {documents.map((doc, index) => (
-          <div key={index} className="file-item">
-            <FiFileText size={16} style={{ flexShrink: 0 }} />
-            <span>{doc}</span>
+          <div className="shared-tab-toolbar">
+            <form className="search-container" onSubmit={(e) => e.preventDefault()}>
+              <input
+                className="search-input"
+                placeholder="Tìm kiếm bài tập..."
+                value={exerciseSearch}
+                onChange={(e) => setExerciseSearch(e.target.value)}
+              />
+              <button className="search-button" type="button" aria-label="Tìm kiếm">
+                {renderSearchIcon()}
+              </button>
+            </form>
+
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+            >
+              <option value="all">Tất cả bài</option>
+              <option value="homework">Bài tập</option>
+              <option value="exam">Bài kiểm tra</option>
+            </select>
+
+            <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
+              + Tạo bài tập
+            </button>
+
+            <button
+              className="ep-add-btn"
+              onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
+              style={{
+                background: "#fff",
+                color: "#F95800",
+                border: "1.5px solid #F95800",
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
+            >
+              + Tạo bài LTT
+            </button>
+
+            <div className="ep-total-box">
+              <p>Tổng số bài tập</p>
+              <b>{filteredExercises.length}</b>
+            </div>
           </div>
-        ))}
-      </div>
 
+          {filteredExercises.length === 0 ? (
+            <div className="lesson-tab-empty">Chưa có bài tập nào cho buổi học này.</div>
+          ) : (
+            <div className="lesson-card-grid">
+              {filteredExercises.map((ex) => (
+                <div key={ex.MaBaiTap} className="lesson-content-card">
+                  <div className="lesson-content-head">
+                    <h4>{ex.Title}</h4>
+                    {ex.TrangThai !== "practice" && (
+                      <span className={`content-status ${ex.TrangThai || "pending"}`}>
+                        {ex.TrangThai === "published" ? "Đã duyệt" : ex.TrangThai === "rejected" ? "Từ chối" : "Chờ duyệt"}
+                      </span>
+                    )}
+                  </div>
+
+                  <p>{ex.Type || "Bài tập"}</p>
+                  <span className="content-date">
+                    <FiCalendar size={14} />
+                    {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}
+                  </span>
+
+                  <div className="btn-group">
+                    <button className="outline-btn" onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}>
+                      Xem chi tiết
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "lectures" && (
+        <LessonManagement buoiHocIdProp={id} isEmbedded={true} />
+      )}
+
+      {activeTab === "documents" && (
+        <DocumentManagement buoiHocIdProp={id} isEmbedded={true} />
+      )}
     </div>
   );
 };

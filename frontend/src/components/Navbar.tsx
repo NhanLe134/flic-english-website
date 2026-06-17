@@ -6,29 +6,34 @@ import "./navbar.css";
 function Navbar() {
   const [showTrialDropdown, setShowTrialDropdown] = useState(false);
   const location = useLocation();
+  const authMode = new URLSearchParams(location.search).get("auth");
 
   const isActive = (path: string) => location.pathname === path;
+  
+  const isHome = location.pathname === "/" && !authMode;
+  const isAbout = location.pathname === "/about";
+  const isCourses =
+    location.pathname === "/courses" ||
+    location.pathname.startsWith("/courses-category") ||
+    location.pathname.startsWith("/coursehome");
   const isTrialActive = location.pathname === "/hoc-thu" || location.pathname === "/test-thu";
 
   return (
     <header className="navbar">
       <div className="nav-wrapper">
-
-        {/* Logo */}
         <Link to="/" className="logo">
           <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} alt="FLIC" className="logo-img" />
         </Link>
 
-        {/* Menu */}
         <ul className="navv-menu">
           <li>
-            <Link to="/" className={isActive("/") ? "active" : ""}>Trang chủ</Link>
+            <Link to="/" className={isHome ? "active" : ""}>Trang chủ</Link>
           </li>
           <li>
-            <Link to="/about" className={isActive("/about") ? "active" : ""}>Về Chúng Tôi</Link>
+            <Link to="/about" className={isAbout ? "active" : ""}>Về Chúng Tôi</Link>
           </li>
           <li>
-            <Link to="/courses" className={isActive("/courses") || location.pathname.startsWith("/courses-category/") ? "active" : ""}>Các Khóa Học</Link>
+            <Link to="/courses" className={isCourses ? "active" : ""}>Các Khóa Học</Link>
           </li>
 
           {/* Học thử Dropdown */}
@@ -54,10 +59,9 @@ function Navbar() {
             )}
           </li>
 
-          <li><Link to="?auth=register" className={location.search === "?auth=register" ? "active" : ""}>Đăng ký</Link></li>
-          <li><Link to="?auth=login" className={location.search === "?auth=login" ? "active" : ""}>Đăng nhập</Link></li>
+          <li><Link to="?auth=register" className={authMode === "register" ? "active" : ""}>Đăng ký</Link></li>
+          <li><Link to="?auth=login" className={authMode === "login" ? "active" : ""}>Đăng nhập</Link></li>
         </ul>
-
       </div>
     </header>
   );

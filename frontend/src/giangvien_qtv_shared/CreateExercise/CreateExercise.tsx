@@ -792,8 +792,7 @@ const CreateExercise = () => {
 
       {/* TABS */}
       <div className="tabs">
-        <button className="tab" onClick={() => navigate(`/class/${id}`)}>Tổng quan</button>
-        <button className="tab active" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
+                <button className="tab active" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
         <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
@@ -848,8 +847,8 @@ const CreateExercise = () => {
       </div>
 
       {activeTab === "reuse" ? (
-        <div className="exercise-editor" style={{ padding: "20px" }}>
-          <h3 style={{ marginBottom: "15px", color: "#5a3e2b" }}>BT có sẵn</h3>
+        <div className="exercise-editor" style={{ padding: "24px" }}>
+          <h3 style={{ marginBottom: "15px", color: "#000080", fontWeight: 700 }}>BT có sẵn</h3>
           
           <input
             type="text"
@@ -858,22 +857,36 @@ const CreateExercise = () => {
             onChange={e => setReuseSearch(e.target.value)}
             style={{
               width: "100%",
-              padding: "10px 12px",
+              padding: "10px 14px",
               borderRadius: "8px",
-              border: "1.5px solid #e0d4c3",
+              border: "1px solid #cbd5e1",
               marginBottom: "20px",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              outline: "none",
+              fontSize: "14px",
+              transition: "all 0.2s"
             }}
+            className="exercise-search-input"
           />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {allExistingEx.filter(ex => ex.Title?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
               <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy bài tập nào.</div>
             ) : (
               allExistingEx.filter(ex => ex.Title?.toLowerCase().includes(reuseSearch.toLowerCase())).map((ex: any) => (
-                <div key={ex.MaBaiTap} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfaf7", padding: "15px", borderRadius: "10px", border: "1px solid #e0d4c3" }}>
+                <div key={ex.MaBaiTap} style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  background: "#ffffff",
+                  padding: "16px 20px",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+                  transition: "all 0.2s"
+                }}>
                   <div style={{ flex: 1, paddingRight: "15px", textAlign: "left" }}>
-                    <strong style={{ fontSize: "16px", color: "#5a3e2b", display: "block" }}>{ex.Title}</strong>
+                    <strong style={{ fontSize: "16px", color: "#000080", display: "block" }}>{ex.Title}</strong>
                     <span style={{ fontSize: "12px", color: "#8b7e74" }}>
                       Kỹ năng: {ex.KyNang || "—"} · Dạng: {ex.DangBai || "—"} · Lớp: {ex.TenLop} ({ex.TenBuoiHoc})
                     </span>
@@ -897,30 +910,31 @@ const CreateExercise = () => {
           {/* NÚT QUÉT FILE CÂU HỎI */}
           {["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
             <div style={{
-              background: "#fdfbf7",
-              border: "1.5px dashed #d97706",
-              borderRadius: "10px",
-              padding: "15px",
+              background: "#f8fafc",
+              border: "1px dashed #cbd5e1",
+              borderRadius: "12px",
+              padding: "20px",
               marginBottom: "20px",
               textAlign: "left"
             }}>
-              <h4 style={{ margin: "0 0 5px 0", color: "#d97706", fontSize: "15px" }}>Quét câu hỏi từ file Word (.docx) hoặc Text (.txt)</h4>
-              <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#666" }}>
+              <h4 style={{ margin: "0 0 6px 0", color: "#000080", fontSize: "16px", fontWeight: 700 }}>Quét câu hỏi từ file Word (.docx) hoặc Text (.txt)</h4>
+              <p style={{ margin: "0 0 10px 0", fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
                 Hệ thống hỗ trợ tự động điền thông tin cho dạng bài <strong>{dangBai}</strong>. Vui lòng định dạng file theo mẫu dưới đây để quét chính xác nhất:
               </p>
               
               {/* Dynamic Instructions Box */}
               <div style={{
-                background: "#f4ede4",
-                padding: "10px 12px",
-                borderRadius: "6px",
+                background: "#ffffff",
+                padding: "14px 18px",
+                borderRadius: "8px",
                 fontSize: "12px",
-                fontFamily: "monospace",
+                fontFamily: "Courier New, monospace",
                 whiteSpace: "pre-wrap",
-                color: "#5a3e2b",
-                marginBottom: "12px",
-                borderLeft: "4px solid #d97706",
-                lineHeight: "1.4"
+                color: "#334155",
+                marginBottom: "14px",
+                border: "1px solid #e2e8f0",
+                borderLeft: "4px solid #000080",
+                lineHeight: "1.5"
               }}>
                 {type === "multiple" || type === "listening-mcq" || type === "writing-tense-mcq" || type === "reading-vocab-mcq" ? (
                   `Mẫu file Trắc nghiệm MCQ (Có thể tạo nhiều câu liên tiếp):\n` +
@@ -1020,7 +1034,7 @@ const CreateExercise = () => {
         {/* Global Settings Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Kỹ năng</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Kỹ năng</label>
             <select
               className="exercise-type"
               style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
@@ -1035,7 +1049,7 @@ const CreateExercise = () => {
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Dạng bài tập</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Dạng bài tập</label>
             <select
               className="exercise-type"
               style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
@@ -1052,7 +1066,7 @@ const CreateExercise = () => {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
           <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Hạn nộp bài (Deadline)</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Hạn nộp bài (Deadline)</label>
             <input
               type="datetime-local"
               className="exercise-type"
@@ -1061,15 +1075,15 @@ const CreateExercise = () => {
               onChange={e => setDeadline(e.target.value)}
             />
           </div>
-          <div style={{ display: "flex", gap: "50px", alignItems: "center", paddingTop: "20px", paddingLeft: "10px" }}>
+          <div style={{ display: "flex", gap: "40px", alignItems: "center", paddingTop: "24px", paddingLeft: "10px" }}>
             <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
               <input
                 type="checkbox"
                 checked={isFree}
                 onChange={(e) => setIsFree(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
+                style={{ width: 16, height: 16, accentColor: "#F95800", cursor: "pointer" }}
               />
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>Học thử miễn phí</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}>Học thử miễn phí</span>
             </label>
 
             <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -1077,21 +1091,21 @@ const CreateExercise = () => {
                 type="checkbox"
                 checked={isExam}
                 onChange={(e) => setIsExam(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: "#F95800", cursor: "pointer" }}
+                style={{ width: 16, height: 16, accentColor: "#F95800", cursor: "pointer" }}
               />
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#5a3e2b" }}>Đặt làm bài kiểm tra</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}>Đặt làm bài kiểm tra</span>
             </label>
           </div>
         </div>
 
         {/* ────────────────── EXAM BUILDER SECTION ────────────────── */}
         {isExam ? (
-          <div style={{ borderTop: "2px solid #e6caa5", marginTop: 25, paddingTop: 20 }}>
-            <h3 style={{ color: "#a33d2c", marginBottom: 15 }}>⚙️ Cấu hình Bài Kiểm Tra</h3>
+          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
+            <h3 style={{ color: "#000080", marginBottom: 20, fontSize: "18px", fontWeight: 700 }}>⚙️ Cấu hình Bài Kiểm Tra</h3>
             
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Thời lượng (phút)</label>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Thời lượng (phút)</label>
                 <input
                   type="number"
                   className="exercise-content"
@@ -1101,7 +1115,7 @@ const CreateExercise = () => {
                 />
               </div>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#5a3e2b', display: 'block', marginBottom: 4 }}>Thời gian bắt đầu</label>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Thời gian bắt đầu</label>
                 <input
                   type="datetime-local"
                   className="exercise-type"
@@ -1112,10 +1126,10 @@ const CreateExercise = () => {
               </div>
             </div>
 
-            <h4 style={{ color: "#5a3e2b", borderBottom: "1px solid #e0d4c3", paddingBottom: 8, marginBottom: 15 }}>📚 Các Phần Bài Thi (Exam Sections)</h4>
+            <h4 style={{ color: "#000080", borderBottom: "1.5px solid #000080", paddingBottom: 10, marginBottom: 20, fontSize: "16px", fontWeight: 700 }}>📚 Các Phần Bài Thi (Exam Sections)</h4>
 
             {examSections.map((sec, secIdx) => (
-              <div key={secIdx} className="question-block" style={{ background: "#fcf9f5", border: "2px solid #e6caa5", position: "relative", marginBottom: 24 }}>
+              <div key={secIdx} className="question-block" style={{ borderLeft: "4px solid #F95800", position: "relative", marginBottom: 24 }}>
                 <div className="question-block-header">
                   <h4 style={{ fontSize: 16 }}>Phần {secIdx + 1}: {sec.title}</h4>
                   <button className="remove-btn" onClick={() => removeExamSection(secIdx)}>✕ Xóa phần này</button>
@@ -1188,28 +1202,29 @@ const CreateExercise = () => {
                 {/* NÚT QUÉT FILE CÂU HỎI CHO PHẦN THI */}
                 {["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(sec.type) ? (
                   <div style={{
-                    background: "#fdfbf7",
-                    border: "1.5px dashed #d97706",
-                    borderRadius: "10px",
-                    padding: "15px",
-                    margin: "10px 0 20px 0",
+                    background: "#f8fafc",
+                    border: "1px dashed #cbd5e1",
+                    borderRadius: "12px",
+                    padding: "18px",
+                    margin: "12px 0 24px 0",
                     textAlign: "left"
                   }}>
-                    <h5 style={{ margin: "0 0 5px 0", color: "#d97706", fontSize: "14px" }}>Quét câu hỏi cho Phần {secIdx + 1} (.docx / .txt)</h5>
-                    <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#666" }}>
+                    <h5 style={{ margin: "0 0 6px 0", color: "#000080", fontSize: "14px", fontWeight: 700 }}>Quét câu hỏi cho Phần {secIdx + 1} (.docx / .txt)</h5>
+                    <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#475569" }}>
                       * Quét và tự động nhập nhanh toàn bộ câu hỏi cho phần thi này. Mẫu định dạng file của dạng <strong>{sec.type}</strong>:
                     </p>
                     <div style={{
-                      background: "#f4ede4",
-                      padding: "8px 10px",
-                      borderRadius: "6px",
+                      background: "#ffffff",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
                       fontSize: "11px",
-                      fontFamily: "monospace",
+                      fontFamily: "Courier New, monospace",
                       whiteSpace: "pre-wrap",
-                      color: "#5a3e2b",
-                      marginBottom: "10px",
-                      borderLeft: "4px solid #d97706",
-                      lineHeight: "1.4"
+                      color: "#334155",
+                      marginBottom: "12px",
+                      border: "1px solid #e2e8f0",
+                      borderLeft: "4px solid #000080",
+                      lineHeight: "1.5"
                     }}>
                       {sec.type === "multiple" || sec.type === "listening-mcq" || sec.type === "writing-tense-mcq" || sec.type === "reading-vocab-mcq" ? (
                         `Mẫu file Trắc nghiệm MCQ:\n` +
@@ -1506,7 +1521,7 @@ const CreateExercise = () => {
 
                         {q.fillInAnswers && q.fillInAnswers.length > 0 && (
                           <div style={{ marginTop: 10 }}>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: "#a33d2c" }}>Đáp án ô điền:</p>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Đáp án ô điền:</p>
                             {q.fillInAnswers.map((ans: string, aIdx: number) => (
                               <input
                                 key={aIdx}
@@ -1782,18 +1797,18 @@ const CreateExercise = () => {
           </div>
         ) : (
           /* ────────────────── DYNAMIC MULTI-QUESTION BUILDERS ────────────────── */
-          <div style={{ borderTop: "2px solid #e6caa5", marginTop: 25, paddingTop: 20 }}>
-            <h3 style={{ color: "#a33d2c", marginBottom: 15 }}>📝 Danh sách Câu Hỏi ({dangBai})</h3>
+          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
+            <h3 style={{ color: "#000080", marginBottom: 20, fontSize: "18px", fontWeight: 700 }}>📝 Danh sách Câu Hỏi ({dangBai})</h3>
 
             {type === "listening-mcq" && (
               <div style={{
-                background: "#fdf8f5",
-                border: "2px dashed #e6caa5",
+                background: "#f8fafc",
+                border: "1px dashed #cbd5e1",
                 borderRadius: "12px",
                 padding: "20px",
                 marginBottom: "20px"
               }}>
-                <h4 style={{ color: "#5a3e2b", marginTop: 0, marginBottom: 8, fontSize: "15px" }}>🎵 File nghe chung cho toàn bộ bài tập (Tùy chọn)</h4>
+                <h4 style={{ color: "#000080", marginTop: 0, marginBottom: 8, fontSize: "15px", fontWeight: 600 }}>🎵 File nghe chung cho toàn bộ bài tập (Tùy chọn)</h4>
                 <p style={{ color: "#777", fontSize: "12px", marginTop: 0, marginBottom: 12 }}>
                   * Nếu tải lên file nghe chung ở đây, các câu hỏi sẽ dùng chung audio này. Học viên sẽ nghe từ trình phát chung ở đầu bài.
                   Nếu không tải ở đây, bạn có thể tải audio riêng cho từng câu hỏi phía dưới.
@@ -1838,7 +1853,7 @@ const CreateExercise = () => {
             )}
 
             {questions.map((q, qIndex) => (
-              <div key={qIndex} className="question-block" style={{ border: "2px solid #e6caa5" }}>
+              <div key={qIndex} className="question-block">
                 <div className="question-block-header">
                   <h4 style={{ fontSize: 15 }}>Câu {qIndex + 1}</h4>
                   {questions.length > 1 && (
@@ -2072,7 +2087,7 @@ const CreateExercise = () => {
 
                     {q.fillInAnswers && q.fillInAnswers.length > 0 && (
                       <div style={{ marginTop: 10 }}>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: "#a33d2c" }}>Đáp án ô điền:</p>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: "#000080" }}>Đáp án ô điền:</p>
                         {q.fillInAnswers.map((ans: string, aIdx: number) => (
                           <input
                             key={aIdx}
@@ -2187,9 +2202,9 @@ const CreateExercise = () => {
                     />
                     
                     <div style={{ marginTop: 10 }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#a33d2c" }}>Các câu hỏi trắc nghiệm của bài đọc này:</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>Các câu hỏi trắc nghiệm của bài đọc này:</p>
                       {q.subQuestions?.map((sub: any, subIdx: number) => (
-                        <div key={subIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
+                        <div key={subIdx} style={{ background: "#ffffff", padding: 16, border: "1px solid #e2e8f0", borderLeft: "3px solid #000080", borderRadius: 8, marginTop: 10, boxShadow: "0 1px 2px rgba(0,0,0,0.01)" }}>
                           <div className="question-block-header">
                             <h5>Câu hỏi {subIdx + 1}</h5>
                             {q.subQuestions.length > 1 && (
@@ -2279,7 +2294,7 @@ const CreateExercise = () => {
               onChange={(e) => setShowAnswer(e.target.checked)}
               style={{ width: 16, height: 16, accentColor: "#F95800", cursor: "pointer" }}
             />
-            <span style={{ fontSize: 14, color: "#5a3e2b" }}>
+            <span style={{ fontSize: 14, color: "#334155" }}>
               Hiển thị đáp án cho học viên sau khi nộp bài
             </span>
           </label>
@@ -2291,7 +2306,21 @@ const CreateExercise = () => {
             <button
               type="button"
               className="save-btn"
-              style={{ flex: 1, marginTop: 0 }}
+              style={{
+                flex: 1,
+                padding: "12px",
+                borderRadius: "10px",
+                background: "#F95800",
+                border: "1.5px solid #F95800",
+                color: "#fff",
+                fontWeight: "600",
+                cursor: "pointer",
+                marginTop: 0,
+                boxShadow: "none",
+                transition: "background 0.2s"
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
+              onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
               onClick={() => handleCreate("practice")}
             >
               Tạo bài luyện tập
@@ -2300,7 +2329,21 @@ const CreateExercise = () => {
             <button
               type="button"
               className="save-btn"
-              style={{ flex: 1, marginTop: 0 }}
+              style={{
+                flex: 1,
+                padding: "12px",
+                borderRadius: "10px",
+                background: "#F95800",
+                border: "1.5px solid #F95800",
+                color: "#fff",
+                fontWeight: "600",
+                cursor: "pointer",
+                marginTop: 0,
+                boxShadow: "none",
+                transition: "background 0.2s"
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
+              onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
               onClick={() => handleCreate("published")}
             >
               Đăng lên
@@ -2330,7 +2373,21 @@ const CreateExercise = () => {
               <button
                 type="button"
                 className="save-btn"
-                style={{ flex: 1, marginTop: 0 }}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: "#F95800",
+                  border: "1.5px solid #F95800",
+                  color: "#fff",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  marginTop: 0,
+                  boxShadow: "none",
+                  transition: "background 0.2s"
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
+                onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
                 onClick={() => handleCreate(lesson?.TrangThaiDuyet === "Giảng Viên" ? "pending" : "published")}
               >
                 Gửi duyệt

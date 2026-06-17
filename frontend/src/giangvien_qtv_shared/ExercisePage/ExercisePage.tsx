@@ -1,7 +1,7 @@
 import "./ExercisePage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiArrowLeft } from "react-icons/fi";
+import { FiMonitor, FiClock, FiUsers, FiBook, FiArrowLeft, FiCalendar } from "react-icons/fi";
 
 const ExercisePage = () => {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ const ExercisePage = () => {
   const [soHocVien, setSoHocVien] = useState(0);
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
+  const [filterType, setFilterType] = useState<"all" | "homework" | "exam">("all");
 
 
 
@@ -51,7 +52,7 @@ const ExercisePage = () => {
   /* ===== LOAD BAITAPS ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/baitap/${id}`)
+    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setExercises(data))
       .catch(err => console.log(err));
@@ -78,9 +79,18 @@ const ExercisePage = () => {
     setSelectedId(null);
   };
 
-  const filteredExercises = exercises.filter((ex) =>
-    ex.Title?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredExercises = exercises.filter((ex) => {
+    const matchesSearch = ex.Title?.toLowerCase().includes(search.toLowerCase());
+    const isExam = ex.IsExam === 1 || ex.Type === "exam";
+
+    if (filterType === "homework") {
+      return matchesSearch && !isExam;
+    }
+    if (filterType === "exam") {
+      return matchesSearch && isExam;
+    }
+    return matchesSearch;
+  });
 
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
@@ -93,64 +103,66 @@ const ExercisePage = () => {
 
       {/* ===== HEADER ===== */}
       <div className="header-card">
-        <div className="header-top">
-          <div>
-            <h1>{lesson?.TenBuoiHoc}</h1>
-            <p>{lesson?.MoTa}</p>
-            <p>
-              <FiCalendar size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
-              {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
-              {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
-            </p>
+        <div className="cd-left-content">
+          <h1>{lesson?.TenBuoiHoc}</h1>
+          <p className="cd-class-desc">{lesson?.MoTa}</p>
+          
+          <div className="info-row">
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper teacher-icon">
+                <FiMonitor size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Giáo viên</p>
+                <b>{giangVien}</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper calendar-icon">
+                <FiClock size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Lịch học</p>
+                <b>{lichHoc}</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper students-icon">
+                <FiUsers size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Số học viên</p>
+                <b>{soHocVien} học viên</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper status-icon">
+                <FiBook size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Trạng thái</p>
+                <b>Đang học</b>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div className="cd-right-content">
           <span className="status-badge">Đang học</span>
+          <span className="cd-class-id">Mã lớp: B239B1</span>
+          <span className="cd-class-dates">
+            <FiCalendar size={13} style={{ marginRight: 6 }} />
+            {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} - {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
+          </span>
         </div>
-
-        <div className="info-row">
-          <div className="info-item">
-            <div className="cd2-icon-wrapper teacher-icon">
-              <FiUser size={18} />
-            </div>
-            <div>
-              <p className="label">Giáo viên</p>
-              <b>{giangVien}</b>
-            </div>
-          </div>
-          <div className="info-item">
-            <div className="cd2-icon-wrapper calendar-icon">
-              <FiCalendar size={18} />
-            </div>
-            <div>
-              <p className="label">Lịch học</p>
-              <b>{lichHoc}</b>
-            </div>
-          </div>
-          <div className="info-item">
-            <div className="cd2-icon-wrapper students-icon">
-              <FiUsers size={18} />
-            </div>
-            <div>
-              <p className="label">Số học viên</p>
-              <b>{soHocVien}</b>
-            </div>
-          </div>
-          <div className="info-item">
-            <div className="cd2-icon-wrapper status-icon">
-              <FiBookOpen size={18} />
-            </div>
-            <div>
-              <p className="label">Trạng thái</p>
-              <b>Đang học</b>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* ===== TABS ===== */}
       <div className="tabs">
-        <button className="tab" onClick={() => navigate(`/class/${id}`)}>Tổng quan</button>
-        <button className="tab active">Bài tập</button>
+                <button className="tab active">Bài tập</button>
         <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
@@ -185,6 +197,28 @@ const ExercisePage = () => {
               </button>
             </form>
 
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+              style={{
+                height: "40px",
+                padding: "0 12px",
+                borderRadius: "8px",
+                border: "1.5px solid #f1edeb",
+                background: "white",
+                color: "#333",
+                fontWeight: "600",
+                cursor: "pointer",
+                fontSize: "14px",
+                outline: "none",
+                boxSizing: "border-box"
+              }}
+            >
+              <option value="all">Tất cả bài</option>
+              <option value="homework">Bài tập</option>
+              <option value="exam">Bài kiểm tra</option>
+            </select>
+
             <button
               className="ep-add-btn"
               onClick={() => navigate(`/create-exercise/${id}`)}
@@ -202,7 +236,7 @@ const ExercisePage = () => {
               onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
               onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
             >
-              + Tạo bài luyện tập thêm
+              + Tạo bài LTT
             </button>
           </div>
           <div className="ep-total-box">

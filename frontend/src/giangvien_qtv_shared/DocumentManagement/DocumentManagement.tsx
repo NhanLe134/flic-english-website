@@ -3,9 +3,15 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 
-const DocumentManagement = () => {
+interface DocumentManagementProps {
+  buoiHocIdProp?: string;
+  isEmbedded?: boolean;
+}
+
+const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, isEmbedded }) => {
   const navigate = useNavigate();
-  const { buoiHocId } = useParams();
+  const { buoiHocId: paramBuoiHocId } = useParams();
+  const buoiHocId = buoiHocIdProp || paramBuoiHocId;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -86,18 +92,22 @@ const DocumentManagement = () => {
 
   return (
     <div className="dm-wrapper">
-      <span className="dm-back-btn" onClick={() => navigate(-1)}>
-        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-        Quay lại
-      </span>
+      {!isEmbedded && (
+        <span className="dm-back-btn" onClick={() => navigate(-1)}>
+          <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+          Quay lại
+        </span>
+      )}
 
       {/* PAGE HEADER */}
-      <div className="page-header">
-        <h1 className="page-title">DANH SÁCH TÀI LIỆU</h1>
-      </div>
+      {!isEmbedded && (
+        <div className="page-header">
+          <h1 className="page-title">DANH SÁCH TÀI LIỆU</h1>
+        </div>
+      )}
 
       {/* SEARCH AND ADD */}
-      <div className="dm-toolbar">
+      <div className="shared-tab-toolbar">
         <form className="search-container" onSubmit={(e) => e.preventDefault()} style={{ marginBottom: 0 }}>
           <input
             className="search-input"
@@ -125,10 +135,9 @@ const DocumentManagement = () => {
           className="add-btn"
           onClick={openReuseModal}
           style={{
-            background: "#0284c7",
+            background: "#000080",
             color: "#fff",
             border: "none",
-            marginRight: "8px"
           }}
         >
           + Chọn tài liệu có sẵn
