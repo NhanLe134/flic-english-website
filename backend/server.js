@@ -273,24 +273,23 @@ app.post("/qtv/lophoc", async (req, res) => {
 
           for (const oldBaiTap of oldBaiTapsResult.recordset) {
             await pool.request()
-              .input("Title", oldBaiTap.Title)
-              .input("Type", oldBaiTap.Type)
-              .input("CreatedDate", oldBaiTap.CreatedDate)
+              .input("TieuDe", oldBaiTap.TieuDe)
+              .input("NgayTao", oldBaiTap.NgayTao)
               .input("NewMaBaiHoc", newMaBaiHoc)
-              .input("Content", oldBaiTap.Content)
-              .input("Questions", oldBaiTap.Questions)
-              .input("Vocabulary", oldBaiTap.Vocabulary)
-              .input("AudioUrl", oldBaiTap.AudioUrl)
-              .input("ShowAnswer", oldBaiTap.ShowAnswer ? 1 : 0)
-              .input("IsFree", oldBaiTap.IsFree || 0)
-              .input("IsExam", oldBaiTap.IsExam || 0)
+              .input("NoiDung", oldBaiTap.NoiDung)
+              .input("CauHoi", oldBaiTap.CauHoi)
+              .input("LinkAmThanh", oldBaiTap.LinkAmThanh)
+              .input("HienThiDapAn", oldBaiTap.HienThiDapAn ? 1 : 0)
+              .input("HocThuMienPhi", oldBaiTap.HocThuMienPhi ? 1 : 0)
+              .input("LaBaiKiemTra", oldBaiTap.LaBaiKiemTra ? 1 : 0)
               .input("TrangThai", oldBaiTap.TrangThai || "draft")
               .input("KyNang", oldBaiTap.KyNang || null)
               .input("DangBai", oldBaiTap.DangBai || null)
               .input("MaGiangVien", oldBaiTap.MaGiangVien || null)
+              .input("FileDinhKem", oldBaiTap.FileDinhKem || null)
               .query(`
-                INSERT INTO BAITAP (Title, Type, CreatedDate, MaBaiHoc, Content, Questions, Vocabulary, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai, MaGiangVien)
-                VALUES (@Title, @Type, @CreatedDate, @NewMaBaiHoc, @Content, @Questions, @Vocabulary, @AudioUrl, @ShowAnswer, @IsFree, @IsExam, @TrangThai, @KyNang, @DangBai, @MaGiangVien)
+                INSERT INTO BAITAP (TieuDe, NgayTao, MaBaiHoc, NoiDung, CauHoi, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, DangBai, MaGiangVien, FileDinhKem)
+                VALUES (@TieuDe, @NgayTao, @NewMaBaiHoc, @NoiDung, @CauHoi, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @KyNang, @DangBai, @MaGiangVien, @FileDinhKem)
               `)
           }
         }
@@ -839,7 +838,7 @@ app.get("/baitap/:buoiHocId", async (req, res) => {
     const result = await pool.request()
       .input("buoiHocId", parseInt(req.params.buoiHocId))
       .query(`
-        SELECT e.MaBaiTap, e.Title, e.Type, e.CreatedDate, e.TrangThai
+        SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, e.NgayTao AS CreatedDate, e.TrangThai
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         WHERE bh.MaBuoiHoc = @buoiHocId
@@ -853,14 +852,14 @@ app.get("/baitap/:id", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("id", parseInt(req.params.id))
-      .query(`SELECT MaBaiTap, Title, Type, CreatedDate, Content, Questions, Vocabulary, TrangThai FROM BAITAP WHERE MaBaiTap = @id`);
+      .query(`SELECT MaBaiTap, TieuDe AS Title, DangBai AS Type, NgayTao AS CreatedDate, NoiDung AS Content, CauHoi AS Questions, TrangThai, FileDinhKem FROM BAITAP WHERE MaBaiTap = @id`);
     res.json(result.recordset[0]);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
 app.post("/baitap", async (req, res) => {
   try {
-    const { Title, Type, Content, Questions, CreatedDate, MaBuoiHoc, MaBaiHoc, TrangThai, MaGiangVien } = req.body;
+    const { Title, Type, Content, Questions, CreatedDate, MaBuoiHoc, MaBaiHoc, TrangThai, MaGiangVien, FileDinhKem } = req.body;
     const pool = await poolPromise;
     let targetMaBaiHoc = MaBaiHoc;
 
@@ -905,12 +904,16 @@ app.post("/baitap", async (req, res) => {
     }
 
     await pool.request()
-      .input("Title", Title).input("Type", Type)
-      .input("Content", Content || "").input("Questions", Questions || "")
-      .input("CreatedDate", CreatedDate).input("MaBaiHoc", targetMaBaiHoc)
+      .input("TieuDe", Title)
+      .input("DangBai", Type || null)
+      .input("NoiDung", Content || "")
+      .input("CauHoi", Questions || "")
+      .input("NgayTao", CreatedDate)
+      .input("MaBaiHoc", targetMaBaiHoc)
       .input("TrangThai", TrangThai || "pending")
       .input("MaGiangVien", resolvedMaGiangVien || null)
-      .query(`INSERT INTO BAITAP (Title, Type, Content, Questions, CreatedDate, MaBaiHoc, TrangThai, MaGiangVien) VALUES (@Title, @Type, @Content, @Questions, @CreatedDate, @MaBaiHoc, @TrangThai, @MaGiangVien)`);
+      .input("FileDinhKem", FileDinhKem || null)
+      .query(`INSERT INTO BAITAP (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, TrangThai, MaGiangVien, FileDinhKem) VALUES (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @TrangThai, @MaGiangVien, @FileDinhKem)`);
     res.json({ message: "Thêm bài tập thành công" });
   } catch (err) { res.status(500).send("Lỗi server: " + err.message); }
 });
@@ -920,8 +923,8 @@ app.put("/baitap/:id", async (req, res) => {
     const pool = await poolPromise;
     await pool.request()
       .input("id", parseInt(req.params.id))
-      .input("Questions", Questions)
-      .query(`UPDATE BAITAP SET Questions = @Questions WHERE MaBaiTap = @id`);
+      .input("CauHoi", Questions)
+      .query(`UPDATE BAITAP SET CauHoi = @CauHoi WHERE MaBaiTap = @id`);
     res.json({ message: "Cập nhật thành công" });
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
@@ -1628,9 +1631,9 @@ app.post("/baitap/create", async (req, res) => {
   try {
     const {
       Title, Type, Content, Questions,
-      Vocabulary, CreatedDate, MaBuoiHoc, MaBaiHoc,
+      CreatedDate, MaBuoiHoc, MaBaiHoc,
       AudioUrl, ShowAnswer, IsFree, IsExam,
-      TrangThai, KyNang, DangBai, MaGiangVien
+      TrangThai, KyNang, DangBai, MaGiangVien, FileDinhKem
     } = req.body;
 
     const pool = await poolPromise;
@@ -1677,26 +1680,25 @@ app.post("/baitap/create", async (req, res) => {
     }
 
     await pool.request()
-      .input("Title",       Title)
-      .input("Type",        Type)
-      .input("Content",     Content     || "")
-      .input("Questions",   Questions   || "")
-      .input("Vocabulary",  Vocabulary  || "")
-      .input("CreatedDate", CreatedDate)
-      .input("MaBaiHoc",    targetMaBaiHoc)
-      .input("AudioUrl",    AudioUrl    || "")
-      .input("ShowAnswer",  ShowAnswer  ? 1 : 0)
-      .input("IsFree",      IsFree      ? 1 : 0)
-      .input("IsExam",      IsExam      ? 1 : 0)
-      .input("TrangThai",   TrangThai   || "pending")
-      .input("KyNang",      KyNang      || null)
-      .input("DangBai",     DangBai     || null)
-      .input("MaGiangVien", resolvedMaGiangVien || null)
+      .input("TieuDe",        Title)
+      .input("DangBai",       DangBai || Type || null)
+      .input("NoiDung",       Content     || "")
+      .input("CauHoi",        Questions   || "")
+      .input("NgayTao",       CreatedDate)
+      .input("MaBaiHoc",      targetMaBaiHoc)
+      .input("LinkAmThanh",   AudioUrl    || "")
+      .input("HienThiDapAn",  ShowAnswer  ? 1 : 0)
+      .input("HocThuMienPhi", IsFree      ? 1 : 0)
+      .input("LaBaiKiemTra",  IsExam      ? 1 : 0)
+      .input("TrangThai",     TrangThai   || "pending")
+      .input("KyNang",        KyNang      || null)
+      .input("MaGiangVien",   resolvedMaGiangVien || null)
+      .input("FileDinhKem",   FileDinhKem || null)
       .query(`
         INSERT INTO BAITAP
-          (Title, Type, Content, Questions, Vocabulary, CreatedDate, MaBaiHoc, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai, MaGiangVien)
+          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, MaGiangVien, FileDinhKem)
         VALUES
-          (@Title, @Type, @Content, @Questions, @Vocabulary, @CreatedDate, @MaBaiHoc, @AudioUrl, @ShowAnswer, @IsFree, @IsExam, @TrangThai, @KyNang, @DangBai, @MaGiangVien)
+          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @KyNang, @MaGiangVien, @FileDinhKem)
       `);
 
     res.json({ message: "Thêm bài tập thành công" });
@@ -2328,12 +2330,12 @@ app.get("/qtv/baitap", async (req, res) => {
     const result = await pool.request().query(`
       -- Lấy danh sách Bài tập
       SELECT DISTINCT 'baitap-' + CAST(e.MaBaiTap AS VARCHAR) AS MaBaiTap, 
-             e.Title AS Title, 
+             e.TieuDe AS Title, 
              N'Bài tập' AS Type, 
-             e.CreatedDate AS CreatedDate,
-             e.Content AS Content, 
-             e.Questions AS Questions, 
-             e.Vocabulary AS Vocabulary, 
+             e.NgayTao AS CreatedDate,
+             e.NoiDung AS Content, 
+             e.CauHoi AS Questions, 
+             NULL AS Vocabulary, 
              e.TrangThai AS TrangThai, 
              e.KyNang AS KyNang, 
              e.DangBai AS DangBai,
@@ -2422,7 +2424,7 @@ app.get("/baocao/baitap-headers", async (req, res) => {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        e.MaBaiTap, e.Title AS TenBai,
+        e.MaBaiTap, e.TieuDe AS TenBai,
         l.TenBuoiHoc AS TenBuoiHoc,
         l.ThuTu AS ThuTu,
         l.MaBuoiHoc AS MaBuoiHoc,
@@ -2837,8 +2839,8 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
 app.get("/student/free-content", async (req, res) => {
   try {
     const pool = await poolPromise
-    const lectures = await pool.request().query("SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl FROM BAIHOCKHOAHOC WHERE IsFree = 1 OR HienThiTuDo = 1")
-    const exercises = await pool.request().query("SELECT MaBaiTap, Title, Type, TrangThai, Content, Questions FROM BAITAP WHERE IsFree = 1 OR HienThiTuDo = 1")
+    const lectures = await pool.request().query("SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl FROM BAIHOCKHOAHOC WHERE IsFree = 1")
+    const exercises = await pool.request().query("SELECT MaBaiTap, TieuDe AS Title, DangBai AS Type, TrangThai, NoiDung AS Content, CauHoi AS Questions FROM BAITAP WHERE HocThuMienPhi = 1")
     res.json({ lectures: lectures.recordset, exercises: exercises.recordset })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -2849,7 +2851,7 @@ app.get("/classes/:id/baitap", async (req, res) => {
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
-        SELECT e.MaBaiTap, e.Title, e.Type, bh.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, e.TrangThai
+        SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, bh.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, e.TrangThai
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         JOIN BUOIHOC l ON bh.MaBuoiHoc = l.MaBuoiHoc
@@ -2884,7 +2886,7 @@ app.get("/student/bainop/:maNguoiDung", async (req, res) => {
     
     let query = `
       SELECT b.MaBaiNop, b.MaBaiTap, b.Diem, b.NgayNop, b.TrangThai,
-             e.Title AS TenBaiTap, bg.MaBuoiHoc AS MaBuoiHoc
+             e.TieuDe AS TenBaiTap, bg.MaBuoiHoc AS MaBuoiHoc
       FROM BAINOP b
       JOIN BAITAP e ON b.MaBaiTap = e.MaBaiTap
       LEFT JOIN BAIHOCKHOAHOC bg ON e.MaBaiHoc = bg.MaBaiHoc
@@ -3094,7 +3096,7 @@ app.get("/exercises/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT e.MaBaiTap, e.Title, e.Type, e.CreatedDate, l.TenLop, ls.TenBuoiHoc
+      SELECT DISTINCT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, e.NgayTao AS CreatedDate, l.TenLop, ls.TenBuoiHoc
       FROM BAITAP e
       JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
       JOIN BUOIHOC ls ON bh.MaBuoiHoc = ls.MaBuoiHoc
@@ -3261,26 +3263,25 @@ app.post("/exercises/:id/clone", async (req, res) => {
     }
     
     await pool.request()
-      .input("Title", ex.Title)
-      .input("Type", ex.Type)
-      .input("Content", ex.Content || "")
-      .input("Questions", ex.Questions || "")
-      .input("Vocabulary", ex.Vocabulary || "")
+      .input("TieuDe", ex.TieuDe)
+      .input("DangBai", ex.DangBai || null)
+      .input("NoiDung", ex.NoiDung || "")
+      .input("CauHoi", ex.CauHoi || "")
       .input("CreatedDate", today)
       .input("MaBaiHoc", targetMaBaiHoc)
-      .input("AudioUrl", ex.AudioUrl || "")
-      .input("ShowAnswer", ex.ShowAnswer ? 1 : 0)
-      .input("IsFree", ex.IsFree || 0)
-      .input("IsExam", ex.IsExam || 0)
+      .input("LinkAmThanh", ex.LinkAmThanh || "")
+      .input("HienThiDapAn", ex.HienThiDapAn ? 1 : 0)
+      .input("HocThuMienPhi", ex.HocThuMienPhi ? 1 : 0)
+      .input("LaBaiKiemTra", ex.LaBaiKiemTra ? 1 : 0)
       .input("TrangThai", ex.TrangThai || "draft")
       .input("KyNang", ex.KyNang || "")
-      .input("DangBai", ex.DangBai || "")
       .input("MaGiangVien", ex.MaGiangVien || null)
+      .input("FileDinhKem", ex.FileDinhKem || null)
       .query(`
         INSERT INTO BAITAP 
-          (Title, Type, Content, Questions, Vocabulary, CreatedDate, MaBaiHoc, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai, MaGiangVien)
+          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, MaGiangVien, FileDinhKem)
         VALUES 
-          (@Title, @Type, @Content, @Questions, @Vocabulary, @CreatedDate, @MaBaiHoc, @AudioUrl, @ShowAnswer, @IsFree, @IsExam, @TrangThai, @KyNang, @DangBai, @MaGiangVien)
+          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @CreatedDate, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @KyNang, @MaGiangVien, @FileDinhKem)
       `);
       
     res.json({ message: "Sao chép bài tập thành công" });
