@@ -100,6 +100,7 @@ function App() {
         <Route path="/register-success" element={<RegisterSuccess />} />
         <Route path="/hoc-thu" element={<HocThu />} />
         <Route path="/test-thu" element={<TestThuPublic />} />
+        <Route path="/test-exam/:testId" element={<TestExamPage />} />
 
         {/* LOGIN */}
         <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
@@ -172,7 +173,6 @@ function App() {
           <Route path="/course-register" element={<CourseRegister />} />
           <Route path="/hoc-thu-sv" element={<HocThuSV />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
-          <Route path="/test-exam/:testId" element={<TestExamPage />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />

@@ -1254,11 +1254,39 @@ export default function TestExamPage() {
         />
       )}
       {modal?.type === "register_required" && (
-        <Modal
-          title="Đăng ký tài khoản"
-          body="Bạn đã hoàn thành phần thi thử trải nghiệm (Part 1 của Listening). Vui lòng đăng ký hoặc đăng nhập tài khoản thành viên để được làm đầy đủ bài thi 4 kỹ năng."
-          onConfirm={modal.onConfirm} onCancel={() => setModal(null)} confirmLabel="Đăng ký ngay"
-        />
+        <div className="exam-modal-overlay">
+          <div className="exam-modal-card">
+            <button className="exam-modal-close-x" onClick={() => setModal(null)}>&times;</button>
+            <div className="exam-modal-title">Đăng ký / Đăng nhập</div>
+            <div className="exam-modal-body">
+              <p className="exam-modal-main-text">
+                Bạn đã hoàn thành phần thi thử trải nghiệm (Part 1 của Listening). Vui lòng đăng ký hoặc đăng nhập tài khoản thành viên để được làm đầy đủ bài thi 4 kỹ năng.
+              </p>
+            </div>
+            <div className="exam-modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button className="modal-btn-cancel" onClick={() => setModal(null)}>Hủy</button>
+              <button 
+                className="modal-btn-confirm" 
+                style={{ backgroundColor: "#3182ce", borderColor: "#3182ce" }} 
+                onClick={() => {
+                  setModal(null);
+                  setSearchParams({ auth: "login" }, { replace: true });
+                }}
+              >
+                Đăng nhập
+              </button>
+              <button 
+                className="modal-btn-confirm" 
+                onClick={() => {
+                  setModal(null);
+                  setSearchParams({ auth: "register" }, { replace: true });
+                }}
+              >
+                Đăng ký ngay
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
