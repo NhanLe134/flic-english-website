@@ -1,0 +1,134 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FiClock, FiAlertTriangle } from "react-icons/fi";
+import "./TestThuSV.css";
+
+interface BaiTest {
+  MaBaiTest: number;
+  TieuDe: string;
+  MoTa: string;
+  TongThoiGian: number;
+  CapDo: string;
+  LoaiBai: string;
+  NgayTao: string;
+  TrangThai: string;
+}
+
+const STATIC_TESTS = [
+  {
+    MaBaiTest: 1,
+    TieuDe: "VSTEP B1 - Đề thi mẫu số 1",
+    MoTa: "Đề thi thử VSTEP trình độ B1 bao gồm đầy đủ 4 kỹ năng: Nghe, Đọc, Viết và Nói.",
+    TongThoiGian: 177,
+    CapDo: "B1",
+    LoaiBai: "VSTEP",
+    NgayTao: "2026-01-10T00:00:00.000Z",
+    TrangThai: "published"
+  },
+  {
+    MaBaiTest: 2,
+    TieuDe: "VSTEP B2 - Đề thi mẫu số 2",
+    MoTa: "Đề thi thử VSTEP trình độ B2 với câu hỏi nâng cao hơn cho cả 4 kỹ năng.",
+    TongThoiGian: 177,
+    CapDo: "B2",
+    LoaiBai: "VSTEP",
+    NgayTao: "2026-02-15T00:00:00.000Z",
+    TrangThai: "published"
+  },
+  {
+    MaBaiTest: 3,
+    TieuDe: "TOEIC Practice Test - Full Exam",
+    MoTa: "Đề thi thử TOEIC đầy đủ với phần Listening và Reading chuẩn format quốc tế.",
+    TongThoiGian: 120,
+    CapDo: "Intermediate",
+    LoaiBai: "TOEIC",
+    NgayTao: "2026-03-01T00:00:00.000Z",
+    TrangThai: "published"
+  }
+];
+
+export default function TestThuSV() {
+  const [tests, setTests] = useState<BaiTest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if ((location.state as any)?.submitted) setSubmitted(true);
+    setTests(STATIC_TESTS);
+    setLoading(false);
+  }, [location]);
+
+  const formatTime = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
+  };
+
+  return (
+    <div className="test-thu-container">
+      {/* Submitted success banner (No checkmark emoji, clean green color style) */}
+      {submitted && (
+        <div className="submit-success-banner">
+          <div>
+            <div className="banner-title">Nộp bài thành công!</div>
+            <div className="banner-desc">Bài thi của bạn đã được ghi nhận. Kết quả sẽ được thông báo sau.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="test-header">
+        <div>
+          <h1>LÀM BÀI TEST</h1>
+          <p>Chọn đề thi để bắt đầu làm bài thi thử.</p>
+        </div>
+      </div>
+
+      {/* Info banner */}
+      <div className="test-info-banner">
+        <div className="info-banner-title">
+          <FiAlertTriangle style={{ marginRight: 6 }} /> LƯU Ý QUAN TRỌNG
+        </div>
+        <ul className="info-banner-list">
+          <li>Hết thời gian từng phần sẽ tự động chuyển sang phần tiếp theo.</li>
+          <li>Không được quay lại các kỹ năng đã hoàn thành.</li>
+          <li>Sau khi hoàn thành mỗi phần phải nhấn "LƯU BÀI" để lưu thủ công.</li>
+          <li>Phần Listening & Reading: cấm dùng bàn phím và click ngoài vùng thi.</li>
+        </ul>
+      </div>
+
+      {/* Test list */}
+      {loading ? (
+        <div className="test-loading-box">
+          <div className="test-spinner" />
+          <div>Đang tải danh sách đề thi...</div>
+        </div>
+      ) : (
+        <div className="test-list-grid">
+          {tests.map(test => (
+            <div key={test.MaBaiTest} className="test-item-card">
+              <div className="test-item-info">
+                <h3 className="test-item-title">{test.TieuDe}</h3>
+                <p className="test-item-desc">{test.MoTa}</p>
+                <div className="test-item-meta">
+                  <span className="meta-time">
+                    <FiClock style={{ marginRight: 4 }} /> Thời gian: {formatTime(test.TongThoiGian)}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate(`/test-exam/${test.MaBaiTest}`)}
+                className="test-item-btn"
+              >
+                Vào thi
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,176 @@
+.piv-edit-btn {
+  background: #F95800;
+  border: 1.5px solid #F95800;
+  padding: 8px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.piv-edit-btn:hover {
+  background: #e04f00;
+  border-color: #e04f00;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
+}
+
+.piv-edit-btn:active {
+  transform: translateY(0);
+}
+
+
+.piv-wrapper {
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+}
+
+/* HEADER ROW */
+.piv-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.piv-header-row h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: #222;
+}
+
+
+
+/* PIV GRID LAYOUT */
+.piv-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* SIDEBAR CARD */
+.piv-sidebar-card {
+  background: white;
+  padding: 36px 24px;
+  border-radius: 16px;
+  border: 1px solid #eef2f6;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+}
+
+.piv-avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 0 auto 18px;
+  border: 3px solid #eef2f6;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #F95800, #ff8c42);
+}
+
+.piv-avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.piv-avatar-initial {
+  font-size: 40px;
+  color: white;
+  font-weight: 700;
+}
+
+.piv-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #222;
+}
+
+.piv-badge {
+  display: inline-block;
+  background: #fff4ec;
+  color: #F95800;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.piv-contact-section {
+  border-top: 1px solid #eef2f6;
+  padding-top: 20px;
+  text-align: left;
+}
+
+.piv-contact-item {
+  margin-bottom: 16px;
+}
+
+.piv-contact-item:last-child {
+  margin-bottom: 0;
+}
+
+.piv-contact-label {
+  font-size: 11px;
+  color: #a0aec0;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.piv-contact-value {
+  margin: 0;
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* MAIN CONTENT */
+.piv-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.piv-info-card {
+  background: white;
+  padding: 24px 28px;
+  border-radius: 16px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+  text-align: left;
+}
+
+.piv-info-card h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  border-left: 4px solid #F95800;
+  padding-left: 10px;
+}
+
+.piv-info-card p {
+  margin: 0;
+  font-size: 15px;
+  color: #4a5568;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+@media (max-width: 768px) {
+  .piv-grid {
+    grid-template-columns: 1fr;
+  }
+}

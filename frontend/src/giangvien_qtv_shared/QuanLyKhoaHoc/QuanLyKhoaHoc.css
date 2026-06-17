@@ -1,0 +1,326 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* HEADER */
+.teacher-header {
+  height: 70px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  border-bottom: 1px solid #d8c7b3;
+}
+
+.teacher-logo {
+  height: 50px;
+}
+
+.teacher-center-btn {
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 10px 25px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+/* LAYOUT */
+.teacher-layout {
+  display: flex;
+}
+
+/* SIDEBAR */
+.teacher-sidebar {
+  width: 260px;
+  background: white;
+  min-height: calc(100vh - 70px);
+  padding: 20px;
+}
+
+.teacher-profile {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.teacher-sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.teacher-sidebar li {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.teacher-sidebar li:hover {
+  background: #e3e3e3;
+}
+
+.teacher-sidebar .active {
+  background: #F95800;
+  color: white;
+}
+
+/* CONTENT CONTAINER */
+.teacher-content {
+  flex: 1;
+  padding: 24px 30px; /* Hơi co lại cho gọn */
+  box-sizing: border-box;
+}
+
+/* INNER LAYER CONTENT CARD */
+.qlkh-content-card {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.qlkh-content-card h1 {
+  font-size: 28px; /* Giảm từ 36px xuống cho gọn */
+  color: #2c2520;
+  margin-top: 0;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.sub {
+  color: #7a6e65;
+  margin-bottom: 24px;
+  font-size: 14px; /* Giảm từ 15px */
+}
+
+/* STATS */
+.stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  padding: 16px 20px;
+  border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff !important;
+  border: 1px solid #eef2f6 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #4a5568;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 2px 0 !important;
+  line-height: 1.2;
+}
+
+.stat-desc {
+  font-size: 11px;
+  color: #a0aec0;
+  font-weight: 400;
+}
+
+/* Colors for specific stats */
+.stat-box.courses-stat .stat-icon-wrapper {
+  background: rgba(249, 88, 0, 0.08);
+  color: #f95800;
+}
+.stat-box.courses-stat .stat-label {
+  color: #c2410c;
+}
+
+.stat-box.students-stat .stat-icon-wrapper {
+  background: rgba(16, 117, 68, 0.08);
+  color: #107544;
+}
+.stat-box.students-stat .stat-label {
+  color: #15803d;
+}
+
+.stat-box.pending-stat .stat-icon-wrapper {
+  background: rgba(0, 0, 128, 0.08);
+  color: #000080;
+}
+.stat-box.pending-stat .stat-label {
+  color: #000080;
+}
+
+/* SEARCH CONTAINER (Joined input + orange button) */
+.search-container {
+  display: flex;
+  align-items: center;
+  max-width: 420px; /* Giảm từ 600px */
+  height: 40px; /* Giảm từ 48px */
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px; /* Giảm từ 12px */
+  overflow: hidden;
+  margin-bottom: 28px; /* Giảm từ 40px */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  height: 100%;
+}
+
+.search-input::placeholder {
+  color: #9c8e83;
+}
+
+.search-button {
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 0 16px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.search-button:hover {
+  background: #e04f00;
+}
+
+.search-button svg {
+  stroke: white;
+}
+
+/* COURSES GRID */
+.courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.course-card {
+  background: white;
+  padding: 20px; /* Giảm từ 30px */
+  border-radius: 12px; /* Giảm từ 20px */
+  border: 1px solid #eef2f6;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.015);
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 300px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(44, 37, 32, 0.04);
+}
+
+/* Course Card Header & Tags */
+.course-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.course-index-tag {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #fff5ed;
+  color: #f95800;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.course-code-tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8c7e74;
+  background: #f0ebe4;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.course-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px; /* Giảm từ 22px */
+  color: #1f1915;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.course-card .schedule {
+  font-size: 13px; /* Giảm từ 14px */
+  color: #666;
+  margin: 0 0 6px 0;
+  line-height: 1.4;
+}
+
+.course-card .students-count {
+  font-size: 13px; /* Giảm từ 14px */
+  color: #666;
+  margin: 0 0 16px 0; /* Giảm từ 24px */
+}
+
+.course-card button.detail-button {
+  margin-top: auto;
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 10px 16px; /* Giảm từ 12px 20px */
+  border-radius: 8px; /* Giảm từ 12px */
+  font-size: 14px; /* Giảm từ 15px */
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.course-card button.detail-button:hover {
+  background: #e04f00;
+}

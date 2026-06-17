@@ -1,76 +1,77 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import TeacherLayout from "./layout/TeacherLayout"
-import Home from "./pages/Home"
-import AboutPage from "./pages/AboutPage"
-import CoursesPageHome from "./pages/CoursesPageHome"
-import CoursesCategoryPage from "./pages/CoursesCategoryPage"
-import CourseDetailHome from "./pages/CourseDetailHome"
-import RegisterSuccess from "./pages/RegisterSuccess"
+import TeacherLayout from "./giangvien/layout/TeacherLayout"
+import Home from "./home_pages/Home/Home"
+import AboutPage from "./home_pages/AboutPage/AboutPage"
+import CoursesPageHome from "./home_pages/CoursesPageHome/CoursesPageHome"
+import CoursesCategoryPage from "./home_pages/CoursesCategoryPage/CoursesCategoryPage"
+import CourseDetailHome from "./home_pages/CourseDetailHome/CourseDetailHome"
+import RegisterSuccess from "./home_pages/RegisterSuccess/RegisterSuccess"
 import AuthModal from "./components/AuthModal"
-import QuanLyKhoaHoc from "./pages/QuanLyKhoaHoc"
-import ResetSuccess from "./pages/ResetSuccess"
-import CourseDetail from "./pages/CourseDetail"
-import LessonList from "./pages/LessonList"
-import ClassDetail from "./pages/ClassDetail"
-import CreateExercise from "./pages/CreateExercise"
-import ExerciseDetail from "./pages/ExerciseDetail"
-import LessonManagement from "./pages/LessonManagement"
-import LessonDetail from "./pages/LessonDetail"
-import AddLesson from "./pages/AddLesson"
-import DocumentManagement from "./pages/DocumentManagement"
-import AddDocument from "./pages/AddDocument"
-import DocumentDetail from "./pages/DocumentDetail"
-import CreatepersonalInfo from "./pages/CreatepersonalInfo"
-import PersonalInfoView from "./pages/PersonalInfoView"
-import EditPersonalInfo from "./pages/EditPersonalInfo"
-import StudentList from "./pages/StudentList"
-import AddStudent from "./pages/AddStudent"
-import ExercisePage from "./pages/ExercisePage"
-import LessonDiscussionPage from "./pages/LessonDiscussionPage"
-import ViewStudent from "./pages/ViewStudent"
-import EditStudent from "./pages/EditStudent"
-import QuanLyKetQuaHocTap from "./pages/QuanLyKetQuaHocTap"
-import LessonResultPage from "./pages/LessonResultPage"
-import ChiTietKetQua from "./pages/ChiTietKetQua"
-import KetQuaHocTapHocVien from "./pages/KetQuaHocTapHocVien"
-import SuaKetQuaHocTapHocVien from "./pages/SuaKetQuaHocTapHocVien"
-import DoiMatKhau from "./pages/DoiMatKhau"
-import HocThu from "./pages/HocThu"
-import DraftsManagement from "./pages/DraftsManagement"
+import QuanLyKhoaHoc from "./giangvien_qtv_shared/QuanLyKhoaHoc/QuanLyKhoaHoc"
+import ResetSuccess from "./home_pages/ResetSuccess/ResetSuccess"
+import CourseDetail from "./giangvien_qtv_shared/CourseDetail/CourseDetail"
+import LessonList from "./giangvien_qtv_shared/LessonList/LessonList"
+import ClassDetail from "./giangvien_qtv_shared/ClassDetail/ClassDetail"
+import CreateExercise from "./giangvien_qtv_shared/CreateExercise/CreateExercise"
+import ExerciseDetail from "./giangvien_qtv_shared/ExerciseDetail/ExerciseDetail"
+import LessonManagement from "./giangvien_qtv_shared/LessonManagement/LessonManagement"
+import LessonDetail from "./giangvien_qtv_shared/LessonDetail/LessonDetail"
+import AddLesson from "./giangvien_qtv_shared/AddLesson/AddLesson"
+import DocumentManagement from "./giangvien_qtv_shared/DocumentManagement/DocumentManagement"
+import AddDocument from "./giangvien_qtv_shared/AddDocument/AddDocument"
+import DocumentDetail from "./giangvien_qtv_shared/DocumentDetail/DocumentDetail"
+import CreatepersonalInfo from "./giangvien_qtv_shared/CreatepersonalInfo/CreatepersonalInfo"
+import PersonalInfoView from "./giangvien_qtv_shared/PersonalInfoView/PersonalInfoView"
+import EditPersonalInfo from "./giangvien_qtv_shared/EditPersonalInfo/EditPersonalInfo"
+import StudentList from "./giangvien_qtv_shared/StudentList/StudentList"
+import AddStudent from "./giangvien_qtv_shared/AddStudent/AddStudent"
+import ExercisePage from "./giangvien_qtv_shared/ExercisePage/ExercisePage"
+import LessonDiscussionPage from "./giangvien_qtv_shared/LessonDiscussionPage/LessonDiscussionPage"
+import ViewStudent from "./giangvien_qtv_shared/ViewStudent/ViewStudent"
+import EditStudent from "./giangvien_qtv_shared/EditStudent/EditStudent"
+import QuanLyKetQuaHocTap from "./giangvien_qtv_shared/QuanLyKetQuaHocTap/QuanLyKetQuaHocTap"
+import LessonResultPage from "./giangvien_qtv_shared/LessonResultPage/LessonResultPage"
+import ChiTietKetQua from "./giangvien_qtv_shared/ChiTietKetQua/ChiTietKetQua"
+import KetQuaHocTapHocVien from "./giangvien_qtv_shared/KetQuaHocTapHocVien/KetQuaHocTapHocVien"
+import SuaKetQuaHocTapHocVien from "./giangvien_qtv_shared/SuaKetQuaHocTapHocVien/SuaKetQuaHocTapHocVien"
+import DoiMatKhau from "./giangvien_qtv_shared/DoiMatKhau/DoiMatKhau"
+import HocThu from "./home_pages/HocThu/HocThu"
+import DraftsManagement from "./giangvien/pages/DraftsManagement/DraftsManagement"
 
 /* ADMIN */
-import AdminLayout from "./layout/AdminLayout"
-import StatisticsAdmin from "./pages/StatisticsAdmin"
-import ApproveAdmin from "./pages/ApproveAdmin"
-import AccountAdmin from "./pages/AccountAdmin"
-import PermissionsAdmin from "./pages/PermissionsAdmin"
-import BaoCaoKetQua from "./pages/BaoCaoKetQua"
+import AdminLayout from "./admin/layout/AdminLayout"
+import StatisticsAdmin from "./admin/pages/StatisticsAdmin/StatisticsAdmin"
+import ApproveAdmin from "./admin/pages/ApproveAdmin/ApproveAdmin"
+import AccountAdmin from "./admin/pages/AccountAdmin/AccountAdmin"
+import PermissionsAdmin from "./admin/pages/PermissionsAdmin/PermissionsAdmin"
+import BaoCaoKetQua from "./admin/pages/BaoCaoKetQua/BaoCaoKetQua"
 
 /* QTV nội dung */
-import QTVLayout from "./layout/QTVLayout"
-import DuyetBaiQTV from "./pages/DuyetBaiQTV"
-import CoursePageQTV from "./pages/CoursePageQTV"
-/* Sinh viên */
-import CourseRegister from "./pages/CourseRegister/CourseRegister"
-import Profile from "./pages/Profile/Profile"
-import ProfilePage from "./pages/ProfilePage/ProfilePage"
-import MyCourses from "./pages/MyCourses/MyCourses"
-import CourseDetailSV from "./pages/CourseDetail/CourseDetailSV"
-import ClassDetailSV from "./pages/ClassDetail/ClassDetailSV"
-import DocDetail from "./pages/DocDetail/DocDetail"
-import LessonDetailSV from "./pages/LessonDetail/LessonDetailSV"
-import Progress from "./pages/Progress/Progress"
-import Settings from "./pages/Settings/Settings"
-import Assignments from "./pages/Assignments/Assignments"
-import AssignmentDetail from "./pages/AssignmentDetail/AssignmentDetail"
-import AssignmentSuccess from "./pages/AssignmentSuccess/AssignmentSuccess"
-import QuizDetail from "./pages/QuizDetail/QuizDetail"
-import EssayDetail from "./pages/EssayDetail/EssayDetail"
-import DanhSachBaiNop from "./pages/DanhSachBaiNop"
-import ChamBaiPage from "./pages/ChamBaiPage"
-import BaoCaoKetQuaQTV from "./pages/Baocaoketquaqtv"
-import BaiGiangSV from "./pages/LessonDetail/BaiGiangSV"
-import StudentLayout from "./layout/StudentLayout"
+import QTVLayout from "./qtv/layout/QTVLayout"
+import DuyetBaiQTV from "./qtv/pages/DuyetBaiQTV/DuyetBaiQTV"
+import CoursePageQTV from "./qtv/pages/CoursePageQTV/CoursePageQTV"
+import CourseRegister from "./sinhvien/pages/CourseRegister/CourseRegister"
+import Profile from "./sinhvien/pages/Profile/Profile"
+import ProfilePage from "./sinhvien/pages/ProfilePage/ProfilePage"
+import MyCourses from "./sinhvien/pages/MyCourses/MyCourses"
+import CourseDetailSV from "./sinhvien/pages/CourseDetail/CourseDetailSV"
+import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
+import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
+import Progress from "./sinhvien/pages/Progress/Progress"
+import Settings from "./sinhvien/pages/Settings/Settings"
+import Assignments from "./sinhvien/pages/Assignments/Assignments"
+import AssignmentDetail from "./sinhvien/pages/AssignmentDetail/AssignmentDetail"
+import AssignmentSuccess from "./sinhvien/pages/AssignmentSuccess/AssignmentSuccess"
+import QuizDetail from "./sinhvien/pages/QuizDetail/QuizDetail"
+import EssayDetail from "./sinhvien/pages/EssayDetail/EssayDetail"
+import DanhSachBaiNop from "./giangvien_qtv_shared/DanhSachBaiNop/DanhSachBaiNop"
+import ChamBaiPage from "./giangvien_qtv_shared/ChamBaiPage/ChamBaiPage"
+import BaoCaoKetQuaQTV from "./qtv/pages/BaoCaoKetQuaQTV/BaoCaoKetQuaQTV"
+import BaiGiangSV from "./sinhvien/pages/LessonDetail/BaiGiangSV"
+import StudentLayout from "./sinhvien/layout/StudentLayout"
+import HocThuSV from "./sinhvien/pages/HocThuSV"
+import TestThuSV from "./sinhvien/pages/TestThuSV"
+import TestExamPage from "./sinhvien/pages/TestExamPage"
 
 function App() {
   return (
@@ -99,14 +100,14 @@ function App() {
           <Route path="/lessonlist/:id" element={<LessonList />} />
           <Route path="/class/:id" element={<ClassDetail />} />
           <Route path="/create-exercise/:id" element={<CreateExercise />} />
-          <Route path="/exercise-detail/:id/:lessonId" element={<ExerciseDetail />} />
-          <Route path="/danh-sach-bai-nop/:maExercise" element={<DanhSachBaiNop />} />
+          <Route path="/baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
+          <Route path="/danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="/cham-bai/:maBaiNop" element={<ChamBaiPage />} />
-          <Route path="/quan-ly-bai-giang/:lessonId" element={<LessonManagement />} />
+          <Route path="/quan-ly-bai-giang/:buoiHocId" element={<LessonManagement />} />
           <Route path="/bai-giang/:id" element={<LessonDetail />} />
-          <Route path="/them-bai-giang/:lessonId" element={<AddLesson />} />
-          <Route path="/documents/:lessonId" element={<DocumentManagement />} />
-          <Route path="/them-tai-lieu/:lessonId" element={<AddDocument />} />
+          <Route path="/them-bai-giang/:buoiHocId" element={<AddLesson />} />
+          <Route path="/documents/:buoiHocId" element={<DocumentManagement />} />
+          <Route path="/them-tai-lieu/:buoiHocId" element={<AddDocument />} />
           <Route path="/quan-ly-tai-lieu/:id" element={<DocumentDetail />} />
 
           {/* PROFILE */}
@@ -149,11 +150,15 @@ function App() {
           <Route path="khoahoc" element={<CoursePageQTV />} />
           <Route path="baocao" element={<BaoCaoKetQuaQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
+          <Route path="create-exercise/:id" element={<CreateExercise />} />
         </Route>
 
         {/*Sinh viên*/}
-        <Route path="/course-register" element={<CourseRegister />} />
         <Route element={<StudentLayout />}>
+          <Route path="/course-register" element={<CourseRegister />} />
+          <Route path="/hoc-thu-sv" element={<HocThuSV />} />
+          <Route path="/test-thu-sv" element={<TestThuSV />} />
+          <Route path="/test-exam/:testId" element={<TestExamPage />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />
@@ -161,13 +166,12 @@ function App() {
           <Route path="/class-detail/:id" element={<ClassDetailSV />} />
           <Route path="/course-detail/:id" element={<CourseDetailSV />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
-          <Route path="/lesson-detail/:maLopHoc/:maLesson" element={<LessonDetailSV />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/assignments" element={<Assignments />} />
-          <Route path="/exercise/:id" element={<AssignmentDetail />} />
+          <Route path="/baitap/:id" element={<AssignmentDetail />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />
           <Route path="/essay-detail" element={<EssayDetail />} />

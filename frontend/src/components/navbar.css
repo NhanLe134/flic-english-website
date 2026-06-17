@@ -55,6 +55,10 @@
   color: #642002;
 }
 
+.navv-menu a.active {
+  color: #000080;
+}
+
 /* ---- Dropdown ---- */
 .nav-dropdown-wrap {
   position: relative;

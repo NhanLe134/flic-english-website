@@ -6,7 +6,7 @@ export interface Lesson {
   status: "published" | "draft";
 }
 
-export const lessonData: Lesson[] = [
+export const buoiHocData: Lesson[] = [
   {
     id: 1,
     name: "Grammar – Tenses",

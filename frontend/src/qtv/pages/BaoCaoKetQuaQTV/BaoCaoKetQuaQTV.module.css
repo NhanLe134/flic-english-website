@@ -1,0 +1,609 @@
+/* ── Page & Layout ── */
+.page {
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 32px 40px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ── Top bar ── */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+
+.exportBtn {
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background .2s;
+}
+
+
+.exportBtn:hover {
+  background: #333;
+}
+
+/* Bỏ border khi click trên biểu đồ */
+svg:focus,
+svg:active {
+  outline: none;
+  border: none;
+}
+
+
+/* ── Stats ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(224, 212, 195, 0.55);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+  text-align: left;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(245, 130, 32, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+  border-color: rgba(245, 130, 32, 0.3);
+}
+
+.cardIconContainer {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .cardIconContainer {
+  transform: scale(1.08);
+}
+
+.cardUsers .cardIconContainer {
+  background-color: rgba(59, 130, 246, 0.09);
+  color: #2563eb;
+}
+
+.cardActive .cardIconContainer {
+  background-color: rgba(16, 185, 129, 0.09);
+  color: #059669;
+}
+
+.cardCompleted .cardIconContainer {
+  background-color: rgba(139, 92, 246, 0.09);
+  color: #7c3aed;
+}
+
+.cardAverage .cardIconContainer {
+  background-color: rgba(245, 130, 32, 0.09);
+  color: #f58220;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardLabel {
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.cardValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 4px 0 2px 0;
+  line-height: 1.2;
+}
+
+.cardSubtext {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+@media (max-width: 1200px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ── Filter bar ── */
+.filterBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+.searchWrap {
+  margin-bottom: 0;
+  flex: 2;
+  min-width: 250px;
+}
+
+.searchBox {
+  display: flex;
+  width: 100%;
+}
+
+.searchBox input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px 0 0 8px;
+  border: 1.5px solid #e0d8cc;
+  border-right: none;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.searchBox input:focus {
+  border-color: #e87722;
+}
+
+.searchBtn {
+  width: 44px;
+  background: #e87722;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.searchBtn:hover {
+  background: #cf6415;
+}
+
+
+.select {
+  padding: 10px 32px 10px 12px;
+  border: 1.5px solid #e0d8cc;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+  color: #333;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
+  background-position: right 12px center;
+  background-size: 13px;
+  flex: 1;
+  min-width: 160px;
+}
+
+
+.select:focus {
+  border-color: #e87722;
+}
+
+
+/* ── Table wrap ── */
+.tableWrap {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.07);
+  overflow-x: auto;
+  width: 100%;
+}
+
+
+/* ── Table ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+
+.table thead tr {
+  background: #fafafa;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+
+.table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  white-space: nowrap;
+}
+
+
+.thArrow {
+  width: 36px;
+}
+
+
+.table td {
+  padding: 14px;
+  border-bottom: 1px solid #f3f3f3;
+  font-size: 13px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+
+.row {
+  cursor: pointer;
+  transition: background .15s;
+}
+
+
+.row:hover {
+  background: #fdf8f3;
+}
+
+
+/* ── Arrow toggle ── */
+.arrowCell {
+  text-align: center;
+}
+
+
+.arrow {
+  display: inline-block;
+  font-size: 10px;
+  color: #bbb;
+  transition: transform .2s;
+}
+
+
+.arrowDown {
+  transform: rotate(90deg);
+  color: #e87722;
+}
+
+
+/* ── Mã HV ── */
+.maHV {
+  font-weight: 600;
+  color: #333;
+  font-size: 12.5px;
+}
+
+
+/* ── Tên HV ── */
+.tenHV {
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 2px;
+}
+
+
+.subInfo {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+
+/* ── Lớp / khóa ── */
+.tenLop {
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 2px;
+}
+
+
+/* ── Trạng thái badge ── */
+.trangThai {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+.ttDangHoc {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+
+.ttHoanThanh {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+
+.ttTamDung {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+/* ── Điểm badge ── */
+.diemBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+.diemXanh {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+
+.diemVang {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+.diemDo {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* ── Chưa nộp ── */
+.chuaNop {
+  font-size: 12.5px;
+  color: #bbb;
+}
+
+
+/* ── Empty ── */
+.empty {
+  text-align: center;
+  padding: 48px;
+  color: #bbb;
+  font-size: 14px;
+}
+
+
+/* ── Expanded row ── */
+.expandRow td {
+  padding: 20px 24px !important;
+  border-bottom: 2px solid #f0e4d4 !important;
+  background: #fdf8f3;
+}
+
+.detailsContainer {
+  text-align: left;
+}
+
+.detailsTitle {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.buoiCard {
+  background: white;
+  border: 1.5px solid #f0eae0;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.buoiCard h5 {
+  margin: 0 0 10px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 1.5px solid #f1f5f9;
+  padding-bottom: 6px;
+}
+
+.activeBadgeHeader {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+/* Card hiển thị bài tập trong ô expanded */
+.buoiExList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.exCard {
+  background: #fff;
+  border: 1.5px solid #f0eae0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.exCardContent {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.exCardTitle {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exCardSub {
+  font-size: 10.5px;
+  color: #888;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+.exCardBadge {
+  flex-shrink: 0;
+}
+
+.diemBadgeMini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chuaNopMini {
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
+}
+
+.emptyVal {
+  color: #bbb;
+  font-style: italic;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 10px;
+}
+
+.pageBtn {
+  background: #ffffff;
+  border: 1.5px solid #e0d8cc;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #e87722;
+  color: #e87722;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 13px;
+  color: #666;
+}
+
+.clickableCell {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.clickableCell:hover {
+  background-color: #fdf2e9 !important;
+}

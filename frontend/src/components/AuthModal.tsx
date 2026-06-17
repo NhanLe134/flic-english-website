@@ -1,8 +1,8 @@
 import { useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import ForgotPassword from "../pages/ForgotPassword";
+import Login from "../home_pages/Login/Login";
+import Register from "../home_pages/Register/Register";
+import ForgotPassword from "../home_pages/ForgotPassword/ForgotPassword";
 import "./authModal.css";
 
 const AuthModal = () => {
