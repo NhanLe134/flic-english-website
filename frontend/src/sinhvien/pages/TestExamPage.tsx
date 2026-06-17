@@ -435,6 +435,175 @@ function SpeakingSection({
   );
 }
 
+const STATIC_QUESTIONS = {
+  listening: {
+    thoiGian: 45 * 60,
+    parts: [
+      {
+        soPhan: 1,
+        tieuDe: "Part 1: Short Conversations",
+        huongDan: "In this part, you will hear EIGHT short recordings. The recordings will be played ONCE only. There is one question following each recording. For each question, choose the right answer A, B, C or D.",
+        audioUrl: "/coffee-shop.mp3",
+        cauHois: [
+          { id: 1, noiDung: "What music will they have at the party?", luaChon: ["A. guitar", "B. cello", "C. CDs", "D. piano"], dapAn: "D" },
+          { id: 2, noiDung: "What is the man's problem?", luaChon: ["A. He lost his wallet", "B. He missed his flight", "C. He forgot his passport", "D. He is late for work"], dapAn: "B" },
+          { id: 3, noiDung: "Where does this conversation take place?", luaChon: ["A. At a hospital", "B. At a bank", "C. At a restaurant", "D. At a school"], dapAn: "C" },
+          { id: 4, noiDung: "What will the woman do next?", luaChon: ["A. Call a taxi", "B. Take the bus", "C. Walk home", "D. Drive her car"], dapAn: "A" },
+          { id: 5, noiDung: "What is being discussed?", luaChon: ["A. A job promotion", "B. A business trip", "C. A company meeting", "D. A new project"], dapAn: "D" },
+          { id: 6, noiDung: "How does the man feel about the news?", luaChon: ["A. Excited", "B. Disappointed", "C. Confused", "D. Worried"], dapAn: "A" },
+          { id: 7, noiDung: "What time does the train depart?", luaChon: ["A. 8:00 AM", "B. 9:30 AM", "C. 10:00 AM", "D. 11:15 AM"], dapAn: "C" },
+          { id: 8, noiDung: "What does the woman suggest?", luaChon: ["A. Buying a new phone", "B. Visiting a doctor", "C. Going on vacation", "D. Starting a business"], dapAn: "B" }
+        ]
+      },
+      {
+        soPhan: 2,
+        tieuDe: "Part 2: Longer Conversations",
+        huongDan: "In this part, you will hear TWO longer conversations. Answer the questions that follow each conversation.",
+        audioUrl: "/job-interview.mp3",
+        cauHois: [
+          { id: 9, noiDung: "What is the main topic of the conversation?", luaChon: ["A. Travel planning", "B. Job application", "C. Business meeting", "D. School project"], dapAn: "B" },
+          { id: 10, noiDung: "What position is being discussed?", luaChon: ["A. Manager", "B. Engineer", "C. Teacher", "D. Accountant"], dapAn: "A" },
+          { id: 11, noiDung: "How long has the applicant worked in the field?", luaChon: ["A. 2 years", "B. 5 years", "C. 7 years", "D. 10 years"], dapAn: "C" },
+          { id: 12, noiDung: "What will happen next?", luaChon: ["A. A second interview", "B. A written test", "C. A training session", "D. A contract signing"], dapAn: "A" },
+          { id: 13, noiDung: "What does the interviewer say about the company?", luaChon: ["A. It is expanding rapidly", "B. It is facing financial difficulties", "C. It is looking for interns", "D. It recently merged"], dapAn: "A" }
+        ]
+      },
+      {
+        soPhan: 3,
+        tieuDe: "Part 3: Talks and Announcements",
+        huongDan: "In this part, you will hear THREE short talks. Answer the questions based on what you hear.",
+        audioUrl: "/weather-forecast.mp3",
+        cauHois: [
+          { id: 14, noiDung: "What is the purpose of this announcement?", luaChon: ["A. To warn about bad weather", "B. To advertise a product", "C. To announce a schedule change", "D. To introduce new staff"], dapAn: "A" },
+          { id: 15, noiDung: "According to the forecast, what will happen tomorrow?", luaChon: ["A. Heavy rain", "B. Strong winds", "C. Clear skies", "D. Thunderstorms"], dapAn: "D" },
+          { id: 16, noiDung: "What advice is given to listeners?", luaChon: ["A. Stay indoors", "B. Drive carefully", "C. Carry an umbrella", "D. Avoid the beach"], dapAn: "C" },
+          { id: 17, noiDung: "When will the weather improve?", luaChon: ["A. Tonight", "B. Tomorrow morning", "C. This weekend", "D. Next week"], dapAn: "C" },
+          { id: 18, noiDung: "What temperature is expected?", luaChon: ["A. 15°C", "B. 20°C", "C. 25°C", "D. 30°C"], dapAn: "B" },
+          { id: 19, noiDung: "Which area will be most affected?", luaChon: ["A. Northern region", "B. Southern region", "C. Coastal areas", "D. Mountain areas"], dapAn: "C" },
+          { id: 20, noiDung: "What should people prepare for the storm?", luaChon: ["A. Emergency supplies", "B. Rain boots", "C. Sun cream", "D. Extra clothing"], dapAn: "A" }
+        ]
+      }
+    ]
+  },
+  reading: {
+    thoiGian: 60 * 60,
+    parts: [
+      {
+        soPhan: 1,
+        tieuDe: "Part 1: Reading Comprehension",
+        huongDan: "Directions: In this section, you will read several passages. Each one is followed by several questions about it. For questions 1-40, you are to choose the one best answer A, B, C or D to each question. Answer all questions following a passage on the basis of what is stated or implied in that passage.",
+        doanVan: "(A) It is estimated that over 99 percent of all species that ever existed have become extinct. What causes extinction? When a species is no longer adapted to a changed environment, it may perish. The exact causes of a species' death vary from situation to situation. Rapid ecological change may render an environment hostile to a species. For example, temperatures may change and a species may not be able to adapt. Food resources may be affected by environmental changes, which will then cause problems for a species requiring these resources. Other species may become better adapted to an environment, resulting in competition and, ultimately, in the death of a species. The fossil record reveals that extinction has occurred throughout the history of Earth. Recent analyses have also revealed that on some occasions many species became extinct at the same time—a mass extinction. One of the best-known examples of mass extinction occurred 65 million years ago with the demise of dinosaurs and many other forms of life.\n\n(B) Perhaps the largest mass extinction was the one that occurred 225 million years ago, when approximately 95 percent of all species died. Mass extinctions can be caused by a relatively rapid change in the environment and can be worsened by the close interrelationship of many species. If, for example, something was to happen to destroy much of the plankton in the oceans, then the oxygen content of Earth would drop, affecting even organisms not living in the oceans. Such a change would probably lead to a mass extinction.",
+        cauHois: [
+          { id: 1, noiDung: "The word 'it' in paragraph (A) refers to", luaChon: ["A. extinction", "B. species", "C. environment", "D. 99 percent"], dapAn: "A" },
+          { id: 2, noiDung: "The word 'ultimately' in paragraph (A) is closest in meaning to", luaChon: ["A. unfortunately", "B. eventually", "C. exceptionally", "D. dramatically"], dapAn: "B" },
+          { id: 3, noiDung: "What does the author say in paragraph (A) regarding most species in Earth's history?", luaChon: ["A. They have caused rapid change in the environment.", "B. They are no longer in existence.", "C. They have remained basically unchanged from their original forms.", "D. They have been able to adapt to ecological changes."], dapAn: "B" },
+          { id: 4, noiDung: "Which of the following is NOT mentioned in paragraph (A) as resulting from rapid ecological change?", luaChon: ["A. Temperature changes", "B. Competition among species", "C. Availability of food resources", "D. Introduction of new species"], dapAn: "D" },
+          { id: 5, noiDung: "The word 'demise' in paragraph (A) is closest in meaning to", luaChon: ["A. change", "B. recovery", "C. death", "D. escape"], dapAn: "C" },
+          { id: 6, noiDung: "According to paragraph (B), what happened 225 million years ago?", luaChon: ["A. A new species evolved", "B. 95% of all species went extinct", "C. Plankton disappeared from oceans", "D. Dinosaurs first appeared"], dapAn: "B" },
+          { id: 7, noiDung: "What role does plankton play according to paragraph (B)?", luaChon: ["A. It produces food for fish", "B. It contributes to Earth's oxygen content", "C. It prevents ocean pollution", "D. It regulates temperature"], dapAn: "B" },
+          { id: 8, noiDung: "The word 'worsened' in paragraph (B) is closest in meaning to", luaChon: ["A. improved", "B. interrupted", "C. made more severe", "D. prevented"], dapAn: "C" },
+          { id: 9, noiDung: "What is the main idea of this passage?", luaChon: ["A. Dinosaurs dominated Earth for millions of years", "B. Extinction is a natural process that has occurred throughout Earth's history", "C. Human activity is the main cause of extinction", "D. Most species alive today evolved from ancient organisms"], dapAn: "B" },
+          { id: 10, noiDung: "Which is the best title for this passage?", luaChon: ["A. The Age of Dinosaurs", "B. Environmental Changes on Earth", "C. Extinction: Causes and Examples", "D. Marine Life and Oxygen"], dapAn: "C" }
+        ]
+      },
+      {
+        soPhan: 2,
+        tieuDe: "Part 2: Vocabulary in Context",
+        huongDan: "Read the passage and answer the vocabulary questions.",
+        doanVan: "The Industrial Revolution, which began in Britain in the mid-18th century, fundamentally transformed society and the economy. Factories replaced cottage industries, urbanization accelerated as workers moved to cities, and new technologies like the steam engine dramatically increased productivity. However, these changes also brought significant social challenges, including harsh working conditions, child labor, and growing inequality between factory owners and workers. The era also sparked important social movements that eventually led to labor reforms and improvements in workers' rights.",
+        cauHois: [
+          { id: 11, noiDung: "The word 'fundamentally' in the passage is closest in meaning to", luaChon: ["A. temporarily", "B. basically/completely", "C. gradually", "D. partially"], dapAn: "B" },
+          { id: 12, noiDung: "What does 'urbanization' refer to?", luaChon: ["A. The growth of rural areas", "B. The movement of people to cities", "C. Industrial development", "D. Agricultural expansion"], dapAn: "B" },
+          { id: 13, noiDung: "Which best describes the 'cottage industries' mentioned in the passage?", luaChon: ["A. Large factory-based production", "B. Small-scale home-based production", "C. Agricultural activities", "D. International trade"], dapAn: "B" },
+          { id: 14, noiDung: "According to the passage, what was a major social problem of the Industrial Revolution?", luaChon: ["A. Lack of new technology", "B. Decreasing productivity", "C. Harsh working conditions", "D. Rural overpopulation"], dapAn: "C" },
+          { id: 15, noiDung: "What eventually resulted from social movements of that era?", luaChon: ["A. End of industrialization", "B. Return to cottage industries", "C. Labor reforms and workers' rights improvements", "D. Factory closures"], dapAn: "C" }
+        ]
+      },
+      {
+        soPhan: 3,
+        tieuDe: "Part 3: Text Completion",
+        huongDan: "Choose the best answer to complete each sentence based on the context.",
+        doanVan: "Climate change is one of the most pressing issues of our time. Scientists have warned that without significant reductions in greenhouse gas emissions, global temperatures could rise by more than 2 degrees Celsius above pre-industrial levels by the end of this century. Such a rise would have devastating consequences for ecosystems, weather patterns, sea levels, and human societies. International agreements like the Paris Accord aim to coordinate global efforts to limit warming and transition to cleaner energy sources.",
+        cauHois: [
+          { id: 16, noiDung: "The word 'pressing' in the passage is closest in meaning to", luaChon: ["A. easy", "B. urgent", "C. minor", "D. outdated"], dapAn: "B" },
+          { id: 17, noiDung: "What do scientists warn will happen without emission reductions?", luaChon: ["A. Sea levels will drop", "B. Temperatures will fall", "C. Global temperatures will rise significantly", "D. Weather will improve"], dapAn: "C" },
+          { id: 18, noiDung: "What is the purpose of the Paris Accord according to the passage?", luaChon: ["A. To ban fossil fuels entirely", "B. To coordinate global efforts to limit warming", "C. To increase greenhouse gas emissions", "D. To fund new technologies"], dapAn: "B" },
+          { id: 19, noiDung: "The word 'devastating' is closest in meaning to", luaChon: ["A. beneficial", "B. minor", "C. destructive", "D. temporary"], dapAn: "C" },
+          { id: 20, noiDung: "What areas would be affected by a temperature rise above 2°C?", luaChon: ["A. Only polar regions", "B. Ecosystems and weather patterns", "C. Only human societies", "D. Only sea levels"], dapAn: "B" }
+        ]
+      },
+      {
+        soPhan: 4,
+        tieuDe: "Part 4: Long Reading",
+        huongDan: "Read the following passage carefully and answer all questions.",
+        doanVan: "The continents may have first risen high above the oceans of the world about 3 billion years ago, researchers say. That is about a billion years earlier than geoscientists had suspected for the emergence of a good chunk of the continents.\n\nEarth is the only known planet whose surface is divided into continents and oceans. Currently, the continents rise an average of about 2.5 miles (4 kilometers) above the seafloor.\n\nThe continents are composed of a thick, buoyant crust that is about 21 miles (35 km) deep, on average, whereas the comparatively thin, dense crust of the ocean floor is only about 4 miles (7 km) thick. Because the continents are so thick and buoyant, they are less likely than oceanic crust to sink into Earth's interior, which is why so many ancient continental rocks have survived in the Earth's crust. Details of how the continents formed, when and how they formed, remains hotly contested.",
+        cauHois: [
+          { id: 21, noiDung: "According to the geoscientists, when were the continents assumed to first rise above the oceans?", luaChon: ["A. 2 billion years ago", "B. 3 billion years ago", "C. 4 billion years ago", "D. 1 billion years ago"], dapAn: "B" },
+          { id: 22, noiDung: "What is true about the continents?", luaChon: ["A. They are thinner than oceanic crust", "B. They have a dense crust", "C. They are made of buoyant crust", "D. They sink frequently"], dapAn: "C" },
+          { id: 23, noiDung: "What is Earth unique in having?", luaChon: ["A. A surface divided into continents and oceans", "B. Water on its surface", "C. A thick atmosphere", "D. Volcanic activity"], dapAn: "A" },
+          { id: 24, noiDung: "The phrase 'To shed light on' means", luaChon: ["A. To ignite", "B. To clarify", "C. To illustrate", "D. To release"], dapAn: "B" },
+          { id: 25, noiDung: "According to the passage, how was the crust of the seafloor formed?", luaChon: ["A. Through tectonic compression", "B. Through silica deposition", "C. Through volcanic activity on land", "D. Through erosion of continents"], dapAn: "A" },
+          { id: 26, noiDung: "What is the average depth of continental crust?", luaChon: ["A. 4 km", "B. 7 km", "C. 35 km", "D. 21 miles"], dapAn: "C" },
+          { id: 27, noiDung: "Why have ancient continental rocks survived in Earth's crust?", luaChon: ["A. They are harder than ocean rocks", "B. They are less likely to sink into Earth's interior", "C. They were protected by glaciers", "D. They formed recently"], dapAn: "B" },
+          { id: 28, noiDung: "What remains 'hotly contested' according to the passage?", luaChon: ["A. The age of the oceans", "B. The formation of continents", "C. The depth of the seafloor", "D. The composition of rocks"], dapAn: "B" },
+          { id: 29, noiDung: "How far do continents rise above the seafloor on average?", luaChon: ["A. 1.5 miles", "B. 2 miles", "C. 2.5 miles", "D. 3 miles"], dapAn: "C" },
+          { id: 30, noiDung: "The passage is mainly about", luaChon: ["A. Ocean floor formation", "B. The origin and nature of continents", "C. Volcanic activity", "D. Erosion processes"], dapAn: "B" }
+        ]
+      }
+    ]
+  },
+  writing: {
+    thoiGian: 60 * 60,
+    parts: [
+      {
+        soPhan: 1,
+        tieuDe: "Part 1: Letter Writing",
+        huongDan: "You should spend about 20 minutes on this task. You have received this email from an English-speaking pen friend.",
+        noiDung: "I'm a rock fan. I can listen to rock all day.\n\nWhat about you?\nWhat kind of music do you like?\nWhat is your favourite song and artist?\nPlease write to tell me more about your music taste.",
+        yeuCau: "Write an email to your friend responding to their questions and sharing your music preferences.\n\nYou should write at least 120 words. Do not include your name. Your response will be evaluated in terms of Task Fulfillment, Organization, Vocabulary and Grammar.",
+        soTuToiThieu: 120
+      },
+      {
+        soPhan: 2,
+        tieuDe: "Part 2: Essay Writing",
+        huongDan: "You should spend about 40 minutes on this task. Write about the following topic.",
+        noiDung: "Some people believe that technology has made our lives easier and more convenient. Others think it has made life more complicated and stressful.\n\nDiscuss both views and give your own opinion.",
+        yeuCau: "Give reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nYou should write at least 250 words. Your response will be evaluated in terms of Task Fulfillment, Coherence and Cohesion, Lexical Resource, and Grammatical Range and Accuracy.",
+        soTuToiThieu: 250
+      }
+    ]
+  },
+  speaking: {
+    thoiGian: 12 * 60,
+    parts: [
+      {
+        soPhan: 1,
+        tieuDe: "Part 1: Social Interaction",
+        moTa: "Question 1: Social Interaction (3 minutes)",
+        audioUrl: "/coffee-shop.mp3",
+        noiDung: "The examiner will ask you some questions about yourself and your life. Please answer naturally and in full sentences. Topic: Your daily routine and hobbies.\n\nSample questions:\n- What do you usually do in the morning?\n- What are your hobbies and why do you enjoy them?\n- How do you spend your weekends?",
+        thoiGianNoi: 3 * 60
+      },
+      {
+        soPhan: 2,
+        tieuDe: "Part 2: Solution Discussion",
+        moTa: "Question 2: Solution Discussion (4 minutes)",
+        audioUrl: "/job-interview.mp3",
+        noiDung: "Situation: If you won a lottery of 1 billion VND, what would you do with the money? Three options are suggested: buying a new house, starting a business, and depositing the money in the bank. Which option do you think is the best choice? Why?",
+        thoiGianNoi: 4 * 60
+      },
+      {
+        soPhan: 3,
+        tieuDe: "Part 3: Topic Development",
+        moTa: "Question 3: Topic Development (5 minutes)",
+        audioUrl: "/weather-forecast.mp3",
+        noiDung: "Topic: The impact of social media on modern society.\n\nDiscuss the following points:\n- How has social media changed the way people communicate?\n- What are the positive and negative effects of social media?\n- Do you think the benefits of social media outweigh the disadvantages? Give your reasons.",
+        thoiGianNoi: 5 * 60
+      }
+    ]
+  }
+};
+
 // ---- MAIN EXAM PAGE ----
 export default function TestExamPage() {
   const { testId } = useParams<{ testId: string }>();
@@ -480,17 +649,20 @@ export default function TestExamPage() {
       const u = JSON.parse(sessionStorage.getItem("user") || "{}");
       setHoTen(u.HoTen || "Sinh Viên");
     } catch { /* empty */ }
-    
-    fetch(`http://localhost:5000/tests/${testId}`)
-      .then(r => r.json())
-      .then((d: TestData) => {
-        setTestData(d);
-        setTimeLeft(d.kyNang.listening.thoiGian);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+
+    // Frontend-only simulation of tests detail response
+    const testIdNum = parseInt(testId || "1");
+    const testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
+    const testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
+
+    setTestData({
+      MaBaiTest: testIdNum,
+      TieuDe: testTitle,
+      CapDo: testLevel,
+      kyNang: STATIC_QUESTIONS
+    });
+    setTimeLeft(STATIC_QUESTIONS.listening.thoiGian);
+    setLoading(false);
   }, [testId]);
 
   const showToast = useCallback((msg: string) => {
@@ -499,14 +671,10 @@ export default function TestExamPage() {
   }, []);
 
   const doSave = useCallback(() => {
-    fetch(`http://localhost:5000/tests/${testId}/save`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ skill, partIdx, answers, writingAnswers })
-    }).catch(() => {});
+    // Frontend-only: skip fetch call
     showToast("Bài làm đã được lưu vào hệ thống.");
     setDoneParts(p => ({ ...p, [`${skill}_${partIdx}`]: true }));
-  }, [testId, skill, partIdx, answers, writingAnswers, showToast]);
+  }, [skill, partIdx, showToast]);
 
   // Speaking Audio Ended Callback
   const handleSpeakingAudioEnded = useCallback(() => {
@@ -737,7 +905,6 @@ export default function TestExamPage() {
       type: "submit",
       onConfirm: () => {
         setModal(null);
-        fetch(`http://localhost:5000/tests/${testId}/submit`, { method: "POST" }).catch(() => {});
         calculateScores();
         setIsSubmitted(true);
       }

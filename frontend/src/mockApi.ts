@@ -237,7 +237,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         return new Response(
           JSON.stringify({
             MaNguoiDung: 100,
-            HoTen: "Học viên Nguyễn Văn C",
+            HoTen: "Lê Nhàn",
             TenDangNhap: "student",
             Email: "student@flic.edu.vn"
           }),
@@ -385,13 +385,14 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     }
 
     // 8. GET LESSON DETAIL
-    if (urlStr.includes("/lesson/") && method === "GET") {
+    if ((urlStr.includes("/lesson/") || urlStr.includes("/buoihoc/")) && method === "GET") {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
       return new Response(
         JSON.stringify({
           MaBuoiHoc: id,
           TenBuoiHoc: `Buổi ${id}: Chuyên đề ngữ pháp & luyện đề`,
+          TenLop: "Lớp 2 - TOEIC Foundation",
           MoTa: `Mô tả nội dung học chi tiết cho buổi học số ${id}`,
           ActiveBuoiHocId: 1,
           ThuTu: id,

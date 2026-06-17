@@ -1524,7 +1524,8 @@ app.put("/bainop/:maBaiNop/cham", async (req, res) => {
 // Nộp bài
 app.post("/bainop", async (req, res) => {
   try {
-    const { MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai } = req.body  // ← thêm Diem, TrangThai
+    const { MaSinhVien, NoiDung, Diem, TrangThai } = req.body;
+    const MaBaiTap = req.body.MaBaiTap || req.body.MaExercise;
     const pool = await poolPromise
     const check = await pool.request()
       .input("MaBaiTap", MaBaiTap).input("MaSinhVien", MaSinhVien)
@@ -1541,6 +1542,50 @@ app.post("/bainop", async (req, res) => {
     res.json({ message: "Nộp bài thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
+app.post("/bainop/tracnghiem", async (req, res) => {
+  try {
+    const { MaSinhVien, DapAnChon } = req.body;
+    const MaBaiTap = req.body.MaBaiTap || req.body.MaExercise;
+    const pool = await poolPromise;
+
+    // Lấy đáp án đúng từ BAITAP
+    const exResult = await pool.request()
+      .input("MaBaiTap", MaBaiTap)
+      .query(`SELECT Questions FROM BAITAP WHERE MaBaiTap = @MaBaiTap`);
+
+    const questions = exResult.recordset[0]?.Questions || "";
+
+    // Lấy đáp án đúng — phần cuối sau "Đáp án đúng: "
+    const parts = questions.split("|");
+    const dapAnPart = parts.find(q => q.includes("Đáp án đúng:"));
+    const dapAnDung = dapAnPart
+      ? dapAnPart.replace("Đáp án đúng:", "").trim()
+      : null;
+
+    // Tính điểm: đúng = 10, sai = 0
+    const diem = DapAnChon === dapAnDung ? 10 : 0;
+
+    // Kiểm tra đã nộp chưa
+    const check = await pool.request()
+      .input("MaBaiTap", MaBaiTap)
+      .input("MaSinhVien", MaSinhVien)
+      .query(`SELECT * FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
+
+    if (check.recordset.length > 0)
+      return res.json({ message: "Đã nộp bài này rồi", Diem: check.recordset[0].Diem });
+
+    // Lưu kết quả
+    await pool.request()
+      .input("MaBaiTap", MaBaiTap)
+      .input("MaSinhVien", MaSinhVien)
+      .input("NoiDung", `Đáp án chọn: ${DapAnChon}`)
+      .input("Diem", diem)
+      .query(`INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai)
+              VALUES (@MaBaiTap, @MaSinhVien, @NoiDung, @Diem, N'Đã chấm')`);
+
+    res.json({ message: "Nộp bài thành công", Diem: diem, DapAnDung: dapAnDung });
+  } catch (err) { res.status(500).send(err.message); }
+});
 
 // ADMIN
 app.get("/admin/stats", async (req, res) => {
@@ -2812,15 +2857,19 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien,
-          COALESCE((
-            SELECT TOP 1 
-              CASE 
-                WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
-                ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
-              END
-            FROM BUOIHOC active_bh 
-            WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
-          ), 0) AS TienDo,
+          COALESCE(
+            (
+              SELECT TOP 1 
+                CASE 
+                  WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                  ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                END
+              FROM BUOIHOC active_bh 
+              WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
+            ),
+            l.TienDo,
+            0
+          ) AS TienDo,
           k.TenKhoaHoc,
           sl.TrangThai, sl.NgayGhiDanh
         FROM SINHVIEN_LOPHOC sl

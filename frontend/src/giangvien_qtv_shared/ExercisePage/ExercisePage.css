@@ -22,88 +22,136 @@
 /* HEADER CARD */
 .header-card {
   background: white;
-  padding: 28px;
-  border-radius: 16px;
+  padding: 32px;
+  border-radius: 24px;
   position: relative;
-  border: 1px solid #eef2f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-
-.header-top {
+  border: none;
+  
+  box-shadow: 0 10px 30px rgba(0, 0, 128, 0.02);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  gap: 30px;
+  overflow: hidden;
+  margin-bottom: 24px;
 }
 
-.header-card h1 {
-  margin: 0;
-  font-size: 28px;
+.cd-left-content {
+  flex: 1;
 }
 
-.header-card p {
-  color: #666;
-  margin-top: 4px;
-}
-
-/* INFO ROW */
-.info-row {
-  display: flex;
-  gap: 50px;
-  margin-top: 25px;
-  flex-wrap: wrap;
-}
-
-.info-item {
+.cd-right-content {
+  width: 240px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 8px;
+  justify-content: center;
+  border-left: 1px dashed #e2e8f0;
+  padding-left: 32px;
+  flex-shrink: 0;
+  gap: 12px;
 }
 
-.cd2-icon-wrapper {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+.header-card h1 {
+  margin: 0 0 6px 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: #000080;
+  line-height: 1.25;
+}
+
+.cd-class-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0 0 24px 0;
+}
+
+.cd-class-id {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cd-class-dates {
+  font-size: 12px;
+  color: #64748b;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  font-weight: 500;
 }
 
-.cd2-icon-wrapper.teacher-icon {
-  background: rgba(249, 88, 0, 0.08);
-  color: #f95800;
+/* INFO ROW (2-COLUMN GRID) */
+.header-card .info-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 24px;
+  margin-top: 20px;
 }
 
-.cd2-icon-wrapper.calendar-icon {
-  background: rgba(2, 132, 199, 0.08);
-  color: #0284c7;
+.header-card .info-item {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+  gap: 14px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
 
-.cd2-icon-wrapper.students-icon {
-  background: rgba(16, 117, 68, 0.08);
-  color: #107544;
+.info-item-content {
+  display: flex;
+  flex-direction: column;
 }
 
-.cd2-icon-wrapper.status-icon {
-  background: rgba(0, 0, 128, 0.08);
-  color: #000080;
+.cd-meta-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  font-size: 16px !important;
+  aspect-ratio: 1 / 1 !important;
+}
+
+.cd-meta-icon-wrapper.teacher-icon,
+.cd-meta-icon-wrapper.calendar-icon,
+.cd-meta-icon-wrapper.students-icon,
+.cd-meta-icon-wrapper.status-icon {
+  background: #fff2eb; /* Orange tint background */
+  color: #F95800;      /* Orange icon color */
 }
 
 .label {
-  font-size: 12px;
-  color: #777;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin: 0;
 }
 
-/* STATUS */
+.info-item b {
+  font-size: 14.5px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* STATUS BADGE */
 .status-badge {
-  background: #2ecc71;
-  color: white;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 13px;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* PROGRESS */
@@ -138,32 +186,37 @@
 
 /* TABS */
 .tabs {
-  margin-top: 25px;
+  margin-top: 30px;
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .tab {
-  padding: 8px 20px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  border-radius: 20px;
+  padding: 10px 24px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  color: #4a5568;
-  transition: 0.2s;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.25s ease;
+  outline: none;
 }
 
 .tab:hover {
-  background: #f8fafc;
-  border-color: #cbd5e0;
+  color: #F95800;
+  background: #FFF2EB;
 }
 
 .tab.active {
   background: #F95800;
   color: white;
-  border-color: #F95800;
-  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
+  font-weight: 700;
 }
 
 /* EXERCISE SECTION */

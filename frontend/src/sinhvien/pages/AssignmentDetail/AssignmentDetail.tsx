@@ -166,9 +166,9 @@ function AssignmentDetail() {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      fetch(`${API}/exercise/${id}`).then(r => r.json()),
+      fetch(`${API}/baitap/${id}`).then(r => r.json()),
       maLopHoc ? fetch(`${API}/classes/${maLopHoc}/info`).then(r => r.json()) : Promise.resolve(null),
-      fetch(`${API}/bainop/exercise/${id}`).then(r => r.json()),
+      fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()),
     ])
       .then(([exData, lopData, nopData]) => {
         setExercise(exData);

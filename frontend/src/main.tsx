@@ -1,5 +1,5 @@
 // Load mock API only when explicitly enabled via Vite env `VITE_USE_MOCK`
-if (import.meta.env.VITE_USE_MOCK === 'true') {
+if (import.meta.env.VITE_USE_MOCK === 'false') {
   import('./mockApi');
 }
 import { StrictMode } from 'react'

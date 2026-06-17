@@ -57,7 +57,6 @@ import MyCourses from "./sinhvien/pages/MyCourses/MyCourses"
 import CourseDetailSV from "./sinhvien/pages/CourseDetail/CourseDetailSV"
 import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
-import LessonDetailSV from "./sinhvien/pages/LessonDetail/LessonDetailSV"
 import Progress from "./sinhvien/pages/Progress/Progress"
 import Settings from "./sinhvien/pages/Settings/Settings"
 import Assignments from "./sinhvien/pages/Assignments/Assignments"
@@ -167,7 +166,6 @@ function App() {
           <Route path="/class-detail/:id" element={<ClassDetailSV />} />
           <Route path="/course-detail/:id" element={<CourseDetailSV />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
-          <Route path="/lesson-detail/:maLopHoc/:maBuoiHoc" element={<LessonDetailSV />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />

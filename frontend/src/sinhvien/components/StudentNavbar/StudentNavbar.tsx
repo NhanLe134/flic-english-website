@@ -54,6 +54,7 @@ export default function StudentNavbar() {
       p.startsWith("/bai-giangSV/") ||
       p === "/assignments" ||
       p.startsWith("/exercise/") ||
+      p.startsWith("/baitap/") ||
       p === "/assignment-success" ||
       p.startsWith("/quiz-detail") ||
       p.startsWith("/essay-detail")
@@ -64,9 +65,9 @@ export default function StudentNavbar() {
     <header className="navbar student-navbar">
       <div className="nav-wrapper">
         {/* Logo */}
-        <Link to="/profile" className="logo">
+        <div className="logo">
           <img src={logo} alt="FLIC logo" className="logo-img" />
-        </Link>
+        </div>
 
         {/* Navigation Menu */}
         <ul className="navv-menu">

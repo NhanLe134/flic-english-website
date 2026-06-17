@@ -792,8 +792,7 @@ const CreateExercise = () => {
 
       {/* TABS */}
       <div className="tabs">
-        <button className="tab" onClick={() => navigate(`/class/${id}`)}>Tổng quan</button>
-        <button className="tab active" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
+                <button className="tab active" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
         <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
