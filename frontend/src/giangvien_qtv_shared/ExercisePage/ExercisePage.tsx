@@ -1,7 +1,7 @@
 import "./ExercisePage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiUser, FiCalendar, FiUsers, FiBookOpen, FiArrowLeft } from "react-icons/fi";
+import { FiMonitor, FiClock, FiUsers, FiBook, FiArrowLeft, FiCalendar } from "react-icons/fi";
 
 const ExercisePage = () => {
   const navigate = useNavigate();
@@ -93,64 +93,66 @@ const ExercisePage = () => {
 
       {/* ===== HEADER ===== */}
       <div className="header-card">
-        <div className="header-top">
-          <div>
-            <h1>{lesson?.TenBuoiHoc}</h1>
-            <p>{lesson?.MoTa}</p>
-            <p>
-              <FiCalendar size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: '#666' }} />
-              {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} -{" "}
-              {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
-            </p>
+        <div className="cd-left-content">
+          <h1>{lesson?.TenBuoiHoc}</h1>
+          <p className="cd-class-desc">{lesson?.MoTa}</p>
+          
+          <div className="info-row">
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper teacher-icon">
+                <FiMonitor size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Giáo viên</p>
+                <b>{giangVien}</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper calendar-icon">
+                <FiClock size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Lịch học</p>
+                <b>{lichHoc}</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper students-icon">
+                <FiUsers size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Số học viên</p>
+                <b>{soHocVien} học viên</b>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="cd-meta-icon-wrapper status-icon">
+                <FiBook size={18} />
+              </div>
+              <div className="info-item-content">
+                <p className="label">Trạng thái</p>
+                <b>Đang học</b>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div className="cd-right-content">
           <span className="status-badge">Đang học</span>
+          <span className="cd-class-id">Mã lớp: B239B1</span>
+          <span className="cd-class-dates">
+            <FiCalendar size={13} style={{ marginRight: 6 }} />
+            {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} - {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
+          </span>
         </div>
-
-        <div className="info-row">
-          <div className="info-item">
-            <div className="cd2-icon-wrapper teacher-icon">
-              <FiUser size={18} />
-            </div>
-            <div>
-              <p className="label">Giáo viên</p>
-              <b>{giangVien}</b>
-            </div>
-          </div>
-          <div className="info-item">
-            <div className="cd2-icon-wrapper calendar-icon">
-              <FiCalendar size={18} />
-            </div>
-            <div>
-              <p className="label">Lịch học</p>
-              <b>{lichHoc}</b>
-            </div>
-          </div>
-          <div className="info-item">
-            <div className="cd2-icon-wrapper students-icon">
-              <FiUsers size={18} />
-            </div>
-            <div>
-              <p className="label">Số học viên</p>
-              <b>{soHocVien}</b>
-            </div>
-          </div>
-          <div className="info-item">
-            <div className="cd2-icon-wrapper status-icon">
-              <FiBookOpen size={18} />
-            </div>
-            <div>
-              <p className="label">Trạng thái</p>
-              <b>Đang học</b>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* ===== TABS ===== */}
       <div className="tabs">
-        <button className="tab" onClick={() => navigate(`/class/${id}`)}>Tổng quan</button>
-        <button className="tab active">Bài tập</button>
+                <button className="tab active">Bài tập</button>
         <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
         <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
       </div>
