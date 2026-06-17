@@ -1,7 +1,9 @@
 import "./ClassDetail.css";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { FiMonitor, FiClock, FiUsers, FiBook, FiArrowLeft, FiCalendar } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiArrowLeft, FiMonitor, FiClock, FiBook } from "react-icons/fi";
+import LessonManagement from "../LessonManagement/LessonManagement";
+import DocumentManagement from "../DocumentManagement/DocumentManagement";
 
 type ActiveTab = "exercises" | "lectures" | "documents";
 
@@ -15,11 +17,8 @@ const ClassDetail = () => {
   const [studentCount, setStudentCount] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<ActiveTab>("exercises");
   const [exerciseSearch, setExerciseSearch] = useState("");
-  const [lectureSearch, setLectureSearch] = useState("");
-  const [documentSearch, setDocumentSearch] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "homework" | "exam">("all");
   const [exercises, setExercises] = useState<any[]>([]);
-  const [lectures, setLectures] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -52,35 +51,31 @@ const ClassDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:5000/baitap/${id}`)
+    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
       .then(res => res.json())
-      .then(data => setExercises(Array.isArray(data) ? data : []))
-      .catch(err => console.log(err));
-
-    fetch(`http://localhost:5000/baigiang/${id}`)
-      .then(res => res.json())
-      .then(data => setLectures(Array.isArray(data) ? data : []))
-      .catch(err => console.log(err));
-
-    fetch(`http://localhost:5000/tailieu/${id}`)
-      .then(res => res.json())
-      .then(data => setDocuments(Array.isArray(data) ? data : []))
-      .catch(err => console.log(err));
+      .then(data => {
+        console.log("ClassDetail exercises fetched:", data);
+        setExercises(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error("ClassDetail exercises fetch error:", err));
   }, [id]);
 
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
-  const filteredExercises = exercises.filter((ex) =>
-    ex.Title?.toLowerCase().includes(exerciseSearch.toLowerCase())
-  );
+  const filteredExercises = exercises.filter((ex) => {
+    const matchesSearch = ex.Title?.toLowerCase().includes(exerciseSearch.toLowerCase());
+    const isExam = ex.IsExam === 1 || ex.Type === "exam";
 
-  const filteredLectures = lectures.filter((lecture) =>
-    `${lecture.TieuDe || ""} ${lecture.LoaiBaiHoc || ""}`.toLowerCase().includes(lectureSearch.toLowerCase())
-  );
+    if (filterType === "homework") {
+      return matchesSearch && !isExam;
+    }
+    if (filterType === "exam") {
+      return matchesSearch && isExam;
+    }
+    return matchesSearch;
+  });
 
-  const filteredDocuments = documents.filter((doc) =>
-    `${doc.TieuDe || ""} ${doc.MoTa || ""}`.toLowerCase().includes(documentSearch.toLowerCase())
-  );
+
 
   const renderSearchIcon = () => (
     <svg
@@ -97,6 +92,7 @@ const ClassDetail = () => {
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   );
+
 
   return (
     <div className="cd2-wrapper">
@@ -179,24 +175,45 @@ const ClassDetail = () => {
         <div className="lesson-tab-section">
           <h2>Danh sách bài tập</h2>
 
-          <div className="lesson-tab-top">
-            <div className="ep-search-group">
-              <form className="search-container" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  className="search-input"
-                  placeholder="Tìm kiếm bài tập..."
-                  value={exerciseSearch}
-                  onChange={(e) => setExerciseSearch(e.target.value)}
-                />
-                <button className="search-button" type="button" aria-label="Tìm kiếm">
-                  {renderSearchIcon()}
-                </button>
-              </form>
-
-              <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
-                + Tạo bài tập
+          <div className="shared-tab-toolbar">
+            <form className="search-container" onSubmit={(e) => e.preventDefault()}>
+              <input
+                className="search-input"
+                placeholder="Tìm kiếm bài tập..."
+                value={exerciseSearch}
+                onChange={(e) => setExerciseSearch(e.target.value)}
+              />
+              <button className="search-button" type="button" aria-label="Tìm kiếm">
+                {renderSearchIcon()}
               </button>
-            </div>
+            </form>
+
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+            >
+              <option value="all">Tất cả bài</option>
+              <option value="homework">Bài tập</option>
+              <option value="exam">Bài kiểm tra</option>
+            </select>
+
+            <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
+              + Tạo bài tập
+            </button>
+
+            <button
+              className="ep-add-btn"
+              onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
+              style={{
+                background: "#fff",
+                color: "#F95800",
+                border: "1.5px solid #F95800",
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
+            >
+              + Tạo bài LTT
+            </button>
 
             <div className="ep-total-box">
               <p>Tổng số bài tập</p>
@@ -238,132 +255,11 @@ const ClassDetail = () => {
       )}
 
       {activeTab === "lectures" && (
-        <div className="lesson-tab-section">
-          <h2>Danh sách bài giảng</h2>
-
-          <div className="lesson-tab-top">
-            <div className="ep-search-group">
-              <form className="search-container" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  className="search-input"
-                  placeholder="Tìm kiếm bài giảng..."
-                  value={lectureSearch}
-                  onChange={(e) => setLectureSearch(e.target.value)}
-                />
-                <button className="search-button" type="button" aria-label="Tìm kiếm">
-                  {renderSearchIcon()}
-                </button>
-              </form>
-
-              <button className="ep-add-btn" onClick={() => navigate(`/them-bai-giang/${id}`)}>
-                + Thêm bài học mới
-              </button>
-            </div>
-
-            <div className="ep-total-box">
-              <p>Tổng số bài giảng</p>
-              <b>{filteredLectures.length}</b>
-            </div>
-          </div>
-
-          {filteredLectures.length === 0 ? (
-            <div className="lesson-tab-empty">Chưa có bài giảng nào cho buổi học này.</div>
-          ) : (
-            <div className="table-card">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Tên bài giảng</th>
-                    <th>Loại</th>
-                    <th>Thời lượng</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLectures.map((lecture, index) => (
-                    <tr key={lecture.MaBaiHoc}>
-                      <td>{index + 1}</td>
-                      <td>{lecture.TieuDe}</td>
-                      <td>{lecture.LoaiBaiHoc || "N/A"}</td>
-                      <td>{lecture.ThoiLuong || "N/A"}</td>
-                      <td>
-                        <span className={`content-status ${lecture.TrangThai || "draft"}`}>
-                          {lecture.TrangThai === "published" ? "Đã duyệt" : lecture.TrangThai === "pending" ? "Chờ duyệt" : lecture.TrangThai === "rejected" ? "Từ chối" : lecture.TrangThai || "Nháp"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button className="action-btn discuss-btn" onClick={() => navigate(`/lesson-discussion/${lecture.MaBaiHoc}`)}>
-                            Thảo luận
-                          </button>
-                          <button className="action-btn detaill-btn" onClick={() => navigate(`/bai-giang/${lecture.MaBaiHoc}`)}>
-                            Xem chi tiết
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        <LessonManagement buoiHocIdProp={id} isEmbedded={true} />
       )}
 
       {activeTab === "documents" && (
-        <div className="lesson-tab-section">
-          <h2>Danh sách tài liệu</h2>
-
-          <div className="lesson-tab-top">
-            <div className="ep-search-group">
-              <form className="search-container" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  className="search-input"
-                  placeholder="Tìm kiếm tài liệu..."
-                  value={documentSearch}
-                  onChange={(e) => setDocumentSearch(e.target.value)}
-                />
-                <button className="search-button" type="button" aria-label="Tìm kiếm">
-                  {renderSearchIcon()}
-                </button>
-              </form>
-
-              <button className="ep-add-btn" onClick={() => navigate(`/them-tai-lieu/${id}`)}>
-                + Thêm tài liệu
-              </button>
-            </div>
-
-            <div className="ep-total-box">
-              <p>Tổng số tài liệu</p>
-              <b>{filteredDocuments.length}</b>
-            </div>
-          </div>
-
-          {filteredDocuments.length === 0 ? (
-            <div className="lesson-tab-empty">Chưa có tài liệu nào cho buổi học này.</div>
-          ) : (
-            <div className="doc-list">
-              {filteredDocuments.map((doc) => (
-                <div key={doc.MaTaiLieu} className="doc-card">
-                  <div className="doc-left">
-                    <h3>{doc.TieuDe}</h3>
-                    <p className="doc-desc">{doc.MoTa}</p>
-                  </div>
-                  <div className="doc-right">
-                    <span className="doc-date">
-                      Cập nhật: {doc.NgayCapNhat ? new Date(doc.NgayCapNhat).toLocaleDateString("vi-VN") : "N/A"}
-                    </span>
-                    <button className="detaill-btn" onClick={() => navigate(`/quan-ly-tai-lieu/${doc.MaTaiLieu}`)}>
-                      Xem chi tiết
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <DocumentManagement buoiHocIdProp={id} isEmbedded={true} />
       )}
     </div>
   );

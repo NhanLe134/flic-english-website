@@ -15,7 +15,7 @@
   font-size: 28px;
   font-weight: 700;
   margin: 0;
-  color: #222;
+  color: #000080;
 }
 
 /* SEARCH & FILTER */
@@ -140,19 +140,19 @@
 }
 
 /* TABLE */
-.table-container {
+.sl-wrapper .table-container {
   background: white;
   padding: 0;
   overflow-x: auto;
 }
 
-table {
+.sl-wrapper table {
   width: 100%;
   min-width: 1100px;
   border-collapse: collapse;
 }
 
-th {
+.sl-wrapper th {
   text-align: left;
   padding: 14px 16px;
   background: #000080;
@@ -163,19 +163,19 @@ th {
   text-transform: uppercase;
 }
 
-td {
+.sl-wrapper td {
   padding: 14px 16px;
   border-bottom: 1px solid #eef2f6;
   font-size: 14px;
   color: #333;
 }
 
-tr:hover td {
+.sl-wrapper tr:hover td {
   background: #f8fafc;
 }
 
 /* VIEW BUTTON */
-.view-btn {
+.sl-wrapper .view-btn {
   background: transparent;
   color: #F95800;
   border: 1.5px solid #F95800;
@@ -187,14 +187,14 @@ tr:hover td {
   transition: all 0.2s ease;
 }
 
-.view-btn:hover {
+.sl-wrapper .view-btn:hover {
   background: #fff4ec;
   color: #e04f00;
   border-color: #e04f00;
 }
 
 /* TABLE FOOTER */
-.table-footer {
+.sl-wrapper .table-footer {
   padding: 16px 20px;
   border-top: 1px solid #eef2f6;
   display: flex;
@@ -202,7 +202,7 @@ tr:hover td {
   align-items: center;
 }
 
-.export-btn {
+.sl-wrapper .export-btn {
   background: #000080;
   color: white;
   border: none;
@@ -214,17 +214,17 @@ tr:hover td {
   transition: background 0.2s;
 }
 
-.export-btn:hover {
+.sl-wrapper .export-btn:hover {
   background: #000066;
 }
 
-.pagination {
+.sl-wrapper .pagination {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.pagination button {
+.sl-wrapper .pagination button {
   padding: 6px 12px;
   border: 1px solid #e2e8f0;
   background: white;
@@ -235,23 +235,23 @@ tr:hover td {
   transition: all 0.2s;
 }
 
-.pagination button:hover:not(:disabled) {
+.sl-wrapper .pagination button:hover:not(:disabled) {
   background: #f8fafc;
   color: #222;
 }
 
-.pagination button:disabled {
+.sl-wrapper .pagination button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.pagination span {
+.sl-wrapper .pagination span {
   font-size: 14px;
   color: #555;
 }
 
 /* SUCCESS POPUP */
-.success-overlay {
+.sl-wrapper .success-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -264,7 +264,7 @@ tr:hover td {
   z-index: 999;
 }
 
-.success-modal {
+.sl-wrapper .success-modal {
   background: white;
   padding: 40px 60px;
   border-radius: 16px;
@@ -273,7 +273,7 @@ tr:hover td {
   animation: fadeIn 0.3s ease;
 }
 
-.check-circle {
+.sl-wrapper .check-circle {
   width: 60px;
   height: 60px;
   border-radius: 50%;

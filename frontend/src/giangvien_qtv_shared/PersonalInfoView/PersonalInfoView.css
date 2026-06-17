@@ -1,3 +1,27 @@
+.piv-edit-btn {
+  background: #F95800;
+  border: 1.5px solid #F95800;
+  padding: 8px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.piv-edit-btn:hover {
+  background: #e04f00;
+  border-color: #e04f00;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
+}
+
+.piv-edit-btn:active {
+  transform: translateY(0);
+}
+
+
 .piv-wrapper {
   font-family: "Segoe UI", sans-serif;
   width: 100%;
@@ -18,21 +42,7 @@
   color: #222;
 }
 
-.edit-btn {
-  border: 1.5px solid #F95800;
-  background: transparent;
-  padding: 8px 20px;
-  border-radius: 8px;
-  color: #F95800;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
 
-.edit-btn:hover {
-  background: #fff4ec;
-}
 
 /* PIV GRID LAYOUT */
 .piv-grid {

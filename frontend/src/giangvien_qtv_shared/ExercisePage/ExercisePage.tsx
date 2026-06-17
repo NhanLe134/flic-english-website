@@ -15,6 +15,7 @@ const ExercisePage = () => {
   const [soHocVien, setSoHocVien] = useState(0);
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
+  const [filterType, setFilterType] = useState<"all" | "homework" | "exam">("all");
 
 
 
@@ -51,7 +52,7 @@ const ExercisePage = () => {
   /* ===== LOAD BAITAPS ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/baitap/${id}`)
+    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setExercises(data))
       .catch(err => console.log(err));
@@ -78,9 +79,18 @@ const ExercisePage = () => {
     setSelectedId(null);
   };
 
-  const filteredExercises = exercises.filter((ex) =>
-    ex.Title?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredExercises = exercises.filter((ex) => {
+    const matchesSearch = ex.Title?.toLowerCase().includes(search.toLowerCase());
+    const isExam = ex.IsExam === 1 || ex.Type === "exam";
+
+    if (filterType === "homework") {
+      return matchesSearch && !isExam;
+    }
+    if (filterType === "exam") {
+      return matchesSearch && isExam;
+    }
+    return matchesSearch;
+  });
 
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
@@ -187,6 +197,28 @@ const ExercisePage = () => {
               </button>
             </form>
 
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+              style={{
+                height: "40px",
+                padding: "0 12px",
+                borderRadius: "8px",
+                border: "1.5px solid #f1edeb",
+                background: "white",
+                color: "#333",
+                fontWeight: "600",
+                cursor: "pointer",
+                fontSize: "14px",
+                outline: "none",
+                boxSizing: "border-box"
+              }}
+            >
+              <option value="all">Tất cả bài</option>
+              <option value="homework">Bài tập</option>
+              <option value="exam">Bài kiểm tra</option>
+            </select>
+
             <button
               className="ep-add-btn"
               onClick={() => navigate(`/create-exercise/${id}`)}
@@ -204,7 +236,7 @@ const ExercisePage = () => {
               onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
               onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
             >
-              + Tạo bài luyện tập thêm
+              + Tạo bài LTT
             </button>
           </div>
           <div className="ep-total-box">

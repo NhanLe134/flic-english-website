@@ -45,12 +45,7 @@ const LessonResultPage = () => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
 
-  const refetchClassInfo = () => {
-    fetch(`http://localhost:5000/classes/${id}/info`)
-      .then(r => r.json())
-      .then(info => setClassInfo(info))
-      .catch(err => console.error(err));
-  };
+
 
   useEffect(() => {
     if (!id) return;
@@ -221,22 +216,7 @@ const LessonResultPage = () => {
     });
   };
 
-  const handleMarkActiveLesson = async (lessonId: number) => {
-    try {
-      const res = await fetch(`http://localhost:5000/classes/${id}/active-buoihoc`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activeBuoiHocId: lessonId })
-      });
-      if (res.ok) {
-        refetchClassInfo();
-      } else {
-        alert("Lỗi khi cập nhật buổi học đang học");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
 
   const getStudentBuoiStatus = (s: Student, buoiNum: number) => {
     const exsInBuoi = classExercises.filter(ex => ex.ThuTu === buoiNum);
@@ -408,28 +388,12 @@ const LessonResultPage = () => {
                     <th>Lớp/khóa</th>
                     <th>Trạng thái</th>
                     {uniqueBuois.map(b => {
-                      const lessonForBuoi = lessons.find(l => l.ThuTu === b);
-                      const isActive = lessonForBuoi && classInfo?.ActiveBuoiHocId === lessonForBuoi.MaBuoiHoc;
+
+
                       return (
                         <th key={b}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                             <span>Buổi {b}</span>
-                            {isActive ? (
-                              <span className="lrp-active-badge">Đang học</span>
-                            ) : (
-                              <button 
-                                type="button" 
-                                className="lrp-mark-active-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (lessonForBuoi) {
-                                    handleMarkActiveLesson(lessonForBuoi.MaBuoiHoc);
-                                  }
-                                }}
-                              >
-                                Đánh dấu đang học
-                              </button>
-                            )}
                           </div>
                         </th>
                       );

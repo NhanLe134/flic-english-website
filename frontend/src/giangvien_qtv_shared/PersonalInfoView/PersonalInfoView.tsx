@@ -31,7 +31,7 @@ const PersonalInfoView = () => {
     <div className="piv-wrapper">
       <div className="piv-header-row">
         <h1>Thông tin cá nhân</h1>
-        <button className="edit-btn" onClick={() => navigate("/edit-personal-info")}>
+        <button className="piv-edit-btn" onClick={() => navigate("/edit-personal-info")}>
           Sửa thông tin
         </button>
       </div>

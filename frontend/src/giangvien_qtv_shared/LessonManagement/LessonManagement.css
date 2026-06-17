@@ -11,14 +11,14 @@
   margin-bottom: 6px;
 }
 
-.page-title {
+.lm-wrapper .page-title {
   font-size: 28px;
   font-weight: 700;
-  color: #333;
+  color: #000080;
   margin: 0 0 6px;
 }
 
-.subtitle {
+.lm-wrapper .subtitle {
   color: #777;
   margin: 0 0 24px;
   font-size: 14px;
@@ -128,42 +128,62 @@
   background: #e46d10;
 }
 
+.lm-wrapper .add-btn-reuse {
+  background: #fff4ec;
+  color: #F95800;
+  border: 2px solid #F95800;
+  padding: 8px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.2s;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.lm-wrapper .add-btn-reuse:hover {
+  background: #F95800;
+  color: white;
+}
+
 /* TABLE */
-.table-card {
+.lm-wrapper .table-card {
   background: white;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid #eef2f6;
 }
 
-table {
+.lm-wrapper table {
   width: 100%;
   border-collapse: collapse;
 }
 
-thead {
-  background: #fafafa;
+.lm-wrapper thead {
+  background: #000080;
 }
 
-th {
+.lm-wrapper th {
   padding: 14px 16px;
   text-align: left;
   font-size: 14px;
-  color: #555;
-  border-bottom: 2px solid #eef2f6;
+  color: #ffffff;
+  background: #000080;
+  border-bottom: 2px solid #000066;
 }
 
-td {
+.lm-wrapper td {
   padding: 14px 16px;
   font-size: 14px;
   color: #333;
 }
 
-tr:not(:last-child) td {
+.lm-wrapper tr:not(:last-child) td {
   border-bottom: 1px solid #eef2f6;
 }
 
-tr:hover td {
+.lm-wrapper tr:hover td {
   background: #fafafa;
 }
 

@@ -707,3 +707,130 @@
     width: 100%;
   }
 }
+
+/* SHARED TAB TOOLBAR */
+.shared-tab-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: white !important;
+  padding: 16px !important;
+  border-radius: 14px !important;
+  margin-bottom: 24px !important;
+  border: 1px solid #eef2f6 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.shared-tab-toolbar .search-container {
+  display: flex !important;
+  align-items: center !important;
+  max-width: 320px !important;
+  width: 100% !important;
+  height: 40px !important;
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) !important;
+  margin: 0 !important;
+}
+
+.shared-tab-toolbar .search-input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  background: transparent !important;
+  height: 100% !important;
+}
+
+.shared-tab-toolbar .search-button {
+  background: #F95800 !important;
+  border: none !important;
+  color: white !important;
+  padding: 0 16px !important;
+  height: 100% !important;
+  min-width: 50px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.2s ease !important;
+}
+
+.shared-tab-toolbar .filter-select,
+.shared-tab-toolbar select {
+  height: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: white !important;
+  color: #333 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.shared-tab-toolbar .add-btn,
+.shared-tab-toolbar .add-btn-reuse,
+.shared-tab-toolbar .ep-add-btn {
+  height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.shared-tab-toolbar .ep-total-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: #f8fafc !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 8px !important;
+  padding: 0 16px !important;
+  height: 40px !important;
+  margin-left: auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.shared-tab-toolbar .ep-total-box p {
+  margin: 0 !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+}
+
+.shared-tab-toolbar .ep-total-box b {
+  font-size: 16px !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 768px) {
+  .shared-tab-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .shared-tab-toolbar .search-container {
+    max-width: 100% !important;
+  }
+  .shared-tab-toolbar .ep-total-box {
+    margin-left: 0 !important;
+  }
+}

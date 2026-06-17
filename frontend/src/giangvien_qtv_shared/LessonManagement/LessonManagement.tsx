@@ -3,9 +3,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import "./LessonManagement.css";
 
-const LessonManagement: React.FC = () => {
+interface LessonManagementProps {
+  buoiHocIdProp?: string;
+  isEmbedded?: boolean;
+}
+
+const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEmbedded }) => {
   const navigate = useNavigate();
-  const { buoiHocId } = useParams();
+  const { buoiHocId: paramBuoiHocId } = useParams();
+  const buoiHocId = buoiHocIdProp || paramBuoiHocId;
 
   const [lessons, setLessons] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -86,20 +92,24 @@ const LessonManagement: React.FC = () => {
 
   return (
     <div className="lm-wrapper">
-      <span className="back-btn-span" onClick={() => navigate(-1)}>
-        <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-        Quay lại
-      </span>
+      {!isEmbedded && (
+        <span className="back-btn-span" onClick={() => navigate(-1)}>
+          <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+          Quay lại
+        </span>
+      )}
 
       {/* PAGE HEADER */}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Quản lý bài giảng</h1>
+      {!isEmbedded && (
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Quản lý bài giảng</h1>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* TOOLBAR */}
-      <div className="toolbar">
+      <div className="shared-tab-toolbar">
         <form className="search-container" onSubmit={(e) => e.preventDefault()} style={{ marginBottom: 0 }}>
           <input
             type="text"
@@ -135,16 +145,10 @@ const LessonManagement: React.FC = () => {
           <option>Writing</option>
         </select>
         <button
-          className="add-btn"
+          className="add-btn-reuse"
           onClick={openReuseModal}
-          style={{
-            background: "#0284c7",
-            color: "#fff",
-            border: "none",
-            marginRight: "8px"
-          }}
         >
-          + Chọn bài giảng có sẵn
+          + Chọn BG có sẵn
         </button>
         <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
           + Thêm bài học mới
@@ -156,7 +160,7 @@ const LessonManagement: React.FC = () => {
         <table>
           <thead>
             <tr>
-              <th>#</th>
+              <th>STT</th>
               <th>Tên bài giảng</th>
               <th>Loại</th>
               <th>Thời lượng</th>

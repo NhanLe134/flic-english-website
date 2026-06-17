@@ -20,7 +20,8 @@
   background: white;
   padding: 24px 28px;
   border-radius: 16px;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   margin-bottom: 20px;
 }
 
@@ -42,17 +43,20 @@
 }
 
 .tab {
-  padding: 8px 20px;
+  padding: 8px 24px;
   border: none;
-  background: #e0d4c3;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
   border-radius: 20px;
   cursor: pointer;
   font-size: 14px;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
 .tab:hover {
-  background: #d4c4b0;
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .tab.active {
@@ -66,22 +70,29 @@
   background: white;
   border-radius: 16px;
   padding: 28px;
-  border: 1px solid #e0d4c3;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 /* TITLE */
 .exercise-title {
   width: 100%;
-  padding: 16px;
-  font-size: 24px;
-  font-weight: 700;
-  border-radius: 12px;
-  border: 2px solid #e6caa5;
-  background: #fdf8f3;
-  color: #a33d2c;
+  padding: 14px 20px;
+  font-size: 20px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1f2937;
   margin-bottom: 20px;
   box-sizing: border-box;
   outline: none;
+  transition: all 0.2s ease;
+}
+
+.exercise-title:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.12);
 }
 
 .exercise-title:focus {
@@ -92,13 +103,20 @@
 .exercise-type {
   margin-top: 15px;
   margin-bottom: 20px;
-  padding: 10px;
+  padding: 10px 14px;
   width: 220px;
   border-radius: 8px;
-  border: 2px solid #e6caa5;
-  background: #fdf8f3;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
   font-size: 14px;
   outline: none;
+  transition: all 0.2s ease;
+}
+
+.exercise-type:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.12);
 }
 
 /* CONTENT */
@@ -106,15 +124,22 @@
   width: 100%;
   min-height: 48px;
   padding: 12px 16px;
-  border-radius: 12px;
-  border: 2px solid #e6caa5;
-  background: #fdf8f3;
-  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 14px;
   resize: vertical;
   margin-top: 10px;
   box-sizing: border-box;
   outline: none;
+  color: #334155;
+  transition: all 0.2s ease;
   font-family: "Segoe UI", sans-serif;
+}
+
+.exercise-content:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.12);
 }
 
 .exercise-content:focus {
@@ -135,19 +160,20 @@ textarea.exercise-content {
 /* ADD CONTENT */
 .add-content {
   margin-top: 20px;
-  background: #fdf8f3;
+  background: #f8fafc;
   border-radius: 10px;
   padding: 16px;
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
   color: #F95800;
   cursor: pointer;
-  border: 2px dashed #e6caa5;
-  transition: 0.2s;
+  border: 1.5px dashed #cbd5e1;
+  transition: all 0.2s ease;
+  font-weight: 600;
 }
 
 .add-content:hover {
-  background: #fef0e0;
+  background: #fff4ec;
   border-color: #F95800;
 }
 
@@ -166,16 +192,16 @@ textarea.exercise-content {
 .upload-box {
   display: block;
   cursor: pointer;
-  border: 2px dashed #e6caa5;
+  border: 1.5px dashed #cbd5e1;
   border-radius: 12px;
-  background: #fdf8f3;
+  background: #f8fafc;
   padding: 24px;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
 .upload-box:hover {
   border-color: #F95800;
-  background: #fef0e0;
+  background: #fff4ec;
 }
 
 .upload-placeholder {
@@ -277,11 +303,23 @@ textarea.exercise-content {
 }
 
 .question-block {
-  background: #fdf6ee;
-  border: 1px solid #e0d4c3;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #000080;
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.question-block:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+.exercise-search-input:focus {
+  border-color: #F95800 !important;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.12) !important;
 }
 
 .question-block-header {
