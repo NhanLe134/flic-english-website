@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import TeacherLayout from "./giangvien/layout/TeacherLayout"
 import Home from "./home_pages/Home/Home"
@@ -75,6 +76,17 @@ import TestThuSV from "./sinhvien/pages/TestThuSV"
 import TestExamPage from "./sinhvien/pages/TestExamPage"
 
 function App() {
+  useEffect(() => {
+    try {
+      const sessionUser = sessionStorage.getItem("user");
+      if (!sessionUser || sessionUser === "{}") {
+        localStorage.removeItem("user");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   return (
     <BrowserRouter basename="/flic-english-website">
       <Routes>
