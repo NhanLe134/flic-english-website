@@ -134,7 +134,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
       }
 
       setSuccess("Đăng ký thành công! Đang chuyển sang trang đăng nhập...");
-      setTimeout(() => navigate(isModal ? "?auth=login" : "/login"), 2000);
+      setTimeout(() => navigate(isModal ? "?auth=login" : "/login", isModal ? { replace: true } : undefined), 2000);
     } catch (err) {
       setError("Không thể kết nối đến server!");
     } finally {
@@ -295,7 +295,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
 
         <p style={{ textAlign: "center", marginTop: 16, fontSize: 14, color: "#666" }}>
           Đã có tài khoản?{" "}
-          <Link to={isModal ? "?auth=login" : "/login"} style={{ color: "#000080", fontWeight: 600, textDecoration: "none" }}>
+          <Link replace to={isModal ? "?auth=login" : "/login"} style={{ color: "#000080", fontWeight: 600, textDecoration: "none" }}>
             Đăng nhập ngay
           </Link>
         </p>

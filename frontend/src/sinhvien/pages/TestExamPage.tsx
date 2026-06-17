@@ -890,7 +890,7 @@ export default function TestExamPage() {
         type: "register_required",
         onConfirm: () => {
           setModal(null);
-          setSearchParams({ auth: "register" });
+          setSearchParams({ auth: "register" }, { replace: true });
         }
       });
       return;

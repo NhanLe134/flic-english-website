@@ -60,7 +60,10 @@ const Login = ({ isModal = false }: LoginProps) => {
 
       // Khi đăng nhập thành công và chuyển hướng, query param ?auth=login sẽ tự động mất đi
       if (window.location.pathname.includes("/test-exam/")) {
-        window.location.href = window.location.pathname;
+        navigate("/test-thu-sv", { replace: true });
+        setTimeout(() => {
+          window.location.href = window.location.pathname;
+        }, 100);
       } else {
         if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
         else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
@@ -166,7 +169,7 @@ const Login = ({ isModal = false }: LoginProps) => {
 
         <p style={{ textAlign:"center", marginTop:12, fontSize:15, color:"#666" }}>
           Chưa có tài khoản?{" "}
-          <Link to={isModal ? "?auth=register" : "/register"} style={{ color:"#000080", fontWeight:600 }}>
+          <Link replace to={isModal ? "?auth=register" : "/register"} style={{ color:"#000080", fontWeight:600 }}>
             Đăng ký ngay
           </Link>
         </p>
