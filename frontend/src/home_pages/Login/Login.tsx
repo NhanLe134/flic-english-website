@@ -59,10 +59,14 @@ const Login = ({ isModal = false }: LoginProps) => {
       localStorage.setItem("user", JSON.stringify({ ...data, VaiTro: vaiTro }))
 
       // Khi đăng nhập thành công và chuyển hướng, query param ?auth=login sẽ tự động mất đi
-      if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
-      else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
-      else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/khoahoc")
-      else                                       navigate("/profile")
+      if (window.location.pathname.includes("/test-exam/")) {
+        window.location.href = window.location.pathname;
+      } else {
+        if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
+        else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
+        else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/khoahoc")
+        else                                       navigate("/profile")
+      }
     } catch (err) {
       console.error(err);
       setLoginError("Không kết nối được server");

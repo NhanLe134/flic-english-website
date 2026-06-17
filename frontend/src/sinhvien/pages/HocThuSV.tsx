@@ -1,7 +1,11 @@
 import { FiBookOpen, FiPlayCircle, FiHeadphones, FiCheckCircle, FiClock } from "react-icons/fi";
+import { Link } from "react-router-dom";
 import "./hocthu.css"; // Reuse existing css or add sv styling
 
 export default function HocThuSV() {
+  const isLoggedIn = !!sessionStorage.getItem("user");
+  const homePath = isLoggedIn ? "/profile" : "/";
+
   const trialLessons = [
     {
       id: 1,
@@ -30,7 +34,16 @@ export default function HocThuSV() {
   ];
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto 40px auto', fontFamily: 'Inter, sans-serif' }}>
+      {/* Breadcrumb */}
+      <nav className="courses-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', marginTop: '24px', marginBottom: '24px', fontFamily: 'Inter, sans-serif' }}>
+        <Link to={homePath} style={{ color: '#777777', textDecoration: 'none', fontWeight: 500 }}>Trang chủ</Link>
+        <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>
+        <span style={{ color: '#777777', fontWeight: 500 }}>Học & thi thử</span>
+        <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>
+        <span style={{ color: '#F95800', fontWeight: 600 }}>Học thử</span>
+      </nav>
+
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #FFF2EB 0%, #FFEBE0 100%)', borderRadius: '16px', padding: '36px', marginBottom: '32px', border: '1px solid #FFE0D1' }}>
         <h1 style={{ margin: '0 0 12px 0', color: '#dd4e00', fontSize: '28px', fontWeight: 800 }}>LỚP HỌC TRẢI NGHIỆM THỬ</h1>

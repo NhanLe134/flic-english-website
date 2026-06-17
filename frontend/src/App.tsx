@@ -36,6 +36,7 @@ import KetQuaHocTapHocVien from "./giangvien_qtv_shared/KetQuaHocTapHocVien/KetQ
 import SuaKetQuaHocTapHocVien from "./giangvien_qtv_shared/SuaKetQuaHocTapHocVien/SuaKetQuaHocTapHocVien"
 import DoiMatKhau from "./giangvien_qtv_shared/DoiMatKhau/DoiMatKhau"
 import HocThu from "./home_pages/HocThu/HocThu"
+import TestThuPublic from "./home_pages/TestThu/TestThuPublic"
 import DraftsManagement from "./giangvien/pages/DraftsManagement/DraftsManagement"
 
 /* ADMIN */
@@ -87,6 +88,7 @@ function App() {
         <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
         <Route path="/register-success" element={<RegisterSuccess />} />
         <Route path="/hoc-thu" element={<HocThu />} />
+        <Route path="/test-thu" element={<TestThuPublic />} />
 
         {/* LOGIN */}
         <Route path="/login" element={<Navigate to="/?auth=login" replace />} />

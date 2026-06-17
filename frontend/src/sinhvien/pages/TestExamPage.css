@@ -709,6 +709,10 @@
   width: 100%;
 }
 
+.bottom-bar-flex-container.center-justify {
+  justify-content: center;
+}
+
 .bottom-skills-navigation {
   display: flex;
   gap: 20px;
@@ -1271,8 +1275,10 @@
 }
 
 .review-mode-pill {
-  background: #64748b;
-  box-shadow: none;
+  background: #3b82f6;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
 .review-content-pad {

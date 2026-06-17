@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FiPlay } from "react-icons/fi";
 import "./TestExamPage.css";
 
@@ -292,6 +292,17 @@ function SpeakingSection({
   const activeIdx = reviewMode ? reviewPartIdx : speakingPartIdx;
   const part = parts[activeIdx] || parts[0];
 
+  useEffect(() => {
+    if (audioRef.current && !reviewMode) {
+      if (speakingPhase === "audio_playing") {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => { /* autoplay block */ });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [speakingPhase, activeIdx, reviewMode]);
+
   // Speaking Review Mode Render
   if (reviewMode) {
     return (
@@ -384,9 +395,22 @@ function SpeakingSection({
               >
                 <FiPlay style={{ marginLeft: 2 }} />
               </button>
-              <span className="audio-time-current">--:--</span>
-              <div className="audio-progress-bar"><div className="audio-progress-fill" style={{ width: "0%" }} /></div>
-              <span className="audio-time-duration">--:--</span>
+              <span className="audio-time-current">
+                {speakingPhase === "audio_playing" ? fmt(30 - speakingCountdown) : "--:--"}
+              </span>
+              <div className="audio-progress-bar">
+                <div
+                  className="audio-progress-fill"
+                  style={{
+                    width: speakingPhase === "audio_playing"
+                      ? `${((30 - speakingCountdown) / 30) * 100}%`
+                      : "0%"
+                  }}
+                />
+              </div>
+              <span className="audio-time-duration">
+                {speakingPhase === "audio_playing" ? "00:30" : "--:--"}
+              </span>
             </div>
             <p className="speaking-audio-warning">
               *Hệ thống tự động phát phát câu hỏi. Nếu không tự chạy, vui lòng bấm nút Play để nghe.
@@ -402,6 +426,7 @@ function SpeakingSection({
           {speakingPhase === "audio_playing" && (
             <div className="speaking-status-inner">
               <div className="speaking-status-label">Đang phát câu hỏi...</div>
+              <div className="speaking-countdown-big">{speakingCountdown} GIÂY</div>
             </div>
           )}
           {speakingPhase === "pre_record" && (
@@ -425,8 +450,16 @@ function SpeakingSection({
           )}
           {speakingPhase === "saved" && (
             <div className="speaking-status-inner">
-              <div className="speaking-status-label green-text">ĐÃ LƯU BÀI NÓI SỐ {speakingPartIdx + 1} VÀO HỆ THỐNG</div>
-              <div className="speaking-saved-sub">Câu hỏi tiếp theo sẽ bắt đầu sau...</div>
+              <div className="speaking-status-label green-text">
+                {speakingPartIdx === parts.length - 1
+                  ? "ĐÃ LƯU BÀI THI NÓI THÀNH CÔNG!"
+                  : "ĐÃ LƯU ĐOẠN THU ÂM THÀNH CÔNG!"}
+              </div>
+              <div className="speaking-saved-sub">
+                {speakingPartIdx === parts.length - 1
+                  ? "Đang chuẩn bị nộp bài và chấm điểm..."
+                  : "Đang tự động chuyển sang câu tiếp theo..."}
+              </div>
             </div>
           )}
         </div>
@@ -608,6 +641,8 @@ const STATIC_QUESTIONS = {
 export default function TestExamPage() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
+  const isLoggedIn = !!sessionStorage.getItem("user");
 
   const [testData, setTestData] = useState<TestData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -638,7 +673,7 @@ export default function TestExamPage() {
 
   const skillList: Skill[] = ["listening", "reading", "writing", "speaking"];
   const skillLabels: Record<Skill, string> = {
-    listening: "Listening - 47",
+    listening: "Listening - 45",
     reading: "Reading - 60",
     writing: "Writing - 60",
     speaking: "Speaking - 12"
@@ -678,17 +713,22 @@ export default function TestExamPage() {
 
   // Speaking Audio Ended Callback
   const handleSpeakingAudioEnded = useCallback(() => {
-    setSpeakingPhase("pre_record");
-    setSpeakingCountdown(60); // 60s prep before recording
+    // Left empty: transitions are controlled strictly by speakingCountdown timer
   }, []);
 
   // Timer Effect supporting refined Speaking logic
   useEffect(() => {
     if (!testData || loading || isSubmitted || reviewMode) return;
 
-    if (skill !== "speaking") {
-      // Standard skills ticking down
-      if (timeLeft <= 0) {
+    if (timeLeft <= 0) {
+      if (skill === "speaking") {
+        if (speakingPhase !== "saved") {
+          calculateScores();
+          setIsSubmitted(true);
+          setModal(null);
+          return;
+        }
+      } else {
         doSave();
         const idx = skillList.indexOf(skill);
         if (idx < skillList.length - 1) {
@@ -706,26 +746,43 @@ export default function TestExamPage() {
         }
         return;
       }
+    }
+
+    if (skill !== "speaking") {
       const t = setInterval(() => setTimeLeft(p => p - 1), 1000);
       return () => clearInterval(t);
     } else {
-      // Speaking ticking (Timer ONLY ticks down when recording)
-      if (timeLeft <= 0 || speakingPhase === "all_done") {
-        setSpeakingPhase("all_done");
-        return;
-      }
-
       const t = setInterval(() => {
-        if (speakingPhase === "initial_prep" || speakingPhase === "pre_record") {
+        if (speakingPhase === "recording") {
+          setTimeLeft(p => p - 1);
+        }
+
+        if (speakingPhase === "initial_prep" || speakingPhase === "pre_record" || speakingPhase === "audio_playing" || speakingPhase === "saved") {
           setSpeakingCountdown(c => {
             if (c <= 1) {
               if (speakingPhase === "initial_prep") {
                 setSpeakingPhase("audio_playing");
-              } else {
+                return 30; // 30s audio playing countdown
+              } else if (speakingPhase === "audio_playing") {
+                setSpeakingPhase("pre_record");
+                return 60; // 60s prep countdown
+              } else if (speakingPhase === "pre_record") {
                 setSpeakingPhase("recording");
                 // Q1: 3 min (180s), Q2: 4 min (240s), Q3: 5 min (300s)
                 const recordTimes = [180, 240, 300];
                 return recordTimes[speakingPartIdx] || 180;
+              } else if (speakingPhase === "saved") {
+                const nextIdx = speakingPartIdx + 1;
+                if (nextIdx < testData.kyNang.speaking.parts.length) {
+                  setSpeakingPartIdx(nextIdx);
+                  setSpeakingPhase("audio_playing");
+                  return 30; // 30s audio playing for next part
+                } else {
+                  calculateScores();
+                  setIsSubmitted(true);
+                  setModal(null);
+                  return 0;
+                }
               }
               return 0;
             }
@@ -736,21 +793,6 @@ export default function TestExamPage() {
             if (c <= 1) {
               setSpeakingPhase("saved");
               return 3; // 3 seconds display of saved status
-            }
-            return c - 1;
-          });
-          setTimeLeft(tl => tl - 1);
-        } else if (speakingPhase === "saved") {
-          setSpeakingCountdown(c => {
-            if (c <= 1) {
-              const nextIdx = speakingPartIdx + 1;
-              if (nextIdx < testData.kyNang.speaking.parts.length) {
-                setSpeakingPartIdx(nextIdx);
-                setSpeakingPhase("audio_playing");
-              } else {
-                setSpeakingPhase("all_done");
-              }
-              return 0;
             }
             return c - 1;
           });
@@ -800,6 +842,9 @@ export default function TestExamPage() {
   const countTotal = () => {
     const sd = getSkillData();
     if (!sd || !(sd as any).parts) return 1;
+    if (!isLoggedIn) {
+      return testData?.kyNang.listening.parts[0]?.cauHois?.length || 8;
+    }
     if (skill === "writing" || skill === "speaking") {
       return (sd as any).parts.length;
     }
@@ -840,6 +885,16 @@ export default function TestExamPage() {
   };
 
   const handleContinue = () => {
+    if (!isLoggedIn) {
+      setModal({
+        type: "register_required",
+        onConfirm: () => {
+          setModal(null);
+          setSearchParams({ auth: "register" });
+        }
+      });
+      return;
+    }
     const sd = getSkillData() as { parts: { cauHois?: CauHoi[] }[] } | null;
     if (!sd?.parts) return;
     const partCauHois = sd.parts[partIdx]?.cauHois || [];
@@ -954,11 +1009,15 @@ export default function TestExamPage() {
         {toast && <div className="exam-toast">{toast}</div>}
         <header className="exam-header">
           <div className="exam-header-left">
-            <div className="exam-student-avatar-badge">{initials}</div>
-            <span className="exam-student-name">{hoTen}</span>
+            {isLoggedIn && (
+              <>
+                <div className="exam-student-avatar-badge">{initials}</div>
+                <span className="exam-student-name">{hoTen}</span>
+              </>
+            )}
           </div>
           <div className="exam-header-right">
-            <button className="exam-submit-btn" onClick={() => navigate("/test-thu-sv")}>Quay lại danh sách</button>
+            <button className="exam-submit-btn" onClick={() => navigate(sessionStorage.getItem("user") ? "/test-thu-sv" : "/test-thu")}>Quay lại danh sách</button>
           </div>
         </header>
 
@@ -1065,8 +1124,12 @@ export default function TestExamPage() {
 
       <header className={`exam-header ${reviewMode ? "review-header" : ""}`}>
         <div className="exam-header-left">
-          <div className="exam-student-avatar-badge">{initials}</div>
-          <span className="exam-student-name">{hoTen}</span>
+          {isLoggedIn && (
+            <>
+              <div className="exam-student-avatar-badge">{initials}</div>
+              <span className="exam-student-name">{hoTen}</span>
+            </>
+          )}
         </div>
         
         {reviewMode ? (
@@ -1079,7 +1142,7 @@ export default function TestExamPage() {
           {!reviewMode && (
             <>
               <span className="exam-answered-count">Đã trả lời: {answered}/{total}</span>
-              <button className="exam-submit-btn" onClick={handleSubmit}>Nộp bài</button>
+              {isLoggedIn && <button className="exam-submit-btn" onClick={handleSubmit}>Nộp bài</button>}
             </>
           )}
         </div>
@@ -1123,7 +1186,7 @@ export default function TestExamPage() {
       </main>
 
       <nav className="exam-bottom-bar">
-        <div className="bottom-bar-flex-container">
+        <div className={`bottom-bar-flex-container ${(reviewMode || skill === "speaking") ? "center-justify" : ""}`}>
           <div className="bottom-skills-navigation">
             {skillList.map(sk => (
               <div key={sk} className="bottom-skill-group">
@@ -1132,7 +1195,7 @@ export default function TestExamPage() {
                     const isDone = doneParts[`${sk}_${i}`] || doneSkills[sk];
                     const isActive = sk === skill && i === partIdx;
                     
-                    const isDisabled = reviewMode ? false : (!!doneSkills[sk] || sk !== skill);
+                    const isDisabled = reviewMode ? false : (!!doneSkills[sk] || sk !== skill || (!isLoggedIn && (sk !== "listening" || i !== 0)));
                     return (
                       <button
                         key={i}
@@ -1162,7 +1225,7 @@ export default function TestExamPage() {
           {!reviewMode && skill !== "speaking" && (
             <div className="bottom-actions-container">
               <button className="btn-continue" onClick={handleContinue}>Tiếp tục</button>
-              <button className="btn-save" onClick={doSave}>Lưu bài</button>
+              {isLoggedIn && <button className="btn-save" onClick={doSave}>Lưu bài</button>}
             </div>
           )}
         </div>
@@ -1188,6 +1251,13 @@ export default function TestExamPage() {
           title="Nộp bài thi"
           body="Bạn đã hoàn thành bài thi và muốn nộp bài. Hãy chắc chắn rằng bạn thực sự đã hoàn tất bài thi."
           onConfirm={modal.onConfirm} onCancel={() => setModal(null)} confirmLabel="Đồng ý"
+        />
+      )}
+      {modal?.type === "register_required" && (
+        <Modal
+          title="Đăng ký tài khoản"
+          body="Bạn đã hoàn thành phần thi thử trải nghiệm (Part 1 của Listening). Vui lòng đăng ký hoặc đăng nhập tài khoản thành viên để được làm đầy đủ bài thi 4 kỹ năng."
+          onConfirm={modal.onConfirm} onCancel={() => setModal(null)} confirmLabel="Đăng ký ngay"
         />
       )}
     </div>

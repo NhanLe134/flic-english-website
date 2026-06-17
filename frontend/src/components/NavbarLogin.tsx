@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FiChevronDown, FiBookOpen, FiEdit3 } from "react-icons/fi";
 import "./NavbarLogin.css";
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
 const user = import.meta.env.BASE_URL + "user.png";
 
 function NavbarLogin() {
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showTrialDropdown, setShowTrialDropdown] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
+  const isTrialActive = location.pathname === "/hoc-thu" || location.pathname === "/test-thu";
 
   let currentUser: any = {};
   try {
@@ -32,10 +38,32 @@ function NavbarLogin() {
       </div>
 
       <ul className="nav-menu">
-        <li><Link to="/">Trang chủ</Link></li>
-        <li><Link to="/about">Về Chúng Tôi</Link></li>
-        <li><Link to="/courses">Các Khóa Học</Link></li>
-        <li><Link to="/hoc-thu">Học thử</Link></li>
+        <li><Link to="/" className={isActive("/") ? "active" : ""}>Trang chủ</Link></li>
+        <li><Link to="/about" className={isActive("/about") ? "active" : ""}>Về Chúng Tôi</Link></li>
+        <li><Link to="/courses" className={isActive("/courses") || location.pathname.startsWith("/courses-category/") ? "active" : ""}>Các Khóa Học</Link></li>
+
+        {/* Học thử Dropdown */}
+        <li
+          className="nav-dropdown-wrap"
+          onMouseEnter={() => setShowTrialDropdown(true)}
+          onMouseLeave={() => setShowTrialDropdown(false)}
+        >
+          <span className={`nav-dropdown-trigger ${isTrialActive ? "active" : ""}`}>
+            Học & thi thử <FiChevronDown className={`nav-chevron ${showTrialDropdown ? "open" : ""}`} />
+          </span>
+          {showTrialDropdown && (
+            <div className="nav-dropdown">
+              <div className="nav-dropdown-inner">
+                <Link to="/hoc-thu" onClick={() => setShowTrialDropdown(false)} className={isActive("/hoc-thu") ? "active" : ""}>
+                  <FiBookOpen size={16} /> Học thử
+                </Link>
+                <Link to="/test-thu" onClick={() => setShowTrialDropdown(false)} className={isActive("/test-thu") ? "active" : ""}>
+                  <FiEdit3 size={16} /> Làm bài test
+                </Link>
+              </div>
+            </div>
+          )}
+        </li>
       </ul>
 
       {/* User box với dropdown */}

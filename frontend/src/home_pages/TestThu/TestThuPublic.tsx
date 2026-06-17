@@ -1,17 +1,17 @@
 import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
-import HocThuSV from "../../sinhvien/pages/HocThuSV";
+import TestThuSV from "../../sinhvien/pages/TestThuSV";
 
-const HocThu = () => {
+const TestThuPublic = () => {
   return (
     <>
       <NavbarAuto />
       <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
-        <HocThuSV />
+        <TestThuSV />
       </div>
       <Footer />
     </>
   );
 };
 
-export default HocThu;
+export default TestThuPublic;
