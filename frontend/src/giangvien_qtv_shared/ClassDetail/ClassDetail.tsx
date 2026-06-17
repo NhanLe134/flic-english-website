@@ -173,7 +173,6 @@ const ClassDetail = () => {
 
       {activeTab === "exercises" && (
         <div className="lesson-tab-section">
-          <h2>Danh sách bài tập</h2>
 
           <div className="shared-tab-toolbar">
             <form className="search-container" onSubmit={(e) => e.preventDefault()}>
