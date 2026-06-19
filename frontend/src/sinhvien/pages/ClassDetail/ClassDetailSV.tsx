@@ -430,7 +430,7 @@ export default function ClassDetailSV() {
                                 onClick={() => handleTabChange(lesson.MaLesson, 'exams')}
                               >
                                 <FaClipboardCheck className="ld2-tab-icon" />
-                                <span>Kiểm tra</span>
+                                <span>Bài tập</span>
                                 <span className="ld2-tab-badge">{detail.exams.length}</span>
                               </button>
                             </div>

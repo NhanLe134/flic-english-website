@@ -111,7 +111,7 @@ const StudentList: React.FC = () => {
           <input
             className="sl-search-input"
             type="text"
-            placeholder="Tìm kiếm học viên..."
+            placeholder="Tìm theo tên hoặc mã sinh viên"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
           />

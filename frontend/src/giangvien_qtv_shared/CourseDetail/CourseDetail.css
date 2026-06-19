@@ -40,7 +40,7 @@
 }
 
 /* SEARCH CONTAINER (Joined input + orange button) */
-.search-container {
+.cd-wrapper .search-container {
   display: flex;
   align-items: center;
   max-width: 420px;
@@ -49,7 +49,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
@@ -192,6 +192,7 @@
   flex-wrap: wrap;
   gap: 24px;
   width: 100%;
+  margin-top: 16px;
 }
 
 /* CLASS CARD */
@@ -300,3 +301,58 @@
 .cd-detail-btn:hover {
   opacity: 0.9;
 }
+
+/* PRACTICE TESTS STATS CARD */
+.cd-stat-card.tests-card .stat-icon-wrapper {
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+}
+.cd-stat-card.tests-card .stat-label {
+  color: #4f46e5;
+}
+
+/* ACTIVE TAB CARD STATE */
+.cd-stat-card.active-tab-card {
+  border-color: #F95800 !important;
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.08) !important;
+  transform: translateY(-2px);
+}
+
+/* TEST CARDS & INTERACTIONS */
+.cd-test-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cd-test-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.cd-create-test-btn:hover {
+  background: #e04f00 !important;
+}
+
+.cd-test-delete-btn:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+}
+
+/* MODAL TRANSITIONS */
+.cd-modal-overlay {
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+.cd-modal-card {
+  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

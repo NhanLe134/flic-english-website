@@ -8,8 +8,8 @@ const BASE = import.meta.env.BASE_URL;
 interface CauHoi { id: number; noiDung: string; luaChon: string[]; dapAn: string; }
 interface ListeningPart { soPhan: number; tieuDe: string; huongDan: string; audioUrl: string; cauHois: CauHoi[]; }
 interface ReadingPart { soPhan: number; tieuDe: string; huongDan: string; doanVan: string; cauHois: CauHoi[]; }
-interface WritingPart { soPhan: number; tieuDe: string; huongDan: string; noiDung: string; yeuCau: string; soTuToiThieu: number; }
-interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; }
+interface WritingPart { soPhan: number; tieuDe: string; huongDan: string; noiDung: string; yeuCau: string; soTuToiThieu: number; loaiBai?: string; goiY?: string; }
+interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; imageUrl?: string; imageName?: string; }
 interface TestData {
   MaBaiTest: number; TieuDe: string; CapDo: string;
   kyNang: {
@@ -139,9 +139,7 @@ function ListeningSection({ part, answers, onAnswer, reviewMode }: {
 }) {
   return (
     <div className="listening-section">
-      <div className="part-direction-box">
-        {part.huongDan}
-      </div>
+      <div className="part-direction-box" dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} />
       <div className="part-title-label">PART {part.soPhan}</div>
       <div className="part-subtitle-desc">{part.tieuDe}</div>
       
@@ -196,8 +194,8 @@ function ReadingSection({ part, answers, onAnswer, reviewMode }: {
   return (
     <div className="reading-layout">
       <div className="reading-passage">
-        <div className="passage-header">Directions: {part.huongDan}</div>
-        <div className="passage-content">{part.doanVan}</div>
+        <div className="passage-header">Directions: <span dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} /></div>
+        <div className="passage-content" dangerouslySetInnerHTML={{ __html: part.doanVan || "" }} />
       </div>
       <div className="reading-questions">
         {part.cauHois.map((q) => (
@@ -242,19 +240,22 @@ function ReadingSection({ part, answers, onAnswer, reviewMode }: {
 function WritingSection({ part, value, onChange, reviewMode }: {
   part: WritingPart; value: string; onChange: (v: string) => void; reviewMode: boolean;
 }) {
-  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
-  const ok = wordCount >= part.soTuToiThieu;
   return (
     <div className="writing-section">
       <div className="writing-prompt-box">
-        <div className="writing-prompt-header">{part.huongDan}</div>
-        <div className="writing-letter-quote">{part.noiDung}</div>
+        <div className="writing-prompt-header" dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} />
+        {part.goiY && (
+          <div className="writing-suggested-hints" style={{ marginTop: 12, marginBottom: 12, padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px" }}>
+            <strong style={{ color: "#F95800" }}>Gợi ý làm bài:</strong>
+            <div style={{ marginTop: 6, lineHeight: "1.5" }} dangerouslySetInnerHTML={{ __html: part.goiY }} />
+          </div>
+        )}
+        <div className="writing-letter-quote" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
         <div className="writing-instruction">{part.yeuCau}</div>
       </div>
       <div className="writing-answer-box">
         <div className="writing-answer-header">
           <span className="writing-answer-label">Your answer:</span>
-          <span className="word-count-display">Word count: <strong className={ok ? "ok" : ""}>{wordCount}</strong></span>
         </div>
         <textarea
           className="writing-textarea"
@@ -325,7 +326,12 @@ function SpeakingSection({
           <div className="speaking-left-pane">
             <div className="speaking-question-box">
               <div className="speaking-q-title">{part.moTa}</div>
-              <div className="speaking-q-content">{part.noiDung}</div>
+              <div className="speaking-q-content" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
+              {part.imageUrl && (
+                <div style={{ marginTop: 12, textAlign: "center" }}>
+                  <img src={part.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+                </div>
+              )}
             </div>
           </div>
           <div className="speaking-right-pane">
@@ -417,7 +423,12 @@ function SpeakingSection({
             </p>
           </div>
 
-          <div className="speaking-q-content">{part.noiDung}</div>
+          <div className="speaking-q-content" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
+          {part.imageUrl && (
+            <div style={{ marginTop: 12, textAlign: "center" }}>
+              <img src={part.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -685,18 +696,54 @@ export default function TestExamPage() {
       setHoTen(u.HoTen || "Sinh Viên");
     } catch { /* empty */ }
 
-    // Frontend-only simulation of tests detail response
     const testIdNum = parseInt(testId || "1");
-    const testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
-    const testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
+    let testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
+    let testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
+    let customQuestions = STATIC_QUESTIONS;
+
+    const localTestsStr = localStorage.getItem("flic_student_practice_tests");
+    if (localTestsStr) {
+      try {
+        const localTests = JSON.parse(localTestsStr);
+        const currentTest = localTests.find((t: any) => t.MaBaiTest === testIdNum);
+        if (currentTest) {
+          testTitle = currentTest.TieuDe;
+          testLevel = currentTest.CapDo;
+          if (currentTest.kyNang) {
+            customQuestions = currentTest.kyNang;
+          } else if (currentTest.questions && currentTest.questions.length > 0) {
+            const cloned = JSON.parse(JSON.stringify(STATIC_QUESTIONS));
+            cloned.reading.parts = [
+              {
+                soPhan: 1,
+                tieuDe: "Phần 1: Câu hỏi do Giảng viên tạo",
+                huongDan: "Đọc kỹ câu hỏi và chọn đáp án chính xác.",
+                doanVan: currentTest.MoTa || "Vui lòng chọn đáp án đúng cho từng câu hỏi bên dưới.",
+                cauHois: currentTest.questions.map((q: any, index: number) => ({
+                  id: q.id || index + 1,
+                  noiDung: q.noiDung,
+                  luaChon: q.luaChon || [],
+                  dapAn: q.dapAn
+                }))
+              }
+            ];
+            cloned.reading.parts = [cloned.reading.parts[0]];
+            cloned.reading.thoiGian = (currentTest.TongThoiGian || 120) * 60;
+            customQuestions = cloned;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
 
     setTestData({
       MaBaiTest: testIdNum,
       TieuDe: testTitle,
       CapDo: testLevel,
-      kyNang: STATIC_QUESTIONS
+      kyNang: customQuestions
     });
-    setTimeLeft(STATIC_QUESTIONS.listening.thoiGian);
+    setTimeLeft(customQuestions.listening.thoiGian);
     setLoading(false);
   }, [testId]);
 

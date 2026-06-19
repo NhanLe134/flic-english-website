@@ -2,6 +2,7 @@ import "./EditPersonalInfo.css";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
+import { FiCamera } from "react-icons/fi";
 
 const EditPersonalInfo = () => {
   const navigate = useNavigate();
@@ -134,9 +135,9 @@ const EditPersonalInfo = () => {
               : initials
             }
           </div>
-          <label className="upload-avatar-btn">
+          <label className="upload-avatar-btn" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <input type="file" accept="image/*" onChange={handleAvatarChange} hidden />
-            📷 Đổi ảnh
+            <FiCamera size={14} /> Đổi ảnh
           </label>
         </div>
 
