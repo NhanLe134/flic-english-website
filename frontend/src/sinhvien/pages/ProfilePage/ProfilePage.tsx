@@ -3,14 +3,12 @@ import "./ProfilePage.css";
 import { 
   FiMail, 
   FiCalendar, 
-  FiBookOpen, 
   FiUser, 
   FiHome, 
   FiCamera, 
   FiEdit3, 
   FiX, 
   FiAward,
-  FiActivity,
   FiHash
 } from "react-icons/fi";
 
@@ -376,39 +374,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Card 2: Thông tin khóa học FLIC */}
-          <div className="info-group-card highlight-card">
-            <div className="card-subheader">
-              <FiBookOpen size={18} />
-              <h3>Khóa học & Tiến độ học tập</h3>
-            </div>
-            
-            <div className="fields-grid-layout">
-              {/* Khóa học đã đăng ký */}
-              <div className="form-field-wrapper span-2">
-                <span className="field-meta-label">Khóa học hiện tại</span>
-                <span className="field-display-value course-highlight-text">
-                  {profile.TenKhoaHoc || "Chưa đăng ký khóa học nào"}
-                </span>
-              </div>
-
-              {/* Ngày đăng ký */}
-              <div className="form-field-wrapper">
-                <span className="field-meta-label">Ngày đăng ký học</span>
-                <span className="field-display-value">
-                  <FiCalendar className="inline-icon" /> {formatDate(profile.NgayDangKy)}
-                </span>
-              </div>
-
-              {/* Trạng thái học */}
-              <div className="form-field-wrapper">
-                <span className="field-meta-label">Trạng thái học tập</span>
-                <span className="field-display-value status-pill-badge text-active">
-                  <FiActivity className="inline-icon" /> Đang theo học
-                </span>
-              </div>
-            </div>
-          </div>
 
         </div>
 

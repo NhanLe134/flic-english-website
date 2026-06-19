@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { FiClock, FiAlertTriangle } from "react-icons/fi";
+import { FiClock } from "react-icons/fi";
 import "./TestThuSV.css";
 
 interface BaiTest {
@@ -98,18 +98,7 @@ export default function TestThuSV() {
         </div>
       </div>
 
-      {/* Info banner */}
-      <div className="test-info-banner">
-        <div className="info-banner-title">
-          <FiAlertTriangle style={{ marginRight: 6 }} /> LƯU Ý QUAN TRỌNG
-        </div>
-        <ul className="info-banner-list">
-          <li>Hết thời gian từng phần sẽ tự động chuyển sang phần tiếp theo.</li>
-          <li>Không được quay lại các kỹ năng đã hoàn thành.</li>
-          <li>Sau khi hoàn thành mỗi phần phải nhấn "LƯU BÀI" để lưu thủ công.</li>
-          <li>Phần Listening & Reading: cấm dùng bàn phím và click ngoài vùng thi.</li>
-        </ul>
-      </div>
+
 
       {/* Test list */}
       {loading ? (
