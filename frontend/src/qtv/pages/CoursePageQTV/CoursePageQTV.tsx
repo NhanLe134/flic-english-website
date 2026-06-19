@@ -795,20 +795,38 @@ export default function CoursePageQTV() {
   const confirmEnroll = async () => {
     if (!detailClass || selectedIds.size === 0) return
     try {
+      const addedStudents: any[] = []
+      const errorMessages: string[] = []
       for (const studentId of selectedIds) {
-        await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ MaSinhVien: studentId })
-        }).catch(() => {})
+        try {
+          const res = await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ MaSinhVien: studentId })
+          })
+          const data = await res.json()
+          if (res.ok && data.message && data.message.includes("thành công")) {
+            const s = allStudents.find(st => st.id === studentId)
+            if (s) {
+              addedStudents.push({
+                studentId: s.id, name: s.name, gender: s.gender, phone: s.phone,
+                enrollDate: new Date().toLocaleDateString('vi-VN'), status: 'Đang học'
+              })
+            }
+          } else {
+            errorMessages.push(`${studentId}: ${data.message || 'Lỗi khi ghi danh'}`)
+          }
+        } catch {
+          errorMessages.push(`${studentId}: Lỗi kết nối`)
+        }
       }
-      const today = new Date().toLocaleDateString('vi-VN')
-      const newStudents = allStudents.filter(s => selectedIds.has(s.id)).map(s => ({
-        studentId: s.id, name: s.name, gender: s.gender, phone: s.phone,
-        enrollDate: today, status: 'Đang học'
-      }))
-      setEnrolledStudents(prev => [...prev, ...newStudents])
+      if (addedStudents.length > 0) {
+        setEnrolledStudents(prev => [...prev, ...addedStudents])
+        setToast(`Đã ghi danh ${addedStudents.length} sinh viên!`)
+      }
+      if (errorMessages.length > 0) {
+        alert(`Lỗi ghi danh:\n${errorMessages.join('\n')}`)
+      }
       setShowEnroll(false); setSelectedIds(new Set()); setEnrollSearch('')
-      setToast(`Đã ghi danh ${newStudents.length} sinh viên!`)
     } catch { alert('Lỗi khi ghi danh') }
   }
 
@@ -862,13 +880,18 @@ export default function CoursePageQTV() {
   const confirmAssign = async () => {
     if (!selectedReg || !assignClassId) { alert('Vui lòng chọn lớp!'); return }
     try {
-      await fetch(`${API}/qtv/lophoc/${assignClassId}/ghidanh`, {
+      const res = await fetch(`${API}/qtv/lophoc/${assignClassId}/ghidanh`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ MaSinhVien: selectedReg.studentId })
       })
-      setPendingRegs(prev => prev.map(r => r.id === selectedReg.id ? { ...r, status: 'Đã ghi danh' as const } : r))
-      setShowAssignClassModal(false); setSelectedReg(null); setAssignClassId('')
-      setToast(`Đã ghi danh ${selectedReg.name}!`)
+      const data = await res.json()
+      if (res.ok && data.message && data.message.includes("thành công")) {
+        setPendingRegs(prev => prev.map(r => r.id === selectedReg.id ? { ...r, status: 'Đã ghi danh' as const } : r))
+        setShowAssignClassModal(false); setSelectedReg(null); setAssignClassId('')
+        setToast(`Đã ghi danh ${selectedReg.name}!`)
+      } else {
+        alert(data.message || 'Lỗi khi ghi danh')
+      }
     } catch { alert('Lỗi khi ghi danh') }
   }
 
@@ -1488,13 +1511,22 @@ export default function CoursePageQTV() {
                         }
                         if (studentIds.length === 0) { alert('Không tìm thấy mã sinh viên trong file!'); return }
                         let success = 0
+                        const errorMessages: string[] = []
                         for (const studentId of studentIds) {
                           try {
-                            await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh`, {
+                            const res = await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh`, {
                               method: 'POST', headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ MaSinhVien: studentId })
-                            }); success++
-                          } catch {}
+                            })
+                            const data = await res.json()
+                            if (res.ok && data.message && data.message.includes("thành công")) {
+                              success++
+                            } else {
+                              errorMessages.push(`${studentId}: ${data.message || 'Lỗi khi ghi danh'}`)
+                            }
+                          } catch {
+                            errorMessages.push(`${studentId}: Lỗi kết nối`)
+                          }
                         }
                         const res = await fetch(`${API}/lophoc/${detailClass.id}/sinhvien`)
                         const data = await res.json()
@@ -1502,7 +1534,10 @@ export default function CoursePageQTV() {
                           studentId: s.MaSinhVien, name: s.HoTen, gender: s.GioiTinh || '—',
                           phone: s.SoDienThoai || '—', enrollDate: s.NgayGhiDanh || '—', status: s.TrangThai || 'Đang học'
                         })))
-                        setToast(`Đã import ${success}/${studentIds.length} sinh viên!`)
+                        setToast(`Đã import thành công ${success}/${studentIds.length} sinh viên!`)
+                        if (errorMessages.length > 0) {
+                          alert(`Một số sinh viên không thể ghi danh:\n${errorMessages.join('\n')}`)
+                        }
                         e.target.value = ''
                       }} />
                     </label>

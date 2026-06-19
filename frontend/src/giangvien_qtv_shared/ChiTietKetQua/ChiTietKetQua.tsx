@@ -36,7 +36,8 @@ const ChiTietKetQua = () => {
 
   const filteredStudents = students.filter((sv: any) =>
     sv.HoTen?.toLowerCase().includes(search.toLowerCase()) ||
-    sv.MaSinhVien?.toString().toLowerCase().includes(search.toLowerCase())
+    sv.MaSinhVien?.toString().toLowerCase().includes(search.toLowerCase()) ||
+    sv.MSSV?.toString().toLowerCase().includes(search.toLowerCase())
   );
 
   const indexOfFirst = (currentPage - 1) * rowsPerPage;
@@ -45,9 +46,9 @@ const ChiTietKetQua = () => {
   const totalPages = Math.ceil(filteredStudents.length / rowsPerPage) || 1;
 
   const exportCSV = () => {
-    const headers = ["Mã sinh viên", "Tên sinh viên", "Tiến độ (%)", "Số bài đã làm", "Điểm trung bình", "Trạng thái"];
+    const headers = ["Mã học viên", "MSSV (Trường)", "Tên sinh viên", "Tiến độ (%)", "Số bài đã làm", "Điểm trung bình", "Trạng thái"];
     const rows = filteredStudents.map((s: any) => [
-      s.MaSinhVien, s.HoTen,
+      s.MaSinhVien, s.MSSV || "—", s.HoTen,
       s.TienDo || 0, s.SoBaiDaLam || 0,
       s.DiemTrungBinh || "—", s.TrangThai || "Chưa học"
     ]);
@@ -126,7 +127,8 @@ const ChiTietKetQua = () => {
           <table>
             <thead>
               <tr>
-                <th>Mã sinh viên</th>
+                <th>Mã học viên</th>
+                <th>MSSV (Trường)</th>
                 <th>Tên sinh viên</th>
                 <th>Tiến độ (%)</th>
                 <th>Số bài đã làm</th>
@@ -138,7 +140,7 @@ const ChiTietKetQua = () => {
             <tbody>
               {currentStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign:"center", padding:"20px", color:"#999" }}>
+                  <td colSpan={8} style={{ textAlign:"center", padding:"20px", color:"#999" }}>
                     Không có học viên nào
                   </td>
                 </tr>
@@ -146,6 +148,7 @@ const ChiTietKetQua = () => {
                 currentStudents.map((sv: any, index: number) => (
                   <tr key={index}>
                     <td>{sv.MaSinhVien}</td>
+                    <td>{sv.MSSV || "—"}</td>
                     <td>{sv.HoTen}</td>
                     <td>{sv.TienDo || 0}%</td>
                     <td>{sv.SoBaiDaLam || 0}</td>

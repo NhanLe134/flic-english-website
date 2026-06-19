@@ -61,6 +61,7 @@ interface LessonInfo {
 interface StudentResult {
   id: number
   studentId: string
+  mssv: string | null
   studentName: string
   gender: string
   className: string
@@ -154,6 +155,7 @@ export default function BaoCaoKetQua() {
           return {
             id: sv.MaNguoiDung,
             studentId: sv.MaSinhVien,
+            mssv: sv.MSSV || null,
             studentName: sv.HoTen,
             gender: sv.GioiTinh || '—',
             className: sv.TenLop || '—',
@@ -378,9 +380,9 @@ export default function BaoCaoKetQua() {
   }, [allData])
 
   const downloadCSV = () => {
-    const headers = ['Họ và tên', 'Mã học viên', 'Trạng thái', ...uniqueBuois.map(b => `Buổi ${b}`)]
+    const headers = ['Họ và tên', 'Mã học viên', 'MSSV (Trường)', 'Trạng thái', ...uniqueBuois.map(b => `Buổi ${b}`)]
     const rows = filtered.map(h => [
-      h.studentName, h.studentId, h.status,
+      h.studentName, h.studentId, h.mssv || '—', h.status,
       ...uniqueBuois.map(b => {
         const avg = getBuoiAvg(h, b)
         return avg !== null ? avg : 'Chưa nộp'
@@ -552,6 +554,7 @@ export default function BaoCaoKetQua() {
                   <tr>
                     <th>HỌ VÀ TÊN</th>
                     <th>MÃ HỌC VIÊN</th>
+                    <th>MSSV (TRƯỜNG)</th>
                     <th>TRẠNG THÁI</th>
                     {uniqueBuois.map(b => (
                       <th key={b} style={{ textAlign: 'center' }}>ĐIỂM TB BUỔI {b}</th>
@@ -565,6 +568,7 @@ export default function BaoCaoKetQua() {
                         <div className={styles.boldText}>{s.studentName}</div>
                       </td>
                       <td className={styles.boldText}>{s.studentId}</td>
+                      <td className={styles.boldText}>{s.mssv || '—'}</td>
                       <td>
                         <span className={`${styles.pill} ${s.status === 'Đang học' ? styles.pillGreen :
                             s.status === 'Hoàn thành' ? styles.pillBlue :

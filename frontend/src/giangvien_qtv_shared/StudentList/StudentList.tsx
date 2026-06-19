@@ -71,7 +71,8 @@ const StudentList: React.FC = () => {
 
     const exportData = filteredStudents.map((s, index) => ({
       "STT": index + 1,
-      "Mã sinh viên": s.MaSinhVien,
+      "Mã học viên (Hệ thống)": s.MaSinhVien,
+      "Mã số sinh viên (Trường)": s.MSSV || "—",
       "Tên sinh viên": s.HoTen,
       "Giới tính": s.GioiTinh || "—",
       "Khóa học": s.TenKhoaHoc || "—",
@@ -85,7 +86,7 @@ const StudentList: React.FC = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách học viên");
 
     const colWidths = [
-      { wch: 5 }, { wch: 15 }, { wch: 25 }, { wch: 10 },
+      { wch: 5 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 10 },
       { wch: 30 }, { wch: 25 }, { wch: 15 }, { wch: 12 },
     ];
     worksheet["!cols"] = colWidths;
@@ -163,7 +164,8 @@ const StudentList: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>Mã sinh viên</th>
+                <th>Mã học viên</th>
+                <th>MSSV (Trường)</th>
                 <th>Tên sinh viên</th>
                 <th>Giới tính</th>
                 <th>Khóa học</th>
@@ -176,7 +178,7 @@ const StudentList: React.FC = () => {
             <tbody>
               {currentStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "20px", color: "#999" }}>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "20px", color: "#999" }}>
                     {loading ? "Đang tải..." : "Không có học viên nào"}
                   </td>
                 </tr>
@@ -184,6 +186,7 @@ const StudentList: React.FC = () => {
                 currentStudents.map((student: any, index: number) => (
                   <tr key={index}>
                     <td>{student.MaSinhVien ? student.MaSinhVien.trim() : ""}</td>
+                    <td>{student.MSSV ? student.MSSV.trim() : "—"}</td>
                     <td>{student.HoTen}</td>
                     <td>{student.GioiTinh || "—"}</td>
                     <td>{student.TenKhoaHoc || "—"}</td>
@@ -276,8 +279,12 @@ const StudentList: React.FC = () => {
             ) : selectedStudentDetails ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
-                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Mã sinh viên:</span>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Mã học viên:</span>
                   <span style={{ color: '#475467' }}>{selectedStudentDetails.MaSinhVien}</span>
+                </div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
+                  <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>MSSV (Trường):</span>
+                  <span style={{ color: '#475467' }}>{selectedStudentDetails.MSSV || "—"}</span>
                 </div>
                 <div style={{ display: 'flex', borderBottom: '1px solid #f2f4f7', paddingBottom: '8px' }}>
                   <span style={{ width: '130px', fontWeight: 600, color: '#344054' }}>Họ và tên:</span>

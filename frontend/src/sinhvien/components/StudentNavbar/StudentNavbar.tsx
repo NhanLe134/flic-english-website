@@ -20,8 +20,7 @@ export default function StudentNavbar() {
     try {
       const user = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
       setHoTen(user.HoTen || "Sinh Viên");
-      const savedAvatar = localStorage.getItem(`user_avatar_${user.MaNguoiDung}`);
-      setAvatarUrl(savedAvatar || userIcon);
+      setAvatarUrl(user.AnhDaiDien || userIcon);
     } catch (e) {
       console.error("Error syncing user info in navbar", e);
     }

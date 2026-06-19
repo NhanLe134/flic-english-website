@@ -12,6 +12,7 @@ interface StudentScore {
 
 interface Student {
   MaSinhVien: string;
+  mssv: string | null;
   HoTen: string;
   GioiTinh: string;
   NgayGhiDanh: string;
@@ -131,6 +132,7 @@ const LessonResultPage = () => {
 
               return {
                 MaSinhVien: sv.MaSinhVien ? sv.MaSinhVien.trim() : "",
+                mssv: sv.MSSV || null,
                 HoTen: sv.HoTen || "—",
                 GioiTinh: sv.GioiTinh || "—",
                 NgayGhiDanh: sv.NgayGhiDanh || "",
@@ -168,7 +170,8 @@ const LessonResultPage = () => {
   const filteredStudents = useMemo(() => {
     return students.filter(s =>
       s.HoTen.toLowerCase().includes(search.toLowerCase()) ||
-      s.MaSinhVien.toLowerCase().includes(search.toLowerCase())
+      s.MaSinhVien.toLowerCase().includes(search.toLowerCase()) ||
+      (s.mssv && s.mssv.toLowerCase().includes(search.toLowerCase()))
     );
   }, [students, search]);
 
@@ -247,7 +250,8 @@ const LessonResultPage = () => {
     }
 
     const headers = [
-      "Mã sinh viên",
+      "Mã học viên",
+      "MSSV (Trường)",
       "Họ tên",
       "Lớp/khóa",
       "Trạng thái",
@@ -257,7 +261,8 @@ const LessonResultPage = () => {
 
     const rows = filteredStudents.map(s => {
       const rowData: Record<string, any> = {
-        "Mã sinh viên": s.MaSinhVien,
+        "Mã học viên": s.MaSinhVien,
+        "MSSV (Trường)": s.mssv || "—",
         "Họ tên": s.HoTen,
         "Lớp/khóa": classInfo?.TenLop || "—",
         "Trạng thái": s.TrangThai || "—",
@@ -275,7 +280,7 @@ const LessonResultPage = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng điểm");
 
     const colWidths = [
-      { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
+      { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
       ...uniqueBuois.map(() => ({ wch: 15 })),
       { wch: 18 }
     ];
@@ -383,7 +388,8 @@ const LessonResultPage = () => {
                 <thead>
                   <tr>
                     <th style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}></th>
-                    <th>Mã sinh viên</th>
+                    <th>Mã học viên</th>
+                    <th>MSSV (Trường)</th>
                     <th>Họ tên</th>
                     <th>Lớp/khóa</th>
                     <th>Trạng thái</th>
@@ -425,6 +431,7 @@ const LessonResultPage = () => {
                               </span>
                             </td>
                             <td className="lrp-code-cell">{s.MaSinhVien}</td>
+                            <td className="lrp-code-cell">{s.mssv || "—"}</td>
                             <td>
                               <span className="lrp-name-text">{s.HoTen}</span>
                             </td>
@@ -471,7 +478,7 @@ const LessonResultPage = () => {
                             maxExCount > 0 ? (
                               Array.from({ length: maxExCount }).map((_, i) => (
                                 <tr key={`sub-${s.MaSinhVien}-${i}`} style={{ background: '#fbfbfb' }}>
-                                  <td colSpan={5}></td>
+                                  <td colSpan={6}></td>
                                   {uniqueBuois.map(b => {
                                     const exList = exercisesByBuoi[b] || [];
                                     const ex = exList[i];

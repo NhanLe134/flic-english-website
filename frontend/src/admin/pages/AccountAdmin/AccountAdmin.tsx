@@ -101,6 +101,9 @@ export default function AccountAdmin() {
     if (!showAddModal) {
       setNewPermissions([]);
       setAddErrors({});
+      setNewUser({ username: "", fullname: "", email: "", password: "123456", role: "Giảng Viên", gioiTinh: "Nam" });
+    } else {
+      setNewPermissions(GV_PERMISSIONS.map(p => p.code));
     }
   }, [showAddModal]);
 
@@ -114,7 +117,7 @@ export default function AccountAdmin() {
 
   const [newUser, setNewUser] = useState({
     username: "", fullname: "", email: "", password: "123456",
-    role: "Học Viên", gioiTinh: "Nam",
+    role: "Giảng Viên", gioiTinh: "Nam",
   });
 
   const showToast = (msg: string) => {
@@ -246,7 +249,7 @@ export default function AccountAdmin() {
       }
       showToast("Đã tạo tài khoản!");
       setShowAddModal(false);
-      setNewUser({ username: "", fullname: "", email: "", password: "123456", role: "Học Viên", gioiTinh: "Nam" });
+      setNewUser({ username: "", fullname: "", email: "", password: "123456", role: "Giảng Viên", gioiTinh: "Nam" });
       loadUsers();
     } catch { showToast("Lỗi khi tạo tài khoản"); }
   };
@@ -514,10 +517,8 @@ export default function AccountAdmin() {
                     }
                   }}
                 >
-                  <option value="Học Viên">Học Viên</option>
                   <option value="Giảng Viên">Giảng Viên</option>
                   <option value="Quản Trị Nội Dung">Quản Trị Nội Dung</option>
-                  <option value="Quản Trị Viên">Quản Trị Viên</option>
                 </select>
               </div>
 
@@ -558,14 +559,7 @@ export default function AccountAdmin() {
                 </div>
               )}
 
-              {newUser.role === "Quản Trị Viên" && (
-                <div className="permissions-section">
-                  <div className="permissions-title">Phân quyền</div>
-                  <div className="permission-info-text">
-                    Có tất cả quyền của Quản trị viên hệ thống.
-                  </div>
-                </div>
-              )}
+
             </div>
 
             <div className="modal-actions">

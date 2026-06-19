@@ -25,6 +25,7 @@ interface StudentProfile {
   MSSV: string | null;
   TenKhoaHoc: string | null;
   NgayDangKy: string | null;
+  AnhDaiDien?: string | null;
 }
 
 export default function ProfilePage() {
@@ -93,7 +94,8 @@ export default function ProfilePage() {
           Lop: detailData.Lop || "",
           MSSV: detailData.MSSV || "",
           TenKhoaHoc: detailData.TenKhoaHoc || null,
-          NgayDangKy: NgayDangKy
+          NgayDangKy: NgayDangKy,
+          AnhDaiDien: detailData.AnhDaiDien || currentUser.AnhDaiDien || null
         };
 
         setProfile(fullProfile);
@@ -106,8 +108,8 @@ export default function ProfilePage() {
           MSSV: fullProfile.MSSV || ""
         });
 
-        // Load avatar từ localStorage
-        const savedAvatar = localStorage.getItem(`user_avatar_${currentUser.MaNguoiDung}`);
+        // Load avatar từ database/sessionStorage
+        const savedAvatar = fullProfile.AnhDaiDien;
         if (savedAvatar) {
           setAvatar(savedAvatar);
         }
@@ -129,18 +131,47 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setAvatar(base64String);
-        localStorage.setItem(`user_avatar_${currentUser.MaNguoiDung}`, base64String);
-        // Kích hoạt event custom để StudentNavbar cập nhật ngay lập tức
-        window.dispatchEvent(new Event("avatarChanged"));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      // 1. Upload file vật lý lên server backend
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch(`${API}/upload`, {
+        method: "POST",
+        body: formData
+      });
+      if (!uploadRes.ok) throw new Error("Upload thất bại");
+
+      const uploadData = await uploadRes.json();
+      const fileUrl = `${API}${uploadData.url}`;
+
+      // 2. Cập nhật state avatar
+      setAvatar(fileUrl);
+
+      // 3. Cập nhật sessionStorage user
+      const userStr = sessionStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        user.AnhDaiDien = fileUrl;
+        sessionStorage.setItem("user", JSON.stringify(user));
+      }
+
+      // 4. Lưu link URL vào database cột AnhDaiDien
+      await fetch(`${API}/users/${currentUser.MaNguoiDung}/anh-dai-dien`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ AnhDaiDien: fileUrl })
+      });
+
+      // Kích hoạt event custom để StudentNavbar cập nhật ngay lập tức
+      window.dispatchEvent(new Event("avatarChanged"));
+    } catch (err) {
+      console.error("Lỗi cập nhật ảnh đại diện:", err);
+      alert("Lỗi khi tải ảnh đại diện lên máy chủ");
     }
   };
 

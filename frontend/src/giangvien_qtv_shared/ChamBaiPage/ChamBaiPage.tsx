@@ -228,8 +228,12 @@ const ChamBaiPage = () => {
             <b>{baiNop.HoTen}</b>
           </div>
           <div className="cb-info-item">
-            <span className="cb-label">Mã sinh viên</span>
+            <span className="cb-label">Mã học viên</span>
             <b>{baiNop.MaSinhVien}</b>
+          </div>
+          <div className="cb-info-item">
+            <span className="cb-label">MSSV (Trường)</span>
+            <b>{baiNop.MSSV || "—"}</b>
           </div>
           <div className="cb-info-item">
             <span className="cb-label">Ngày nộp</span>

@@ -379,7 +379,7 @@ export default function ApproveAdmin() {
           maxStudents: c.SiSoToiDa,
           progress: c.TienDo || 0,
           lessonCount: c.SoBuoiHoc || 0,
-          completed: !!c.HoanThanh,
+          completed: c.TrangThai === "Đã hoàn thành",
           status: c.TrangThai || 'Chưa bắt đầu',
           maLop: c.MaLop
         }));
