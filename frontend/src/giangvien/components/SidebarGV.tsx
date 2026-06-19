@@ -6,9 +6,9 @@ import "./SidebarGV.css";
 
 const menuItems = [
   { label: "Quản lý khóa học",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
-  { label: "Thông tin cá nhân",       path: "/thong-tin-ca-nhan",   icon: <FiUser className="menu-icon" /> },
   { label: "Danh sách học viên",      path: "/danh-sach-hoc-vien",  icon: <FiUsers className="menu-icon" /> },
   { label: "Quản lý kết quả học tập", path: "/quan-ly-ket-qua",   icon: <FiAward className="menu-icon" /> },
+  { label: "Thông tin cá nhân",       path: "/thong-tin-ca-nhan",   icon: <FiUser className="menu-icon" /> },
   { label: "Đăng xuất",               path: "/",                  icon: <FiLogOut className="menu-icon" /> },
 ];
 

@@ -59,7 +59,18 @@ export default function TestThuSV() {
 
   useEffect(() => {
     if ((location.state as any)?.submitted) setSubmitted(true);
-    setTests(STATIC_TESTS);
+    
+    let localTests = localStorage.getItem("flic_student_practice_tests");
+    if (!localTests) {
+      localStorage.setItem("flic_student_practice_tests", JSON.stringify(STATIC_TESTS));
+      localTests = JSON.stringify(STATIC_TESTS);
+    }
+    
+    try {
+      setTests(JSON.parse(localTests));
+    } catch (e) {
+      setTests(STATIC_TESTS);
+    }
     setLoading(false);
   }, [location]);
 
