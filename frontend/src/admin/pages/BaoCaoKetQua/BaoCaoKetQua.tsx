@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import styles from './BaoCaoKetQua.module.css'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell
@@ -37,7 +37,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 
 
-const API = 'http://14.225.192.252:5000'
+const API = 'http://localhost:5000'
 
 interface ExerciseHeader {
   MaBaiTap: number

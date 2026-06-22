@@ -1,8 +1,8 @@
-import "./Login.css";
+﻿import "./Login.css";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 interface LoginProps {
   isModal?: boolean;
@@ -261,3 +261,4 @@ const Login = ({ isModal = false }: LoginProps) => {
 };
 
 export default Login;
+

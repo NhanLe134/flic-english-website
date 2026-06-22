@@ -1,8 +1,8 @@
-import "./DocumentDetail.css";
+﻿import "./DocumentDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 const DocumentDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -101,3 +101,4 @@ const DocumentDetail: React.FC = () => {
 };
 
 export default DocumentDetail;
+

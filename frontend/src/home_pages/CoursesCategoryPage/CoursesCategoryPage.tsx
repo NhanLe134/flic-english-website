@@ -1,10 +1,10 @@
-import NavbarAuto from "../../components/NavbarAuto";
+﻿import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
 import "./CoursesCategoryPage.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 const categoryMeta: Record<string, { title: string; image: string; breadcrumb: string }> = {
   toeic: {
@@ -231,3 +231,4 @@ const CoursesCategoryPage = () => {
 };
 
 export default CoursesCategoryPage;
+

@@ -147,21 +147,6 @@ app.get("/courses/:id/details", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-app.post("/register-course", async (req, res) => {
-  try {
-    const { maKhoaHoc, maSinhVien } = req.body;
-    if (!maKhoaHoc || !maSinhVien) return res.status(400).json({ message: "Thiếu dữ liệu" });
-    const pool = await poolPromise;
-    const check = await pool.request()
-      .input("maKhoaHoc", maKhoaHoc).input("maSinhVien", maSinhVien)
-      .query(`SELECT * FROM DANGKYKHOAHOC WHERE MaKhoaHoc=@maKhoaHoc AND MaSinhVien=@maSinhVien`);
-    if (check.recordset.length > 0) return res.json({ message: "Sinh viên đã đăng ký khóa học này rồi" });
-    await pool.request()
-      .input("maKhoaHoc", maKhoaHoc).input("maSinhVien", maSinhVien)
-      .query(`INSERT INTO DANGKYKHOAHOC (MaKhoaHoc, MaSinhVien, NgayDangKy, TrangThai) VALUES (@maKhoaHoc, @maSinhVien, GETDATE(), N'Đã đăng ký')`);
-    res.json({ message: "Đăng ký khóa học thành công" });
-  } catch (err) { res.status(500).send(err.message); }
-});
 // Tạo khóa học mới
 app.post("/qtv/khoahoc", async (req, res) => {
   const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, KyNang, Listening, Reading, Speaking, Writing } = req.body
@@ -407,16 +392,7 @@ app.get("/qtv/baigiang", async (req, res) => {
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
-app.get("/my-courses/:maSinhVien", async (req, res) => {
-  try {
-    const pool = await poolPromise;
-    const parsedSV = parseStudentId(req.params.maSinhVien);
-    const result = await pool.request()
-      .input("maSinhVien", parsedSV)
-      .query(`SELECT K.TenKhoaHoc, D.NgayDangKy, D.TrangThai FROM DANGKYKHOAHOC D JOIN KHOAHOC K ON D.MaKhoaHoc=K.MaKhoaHoc WHERE D.MaSinhVien=@maSinhVien ORDER BY D.NgayDangKy DESC`);
-    res.json(result.recordset);
-  } catch (err) { res.status(500).send(err.message); }
-});
+
 
 
 // Lấy danh sách giảng viên cho dropdown

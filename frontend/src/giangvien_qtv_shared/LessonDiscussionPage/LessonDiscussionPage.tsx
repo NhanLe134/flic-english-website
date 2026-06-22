@@ -1,9 +1,9 @@
-import "./LessonDiscussionPage.css";
+﻿import "./LessonDiscussionPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiArrowLeft, FiMessageSquare, FiTrash2, FiSend, FiThumbsUp, FiUser } from "react-icons/fi";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 const LessonDiscussionPage = () => {
   const navigate = useNavigate();
@@ -288,3 +288,4 @@ const LessonDiscussionPage = () => {
 };
 
 export default LessonDiscussionPage;
+

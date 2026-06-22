@@ -1,4 +1,4 @@
-import "./AddDocument.css";
+﻿import "./AddDocument.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useRef } from "react";
 
@@ -53,7 +53,7 @@ const AddDocument = () => {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
+        const uploadRes = await fetch("http://localhost:5000/upload", {
           method: "POST",
           body: formData
         });
@@ -61,7 +61,7 @@ const AddDocument = () => {
         fileUrl = uploadData.url || "";
       }
 
-      await fetch("http://14.225.192.252:5000/tailieu", {
+      await fetch("http://localhost:5000/tailieu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -183,3 +183,4 @@ const AddDocument = () => {
 };
 
 export default AddDocument;
+

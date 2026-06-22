@@ -1,4 +1,4 @@
-import "./ExerciseDetail.css";
+﻿import "./ExerciseDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -77,7 +77,7 @@ const ExerciseDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/baitap/${id}`).then(r => r.json()).then(setExercise).catch(console.log);
+    fetch(`http://localhost:5000/baitap/${id}`).then(r => r.json()).then(setExercise).catch(console.log);
   }, [id]);
 
   useEffect(() => {
@@ -315,3 +315,4 @@ const ExerciseDetail = () => {
 };
 
 export default ExerciseDetail;
+

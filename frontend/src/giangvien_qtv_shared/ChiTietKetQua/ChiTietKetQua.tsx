@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import "./ChiTietKetQua.css";
@@ -23,8 +23,8 @@ const ChiTietKetQua = () => {
     const maNguoiDung = user.MaNguoiDung;
 
     Promise.all([
-      fetch(`http://14.225.192.252:5000/buoihoc/${id}`).then(r => r.json()),
-      fetch(`http://14.225.192.252:5000/buoihoc/${id}/students/${maNguoiDung}`).then(r => r.json())
+      fetch(`http://localhost:5000/buoihoc/${id}`).then(r => r.json()),
+      fetch(`http://localhost:5000/buoihoc/${id}/students/${maNguoiDung}`).then(r => r.json())
     ])
       .then(([buoiHocData, studentData]) => {
         setLessonInfo(buoiHocData);
@@ -204,3 +204,4 @@ const ChiTietKetQua = () => {
 };
 
 export default ChiTietKetQua;
+

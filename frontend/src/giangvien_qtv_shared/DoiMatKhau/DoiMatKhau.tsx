@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DoiMatKhau.css";
 
@@ -78,7 +78,7 @@ const DoiMatKhau = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("http://14.225.192.252:5000/doi-mat-khau", {
+      const res = await fetch("http://localhost:5000/doi-mat-khau", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -166,3 +166,4 @@ const DoiMatKhau = () => {
 };
 
 export default DoiMatKhau;
+

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+﻿import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo, Fragment } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -62,7 +62,7 @@ const LessonResultPage = () => {
     }
 
     // Verify lecturer permission
-    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`http://localhost:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(classes => {
         const hasAccess = Array.isArray(classes) && classes.some((c: any) => Number(c.MaLopHoc) === Number(id));
@@ -75,11 +75,11 @@ const LessonResultPage = () => {
 
         // Fetch class data
         Promise.all([
-          fetch(`http://14.225.192.252:5000/classes/${id}/info`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/lophoc/${id}/sinhvien`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/baocao/baitap-headers`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/baocao/diem-all`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`).then(r => r.json()),
+          fetch(`http://localhost:5000/classes/${id}/info`).then(r => r.json()),
+          fetch(`http://localhost:5000/lophoc/${id}/sinhvien`).then(r => r.json()),
+          fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
+          fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
+          fetch(`http://localhost:5000/classes/${id}/buoihoc`).then(r => r.json()),
         ])
           .then(([info, sinhVienList, headers, grades, lessonsList]) => {
             setClassInfo(info);
@@ -567,3 +567,4 @@ const LessonResultPage = () => {
 };
 
 export default LessonResultPage;
+

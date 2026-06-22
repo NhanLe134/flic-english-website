@@ -1,4 +1,4 @@
-import "./ClassDetailSV.css";
+﻿import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -18,7 +18,7 @@ import {
   FaInfoCircle
 } from "react-icons/fa";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -644,3 +644,4 @@ export default function ClassDetailSV() {
     </div>
   );
 }
+

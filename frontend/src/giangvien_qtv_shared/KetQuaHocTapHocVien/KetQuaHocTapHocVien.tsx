@@ -1,8 +1,8 @@
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+﻿import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./KetQuaHocTapHocVien.css";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 const KetQuaHocTapHocVien = () => {
   const navigate = useNavigate();
@@ -143,3 +143,4 @@ const KetQuaHocTapHocVien = () => {
 };
 
 export default KetQuaHocTapHocVien;
+

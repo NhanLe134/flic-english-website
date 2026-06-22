@@ -1,38 +1,85 @@
 import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import "../../../home_pages/CoursesPageHome/CoursesPageHome.css";
 
-const staticCategories = [
-  {
-    key: "toeic",
-    title: "Khóa học Luyện thi TOEIC",
-    desc: "TOEIC là chương trình do Viện khảo thí giáo dục Hoa kỳ thiết kế. Là chương trình kiểm tra và xây dựng tiêu chuẩn Anh ngữ trong môi trường giao tiếp và làm việc quốc tế. Kết quả thi TOEIC (hai kỹ năng Listening and Reading gọi là TOEIC paper) sẽ có từ 10 đến 990 điểm. Kết quả điểm đạt được sẽ thể hiện trình độ Tiếng Anh của người thi.",
-    image: import.meta.env.BASE_URL + "image(17).png"
-  },
-  {
-    key: "ielts",
-    title: "Khóa học Luyện thi IELTS",
-    desc: "IELTS là viết tắt của cụm từ International English Testing System, nhằm đánh giá độ thông thạo tiếng Anh cho mục đích du học, định cư hoặc làm việc tại những nước sử dụng tiếng Anh làm ngôn ngữ chính. Bài thi IELTS đánh giá toàn diện cả 4 kỹ năng Nghe – Nói – Đọc – Viết, trong đó phần Nghe, Nói giống nhau cho cả 2 hình thức thi, chỉ khác nhau về đề tài và mức độ khó ở phần Đọc Viết",
-    image: import.meta.env.BASE_URL + "image(18).png"
-  },
-  {
-    key: "vstep",
-    title: "Khóa học Luyện thi VSTEP",
-    desc: "VSTEP nghĩa là “Kỳ thi đánh giá năng lực tiếng Anh theo Khung năng lực ngoại ngữ (NLNN) 6 bậc dùng cho Việt Nam (từ bậc 1 đến bậc 6) tương đương với trình độ A1 đến C2 của Khung NLNN Châu Âu CEFR”. Bài thi Đọc & Viết đánh giá năng lực đọc hiểu các ký hiệu, văn bản, khả năng ứng phó với những từ và cấu trúc câu mà bạn chưa biết.",
-    image: import.meta.env.BASE_URL + "image(19).png"
-  },
-  {
-    key: "general",
-    title: "Khóa học Tiếng anh tổng quát",
-    desc: "Chương trình tiếng Anh tổng quát ôn tập căn bản các điểm ngữ pháp, củng cố và bổ sung từ vựng mới, tạo phản xạ nghe, nói cho các đối tượng học viên muốn lấy lại căn bản tiếng Anh và tạo nền tảng cho các lớp dự bị TOEFL, IELTS, TOEIC. Khóa học này cũng giúp học viên nghe hiểu và trả lời một câu đã được học, có khả năng viết được những câu đơn, tự tin giao tiếp,...",
-    image: import.meta.env.BASE_URL + "image(20).png"
-  }
-];
+const API = "http://localhost:5000";
+
+const getCourseImage = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("toeic")) return import.meta.env.BASE_URL + "image(17).png";
+  if (lower.includes("ielts")) return import.meta.env.BASE_URL + "image(18).png";
+  if (lower.includes("vstep")) return import.meta.env.BASE_URL + "image(19).png";
+  return import.meta.env.BASE_URL + "image(20).png";
+};
 
 export default function CourseRegister() {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
 
-  const handleNavigateCategory = (key: string) => {
-    navigate(`/courses-category/${key}`);
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast(msg);
+    setToastType(type);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  useEffect(() => {
+    fetch(`${API}/courses`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCourses(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Error fetching courses:", err);
+        setCourses([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleRegister = async (course: any) => {
+    let user: any = {};
+    try {
+      user = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
+    } catch (e) {
+      console.error("Error parsing user in handleRegister", e);
+    }
+    if (!user?.MaNguoiDung) {
+      showToast("Vui lòng đăng nhập để đăng ký khóa học!", "error");
+      setTimeout(() => navigate("/login"), 1500);
+      return;
+    }
+
+    try {
+      const svRes = await fetch(`${API}/students/by-user/${user.MaNguoiDung}`);
+      const svData = await svRes.json();
+      if (!svData?.MaSinhVien) {
+        showToast("Tài khoản này không phải sinh viên!", "error");
+        return;
+      }
+
+      const res = await fetch(`${API}/register-course`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          maKhoaHoc: course.MaKhoaHoc,
+          maSinhVien: svData.MaSinhVien
+        })
+      });
+      const data = await res.json();
+      if (data.message?.includes("đã đăng ký")) {
+        showToast("Bạn đã đăng ký khóa học này rồi!", "error");
+      } else {
+        showToast(`Đăng ký "${course.TenKhoaHoc}" thành công!`);
+      }
+    } catch {
+      showToast("Lỗi khi đăng ký!", "error");
+    }
+  };
+
+  const handleNavigateDetail = (courseId: number) => {
+    navigate(`/coursehome/${courseId}`);
   };
 
   return (
@@ -48,30 +95,49 @@ export default function CourseRegister() {
 
         <h1 className="courses-title">CÁC KHÓA HỌC HIỆN TẠI CỦA FLIC</h1>
 
-        <div className="courses-list-layout">
-          {staticCategories.map((cat) => (
-            <div className="course-item-container" key={cat.key}>
-              <div className="course-item">
-                <img src={cat.image} alt={cat.title} />
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>Đang tải danh sách khóa học...</div>
+        ) : courses.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>Hiện chưa có khóa học nào.</div>
+        ) : (
+          <div className="courses-list-layout">
+            {courses.map((course) => (
+              <div className="course-item-container" key={course.MaKhoaHoc}>
+                <div className="course-item">
+                  <img src={getCourseImage(course.TenKhoaHoc)} alt={course.TenKhoaHoc} />
 
-                <div className="course-content">
-                  <h2>{cat.title}</h2>
-                  <p>{cat.desc}</p>
+                  <div className="course-content">
+                    <h2>{course.TenKhoaHoc}</h2>
+                    <p>{course.MoTa || "Chưa có mô tả chi tiết cho khóa học này."}</p>
 
-                  <div className="course-buttons">
-                    <span className="btn-xem-them" onClick={() => handleNavigateCategory(cat.key)}>
-                      Xem Thêm &rarr;
-                    </span>
-                    <button onClick={() => handleNavigateCategory(cat.key)}>
-                      Đăng ký khóa học
-                    </button>
+                    <div className="course-buttons">
+                      <span className="btn-xem-them" onClick={() => handleNavigateDetail(course.MaKhoaHoc)}>
+                        Xem Thêm &rarr;
+                      </span>
+                      <button onClick={() => handleRegister(course)}>
+                        Đăng ký khóa học
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 28, right: 28, zIndex: 9999,
+          background: toastType === "success" ? "#2e7d32" : "#c62828",
+          color: "#fff", padding: "14px 22px", borderRadius: 12,
+          fontSize: 14, fontWeight: 500, boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          display: "flex", alignItems: "center", gap: 8
+        }}>
+          {toastType === "success" ? "✓" : "✕"} {toast}
+        </div>
+      )}
     </div>
   );
 }

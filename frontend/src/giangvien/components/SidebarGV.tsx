@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+﻿import { useNavigate, useLocation } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut } from "react-icons/fi";
@@ -70,7 +70,7 @@ const Sidebar = () => {
     const userStr = sessionStorage.getItem("user");
     if (!userStr) return;
     const user = JSON.parse(userStr);
-    fetch(`http://14.225.192.252:5000/giangvien/${user.MaNguoiDung}`)
+    fetch(`http://localhost:5000/giangvien/${user.MaNguoiDung}`)
       .then(res => res.json())
       .then(data => setTeacherInfo(data))
       .catch(err => console.log(err));

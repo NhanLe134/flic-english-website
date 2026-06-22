@@ -1,4 +1,4 @@
-import "./DanhSachBaiNop.css";
+﻿import "./DanhSachBaiNop.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -16,12 +16,12 @@ const DanhSachBaiNop = () => {
 
   const id = parseInt(maBaiTap.trim());
 
-  fetch(`http://14.225.192.252:5000/baitap/${id}`)
+  fetch(`http://localhost:5000/baitap/${id}`)
     .then(res => res.json())
     .then(data => setExercise(data))
     .catch(err => console.log(err));
 
-  fetch(`http://14.225.192.252:5000/bainop/baitap/${id}`)
+  fetch(`http://localhost:5000/bainop/baitap/${id}`)
     .then(res => res.json())
     .then(data => setDanhSach(data))
     .catch(err => console.log(err));
@@ -138,3 +138,4 @@ const DanhSachBaiNop = () => {
 };
 
 export default DanhSachBaiNop;
+

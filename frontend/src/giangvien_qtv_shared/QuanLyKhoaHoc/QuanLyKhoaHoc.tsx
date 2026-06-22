@@ -1,4 +1,4 @@
-import "./QuanLyKhoaHoc.css";
+﻿import "./QuanLyKhoaHoc.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUsers, FiCheckSquare } from "react-icons/fi";
@@ -23,7 +23,7 @@ const QuanLyKhoaHoc = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://14.225.192.252:5000/teacher/courses/${maNguoiDung}`)
+    fetch(`http://localhost:5000/teacher/courses/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
         const mappedCourses = data.map((c: any) => ({
@@ -38,7 +38,7 @@ const QuanLyKhoaHoc = () => {
       .catch(err => console.log(err));
 
     // Lấy số lượng bài tập cần duyệt
-    fetch("http://14.225.192.252:5000/teacher/submissions/pending-count")
+    fetch("http://localhost:5000/teacher/submissions/pending-count")
       .then(res => res.json())
       .then(data => setPendingCount(data.count))
       .catch(err => console.log(err));
@@ -145,3 +145,4 @@ const QuanLyKhoaHoc = () => {
 };
 
 export default QuanLyKhoaHoc;
+

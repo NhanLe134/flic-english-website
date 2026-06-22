@@ -1,4 +1,4 @@
-import "./CourseDetail.css";
+﻿import "./CourseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -439,14 +439,14 @@ const CourseDetail = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://14.225.192.252:5000/course-detail/${id}/classes/${maNguoiDung}`)
+    fetch(`http://localhost:5000/course-detail/${id}/classes/${maNguoiDung}`)
       .then((res) => res.json())
       .then(async (data) => {
         const mapped = await Promise.all(
           data.map(async (c: any) => {
             let soLuong = 0;
             try {
-              const res = await fetch(`http://14.225.192.252:5000/lophoc/${c.MaLopHoc}/students/count`);
+              const res = await fetch(`http://localhost:5000/lophoc/${c.MaLopHoc}/students/count`);
               const json = await res.json();
               soLuong = json?.SoLuongHocVien ?? 0;
             } catch (_) { }
@@ -465,7 +465,7 @@ const CourseDetail = () => {
       })
       .catch((err) => console.log(err));
 
-    fetch("http://14.225.192.252:5000/teacher/submissions/pending-count")
+    fetch("http://localhost:5000/teacher/submissions/pending-count")
       .then(res => res.json())
       .then(data => setPendingCount(data.count))
       .catch(err => console.log(err));
@@ -2496,3 +2496,4 @@ D. Visiting friends
 };
 
 export default CourseDetail;
+

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FiArrowLeft, FiFileText } from "react-icons/fi";
 import "./LessonDetail.css";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 const LessonDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -189,3 +189,4 @@ const LessonDetail: React.FC = () => {
 };
 
 export default LessonDetail;
+

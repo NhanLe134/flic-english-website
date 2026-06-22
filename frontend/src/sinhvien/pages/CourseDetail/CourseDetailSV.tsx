@@ -1,8 +1,8 @@
-import "./CourseDetailSV.css";
+﻿import "./CourseDetailSV.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API = "http://14.225.192.252:5000";
+const API = "http://localhost:5000";
 
 function CourseDetailSV() {
   const navigate        = useNavigate()
