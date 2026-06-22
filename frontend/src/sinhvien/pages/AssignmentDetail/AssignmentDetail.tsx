@@ -2,6 +2,8 @@
 import "./AssignmentDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
+import { FiVolume2, FiEdit3, FiBookOpen, FiFileText, FiCheckCircle, FiXCircle, FiClock, FiMic, FiAward, FiList } from "react-icons/fi";
+import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
 
 const API = "http://localhost:5000";
 
@@ -20,6 +22,20 @@ function AssignmentDetail() {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const maNguoiDung = user.MaNguoiDung;
 
+  const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!maNguoiDung) return;
+    fetch(`${API}/students/by-user/${maNguoiDung}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.MaSinhVien) {
+          setMaSinhVien(data.MaSinhVien);
+        }
+      })
+      .catch(err => console.error("Error fetching student info:", err));
+  }, [maNguoiDung]);
+
   const [exercise, setExercise] = useState<any>(null);
   const [lopInfo, setLopInfo] = useState<any>(null);
   const [baiNop, setBaiNop] = useState<any>(null);
@@ -28,7 +44,7 @@ function AssignmentDetail() {
   const [submitted, setSubmitted] = useState(false);
 
   // Solving states
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [mcAnswers, setMcAnswers] = useState<Record<string | number, string>>({}); // mapped by questionIdx
   const [essayAnswers, setEssayAnswers] = useState<Record<string | number, string>>({}); // mapped by questionIdx
   const [fillInAnswers, setFillInAnswers] = useState<Record<string | number, string[]>>({}); // questionIdx -> list of answers
@@ -44,7 +60,7 @@ function AssignmentDetail() {
   const [recordedUrls, setRecordedUrls] = useState<Record<string | number, string>>({});
   const [isRecording, setIsRecording] = useState<Record<string | number, boolean>>({});
   const [recordSeconds, setRecordSeconds] = useState<Record<string | number, number>>({});
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<any>(null);
 
@@ -100,7 +116,7 @@ function AssignmentDetail() {
       if (exercise.Questions.trim().startsWith("[")) {
         return JSON.parse(exercise.Questions);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // Fallback to old custom text formatting
     const exType = (exercise?.Type || "").toLowerCase();
@@ -162,6 +178,73 @@ function AssignmentDetail() {
     return [{ question: exercise.Title, text: exercise.Content }];
   }, [exercise, isExam, parsedContent]);
 
+  // Group questions into pages:
+  // - Questions of the same reading-split passage go on the same page.
+  // - Questions sharing the same audioUrl go on the same page.
+  // - General/Simple questions with no audio or passage are grouped together on a single page.
+  const questionPages = useMemo(() => {
+    if (isExam) return []; // Exams use their own sections tabs
+    if (questionsList.length === 0) return [];
+
+    const pages: any[][] = [];
+    let currentAudioGroup: any[] = [];
+    let currentAudioUrl: string | null = null;
+    let currentSimpleGroup: any[] = [];
+
+    questionsList.forEach((q) => {
+      // 1. Reading split passage has its own page
+      if ((exercise?.Type || "").toLowerCase() === "reading-split" || q.subQuestions) {
+        if (currentAudioGroup.length > 0) {
+          pages.push(currentAudioGroup);
+          currentAudioGroup = [];
+          currentAudioUrl = null;
+        }
+        if (currentSimpleGroup.length > 0) {
+          pages.push(currentSimpleGroup);
+          currentSimpleGroup = [];
+        }
+        pages.push([q]);
+        return;
+      }
+
+      // 2. Questions sharing the same audio Url
+      if (q.audioUrl) {
+        if (currentSimpleGroup.length > 0) {
+          pages.push(currentSimpleGroup);
+          currentSimpleGroup = [];
+        }
+
+        if (currentAudioUrl && q.audioUrl === currentAudioUrl) {
+          currentAudioGroup.push(q);
+        } else {
+          if (currentAudioGroup.length > 0) {
+            pages.push(currentAudioGroup);
+          }
+          currentAudioGroup = [q];
+          currentAudioUrl = q.audioUrl;
+        }
+        return;
+      }
+
+      // 3. Simple questions with no audio or reading-split
+      if (currentAudioGroup.length > 0) {
+        pages.push(currentAudioGroup);
+        currentAudioGroup = [];
+        currentAudioUrl = null;
+      }
+      currentSimpleGroup.push(q);
+    });
+
+    if (currentAudioGroup.length > 0) {
+      pages.push(currentAudioGroup);
+    }
+    if (currentSimpleGroup.length > 0) {
+      pages.push(currentSimpleGroup);
+    }
+
+    return pages;
+  }, [questionsList, isExam, exercise]);
+
   // Load prior submission and metadata
   useEffect(() => {
     if (!id) return;
@@ -174,7 +257,7 @@ function AssignmentDetail() {
         setExercise(exData);
         setLopInfo(lopData);
         const myNop = Array.isArray(nopData)
-          ? nopData.find((b: any) => b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung)
+          ? nopData.find((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung)
           : null;
         setBaiNop(myNop || null);
         if (myNop) {
@@ -246,7 +329,7 @@ function AssignmentDetail() {
           }
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [id, maLopHoc]);
 
@@ -604,7 +687,7 @@ function AssignmentDetail() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             MaExercise: parseInt(id!),
-            MaSinhVien: maNguoiDung,
+            MaSinhVien: maSinhVien || maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: examFinalScore,
             TrangThai: isFullyAutoGraded ? "Đã chấm" : "Chờ chấm"
@@ -732,7 +815,7 @@ function AssignmentDetail() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             MaExercise: parseInt(id!),
-            MaSinhVien: maNguoiDung,
+            MaSinhVien: maSinhVien || maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: finalScore,
             TrangThai: isFullyAuto ? "Đã chấm" : "Chờ chấm"
@@ -757,8 +840,8 @@ function AssignmentDetail() {
     }
   };
 
-  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Đang tải...</div>;
-  if (!exercise) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Không tìm thấy bài tập.</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Loading...</div>;
+  if (!exercise) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Exercise not found.</div>;
 
   // RENDER QUESTION SUB-COMPONENTS
   const renderMCQBlock = (q: any, qIdx: number, subIdxPrefix?: string) => {
@@ -769,32 +852,31 @@ function AssignmentDetail() {
     const isWrong = submitted && chosen && chosen !== q.correct;
 
     return (
-      <div key={qIdx} style={{
-        background: submitted ? (isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "#fff") : "#fff",
-        border: `1.5px solid ${submitted ? (isCorrect ? "#86efac" : isWrong ? "#fecaca" : "#f0e8dc") : "#f0e8dc"}`,
-        borderRadius: 12, padding: "16px 18px", marginBottom: 14
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-          <p style={{ margin: 0, fontWeight: 700, color: "#5a3e2b" }}>Câu {qIdx + 1}: {q.question}</p>
+      <div key={qIdx} className={`ad-mcq-question-box ${submitted ? (isCorrect ? "correct-box" : isWrong ? "wrong-box" : "") : ""}`}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+          <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a", fontSize: 16 }}>Question {qIdx + 1}: {q.question}</p>
           {submitted && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626" }}>
-              {isCorrect ? "✓ Đúng" : "✗ Sai"}
+            <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4 }}>
+              {isCorrect ? (
+                <>
+                  <FiCheckCircle /> Correct
+                </>
+              ) : (
+                <>
+                  <FiXCircle /> Incorrect
+                </>
+              )}
             </span>
           )}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="ad-mcq-list">
           {optionsList.map((opt: any) => {
             const isChosen = chosen === opt.label;
             const isCorrectOpt = submitted && opt.label === q.correct;
             const isWrongOpt = submitted && isChosen && opt.label !== q.correct;
 
             return (
-              <label key={opt.label} style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8,
-                cursor: submitted ? "default" : "pointer",
-                border: `1.5px solid ${isCorrectOpt ? "#86efac" : isWrongOpt ? "#fecaca" : isChosen ? "#e87722" : "#e0d8cc"}`,
-                background: isCorrectOpt ? "#f0fdf4" : isWrongOpt ? "#fef2f2" : isChosen ? "#fff3e0" : "#fafafa",
-              }}>
+              <label key={opt.label} className={`ad-mcq-option ${isCorrectOpt ? "correct" : isWrongOpt ? "wrong" : isChosen ? "chosen" : ""}`}>
                 <input
                   type="radio"
                   disabled={submitted || isOverdue || (isExam && !examStarted)}
@@ -802,35 +884,34 @@ function AssignmentDetail() {
                   onChange={() => {
                     setMcAnswers(prev => ({ ...prev, [key]: opt.label }));
                   }}
-                  style={{ accentColor: "#e87722" }}
                 />
-                <span style={{ fontWeight: 600, color: "#e87722" }}>{opt.label}.</span>
-                <span>{opt.text}</span>
+                <span className="ad-mcq-label-text">{opt.label}.</span>
+                {opt.text && opt.text.trim().toUpperCase() !== opt.label && (
+                  <span>{opt.text}</span>
+                )}
               </label>
             );
           })}
         </div>
         {submitted && (
-          <div style={{ marginTop: 10, fontSize: 13, borderTop: "1px dashed #e0d8cc", paddingTop: 8 }}>
-            <p style={{ margin: 0, color: "#16a34a", fontWeight: "600" }}>Đáp án đúng: {q.correct}</p>
-            {q.explanation && <p style={{ margin: "4px 0 0", color: "#666" }}>Giải thích: {q.explanation}</p>}
+          <div className="ad-explanation">
+            <p className="correct-ans">Correct answer: {q.correct}</p>
+            {q.explanation && <p className="exp-text">Explanation: {q.explanation}</p>}
           </div>
         )}
       </div>
     );
   };
 
-  const renderCurrentQuestionBlock = (q: any, qIdx: number) => {
+  const renderCurrentQuestionBlock = (q: any, qIdx: number, hideAudio: boolean = false) => {
     const questionType = (exercise?.Type || "").toLowerCase();
 
     if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
       return (
         <div>
-          {q.audioUrl && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
+          {q.audioUrl && !hideAudio && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
             <div style={{ marginBottom: 12 }}>
-              <audio controls style={{ width: "100%" }}>
-                <source src={`${API}${q.audioUrl}`} />
-              </audio>
+              <CustomAudioPlayer src={`${API}${q.audioUrl}`} />
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
@@ -840,40 +921,79 @@ function AssignmentDetail() {
     }
 
     if (questionType === "listening-image") {
+      const img = q.imageUrl || exercise?.FileDinhKem || "";
+      const aud = q.audioUrl || exercise?.AudioUrl || "";
       return (
-        <div>
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Listening image visual" style={{ maxWidth: "100%", maxHeight: 300, display: "block", margin: "0 auto 12px", borderRadius: 8 }} />}
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          {renderMCQBlock({ question: "Chọn đáp án đúng theo hình ảnh và âm thanh:", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx)}
+        <div className="ad-listening-image-block">
+          {aud && !hideAudio && (
+            <div className="ad-listening-image-audio-wrapper">
+              <CustomAudioPlayer src={`${API}${aud}`} className="ad-listening-image-audio" />
+            </div>
+          )}
+          <div className="ad-listening-image-body">
+            <div className="ad-listening-image-left">
+              {img && <img src={`${API}${img}`} alt="Listening image visual" className="ad-listening-image-img" />}
+            </div>
+            <div className="ad-listening-image-right">
+              {renderMCQBlock({ question: "", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx)}
+            </div>
+          </div>
         </div>
       );
     }
 
     if (questionType === "listening-dictation") {
+      const aud = q.audioUrl || exercise?.AudioUrl || "";
+      const studentAns = essayAnswers[qIdx] || "";
+      const score = submitted ? calcDictationScore(studentAns, q.text || "") : 0;
+      const isPerfect = score === 10;
+
       return (
-        <div>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và viết lại chính xác:</p>
+        <div className="ad-dictation-container">
+          {aud && (
+            <div className="ad-dictation-audio-wrapper">
+              <CustomAudioPlayer src={`${API}${aud}`} className="ad-dictation-audio" />
+            </div>
+          )}
+          <div className="ad-dictation-prompt">
+            <FiEdit3 className="ad-dictation-icon" style={{ verticalAlign: 'middle' }} />
+            <span>Listen and write exactly what you hear:</span>
+          </div>
+
           {submitted ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ background: "#fafafa", border: "1px solid #e0d8cc", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Bạn viết:</p>
-                <p style={{ margin: 0, fontWeight: 700 }}>"{essayAnswers[qIdx] || ""}"</p>
+            <div className="ad-dictation-result-wrapper">
+              <div className="ad-dictation-score-row">
+                <div className={`ad-dictation-score-badge ${isPerfect ? "perfect" : "partial"}`}>
+                  {isPerfect ? "✓ Perfect Match" : `Score: ${score}/10`}
+                </div>
               </div>
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#16a34a" }}>Đáp án đúng:</p>
-                <p style={{ margin: 0, color: "#15803d", fontWeight: 700 }}>"{q.text}"</p>
+              <div className="ad-dictation-comparison-grid">
+                <div className="ad-dictation-comparison-box student">
+                  <span className="ad-dictation-box-title">Your response:</span>
+                  <p className="ad-dictation-box-text">"{studentAns || "(Empty)"}"</p>
+                </div>
+                <div className="ad-dictation-comparison-box correct">
+                  <span className="ad-dictation-box-title">Correct answer:</span>
+                  <p className="ad-dictation-box-text">"{q.text}"</p>
+                </div>
               </div>
+              {q.explanation && (
+                <div className="ad-dictation-explanation">
+                  <strong>Explanation:</strong> {q.explanation}
+                </div>
+              )}
             </div>
           ) : (
-            <textarea
-              className="ad-q-input"
-              disabled={isOverdue}
-              value={essayAnswers[qIdx] || ""}
-              onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-              placeholder="Nhập những gì bạn nghe được..."
-              rows={3}
-            />
+            <div className="ad-dictation-input-wrapper">
+              <textarea
+                className="ad-dictation-textarea"
+                disabled={isOverdue || (isExam && !examStarted)}
+                value={studentAns}
+                onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
+                placeholder="Type what you hear..."
+                rows={3}
+              />
+            </div>
           )}
         </div>
       );
@@ -885,8 +1005,10 @@ function AssignmentDetail() {
 
       return (
         <div>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và điền vào ô trống:</p>
+          {q.audioUrl && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${q.audioUrl}`} /></div>}
+          <p style={{ fontWeight: 600, color: "#5a3e2b", display: "flex", alignItems: "center", gap: 6 }}>
+            <FiVolume2 /> Listen and fill in the blanks:
+          </p>
           <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
             {parts.map((part: string, idx: number) => {
               const match = part.match(/^\[(\d+)\]$/);
@@ -931,33 +1053,39 @@ function AssignmentDetail() {
 
       return (
         <div>
-          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 10 }}>🎯 Cấp độ: {q.level}</span>
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600 }}>🗣️ Đọc câu sau:</p>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e3a8a" }}>{q.text}</p>
+          <span className="ad-speaking-level-badge">
+            <FiAward style={{ marginRight: 4, verticalAlign: "middle" }} /> Level: {q.level}
+          </span>
+          <div className="ad-speaking-prompt-box">
+            <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <FiVolume2 /> Read the following sentence:
+            </p>
+            <p className="ad-speaking-prompt-text">{q.text}</p>
           </div>
 
           {!submitted ? (
-            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center" }}>
+            <div className="ad-recorder-dashed-box">
               {isList ? (
                 <div>
-                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Đang nhận âm...</span>
-                  <button onClick={() => stopSpeechRecognition(qIdx)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Dừng</button>
+                  <span className="ad-recording-status">🔴 Listening...</span>
+                  <button onClick={() => stopSpeechRecognition(qIdx)} className="ad-record-stop-btn">Stop</button>
                 </div>
               ) : (
-                <button disabled={isOverdue} onClick={() => startSpeechRecognition(qIdx, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700 }}>🎙️ Bấm để nói</button>
+                <button disabled={isOverdue} onClick={() => startSpeechRecognition(qIdx, q.text)} className="ad-record-start-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <FiMic /> Click to speak
+                </button>
               )}
               {spokenText && (
-                <div style={{ marginTop: 15, textAlign: "left" }}>
-                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Nhận âm: "{spokenText}"</p>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Điểm: {speechScore}/10</p>
+                <div className="ad-stt-text-output">
+                  <p>Heard: "{spokenText}"</p>
+                  <p className="ad-stt-score-display" style={{ color: (speechScore || 0) >= 7 ? "#22c55e" : "#f97316" }}>Score: {speechScore}/10</p>
                 </div>
               )}
             </div>
           ) : (
             <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0 }}><strong>Bạn đọc:</strong> "{spokenText || "—"}"</p>
-              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Điểm chấm tự động:</strong> {speechScore}/10</p>
+              <p style={{ margin: 0 }}><strong>Your reading:</strong> "{spokenText || "—"}"</p>
+              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Auto-grading score:</strong> {speechScore}/10</p>
             </div>
           )}
         </div>
@@ -971,29 +1099,34 @@ function AssignmentDetail() {
 
       return (
         <div>
-          <div style={{ background: "#fff3e0", border: "1px solid #f0d8b0", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700, color: "#5a3e2b" }}>📌 {q.prompt}</p>
+          <div className="ad-speaking-prompt-box">
+            <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <FiFileText /> Topic Prompt:
+            </p>
+            <p className="ad-speaking-prompt-text">{q.prompt}</p>
           </div>
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
 
           {!submitted ? (
-            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 12 }}>
+            <div className="ad-recorder-dashed-box">
               {isRec ? (
-                <div>
-                  <span style={{ color: "#dc2626" }}>🔴 Đang ghi âm: {secs}s </span>
-                  <button onClick={() => stopRecording(qIdx)} style={{ padding: "6px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4 }}>Dừng</button>
+                <div className="ad-recording-status">
+                  <span>🔴 Recording: {secs}s </span>
+                  <button onClick={() => stopRecording(qIdx)} className="ad-record-stop-btn">Stop</button>
                 </div>
               ) : (
-                <button disabled={isOverdue} onClick={() => startRecording(qIdx)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, fontWeight: 700 }}>🎙️ Bắt đầu ghi âm</button>
+                <button disabled={isOverdue} onClick={() => startRecording(qIdx)} className="ad-record-start-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <FiMic /> Start Recording
+                </button>
               )}
               {url && (
                 <div style={{ marginTop: 15 }}>
-                  <audio src={url} controls style={{ width: "100%" }} />
+                  <CustomAudioPlayer src={url} />
                 </div>
               )}
             </div>
           ) : (
-            url && <div style={{ marginBottom: 12 }}><audio src={`${API}${url}`} controls style={{ width: "100%" }} /></div>
+            url && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${url}`} /></div>
           )}
 
           <textarea
@@ -1001,7 +1134,7 @@ function AssignmentDetail() {
             disabled={submitted || isOverdue}
             value={essayAnswers[qIdx] || ""}
             onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-            placeholder="Ghi chú bài nói..."
+            placeholder="Prepare your speech notes here..."
             rows={2}
           />
         </div>
@@ -1014,35 +1147,37 @@ function AssignmentDetail() {
 
       return (
         <div>
-          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Gợi ý:</p>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
+          <div className="ad-speaking-prompt-box" style={{ backgroundColor: "#fff8f5" }}>
+            <p className="ad-speaking-prompt-label" style={{ color: "#F95800", display: "flex", alignItems: "center", gap: 6 }}>
+              <FiFileText /> Translation hint:
+            </p>
+            <p className="ad-speaking-prompt-text" style={{ color: "#334155", fontSize: 15 }}>{q.text}</p>
           </div>
 
-          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
+          <div className="ad-word-ordered-box">
             {oWords.map((w, i) => (
               <span key={i} onClick={() => {
                 if (submitted) return;
                 setOrderedWords(prev => ({ ...prev, [qIdx]: oWords.filter((_, idx) => idx !== i) }));
                 setShuffledWords(prev => ({ ...prev, [qIdx]: [...sWords, w] }));
-              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
+              }} className="ad-word-badge">{w} ✕</span>
             ))}
           </div>
 
           {!submitted && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div className="ad-word-shuffled-box">
               {sWords.map((w, i) => (
                 <span key={i} onClick={() => {
                   setOrderedWords(prev => ({ ...prev, [qIdx]: [...oWords, w] }));
                   setShuffledWords(prev => ({ ...prev, [qIdx]: sWords.filter((_, idx) => idx !== i) }));
-                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
+                }} className="ad-word-badge-inactive">{w}</span>
               ))}
             </div>
           )}
 
           {submitted && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
+            <div className="ad-explanation" style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
+              <p className="correct-ans">Correct sentence: {q.correctSentence}</p>
             </div>
           )}
         </div>
@@ -1055,7 +1190,7 @@ function AssignmentDetail() {
 
       return (
         <div>
-          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
+          <p style={{ fontSize: 13, color: "#666" }}>Rearrange the sentences to form a logical paragraph:</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {sSents.map((sent, idx) => {
               const isCorrect = submitted && sent === correctSentences[idx];
@@ -1105,7 +1240,7 @@ function AssignmentDetail() {
               disabled={isOverdue}
               value={essayAnswers[qIdx] || ""}
               onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-              placeholder="Nhập bài viết của bạn tại đây..."
+              placeholder="Write your essay here..."
               rows={6}
             />
           )}
@@ -1115,13 +1250,17 @@ function AssignmentDetail() {
 
     if (questionType === "reading-split") {
       return (
-        <div style={{ display: "flex", gap: 20, height: 500 }}>
-          <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
-            <h5 style={{ margin: 0, fontWeight: 700 }}>📖 Reading Passage</h5>
-            <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{q.text}</p>
+        <div className="ad-reading-split-container">
+          <div className="ad-reading-passage-panel">
+            <h5 className="ad-panel-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <FiBookOpen /> Reading Passage
+            </h5>
+            <p className="ad-passage-text">{q.text}</p>
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            <h5 style={{ margin: 0, fontWeight: 700, marginBottom: 10 }}>❓ Questions</h5>
+          <div className="ad-reading-questions-panel">
+            <h5 className="ad-panel-title" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              <FiList /> Questions
+            </h5>
             {q.subQuestions?.map((sub: any, subIdx: number) => (
               renderMCQBlock(sub, subIdx, `${qIdx}`)
             ))}
@@ -1141,9 +1280,7 @@ function AssignmentDetail() {
         <div key={qIdx} style={{ marginBottom: 20 }}>
           {q.audioUrl && (
             <div style={{ marginBottom: 12 }}>
-              <audio controls style={{ width: "100%" }}>
-                <source src={`${API}${q.audioUrl}`} />
-              </audio>
+              <CustomAudioPlayer src={`${API}${q.audioUrl}`} />
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
@@ -1153,40 +1290,79 @@ function AssignmentDetail() {
     }
 
     if (secType === "listening-image") {
+      const img = q.imageUrl || "";
+      const aud = q.audioUrl || "";
       return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Listening image visual" style={{ maxWidth: "100%", maxHeight: 300, display: "block", margin: "0 auto 12px", borderRadius: 8 }} />}
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          {renderMCQBlock({ question: "Chọn đáp án đúng theo hình ảnh và âm thanh:", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx, `${sIdx}`)}
+        <div key={qIdx} className="ad-listening-image-block" style={{ marginBottom: 20 }}>
+          {aud && (
+            <div className="ad-listening-image-audio-wrapper">
+              <CustomAudioPlayer src={`${API}${aud}`} className="ad-listening-image-audio" />
+            </div>
+          )}
+          <div className="ad-listening-image-body">
+            <div className="ad-listening-image-left">
+              {img && <img src={`${API}${img}`} alt="Listening image visual" className="ad-listening-image-img" />}
+            </div>
+            <div className="ad-listening-image-right">
+              {renderMCQBlock({ question: "", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx, `${sIdx}`)}
+            </div>
+          </div>
         </div>
       );
     }
 
     if (secType === "listening-dictation") {
+      const aud = q.audioUrl || "";
+      const studentAns = essayAnswers[key] || "";
+      const score = submitted ? calcDictationScore(studentAns, q.text || "") : 0;
+      const isPerfect = score === 10;
+
       return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và viết lại chính xác:</p>
+        <div key={qIdx} className="ad-dictation-container" style={{ marginBottom: 20 }}>
+          {aud && (
+            <div className="ad-dictation-audio-wrapper">
+              <CustomAudioPlayer src={`${API}${aud}`} className="ad-dictation-audio" />
+            </div>
+          )}
+          <div className="ad-dictation-prompt">
+            <FiEdit3 className="ad-dictation-icon" style={{ verticalAlign: 'middle' }} />
+            <span>Listen and write exactly what you hear:</span>
+          </div>
+
           {submitted ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ background: "#fafafa", border: "1px solid #e0d8cc", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Bạn viết:</p>
-                <p style={{ margin: 0, fontWeight: 700 }}>"{essayAnswers[key] || ""}"</p>
+            <div className="ad-dictation-result-wrapper">
+              <div className="ad-dictation-score-row">
+                <div className={`ad-dictation-score-badge ${isPerfect ? "perfect" : "partial"}`}>
+                  {isPerfect ? "✓ Perfect Match" : `Score: ${score}/10`}
+                </div>
               </div>
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#16a34a" }}>Đáp án đúng:</p>
-                <p style={{ margin: 0, color: "#15803d", fontWeight: 700 }}>"{q.text}"</p>
+              <div className="ad-dictation-comparison-grid">
+                <div className="ad-dictation-comparison-box student">
+                  <span className="ad-dictation-box-title">Your response:</span>
+                  <p className="ad-dictation-box-text">"{studentAns || "(Empty)"}"</p>
+                </div>
+                <div className="ad-dictation-comparison-box correct">
+                  <span className="ad-dictation-box-title">Correct answer:</span>
+                  <p className="ad-dictation-box-text">"{q.text}"</p>
+                </div>
               </div>
+              {q.explanation && (
+                <div className="ad-dictation-explanation">
+                  <strong>Explanation:</strong> {q.explanation}
+                </div>
+              )}
             </div>
           ) : (
-            <textarea
-              className="ad-q-input"
-              disabled={!examStarted || examEnded}
-              value={essayAnswers[key] || ""}
-              onChange={e => setEssayAnswers(prev => ({ ...prev, [key]: e.target.value }))}
-              placeholder="Nhập những gì bạn nghe được..."
-              rows={3}
-            />
+            <div className="ad-dictation-input-wrapper">
+              <textarea
+                className="ad-dictation-textarea"
+                disabled={!examStarted || examEnded}
+                value={studentAns}
+                onChange={e => setEssayAnswers(prev => ({ ...prev, [key]: e.target.value }))}
+                placeholder="Type what you hear..."
+                rows={3}
+              />
+            </div>
           )}
         </div>
       );
@@ -1198,8 +1374,10 @@ function AssignmentDetail() {
 
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và điền vào ô trống:</p>
+          {q.audioUrl && <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
+          <p style={{ fontWeight: 600, color: "#5a3e2b", display: "flex", alignItems: "center", gap: 6 }}>
+            <FiVolume2 /> Listen and fill in the blanks:
+          </p>
           <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
             {parts.map((part: string, idx: number) => {
               const match = part.match(/^\[(\d+)\]$/);
@@ -1244,9 +1422,13 @@ function AssignmentDetail() {
 
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 10 }}>🎯 Cấp độ: {q.level}</span>
+          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 10 }}>
+            <FiAward /> Level: {q.level}
+          </span>
           <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600 }}>🗣️ Đọc câu sau:</p>
+            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+              <FiVolume2 /> Read the following sentence:
+            </p>
             <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e3a8a" }}>{q.text}</p>
           </div>
 
@@ -1254,23 +1436,25 @@ function AssignmentDetail() {
             <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center" }}>
               {isList ? (
                 <div>
-                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Đang nhận âm...</span>
-                  <button onClick={() => stopSpeechRecognition(key)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Dừng</button>
+                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Listening...</span>
+                  <button onClick={() => stopSpeechRecognition(key)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Stop</button>
                 </div>
               ) : (
-                <button disabled={!examStarted || examEnded} onClick={() => startSpeechRecognition(key, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700 }}>🎙️ Bấm để nói</button>
+                <button disabled={!examStarted || examEnded} onClick={() => startSpeechRecognition(key, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <FiMic /> Click to speak
+                </button>
               )}
               {spokenText && (
                 <div style={{ marginTop: 15, textAlign: "left" }}>
-                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Nhận âm: "{spokenText}"</p>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Điểm: {speechScore}/10</p>
+                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Heard: "{spokenText}"</p>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Score: {speechScore}/10</p>
                 </div>
               )}
             </div>
           ) : (
             <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0 }}><strong>Bạn đọc:</strong> "{spokenText || "—"}"</p>
-              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Điểm chấm tự động:</strong> {speechScore}/10</p>
+              <p style={{ margin: 0 }}><strong>Your reading:</strong> "{spokenText || "—"}"</p>
+              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Auto-grading score:</strong> {speechScore}/10</p>
             </div>
           )}
         </div>
@@ -1284,7 +1468,7 @@ function AssignmentDetail() {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Gợi ý:</p>
+            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Translation hint:</p>
             <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
           </div>
 
@@ -1311,7 +1495,7 @@ function AssignmentDetail() {
 
           {submitted && (
             <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
+              <p style={{ margin: 0, color: "green" }}>Correct sentence: {q.correctSentence}</p>
             </div>
           )}
         </div>
@@ -1324,7 +1508,7 @@ function AssignmentDetail() {
 
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
+          <p style={{ fontSize: 13, color: "#666" }}>Rearrange the sentences to form a logical paragraph:</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {sSents.map((sent, idx) => {
               return (
@@ -1366,7 +1550,7 @@ function AssignmentDetail() {
 
   return (
     <div className="ad-content">
-      <button className="ad-back" onClick={() => navigate(-1)}>← Quay lại</button>
+      <button className="ad-back" onClick={() => navigate(-1)}>← Back</button>
 
       {/* Course Info Card */}
       {lopInfo && (
@@ -1381,15 +1565,12 @@ function AssignmentDetail() {
 
       {/* OVERDUE DEADLINE WARNING BANNER */}
       {isOverdue && (
-        <div style={{
-          background: "#fef2f2", border: "2px solid #ef4444", borderRadius: 12,
-          padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12
-        }}>
+        <div className="ad-banner ad-banner-overdue">
           <span style={{ fontSize: 24 }}>⚠️</span>
           <div>
-            <h4 style={{ margin: 0, color: "#991b1b", fontSize: 16 }}>Bài tập đã quá hạn nộp!</h4>
-            <p style={{ margin: "4px 0 0", color: "#7f1d1d", fontSize: 13 }}>
-              Hạn nộp bài là: <strong>{new Date(parsedContent.deadline).toLocaleString()}</strong>. Bạn chỉ có thể xem lại đề bài, không thể làm bài hoặc nộp bài.
+            <h4>Assignment overdue!</h4>
+            <p>
+              The deadline was: <strong>{new Date(parsedContent.deadline).toLocaleString()}</strong>. You can only view the questions, but cannot answer or submit.
             </p>
           </div>
         </div>
@@ -1397,30 +1578,27 @@ function AssignmentDetail() {
 
       {/* EXAM COUNTDOWN / OVER / RUNNING HEADER */}
       {isExam && (
-        <div style={{
-          background: "#fffbeb", border: "2px solid #f59e0b", borderRadius: 12,
-          padding: "16px 20px", marginBottom: 20, textAlign: "center"
-        }}>
-          <h3 style={{ margin: 0, color: "#b45309" }}>⏱️ Bài Kiểm Tra Khảo Sát</h3>
-          <p style={{ margin: "4px 0 12px", color: "#d97706", fontSize: 13 }}>
-            Thời lượng: <strong>{parsedContent.duration} phút</strong> · Thời gian mở: {new Date(parsedContent.startTime).toLocaleString()}
+        <div className="ad-banner ad-banner-exam">
+          <h3>⏱️ Assessment Exam</h3>
+          <p className="exam-meta">
+            Duration: <strong>{parsedContent.duration} minutes</strong> · Open time: {new Date(parsedContent.startTime).toLocaleString()}
           </p>
 
           {timeToExamStart !== null && (
             <div style={{ fontSize: 18, fontWeight: 700, color: "#b45309" }}>
-              ⏳ Bài thi sẽ bắt đầu sau: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
+              ⏳ The exam starts in: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
             </div>
           )}
 
           {examStarted && !examEnded && (
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#dc2626" }}>
-              ⏳ THỜI GIAN LÀM BÀI CÒN LẠI: <span style={{ fontFamily: "monospace", fontSize: 24, padding: "4px 12px", background: "#fef2f2", borderRadius: 8 }}>{formattedExamTime}</span>
+            <div className="exam-timer">
+              ⏳ REMAINING TIME: <span className="exam-timer-span">{formattedExamTime}</span>
             </div>
           )}
 
           {examEnded && (
             <div style={{ fontSize: 18, fontWeight: 700, color: "#dc2626" }}>
-              🛑 Bài kiểm tra đã kết thúc.
+              🛑 The exam has ended.
             </div>
           )}
         </div>
@@ -1430,19 +1608,16 @@ function AssignmentDetail() {
 
       {/* SUBMISSION STATE BANNER */}
       {submitted && baiNop && (
-        <div style={{
-          background: "#dcfce7", border: "1px solid #86efac",
-          borderRadius: 12, padding: "14px 18px", marginBottom: 20
-        }}>
-          <p style={{ margin: 0, fontWeight: 600, color: "#15803d" }}>✅ Bạn đã nộp bài này</p>
+        <div className="ad-banner ad-banner-submitted">
+          <p className="status-title">✅ You have submitted this assignment</p>
           {baiNop.Diem !== null && baiNop.Diem !== undefined ? (
-            <p style={{ margin: "6px 0 0", color: "#166534" }}>
-              Điểm của bạn: <strong>{baiNop.Diem}/10</strong>
-              {baiNop.NhanXet && ` · Nhận xét: ${baiNop.NhanXet}`}
+            <p className="score-info">
+              Your grade: <strong>{baiNop.Diem}/10</strong>
+              {baiNop.NhanXet && ` · Feedback: ${baiNop.NhanXet}`}
             </p>
           ) : (
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#166534" }}>
-              Đang chờ giáo viên chấm điểm thủ công bài tự luận/nói.
+            <p className="score-info" style={{ fontSize: 13 }}>
+              Awaiting teacher manual grading for essay/speaking questions.
             </p>
           )}
         </div>
@@ -1452,29 +1627,24 @@ function AssignmentDetail() {
       {isExam ? (
         <div>
           {timeToExamStart !== null ? (
-            <div style={{ textAlign: "center", padding: 50, background: "#fafafa", borderRadius: 12, border: "1px solid #e0d8cc", color: "#888" }}>
-              <h3>Chờ đến giờ bắt đầu làm bài thi...</h3>
-              <p>Màn hình làm bài sẽ tự động hiển thị khi đồng hồ đếm ngược kết thúc.</p>
+            <div className="ad-exam-waiting">
+              <h3>Waiting for the exam to start...</h3>
+              <p>The exam interface will automatically display when the countdown reaches 0.</p>
             </div>
           ) : examEnded && !submitted ? (
-            <div style={{ textAlign: "center", padding: 50, background: "#fef2f2", borderRadius: 12, border: "1px solid #fecaca", color: "#dc2626" }}>
-              <h3>Đã quá thời gian làm bài kiểm tra!</h3>
-              <p>Hệ thống đã khóa nhận bài thi.</p>
+            <div className="ad-exam-waiting" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#dc2626" }}>
+              <h3>The exam time limit has expired!</h3>
+              <p>Submissions are now closed.</p>
             </div>
           ) : (
             <div>
               {/* Section Tabs */}
-              <div style={{ display: "flex", gap: 10, marginBottom: 20, overflowX: "auto" }}>
+              <div className="ad-exam-tabs">
                 {parsedContent.sections?.map((sec: any, sIdx: number) => (
                   <button
                     key={sIdx}
                     onClick={() => setActiveSectionIdx(sIdx)}
-                    style={{
-                      padding: "10px 20px", borderRadius: 20, border: "none",
-                      background: activeSectionIdx === sIdx ? "#F95800" : "#e0d4c3",
-                      color: activeSectionIdx === sIdx ? "#fff" : "#444",
-                      fontWeight: 600, cursor: "pointer"
-                    }}
+                    className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
                   >
                     {sec.title} ({sec.type.replace("-", " ")})
                   </button>
@@ -1504,7 +1674,7 @@ function AssignmentDetail() {
                             disabled={!examStarted || examEnded}
                             value={essayAnswers[sIdx] || ""}
                             onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
-                            placeholder="Nhập câu trả lời viết luận..."
+                            placeholder="Write your essay answer here..."
                             rows={8}
                           />
                         )}
@@ -1513,29 +1683,34 @@ function AssignmentDetail() {
 
                     {sec.type === "speaking-topic" && (
                       <div>
-                        <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-                          <p style={{ margin: 0, fontWeight: 700 }}>{sec.content}</p>
+                        <div className="ad-speaking-prompt-box">
+                          <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <FiFileText /> Topic Prompt:
+                          </p>
+                          <p className="ad-speaking-prompt-text">{sec.content}</p>
                         </div>
                         {sec.imageUrl && <img src={`${API}${sec.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
 
                         {!submitted ? (
-                          <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 12 }}>
+                          <div className="ad-recorder-dashed-box">
                             {isRecording[sIdx] ? (
-                              <div>
-                                <span style={{ color: "#dc2626" }}>🔴 Đang ghi âm: {recordSeconds[sIdx] || 0}s </span>
-                                <button onClick={() => stopRecording(sIdx)} style={{ padding: "6px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4 }}>Dừng</button>
+                              <div className="ad-recording-status">
+                                <span>🔴 Recording: {recordSeconds[sIdx] || 0}s </span>
+                                <button onClick={() => stopRecording(sIdx)} className="ad-record-stop-btn">Stop</button>
                               </div>
                             ) : (
-                              <button disabled={!examStarted || examEnded} onClick={() => startRecording(sIdx)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, fontWeight: 700 }}>🎙️ Ghi âm bài nói</button>
+                              <button disabled={!examStarted || examEnded} onClick={() => startRecording(sIdx)} className="ad-record-start-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                <FiMic /> Record your speech
+                              </button>
                             )}
                             {recordedUrls[sIdx] && (
                               <div style={{ marginTop: 15 }}>
-                                <audio src={recordedUrls[sIdx]} controls style={{ width: "100%" }} />
+                                <audio src={recordedUrls[sIdx]} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%" }} />
                               </div>
                             )}
                           </div>
                         ) : (
-                          recordedUrls[sIdx] && <div style={{ marginBottom: 12 }}><audio src={`${API}${recordedUrls[sIdx]}`} controls style={{ width: "100%" }} /></div>
+                          recordedUrls[sIdx] && <div style={{ marginBottom: 12 }}><audio src={`${API}${recordedUrls[sIdx]}`} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%" }} /></div>
                         )}
 
                         <textarea
@@ -1543,18 +1718,18 @@ function AssignmentDetail() {
                           disabled={submitted || !examStarted || examEnded}
                           value={essayAnswers[sIdx] || ""}
                           onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
-                          placeholder="Ghi chú thêm cho bài nói..."
+                          placeholder="Prepare your speech notes here..."
                           rows={2}
                         />
                       </div>
                     )}
 
                     {sec.type === "reading-split" && (
-                      <div style={{ display: "flex", gap: 20, height: 500 }}>
-                        <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
-                          <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{sec.content}</p>
+                      <div className="ad-reading-split-container">
+                        <div className="ad-reading-passage-panel">
+                          <p className="ad-passage-text">{sec.content}</p>
                         </div>
-                        <div style={{ flex: 1, overflowY: "auto" }}>
+                        <div className="ad-reading-questions-panel">
                           {sec.questions?.map((q: any, qIdx: number) => (
                             renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
                           ))}
@@ -1566,7 +1741,7 @@ function AssignmentDetail() {
                       <div>
                         {sec.audioUrl && (
                           <div style={{ marginBottom: 20 }}>
-                            <audio controls style={{ width: "100%" }}><source src={`${API}${sec.audioUrl}`} /></audio>
+                            <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%" }}><source src={`${API}${sec.audioUrl}`} /></audio>
                           </div>
                         )}
                         {sec.questions?.map((q: any, qIdx: number) => (
@@ -1584,69 +1759,68 @@ function AssignmentDetail() {
         /* ────────────────── REGULAR MULTI-QUESTION SOLVER ────────────────── */
         <div>
           {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq" && (
-            <div style={{
-              background: "#fff",
-              border: "1px solid #e0d4c3",
-              padding: "16px 20px",
-              borderRadius: 12,
-              marginBottom: 16,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-            }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#5a3e2b", fontSize: "14px", fontWeight: 600 }}>🎵 File nghe chung cho toàn bộ bài tập:</h4>
-              <audio controls style={{ width: "100%" }}>
+            <div className="ad-audio-card">
+              <h4>🎵 General audio file for the entire assignment:</h4>
+              <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} className="ad-audio-player">
                 <source src={`${API}${exercise.AudioUrl}`} />
               </audio>
             </div>
           )}
 
           {/* Progress pagination indicators */}
-          {questionsList.length > 1 && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15, background: "#fafafa", padding: "10px 16px", borderRadius: 8, border: "1px solid #e0d8cc" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#5a3e2b" }}>
-                Câu hỏi {currentQuestionIdx + 1} trên {questionsList.length}
+          {questionPages.length > 1 && (
+            <div className="ad-progress-bar">
+              <span className="ad-progress-text">
+                Page {currentPageIdx + 1} of {questionPages.length}
               </span>
-              <div style={{ display: "flex", gap: 8 }}>
-                {questionsList.map((_, qIdx) => (
+              <div className="ad-progress-dots">
+                {questionPages.map((_, pIdx) => (
                   <span
-                    key={qIdx}
-                    onClick={() => setCurrentQuestionIdx(qIdx)}
-                    style={{
-                      width: 10, height: 10, borderRadius: "50%",
-                      background: currentQuestionIdx === qIdx ? "#F95800" : "#e0d4c3",
-                      cursor: "pointer"
-                    }}
+                    key={pIdx}
+                    onClick={() => setCurrentPageIdx(pIdx)}
+                    className={`ad-progress-dot ${currentPageIdx === pIdx ? "active" : ""}`}
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Render Active Question */}
-          {questionsList.map((q, qIdx) => {
-            if (qIdx !== currentQuestionIdx) return null;
+          {/* Render Questions inside Current Page */}
+          {questionPages.map((page, pIdx) => {
+            if (pIdx !== currentPageIdx) return null;
+
+            const alreadyHasGlobalAudio = exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq";
+
             return (
-              <div key={qIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
-                {renderCurrentQuestionBlock(q, qIdx)}
+              <div key={pIdx} className="ad-page-container">
+                {page.map((q) => {
+                  const originalIdx = questionsList.indexOf(q);
+                  return (
+                    <div key={originalIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
+                      {renderCurrentQuestionBlock(q, originalIdx, alreadyHasGlobalAudio)}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
 
           {/* Pagination Buttons */}
-          {questionsList.length > 1 && (
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 15 }}>
+          {questionPages.length > 1 && (
+            <div className="ad-nav-buttons">
               <button
-                disabled={currentQuestionIdx === 0}
-                onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                style={{ padding: "8px 20px", borderRadius: 20, border: "1.5px solid #F95800", background: "#fff", color: "#F95800", fontWeight: 600, cursor: currentQuestionIdx === 0 ? "default" : "pointer", opacity: currentQuestionIdx === 0 ? 0.5 : 1 }}
+                disabled={currentPageIdx === 0}
+                onClick={() => setCurrentPageIdx(prev => prev - 1)}
+                className="ad-nav-btn ad-nav-btn-prev"
               >
-                ← Quay lại
+                ← Back
               </button>
               <button
-                disabled={currentQuestionIdx === questionsList.length - 1}
-                onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
-                style={{ padding: "8px 20px", borderRadius: 20, border: "none", background: "#F95800", color: "#fff", fontWeight: 600, cursor: currentQuestionIdx === questionsList.length - 1 ? "default" : "pointer", opacity: currentQuestionIdx === questionsList.length - 1 ? 0.5 : 1 }}
+                disabled={currentPageIdx === questionPages.length - 1}
+                onClick={() => setCurrentPageIdx(prev => prev + 1)}
+                className="ad-nav-btn ad-nav-btn-next"
               >
-                Tiếp theo →
+                Next →
               </button>
             </div>
           )}
@@ -1654,10 +1828,10 @@ function AssignmentDetail() {
       )}
 
       {/* SUBMIT BUTTON FOOTER */}
-      <div className="ad-footer" style={{ marginTop: 30 }}>
+      <div className="ad-footer">
         {submitted ? (
-          <button className="ad-submit-btn" style={{ background: "#6b7280" }} onClick={() => navigate(-1)}>
-            ← Quay lại Lớp học
+          <button className="ad-submit-btn" style={{ backgroundColor: "#64748b" }} onClick={() => navigate(-1)}>
+            ← Back to Classroom
           </button>
         ) : (
           <button
@@ -1665,7 +1839,7 @@ function AssignmentDetail() {
             onClick={handleSubmit}
             disabled={submitting || isOverdue || (isExam && (!examStarted || examEnded))}
           >
-            {submitting ? "Đang nộp..." : isExam ? "Nộp bài Thi" : "Nộp bài tập"}
+            {submitting ? "Submitting..." : isExam ? "Submit Exam" : "Submit"}
           </button>
         )}
       </div>

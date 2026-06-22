@@ -864,7 +864,7 @@ app.get("/baitap/:id", async (req, res) => {
         SELECT MaBaiTap, TieuDe AS Title, DangBai AS Type, 
                CAST(LaBaiKiemTra AS INT) AS IsExam,
                NgayTao AS CreatedDate, NoiDung AS Content, CauHoi AS Questions,
-               TrangThai, TrangThaiDuyet, FileDinhKem
+               TrangThai, TrangThaiDuyet, FileDinhKem, LinkAmThanh AS AudioUrl
         FROM BAITAP 
         WHERE MaBaiTap = @id
       `);

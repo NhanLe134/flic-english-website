@@ -1,0 +1,346 @@
+.custom-audio-container {
+  position: relative;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.custom-audio-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background-color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 0;
+  box-shadow: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cap-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #334155;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: color 0.2s;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.cap-play-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cap-play-btn:hover {
+  background: transparent;
+  color: #ea580c;
+}
+
+.cap-time-display {
+  font-size: 13px;
+  color: #64748b;
+  min-width: 80px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.cap-scrubber-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.cap-scrubber {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: opacity 0.2s;
+}
+
+.cap-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ea580c;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.cap-scrubber::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+.cap-volume-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.cap-volume-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.cap-volume-btn:hover {
+  background: transparent;
+  color: #ea580c;
+}
+
+.cap-volume-slider {
+  width: 0;
+  opacity: 0;
+  height: 4px;
+  margin-left: 0;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+  transition: width 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease;
+}
+
+.cap-volume-wrapper:hover .cap-volume-slider,
+.cap-volume-wrapper:focus-within .cap-volume-slider {
+  width: 60px;
+  opacity: 1;
+  margin-left: 6px;
+  pointer-events: auto;
+}
+
+.cap-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ea580c;
+  cursor: pointer;
+}
+
+.cap-settings-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: -8px;
+}
+
+.cap-settings-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s, transform 0.1s;
+  box-shadow: none;
+}
+
+.cap-settings-btn:hover {
+  background: transparent;
+  color: #ea580c;
+}
+
+.cap-settings-btn.active {
+  color: #ea580c;
+}
+
+.cap-settings-btn:active {
+  transform: scale(0.95);
+}
+
+/* Custom Dropdown styling matching the screenshots */
+.cap-dropdown-menu {
+  position: absolute;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 6px 0;
+  min-width: 155px;
+  z-index: 1010;
+}
+
+.cap-dropdown-menu.open-up {
+  bottom: calc(100% + 8px);
+  animation: slideUp 0.15s ease-out;
+}
+
+.cap-dropdown-menu.open-down {
+  top: calc(100% + 8px);
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cap-menu-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.cap-menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #334155;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s;
+}
+
+.cap-menu-item:hover {
+  background-color: #f8fafc;
+}
+
+.cap-menu-item-label {
+  font-weight: 500;
+}
+
+.cap-menu-item-value {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+.cap-menu-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 4px 0;
+}
+
+.cap-menu-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.cap-menu-header:hover {
+  color: #ea580c;
+}
+
+.cap-speeds-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+.cap-speed-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: #334155;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s;
+}
+
+.cap-speed-option:hover {
+  background-color: #f8fafc;
+}
+
+.cap-radio-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.cap-radio-circle.active {
+  border-color: #00a2ff;
+}
+
+.cap-radio-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #00a2ff;
+}
+
+.cap-speed-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}

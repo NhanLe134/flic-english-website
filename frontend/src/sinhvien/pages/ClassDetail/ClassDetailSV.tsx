@@ -139,7 +139,7 @@ export default function ClassDetailSV() {
       const [baigiangData, tailieuData, baitapData] = await Promise.all([
         fetch(`${API}/baigiang/${lessonId}?role=Sinh Viên`).then(r => r.json()),
         fetch(`${API}/tailieu/${lessonId}?role=Sinh Viên`).then(r => r.json()),
-        fetch(`${API}/baitap/${lessonId}`).then(r => r.json())
+        fetch(`${API}/baitap/buoihoc/${lessonId}`).then(r => r.json())
       ]);
 
       const published = Array.isArray(baigiangData)

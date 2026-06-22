@@ -1,1 +1,218 @@
-/* CSS cho AssignmentSuccess.css */
+/* ==========================================================================
+   CSS cho AssignmentSuccess (Nộp bài thành công)
+   ========================================================================== */
+
+.as-content {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 0 24px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+}
+
+/* Header & navigation */
+.as-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.as-page-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.as-back {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.as-back:hover {
+  color: #F95800;
+  background-color: #f1f5f9;
+}
+
+/* Assignment title */
+.as-assignment-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+/* Main Success Card */
+.as-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* Success Checkmark Icon */
+.as-icon-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.as-icon {
+  width: 72px;
+  height: 72px;
+  background: #dcfce7;
+  border: 4px solid #bbf7d0;
+  color: #15803d;
+  font-size: 32px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+  animation: scaleUpCheck 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.as-success-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 24px 0;
+  letter-spacing: 0.05em;
+}
+
+/* Score displays */
+.as-score-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+}
+
+.as-score {
+  font-size: 64px;
+  font-weight: 900;
+  color: #F95800;
+  margin: 0 0 24px 0;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-shadow: 0 4px 10px rgba(249, 88, 0, 0.1);
+}
+
+.as-pending-box {
+  margin: 10px 0 20px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  display: inline-block;
+  min-width: 260px;
+}
+
+.as-pending-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 4px 0 0;
+  font-weight: 500;
+}
+
+.as-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 30px 0;
+}
+
+/* Stats Row */
+.as-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.as-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.as-stat-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.as-stat-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.as-stat-sep {
+  width: 1px;
+  height: 32px;
+  background: #e2e8f0;
+}
+
+/* Actions/Buttons */
+.as-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.as-actions button {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.as-btn-outline {
+  border: 1.5px solid #F95800;
+  background: #ffffff;
+  color: #F95800;
+}
+
+.as-btn-outline:hover {
+  background: #fff8f5;
+  transform: translateY(-1px);
+}
+
+.as-btn-fill {
+  border: none;
+  background: #F95800;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
+}
+
+.as-btn-fill:hover {
+  background: #dd4e00;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(249, 88, 0, 0.3);
+}
+
+/* Animations */
+@keyframes scaleUpCheck {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}

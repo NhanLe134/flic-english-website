@@ -1,7 +1,7 @@
 import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
 import "./CoursesPageHome.css";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const staticCategories = [
   {
@@ -31,12 +31,6 @@ const staticCategories = [
 ];
 
 const CoursesPageHome = () => {
-  const navigate = useNavigate();
-
-  const handleNavigateCategory = (key: string) => {
-    navigate(`/courses-category/${key}`);
-  };
-
   return (
     <>
       <NavbarAuto />
@@ -63,10 +57,7 @@ const CoursesPageHome = () => {
                     <p>{cat.desc}</p>
 
                     <div className="course-buttons">
-                      <span className="btn-xem-them" onClick={() => handleNavigateCategory(cat.key)}>
-                        Xem Thêm &rarr;
-                      </span>
-                      <button onClick={() => handleNavigateCategory(cat.key)}>
+                      <button onClick={() => window.open("https://flic.due.udn.vn/ngoai_ngu/", "_blank")}>
                         Đăng ký khóa học
                       </button>
                     </div>

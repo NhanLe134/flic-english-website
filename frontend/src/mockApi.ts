@@ -186,6 +186,38 @@ const db = {
       TrangThai: "published",
       CreatedDate: "2026-03-04T12:00:00.000Z",
       MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 10,
+      Title: "Bài tập 1: Nghe trắc nghiệm (Multiple Choice - MCQ)",
+      Type: "listening-mcq",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T08:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 11,
+      Title: "Bài tập 2: Trắc nghiệm chia thì (writing-tense-mcq)",
+      Type: "writing-tense-mcq",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T09:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 12,
+      Title: "Bài tập 3: Trắc nghiệm từ vựng đọc hiểu (reading-vocab-mcq)",
+      Type: "reading-vocab-mcq",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T10:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 13,
+      Title: "Bài tập 4: Trắc nghiệm Tổng hợp (multiple)",
+      Type: "multiple",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T11:00:00.000Z",
+      MaBuoiHoc: 1
     }
   ]
 };
@@ -249,6 +281,90 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
           { status: 401, headers: { "Content-Type": "application/json" } }
         );
       }
+    }
+
+    // 1.1 GET STUDENT PROFILE BY USER ID
+    if (urlStr.includes("/students/by-user/") && method === "GET") {
+      return new Response(
+        JSON.stringify({
+          MaSinhVien: "SV_MOCK_TEST",
+          HoTen: "Lê Nhàn",
+          Email: "student@flic.edu.vn",
+          MaNguoiDung: 100
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 1.2 GET STUDENT DETAIL BY MA SV
+    if (urlStr.includes("/students/") && (urlStr.endsWith("/SV_MOCK_TEST") || urlStr.includes("/SV_MOCK_TEST/")) && method === "GET") {
+      return new Response(
+        JSON.stringify({
+          MaSinhVien: "SV_MOCK_TEST",
+          HoTen: "Lê Nhàn",
+          Email: "student@flic.edu.vn",
+          GioiTinh: "Nữ",
+          NgaySinh: "2002-12-12T00:00:00.000Z",
+          SDT: "0912345678"
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 1.3 GET STUDENT CLASSES
+    if (urlStr.includes("/student/my-classes/") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          {
+            MaLopHoc: 101,
+            TenLop: "TOEIC-01",
+            TenKhoaHoc: "TOEIC 650+ Intensive",
+            LichHoc: "Thứ 2 & 4, 18:00-20:00",
+            TienDo: 68
+          }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 1.4 GET LESSONS FOR CLASS
+    if (urlStr.includes("/classes/") && urlStr.endsWith("/lessons") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          {
+            MaLesson: 1,
+            TenLesson: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            MoTa: "Ôn tập các thì hiện tại đơn, hiện tại tiếp diễn và hoàn thành.",
+            ThuTu: 1
+          }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 1.5 GET EXERCISES FOR CLASS
+    if (urlStr.includes("/classes/") && urlStr.endsWith("/baitap") && method === "GET") {
+      const list = db.exercisesList.filter(ex => ex.MaBuoiHoc === 1);
+      return new Response(
+        JSON.stringify(list),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 1.6 GET DOCUMENTS FOR CLASS
+    if (urlStr.includes("/classes/") && urlStr.endsWith("/tailieu") && method === "GET") {
+      return new Response(
+        JSON.stringify([
+          {
+            MaTaiLieu: 201,
+            TieuDe: "Tài liệu học tập Buổi 1",
+            MoTa: "Tài liệu ngữ pháp các thì hiện tại",
+            FileUrl: "/job-interview.mp3",
+            MaLesson: 1
+          }
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // 2. GET USER ROLE
@@ -406,8 +522,8 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     }
 
     // 8.1 GET BAITAPS BY LESSON ID
-    if (urlStr.includes("/baitap/") && !urlStr.includes("/create") && method === "GET") {
-      const match = urlStr.match(/\/baitap\/(\d+)/);
+    if (urlStr.includes("/baitap/buoihoc/") && method === "GET") {
+      const match = urlStr.match(/\/baitap\/buoihoc\/(\d+)/);
       const buoiHocId = match ? Number(match[1]) : 1;
       const list = db.exercisesList.filter(ex => ex.MaBuoiHoc === buoiHocId);
       return new Response(
@@ -536,11 +652,53 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 
     // 12. GET STUDENT SUBMISSIONS BY USER ID
     if (urlStr.includes("/student/bainop/")) {
+      const parts = urlStr.split("/");
+      const userId = parts[parts.length - 1]; // e.g. "100"
+      
+      const list = db.submissions.filter(s => 
+        s.MaSinhVien === "SV_MOCK_TEST" || 
+        s.MaSinhVien === "SV01" || 
+        String(s.MaSinhVien) === String(userId)
+      ).map(s => ({
+        MaBaiTap: s.MaBaiTap,
+        TenBaiTap: (s as any).TenBaiTap || `Bài tập #${s.MaBaiTap}`,
+        NgayNop: s.NgayNop,
+        Diem: s.Diem
+      }));
+
+      // Fallback/Ensure mock values exist for testing if list is empty
+      if (list.length === 0) {
+        list.push(
+          { MaBaiTap: 1, TenBaiTap: "Bài tập 1: Ngữ pháp", NgayNop: "2026-03-05T08:00:00Z", Diem: 8.5 },
+          { MaBaiTap: 2, TenBaiTap: "Bài tập 2: Reading", NgayNop: "2026-03-06T09:00:00Z", Diem: null }
+        );
+      }
+
       return new Response(
-        JSON.stringify([
-          { TenBaiTap: "Bài tập 1: Ngữ pháp", NgayNop: "2026-03-05T08:00:00Z", Diem: 8.5 },
-          { TenBaiTap: "Bài tập 2: Reading", NgayNop: "2026-03-06T09:00:00Z", Diem: null }
-        ]),
+        JSON.stringify(list),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 12.1 POST STUDENT SUBMISSION
+    if (urlStr.includes("/bainop") && method === "POST" && !urlStr.endsWith("/cham")) {
+      const newSub = {
+        MaBaiNop: db.submissions.length + 1001,
+        MaBaiTap: bodyObj?.MaExercise || bodyObj?.MaBaiTap || 1,
+        HoTen: "Lê Nhàn",
+        MaSinhVien: String(bodyObj?.MaSinhVien || "100"),
+        FileUrl: bodyObj?.FileUrl || "",
+        LinkUrl: bodyObj?.LinkUrl || "",
+        NoiDungBaiNop: bodyObj?.NoiDung || "",
+        Diem: bodyObj?.Diem !== undefined ? bodyObj.Diem : null,
+        NhanXet: "",
+        NgayNop: new Date().toISOString(),
+        TenLop: "TOEIC-01",
+        TenBaiTap: db.exercisesList.find(ex => ex.MaBaiTap === (bodyObj?.MaExercise || bodyObj?.MaBaiTap))?.Title || "Bài tập mới nộp"
+      };
+      db.submissions.push(newSub);
+      return new Response(
+        JSON.stringify({ success: true, message: "Nộp bài thành công!" }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -593,10 +751,162 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     // 13. GET BAITAP DETAILS
     if (urlStr.includes("/baitap/") && method === "GET") {
       const parts = urlStr.split("/");
-      const id = parts[parts.length - 1];
+      const id = parseInt(parts[parts.length - 1]) || 1;
+
+      if (id === 10) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 10,
+            TenBai: "Bài tập 1: Nghe trắc nghiệm (Multiple Choice - MCQ)",
+            Title: "Bài tập 1: Nghe trắc nghiệm (Multiple Choice - MCQ)",
+            Type: "listening-mcq",
+            LoaiBaiHoc: "Trắc nghiệm",
+            Content: "Nghe đoạn hội thoại sau và chọn đáp án chính xác nhất cho các câu hỏi.",
+            Questions: JSON.stringify([
+              {
+                question: "What is the main topic of the conversation?",
+                answers: [
+                  "Scheduling a meeting",
+                  "Discussing a project budget",
+                  "Hiring a new assistant",
+                  "Planning an office party"
+                ],
+                correct: "A",
+                explanation: "Người nói đề cập: 'Let's set up a time to meet next week to review the timeline.' -> Scheduling a meeting."
+              },
+              {
+                question: "Where does the conversation most likely take place?",
+                answers: [
+                  "At a coffee shop",
+                  "In an office",
+                  "At a bank",
+                  "At a train station"
+                ],
+                correct: "B",
+                explanation: "Trong audio nhắc đến 'office', 'conference room', 'desk'."
+              },
+              {
+                question: "What does the woman suggest doing?",
+                answers: [
+                  "Rescheduling the presentation",
+                  "Inviting more colleagues",
+                  "Ordering lunch for the group",
+                  "Sending an email confirmation"
+                ],
+                correct: "D",
+                explanation: "Người phụ nữ nói: 'I will send out an email to confirm the time with everyone.'"
+              }
+            ]),
+            AudioUrl: "/uploads/toeic-office.mp3",
+            FileUrl: "/uploads/toeic-office.mp3",
+            Vocabulary: "schedule, budget, presentation, confirmation",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 1
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 11) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 11,
+            TenBai: "Bài tập 2: Trắc nghiệm chia thì",
+            Title: "Bài tập 2: Trắc nghiệm chia thì",
+            Type: "writing-tense-mcq",
+            LoaiBaiHoc: "Trắc nghiệm",
+            Content: "Chọn đáp án đúng nhất để hoàn thành các câu sau.",
+            Questions: JSON.stringify([
+              {
+                question: "She ___ to the library every Wednesday afternoon.",
+                answers: ["go", "goes", "going", "gone"],
+                correct: "B",
+                explanation: "Thì hiện tại đơn với chủ ngữ số ít 'She'."
+              },
+              {
+                question: "They ___ English since they were in primary school.",
+                answers: ["have studied", "studied", "are studying", "will study"],
+                correct: "A",
+                explanation: "Dấu hiệu 'since' chỉ thì hiện tại hoàn thành."
+              }
+            ]),
+            AudioUrl: "",
+            Vocabulary: "tense, library, primary school",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 2
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 12) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 12,
+            TenBai: "Bài tập 3: Trắc nghiệm từ vựng đọc hiểu",
+            Title: "Bài tập 3: Trắc nghiệm từ vựng đọc hiểu",
+            Type: "reading-vocab-mcq",
+            LoaiBaiHoc: "Trắc nghiệm",
+            Content: "Đọc kỹ câu và chọn từ vựng thích hợp nhất.",
+            Questions: JSON.stringify([
+              {
+                question: "The company decided to ___ the product launch due to technical issues.",
+                answers: ["postpone", "accelerate", "promote", "celebrate"],
+                correct: "A",
+                explanation: "postpone (hoãn lại) phù hợp nghĩa ngữ cảnh 'due to technical issues' (do sự cố kỹ thuật)."
+              },
+              {
+                question: "He has a very ___ attitude towards his colleagues, always helping them.",
+                answers: ["supportive", "aggressive", "passive", "negligent"],
+                correct: "A",
+                explanation: "supportive (hỗ trợ/giúp đỡ) phù hợp nghĩa 'always helping them' (luôn giúp đỡ họ)."
+              }
+            ]),
+            AudioUrl: "",
+            Vocabulary: "postpone, attitude, supportive, colleague",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 3
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 13) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 13,
+            TenBai: "Bài tập 4: Trắc nghiệm Tổng hợp",
+            Title: "Bài tập 4: Trắc nghiệm Tổng hợp",
+            Type: "multiple",
+            LoaiBaiHoc: "Trắc nghiệm",
+            Content: "Bài tập trắc nghiệm tổng hợp kiến thức ngữ pháp và từ vựng.",
+            Questions: JSON.stringify([
+              {
+                question: "If it ___ tomorrow, we will cancel the picnic.",
+                answers: ["rain", "rains", "will rain", "rained"],
+                correct: "B",
+                explanation: "Câu điều kiện loại 1: Mệnh đề If chia ở hiện tại đơn."
+              },
+              {
+                question: "She is the student ___ got the highest score in the final exam.",
+                answers: ["who", "whom", "which", "whose"],
+                correct: "A",
+                explanation: "Mệnh đề quan hệ: 'who' làm chủ ngữ thay thế cho danh từ chỉ người 'the student'."
+              }
+            ]),
+            AudioUrl: "",
+            Vocabulary: "cancel, picnic, final exam",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 4
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Default/Fallback
       return new Response(
         JSON.stringify({
-          MaBaiTap: parseInt(id) || 1,
+          MaBaiTap: id,
           TenBai: `Bài tập thực hành TOEIC #${id}`,
           LoaiBaiHoc: "Tự luận",
           Content: "Hãy viết một đoạn văn ngắn (150 từ) kể về kỳ nghỉ hè đáng nhớ nhất của bạn.",

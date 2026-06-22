@@ -141,8 +141,7 @@
 
 .eye-btn:hover {
   background: none !important;
-  transform: none !important;
-  color: #888 !important;
+  color: #f58220 !important;
 }
 
 .forgot {

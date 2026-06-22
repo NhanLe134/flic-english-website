@@ -1,7 +1,8 @@
 import "./ClassDetail.css";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { FiCalendar, FiUsers, FiArrowLeft, FiMonitor, FiClock, FiBook } from "react-icons/fi";
+import { FiCalendar, FiArrowLeft } from "react-icons/fi";
+import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
 import LessonManagement from "../LessonManagement/LessonManagement";
 import DocumentManagement from "../DocumentManagement/DocumentManagement";
 
@@ -62,7 +63,7 @@ const ClassDetail = () => {
 
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
-  const filteredExercises = exercises.filter((ex) => {
+  const filteredExercises = exercises.filter((ex: any) => {
     const matchesSearch = ex.Title?.toLowerCase().includes(exerciseSearch.toLowerCase());
     const isExam = ex.IsExam === 1 || ex.Type === "exam";
 
@@ -101,49 +102,49 @@ const ClassDetail = () => {
         Quay lại
       </span>
 
-      <div className="header-card">
+      <div className="cd-overview-card">
         <div className="cd-left-content">
-          <h1>{lesson.TenBuoiHoc}</h1>
+          <h2 className="cd-class-title">{lesson.TenBuoiHoc}</h2>
           <p className="cd-class-desc">{lesson.MoTa}</p>
 
-          <div className="info-row">
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper teacher-icon">
-                <FiMonitor size={18} />
+          <div className="cd-meta-grid">
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaChalkboardTeacher />
               </div>
-              <div className="info-item-content">
-                <p className="label">Giáo viên</p>
-                <b>{teacherName}</b>
-              </div>
-            </div>
-
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper calendar-icon">
-                <FiClock size={18} />
-              </div>
-              <div className="info-item-content">
-                <p className="label">Lịch học</p>
-                <b>{lesson.LichHoc}</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Giáo viên</span>
+                <span className="cd-meta-value">{teacherName}</span>
               </div>
             </div>
 
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper students-icon">
-                <FiUsers size={18} />
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaClock />
               </div>
-              <div className="info-item-content">
-                <p className="label">Số học viên</p>
-                <b>{studentCount} học viên</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Lịch học</span>
+                <span className="cd-meta-value">{lesson.LichHoc}</span>
               </div>
             </div>
 
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper status-icon">
-                <FiBook size={18} />
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaUsers />
               </div>
-              <div className="info-item-content">
-                <p className="label">Trạng thái</p>
-                <b>Đang học</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Số học viên</span>
+                <span className="cd-meta-value">{studentCount} học viên</span>
+              </div>
+            </div>
+
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaBook />
+              </div>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Trạng thái</span>
+                <span className="cd-meta-value">Đang học</span>
               </div>
             </div>
           </div>
@@ -224,7 +225,7 @@ const ClassDetail = () => {
             <div className="lesson-tab-empty">Chưa có bài tập nào cho buổi học này.</div>
           ) : (
             <div className="lesson-card-grid">
-              {filteredExercises.map((ex) => (
+              {filteredExercises.map((ex: any) => (
                 <div key={ex.MaBaiTap} className="lesson-content-card">
                   <div className="lesson-content-head">
                     <h4>{ex.Title}</h4>

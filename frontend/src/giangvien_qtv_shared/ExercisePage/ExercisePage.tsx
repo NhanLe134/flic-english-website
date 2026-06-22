@@ -1,7 +1,8 @@
 import "./ExercisePage.css";
-import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiMonitor, FiClock, FiUsers, FiBook, FiArrowLeft, FiCalendar } from "react-icons/fi";
+import { useNavigate, useParams } from "react-router-dom";
+import { FiArrowLeft, FiCalendar } from "react-icons/fi";
+import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
 
 const ExercisePage = () => {
   const navigate = useNavigate();
@@ -66,8 +67,8 @@ const ExercisePage = () => {
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
-        setExercises(prev =>
-          prev.filter(e => Number(e.MaBaiTap) !== Number(selectedId))
+        setExercises((prev: any[]) =>
+          prev.filter((e: any) => Number(e.MaBaiTap) !== Number(selectedId))
         );
       } else {
         alert("Xóa thất bại: " + body);
@@ -79,7 +80,7 @@ const ExercisePage = () => {
     setSelectedId(null);
   };
 
-  const filteredExercises = exercises.filter((ex) => {
+  const filteredExercises = exercises.filter((ex: any) => {
     const matchesSearch = ex.Title?.toLowerCase().includes(search.toLowerCase());
     const isExam = ex.IsExam === 1 || ex.Type === "exam";
 
@@ -102,49 +103,49 @@ const ExercisePage = () => {
       </span>
 
       {/* ===== HEADER ===== */}
-      <div className="header-card">
+      <div className="cd-overview-card">
         <div className="cd-left-content">
-          <h1>{lesson?.TenBuoiHoc}</h1>
+          <h2 className="cd-class-title">{lesson?.TenBuoiHoc}</h2>
           <p className="cd-class-desc">{lesson?.MoTa}</p>
           
-          <div className="info-row">
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper teacher-icon">
-                <FiMonitor size={18} />
+          <div className="cd-meta-grid">
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaChalkboardTeacher />
               </div>
-              <div className="info-item-content">
-                <p className="label">Giáo viên</p>
-                <b>{giangVien}</b>
-              </div>
-            </div>
-
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper calendar-icon">
-                <FiClock size={18} />
-              </div>
-              <div className="info-item-content">
-                <p className="label">Lịch học</p>
-                <b>{lichHoc}</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Giáo viên</span>
+                <span className="cd-meta-value">{giangVien}</span>
               </div>
             </div>
 
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper students-icon">
-                <FiUsers size={18} />
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaClock />
               </div>
-              <div className="info-item-content">
-                <p className="label">Số học viên</p>
-                <b>{soHocVien} học viên</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Lịch học</span>
+                <span className="cd-meta-value">{lichHoc}</span>
               </div>
             </div>
 
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper status-icon">
-                <FiBook size={18} />
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaUsers />
               </div>
-              <div className="info-item-content">
-                <p className="label">Trạng thái</p>
-                <b>Đang học</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Số học viên</span>
+                <span className="cd-meta-value">{soHocVien} học viên</span>
+              </div>
+            </div>
+
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaBook />
+              </div>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Trạng thái</span>
+                <span className="cd-meta-value">Đang học</span>
               </div>
             </div>
           </div>
@@ -246,7 +247,7 @@ const ExercisePage = () => {
         </div>
 
         <div className="exercise-grid">
-          {filteredExercises.map((ex) => (
+          {filteredExercises.map((ex: any) => (
             <div key={ex.MaBaiTap} className="exercise-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1a202c', wordBreak: 'break-word', flex: 1 }}>{ex.Title}</h4>

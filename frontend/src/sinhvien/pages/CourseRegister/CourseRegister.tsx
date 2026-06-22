@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../../../home_pages/CoursesPageHome/CoursesPageHome.css";
 
 const staticCategories = [
@@ -29,12 +29,6 @@ const staticCategories = [
 ];
 
 export default function CourseRegister() {
-  const navigate = useNavigate();
-
-  const handleNavigateCategory = (key: string) => {
-    navigate(`/courses-category/${key}`);
-  };
-
   return (
     <div className="courses-page-wrapper" style={{ minHeight: 'auto', padding: '0 0 40px 0' }}>
       <div className="courses-container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -59,10 +53,7 @@ export default function CourseRegister() {
                   <p>{cat.desc}</p>
 
                   <div className="course-buttons">
-                    <span className="btn-xem-them" onClick={() => handleNavigateCategory(cat.key)}>
-                      Xem Thêm &rarr;
-                    </span>
-                    <button onClick={() => handleNavigateCategory(cat.key)}>
+                    <button onClick={() => window.open("https://flic.due.udn.vn/ngoai_ngu/", "_blank")}>
                       Đăng ký khóa học
                     </button>
                   </div>

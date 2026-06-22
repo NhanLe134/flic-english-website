@@ -39,9 +39,9 @@ function AssignmentSuccess() {
                 <p className="as-score">{diem}</p>
               </>
             ) : (
-              <div style={{ textAlign:"center", marginBottom:8 }}>
-                <p className="as-score-label">Bài tự luận đã được ghi nhận</p>
-                <p style={{ fontSize:13, color:"#aaa", margin:"4px 0 0" }}>
+              <div className="as-pending-box">
+                <p className="as-score-label" style={{ marginBottom: 0 }}>Bài tự luận đã được ghi nhận</p>
+                <p className="as-pending-text">
                   ⏳ Đang chờ giảng viên chấm điểm
                 </p>
               </div>
