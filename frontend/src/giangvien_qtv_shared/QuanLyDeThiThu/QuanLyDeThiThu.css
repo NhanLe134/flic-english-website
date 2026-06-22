@@ -1,0 +1,148 @@
+.cd-wrapper {
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+}
+
+/* HEADER ROW */
+.cd-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.cd-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c2520;
+  margin: 0 0 6px;
+}
+
+.cd-subtitle {
+  color: #7a6e65;
+  margin: 0 0 20px;
+  font-size: 14px;
+}
+
+.cd-back {
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-block;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.cd-back:hover {
+  color: #F95800;
+  text-decoration: underline;
+}
+
+/* SEARCH CONTAINER (Joined input + orange button) */
+.cd-wrapper .search-container {
+  display: flex;
+  align-items: center;
+  max-width: 420px;
+  height: 40px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #333;
+  background: transparent;
+  height: 100%;
+}
+
+.search-input::placeholder {
+  color: #9c8e83;
+}
+
+.search-button {
+  background: #F95800;
+  border: none;
+  color: white;
+  padding: 0 16px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.search-button:hover {
+  background: #e04f00;
+}
+
+.search-button svg {
+  stroke: white;
+}
+
+/* TEST CARDS & INTERACTIONS */
+.cd-test-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cd-test-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.cd-create-test-btn:hover {
+  background: #e04f00 !important;
+}
+
+.cd-test-delete-btn:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+}
+
+/* MODAL TRANSITIONS */
+.cd-modal-overlay {
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+.cd-modal-card {
+  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.anim-fade-in {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sub-row-hover {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sub-row-hover:hover {
+  background-color: #f8fafc;
+}
+
