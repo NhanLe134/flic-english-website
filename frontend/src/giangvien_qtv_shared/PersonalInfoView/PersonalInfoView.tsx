@@ -20,13 +20,15 @@ const PersonalInfoView = () => {
     const user = JSON.parse(userStr);
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://localhost:5000/giangvien/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`)
       .then(res => res.json())
       .then(info => setData(info))
       .catch(err => console.log(err));
   }, []);
 
   if (!data) return <p>Đang tải...</p>;
+
+  const displayAvatar = avatar || (data.AnhDaiDien ? (data.AnhDaiDien.startsWith("http") ? data.AnhDaiDien : `http://14.225.192.252:5000${data.AnhDaiDien}`) : null);
 
   return (
     <div className="piv-wrapper">
@@ -41,8 +43,8 @@ const PersonalInfoView = () => {
         {/* LEFT CARD */}
         <div className="piv-sidebar-card">
           <div className="piv-avatar-wrapper">
-            {avatar || data.AnhDaiDien ? (
-              <img src={avatar || data.AnhDaiDien} alt="avatar" />
+            {displayAvatar ? (
+              <img src={displayAvatar} alt="avatar" />
             ) : (
               <div className="piv-avatar-initial">{data.HoTen?.charAt(0).toUpperCase()}</div>
             )}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import styles from "./DuyetBaiQTV.module.css";
 import { FiSearch } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 type ContentType = "baigiang" | "baitap";
 type ApprovalStatus = "Chờ duyệt" | "Đã duyệt" | "Từ chối";

@@ -89,9 +89,9 @@ app.post("/register", async (req, res) => {
       .input("password", password)
       .input("name", name)
       .input("email", email)
-      .input("ngaySinh", ngaySinh || null)   // ← thêm
-      .query(`INSERT INTO NGUOIDUNG (TenDangNhap, MatKhau, HoTen, Email, NgaySinh, TrangThai, NgayTao)
-              VALUES (@username, @password, @name, @email, @ngaySinh, 'active', GETDATE())`);
+      .input("ngaySinh", ngaySinh || null)
+      .query(`INSERT INTO NGUOIDUNG (TenDangNhap, MatKhau, HoTen, Email, NgaySinh, TrangThai, NgayTao, MaVaiTro)
+              VALUES (@username, @password, @name, @email, @ngaySinh, 'active', GETDATE(), 5)`);
     res.json({ message: "Đăng ký thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -103,15 +103,13 @@ app.get("/users/role/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           CASE
-            WHEN a.MaNguoiDung IS NOT NULL THEN N'Quản Trị Viên'
-            WHEN g.MaNguoiDung IS NOT NULL THEN N'Giảng Viên'
-            WHEN q.MaNguoiDung IS NOT NULL THEN N'Quản Trị Nội Dung'
+            WHEN n.MaVaiTro = 1 THEN N'Quản Trị Viên'
+            WHEN n.MaVaiTro = 2 THEN N'Giảng Viên'
+            WHEN n.MaVaiTro = 4 THEN N'Quản Trị Nội Dung'
+            WHEN n.MaVaiTro = 3 OR n.MaVaiTro = 5 THEN N'Học Viên'
             ELSE N'Học Viên'
           END AS VaiTro
         FROM NGUOIDUNG n
-        LEFT JOIN ADMIN a ON n.MaNguoiDung = a.MaNguoiDung
-        LEFT JOIN GIANGVIEN g ON n.MaNguoiDung = g.MaNguoiDung
-        LEFT JOIN QUANTRIVIENNOIDUNG q ON n.MaNguoiDung = q.MaNguoiDung
         WHERE n.MaNguoiDung = @id
       `)
     res.json(result.recordset[0] || { VaiTro: "Học Viên" })
@@ -2007,6 +2005,15 @@ app.post("/qtv/lophoc/:id/ghidanh", async (req, res) => {
           )
       `)
 
+    // Tự động cập nhật MaVaiTro = 3 (Học viên đã đăng ký khóa học) trong bảng NGUOIDUNG
+    await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        UPDATE NGUOIDUNG
+        SET MaVaiTro = 3
+        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
+      `)
+
     res.json({ message: "Đã ghi danh thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -2035,6 +2042,22 @@ app.delete("/qtv/lophoc/:id/ghidanh/:maSinhVien", async (req, res) => {
               JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
               WHERE lh.MaLopHoc = @MaLopHoc
           )
+      `)
+
+    // Tự động cập nhật lại MaVaiTro dựa trên trạng thái học tập thực tế (nếu không còn lớp nào đang học thì về 5)
+    await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        UPDATE NGUOIDUNG
+        SET MaVaiTro = CASE 
+          WHEN EXISTS (
+              SELECT 1 
+              FROM SINHVIEN_LOPHOC sl
+              WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai = N'Đang học'
+          ) THEN 3
+          ELSE 5
+        END
+        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
       `)
 
     res.json({ message: "Đã hủy ghi danh" })
@@ -2708,17 +2731,13 @@ app.get("/admin/users", async (req, res) => {
         n.MaNguoiDung, n.TenDangNhap, n.HoTen, n.Email,
         n.TrangThai, n.NgayTao,
         CASE 
-          WHEN a.MaNguoiDung IS NOT NULL THEN N'Quản Trị Viên'
-          WHEN g.MaNguoiDung IS NOT NULL THEN N'Giảng Viên'
-          WHEN q.MaNguoiDung IS NOT NULL THEN N'Quản Trị Nội Dung'
-          WHEN s.MaNguoiDung IS NOT NULL THEN N'Học Viên'
+          WHEN n.MaVaiTro = 1 THEN N'Quản Trị Viên'
+          WHEN n.MaVaiTro = 2 THEN N'Giảng Viên'
+          WHEN n.MaVaiTro = 4 THEN N'Quản Trị Nội Dung'
+          WHEN n.MaVaiTro = 3 OR n.MaVaiTro = 5 THEN N'Học Viên'
           ELSE N'Học Viên'
         END AS VaiTro
       FROM NGUOIDUNG n
-      LEFT JOIN ADMIN a ON n.MaNguoiDung = a.MaNguoiDung
-      LEFT JOIN GIANGVIEN g ON n.MaNguoiDung = g.MaNguoiDung
-      LEFT JOIN QUANTRIVIENNOIDUNG q ON n.MaNguoiDung = q.MaNguoiDung
-      LEFT JOIN SINHVIEN s ON n.MaNguoiDung = s.MaNguoiDung
       ORDER BY n.NgayTao DESC
     `)
     res.json(result.recordset)
@@ -2753,17 +2772,24 @@ app.post("/admin/users", async (req, res) => {
   try {
     const { TenDangNhap, HoTen, Email, MatKhau, VaiTro } = req.body
     const pool = await poolPromise
+
+    let maVaiTro = 5; // Mặc định: Học viên chưa có lớp học
+    if (VaiTro === "Giảng Viên") maVaiTro = 2;
+    else if (VaiTro === "Quản Trị Nội Dung") maVaiTro = 4;
+    else if (VaiTro === "Quản Trị Viên") maVaiTro = 1;
+
     // Tạo NGUOIDUNG
     const result = await pool.request()
       .input("TenDangNhap", TenDangNhap)
       .input("HoTen", HoTen)
       .input("Email", Email)
       .input("MatKhau", MatKhau || "123456")
-      .query(`INSERT INTO NGUOIDUNG (TenDangNhap,HoTen,Email,MatKhau,TrangThai,NgayTao)
+      .input("MaVaiTro", maVaiTro)
+      .query(`INSERT INTO NGUOIDUNG (TenDangNhap,HoTen,Email,MatKhau,TrangThai,NgayTao,MaVaiTro)
               OUTPUT INSERTED.MaNguoiDung
-              VALUES (@TenDangNhap,@HoTen,@Email,@MatKhau,N'Active',GETDATE())`)
+              VALUES (@TenDangNhap,@HoTen,@Email,@MatKhau,N'Active',GETDATE(),@MaVaiTro)`)
     const newId = result.recordset[0].MaNguoiDung
-    // Gán vai trò
+    // Gán vai trò vào các bảng con để lưu trữ thuộc tính đặc thù
     if (VaiTro === "Giảng Viên") {
       await pool.request().input("id", newId)
         .query(`INSERT INTO GIANGVIEN (MaNguoiDung) VALUES (@id)`)

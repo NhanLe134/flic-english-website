@@ -5,6 +5,8 @@ import remarkGfm from "remark-gfm";
 import { FiArrowLeft, FiFileText } from "react-icons/fi";
 import "./LessonDetail.css";
 
+const API = "http://14.225.192.252:5000";
+
 const LessonDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -52,7 +54,7 @@ const LessonDetail: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/baigiang/detail/${id}`)
+    fetch(`${API}/baigiang/detail/${id}`)
       .then(res => res.json())
       .then(data => setLesson(data))
       .catch(err => console.log(err));
@@ -60,7 +62,8 @@ const LessonDetail: React.FC = () => {
 
   if (!lesson) return <p style={{ padding: 20 }}>Đang tải...</p>;
 
-  const fileUrl = lesson.FileUrl || null;
+  const rawFileUrl = lesson.FileUrl || null;
+  const fileUrl = rawFileUrl ? (rawFileUrl.startsWith("http") ? rawFileUrl : `${API}${rawFileUrl}`) : null;
   const noiDung = lesson.NoiDung || "";
 
   const isImage = fileUrl && /\.(png|jpg|jpeg|gif|webp)$/i.test(fileUrl);

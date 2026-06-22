@@ -1,7 +1,7 @@
 import "./PermissionsAdmin.css";
 import { useState, useEffect } from "react";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const GV_PERMISSIONS = [
   { code: "LECTURE_CREATE", label: "Đăng bài giảng" },

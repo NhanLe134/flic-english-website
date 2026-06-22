@@ -2,7 +2,7 @@ import "./Assignments.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const statusClass: Record<string, string> = {
   "Chưa làm": "asgn-badge-pending",

@@ -13,14 +13,14 @@ const QuanLyKetQuaHocTap = () => {
 
     if (!maNguoiDung) { setLoading(false); return; }
 
-    fetch(`http://localhost:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(async (data) => {
         // Fetch số học viên thực tế cho từng lớp
         const withStudents = await Promise.all(
           data.map(async (c: any) => {
             try {
-              const res = await fetch(`http://localhost:5000/lophoc/${c.MaLopHoc}/students/count`);
+              const res = await fetch(`http://14.225.192.252:5000/lophoc/${c.MaLopHoc}/students/count`);
               const json = await res.json();
               return { ...c, SoLuongHocVien: json?.SoLuongHocVien ?? 0 };
             } catch {

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import { FiFileText, FiX } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 function pctColor(pct: number) {
   if (pct >= 90) return "#22c55e";

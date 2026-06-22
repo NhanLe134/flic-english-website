@@ -40,7 +40,7 @@ const DraftsManagement = () => {
   const fetchDrafts = () => {
     if (!maNguoiDung) return;
     setLoading(true);
-    fetch(`http://localhost:5000/teacher/${maNguoiDung}/drafts`)
+    fetch(`http://14.225.192.252:5000/teacher/${maNguoiDung}/drafts`)
       .then((res) => res.json())
       .then((data) => {
         setLessons(data.lessons || []);
@@ -57,7 +57,7 @@ const DraftsManagement = () => {
 
   const handleSubmitLesson = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/baigiang/${id}/status`, {
+      const res = await fetch(`http://14.225.192.252:5000/baigiang/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "pending" })
@@ -76,7 +76,7 @@ const DraftsManagement = () => {
 
   const handleSubmitExercise = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/baitap/${id}/status`, {
+      const res = await fetch(`http://14.225.192.252:5000/baitap/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "pending" })
@@ -96,7 +96,7 @@ const DraftsManagement = () => {
   const handleDeleteLesson = async (id: number) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bản nháp bài giảng này không?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/baigiang/${id}`, {
+      const res = await fetch(`http://14.225.192.252:5000/baigiang/${id}`, {
         method: "DELETE"
       });
       if (res.ok) {
@@ -111,7 +111,7 @@ const DraftsManagement = () => {
   const handleDeleteExercise = async (id: number) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bản nháp này không?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/baitap/${id}`, {
+      const res = await fetch(`http://14.225.192.252:5000/baitap/${id}`, {
         method: "DELETE"
       });
       if (res.ok) {

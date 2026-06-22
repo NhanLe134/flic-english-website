@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import { FiUsers, FiBookOpen, FiUserCheck } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 // const DONUT_COLORS = ["#f58220", "#3b82f6", "#10b981", "#8b5cf6", "#ec4899"];
 
 export default function StatisticsAdmin() {

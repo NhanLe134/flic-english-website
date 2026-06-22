@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, Fragment } from "react"
 import styles from "./BaoCaoKetQuaQTV.module.css"
 import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
 
-const API = 'http://localhost:5000'
+const API = 'http://14.225.192.252:5000'
 
 interface ExerciseHeader {
   MaBaiTap: number

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const courseImages: Record<string, string> = {
   TOEIC:   "/image(17).png",

@@ -22,14 +22,14 @@ const ClassDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (data) => {
         setLesson(data);
 
         const maLopHoc = data.MaLopHoc ?? location.state?.maLopHoc;
         if (maLopHoc) {
-          const countRes = await fetch(`http://localhost:5000/lophoc/${maLopHoc}/students/count`);
+          const countRes = await fetch(`http://14.225.192.252:5000/lophoc/${maLopHoc}/students/count`);
           const countData = await countRes.json();
           setStudentCount(countData?.SoLuongHocVien ?? 0);
         }
@@ -41,7 +41,7 @@ const ClassDetail = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user?.MaNguoiDung;
     if (maNguoiDung) {
-      fetch(`http://localhost:5000/giangvien/${maNguoiDung}`)
+      fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`)
         .then(res => res.json())
         .then(data => setTeacherName(data?.HoTen || "Giảng viên"))
         .catch(() => setTeacherName("Giảng viên"));
@@ -51,7 +51,7 @@ const ClassDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => {
         console.log("ClassDetail exercises fetched:", data);

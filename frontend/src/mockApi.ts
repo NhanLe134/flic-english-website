@@ -194,7 +194,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
   const urlStr = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 
   // Check if target is backend API
-  if (urlStr.includes("http://localhost:5000") || urlStr.startsWith("/flic-english-website/api")) {
+  if (urlStr.includes("http://14.225.192.252:5000") || urlStr.startsWith("/flic-english-website/api")) {
     await sleep(200); // Add a small delay to simulate server response time
 
     const method = init?.method?.toUpperCase() || "GET";

@@ -20,7 +20,7 @@ const StudentList: React.FC = () => {
     const trimmedId = maSinhVien.trim();
     setShowModal(true);
     setModalLoading(true);
-    fetch(`http://localhost:5000/students/${trimmedId}`)
+    fetch(`http://14.225.192.252:5000/students/${trimmedId}`)
       .then(res => res.json())
       .then(data => {
         setSelectedStudentDetails(data);
@@ -37,7 +37,7 @@ const StudentList: React.FC = () => {
 
     if (!maNguoiDung) { setLoading(false); return; }
 
-    fetch(`http://localhost:5000/teacher/students/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/teacher/students/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => setStudents(data))
       .catch(err => console.log(err))

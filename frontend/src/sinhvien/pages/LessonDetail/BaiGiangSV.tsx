@@ -4,7 +4,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const unescapeMarkdown = (str: string) => {
   return str
@@ -62,7 +62,8 @@ function BaiGiangSV() {
         </div>
   );
 
-  const fileUrl = baiGiang.FileUrl || null;
+  const rawFileUrl = baiGiang.FileUrl || null;
+  const fileUrl = rawFileUrl ? (rawFileUrl.startsWith("http") ? rawFileUrl : `${API}${rawFileUrl}`) : null;
   const noiDung = baiGiang.NoiDung || "";
 
   const isImage = fileUrl && /\.(png|jpg|jpeg|gif|webp)$/i.test(fileUrl);

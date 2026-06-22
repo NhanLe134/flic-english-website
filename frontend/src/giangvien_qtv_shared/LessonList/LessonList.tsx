@@ -37,7 +37,7 @@ const LessonList = () => {
   });
 
   const fetchClassInfo = () => {
-    fetch(`http://localhost:5000/classes/${id}/info`)
+    fetch(`http://14.225.192.252:5000/classes/${id}/info`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -49,7 +49,7 @@ const LessonList = () => {
 
   const handleMarkActiveLesson = async (lessonId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/classes/${id}/active-buoihoc`, {
+      const res = await fetch(`http://14.225.192.252:5000/classes/${id}/active-buoihoc`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activeBuoiHocId: lessonId })
@@ -75,7 +75,7 @@ const LessonList = () => {
       return;
     }
     try {
-      const res = await fetch("http://localhost:5000/qtv/buoihoc", {
+      const res = await fetch("http://14.225.192.252:5000/qtv/buoihoc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +97,7 @@ const LessonList = () => {
           order: 1
         });
         // Re-fetch lessons list
-        fetch(`http://localhost:5000/classes/${id}/buoihoc`)
+        fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
           .then(r => r.json())
           .then(data => setLessons(data))
           .catch(err => console.log(err));
@@ -122,7 +122,7 @@ const LessonList = () => {
   };
 
   useEffect(() => {
-    fetch(`http://localhost:5000/classes/${id}/buoihoc`)
+    fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
@@ -130,7 +130,7 @@ const LessonList = () => {
     fetchClassInfo();
 
     // Fetch số học viên của lớp
-    fetch(`http://localhost:5000/lophoc/${id}/students/count`)
+    fetch(`http://14.225.192.252:5000/lophoc/${id}/students/count`)
       .then(res => res.json())
       .then(data => setStudentCount(data?.SoLuongHocVien ?? 12))
       .catch(() => setStudentCount(12));
@@ -145,7 +145,7 @@ const LessonList = () => {
     }
 
     // Lấy số lượng bài tập cần duyệt
-    fetch("http://localhost:5000/teacher/submissions/pending-count")
+    fetch("http://14.225.192.252:5000/teacher/submissions/pending-count")
       .then(res => res.json())
       .then(data => setPendingCount(data.count))
       .catch(err => console.log(err));

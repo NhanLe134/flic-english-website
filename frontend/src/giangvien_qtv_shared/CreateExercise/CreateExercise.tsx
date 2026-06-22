@@ -108,7 +108,7 @@ const CreateExercise = () => {
   /* ===== LOAD LESSON ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
@@ -121,7 +121,7 @@ const CreateExercise = () => {
   useEffect(() => {
     // Fetch all existing exercises for cloning
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
-    let url = "http://localhost:5000/exercises/list/all";
+    let url = "http://14.225.192.252:5000/exercises/list/all";
     if (userStr) {
       const user = JSON.parse(userStr);
       if ((user.VaiTro || "").toLowerCase().trim() === "giảng viên" && user.MaNguoiDung) {
@@ -136,7 +136,7 @@ const CreateExercise = () => {
 
   const handleReuseExercise = async (exerciseId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/exercises/${exerciseId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: Number(id) })
@@ -521,7 +521,7 @@ const CreateExercise = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://localhost:5000/upload", {
+    const res = await fetch("http://14.225.192.252:5000/upload", {
       method: "POST",
       body: formData
     });
@@ -734,7 +734,7 @@ const CreateExercise = () => {
         mainAudioUrl = commonAudioUrl || questions[0]?.audioUrl || "";
       }
 
-      await fetch("http://localhost:5000/baitap/create", {
+      await fetch("http://14.225.192.252:5000/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1831,7 +1831,7 @@ const CreateExercise = () => {
                 {commonAudioUrl && (
                   <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
                     <p style={{ color: "green", fontSize: 13, fontWeight: "bold", margin: 0 }}>✓ Đã tải file nghe chung:</p>
-                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://localhost:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
+                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://14.225.192.252:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
                     <button
                       type="button"
                       onClick={() => setCommonAudioUrl("")}

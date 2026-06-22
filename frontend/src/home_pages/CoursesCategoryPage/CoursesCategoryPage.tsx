@@ -4,7 +4,7 @@ import "./CoursesCategoryPage.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const categoryMeta: Record<string, { title: string; image: string; breadcrumb: string }> = {
   toeic: {

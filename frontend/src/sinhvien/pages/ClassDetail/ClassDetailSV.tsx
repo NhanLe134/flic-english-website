@@ -18,7 +18,7 @@ import {
   FaInfoCircle
 } from "react-icons/fa";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface ClassInfo {
   MaLopHoc: number;

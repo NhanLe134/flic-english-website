@@ -12,7 +12,7 @@ import {
   FiHash
 } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface StudentProfile {
   MaSinhVien: string;
@@ -111,7 +111,7 @@ export default function ProfilePage() {
         // Load avatar từ database/sessionStorage
         const savedAvatar = fullProfile.AnhDaiDien;
         if (savedAvatar) {
-          setAvatar(savedAvatar);
+          setAvatar(savedAvatar.startsWith("http") ? savedAvatar : `${API}${savedAvatar}`);
         }
       }
     } catch (err) {
@@ -147,24 +147,25 @@ export default function ProfilePage() {
       if (!uploadRes.ok) throw new Error("Upload thất bại");
 
       const uploadData = await uploadRes.json();
-      const fileUrl = `${API}${uploadData.url}`;
+      const relativeUrl = uploadData.url; // e.g. /uploads/filename.png
+      const absoluteUrl = `${API}${relativeUrl}`;
 
       // 2. Cập nhật state avatar
-      setAvatar(fileUrl);
+      setAvatar(absoluteUrl);
 
       // 3. Cập nhật sessionStorage user
       const userStr = sessionStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
-        user.AnhDaiDien = fileUrl;
+        user.AnhDaiDien = relativeUrl;
         sessionStorage.setItem("user", JSON.stringify(user));
       }
 
-      // 4. Lưu link URL vào database cột AnhDaiDien
+      // 4. Lưu link relative URL vào database cột AnhDaiDien
       await fetch(`${API}/users/${currentUser.MaNguoiDung}/anh-dai-dien`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ AnhDaiDien: fileUrl })
+        body: JSON.stringify({ AnhDaiDien: relativeUrl })
       });
 
       // Kích hoạt event custom để StudentNavbar cập nhật ngay lập tức
