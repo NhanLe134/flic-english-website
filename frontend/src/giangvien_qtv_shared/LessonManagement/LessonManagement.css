@@ -237,6 +237,17 @@
   color: white;
 }
 
+.minitest-btn {
+  background: #eef2ff;
+  color: #000080;
+  border: 2px solid #000080;
+}
+
+.minitest-btn:hover {
+  background: #000080;
+  color: white;
+}
+
 .detaill-btn {
   background: #F95800;
   color: white;

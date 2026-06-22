@@ -206,6 +206,10 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         onClick={() => navigate(`/lesson-discussion/${l.MaBaiHoc}`)}>
                         Thảo luận
                       </button>
+                      <button className="action-btn minitest-btn"
+                        onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}>
+                        + MiniTest
+                      </button>
                       <button className="action-btn detaill-btn"
                         onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}>
                         Xem chi tiết
