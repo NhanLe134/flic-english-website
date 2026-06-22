@@ -1,11 +1,12 @@
 ﻿import { useNavigate, useLocation } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
-import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut } from "react-icons/fi";
+import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut, FiFileText } from "react-icons/fi";
 import "./SidebarGV.css";
 
 const menuItems = [
   { label: "Quản lý khóa học",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
+  { label: "Quản lý đề thi thử",          path: "/quan-ly-de-thi",     icon: <FiFileText className="menu-icon" /> },
   { label: "Danh sách học viên",      path: "/danh-sach-hoc-vien",  icon: <FiUsers className="menu-icon" /> },
   { label: "Quản lý kết quả học tập", path: "/quan-ly-ket-qua",   icon: <FiAward className="menu-icon" /> },
   { label: "Thông tin cá nhân",       path: "/thong-tin-ca-nhan",   icon: <FiUser className="menu-icon" /> },
@@ -13,6 +14,10 @@ const menuItems = [
 ];
 
 const getActiveMenu = (pathname: string) => {
+  if (
+    pathname.startsWith("/quan-ly-de-thi")
+  ) return "/quan-ly-de-thi";
+
   if (
     pathname.startsWith("/quan-ly-khoa-hoc") ||
     pathname.startsWith("/khoa-hoc") ||
