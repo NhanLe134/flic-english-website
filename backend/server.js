@@ -149,23 +149,22 @@ app.get("/courses/:id/details", async (req, res) => {
 
 // Tạo khóa học mới
 app.post("/qtv/khoahoc", async (req, res) => {
-  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, KyNang, Listening, Reading, Speaking, Writing } = req.body
+  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, Listening, Reading, Speaking, Writing } = req.body
   try {
     const pool = await poolPromise
     const result = await pool.request()
       .input("TenKhoaHoc", TenKhoaHoc)
       .input("MoTa", MoTa || "")
       .input("TrinhDo", TrinhDo || "")
-      .input("KyNang", KyNang || null)
       .input("Listening", Listening !== undefined ? Number(Listening) : 0)
       .input("Reading", Reading !== undefined ? Number(Reading) : 0)
       .input("Speaking", Speaking !== undefined ? Number(Speaking) : 0)
       .input("Writing", Writing !== undefined ? Number(Writing) : 0)
       .input("MaNguoiDung", MaNguoiDung)
       .query(`
-        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, KyNang, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao)
+        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao)
         OUTPUT INSERTED.MaKhoaHoc
-        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @KyNang, @Listening, @Reading, @Speaking, @Writing, 'Pending', @MaNguoiDung, GETDATE())
+        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @Listening, @Reading, @Speaking, @Writing, 'Pending', @MaNguoiDung, GETDATE())
       `)
     const newId = result.recordset[0].MaKhoaHoc
     res.json({
@@ -1709,7 +1708,6 @@ app.get("/admin/khoahoc", async (req, res) => {
         kh.TenKhoaHoc,
         kh.MoTa,
         kh.TrinhDo,
-        kh.KyNang,
         kh.Listening,
         kh.Reading,
         kh.Writing,
@@ -2057,7 +2055,7 @@ app.get("/lophoc/:id/students/count", async (req, res) => {
 // ── Sửa khóa học ──
 app.put("/admin/khoahoc/:id", async (req, res) => {
   try {
-    const { TenKhoaHoc, MoTa, TrinhDo, KyNang, Listening, Reading, Speaking, Writing } = req.body
+    const { TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing } = req.body
     const pool = await poolPromise
     
     // Check if course has classes
@@ -2075,9 +2073,8 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       // Hạn chế thay đổi kỹ năng khi đã có lớp trong khóa
       const currentCourse = await pool.request()
         .input("id", req.params.id)
-        .query(`SELECT KyNang, Listening, Reading, Speaking, Writing FROM KHOAHOC WHERE MaKhoaHoc=@id`);
+        .query(`SELECT Listening, Reading, Speaking, Writing FROM KHOAHOC WHERE MaKhoaHoc=@id`);
       const row = currentCourse.recordset[0];
-      const currentKyNang = row?.KyNang || "";
       const currentL = row?.Listening ? 1 : 0;
       const currentR = row?.Reading ? 1 : 0;
       const currentS = row?.Speaking ? 1 : 0;
@@ -2088,8 +2085,7 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       const newS = Speaking !== undefined ? Number(Speaking) : currentS;
       const newW = Writing !== undefined ? Number(Writing) : currentW;
 
-      if ((KyNang !== undefined && KyNang !== currentKyNang) ||
-          (Listening !== undefined && newL !== currentL) ||
+      if ((Listening !== undefined && newL !== currentL) ||
           (Reading !== undefined && newR !== currentR) ||
           (Speaking !== undefined && newS !== currentS) ||
           (Writing !== undefined && newW !== currentW)) {
@@ -2102,7 +2098,6 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       .input("TenKhoaHoc", TenKhoaHoc)
       .input("MoTa", MoTa || "")
       .input("TrinhDo", TrinhDo || "")
-      .input("KyNang", KyNang === undefined ? null : KyNang)
       .input("Listening", Listening !== undefined ? Number(Listening) : null)
       .input("Reading", Reading !== undefined ? Number(Reading) : null)
       .input("Speaking", Speaking !== undefined ? Number(Speaking) : null)
@@ -2110,7 +2105,6 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       .query(`
         UPDATE KHOAHOC 
         SET TenKhoaHoc=@TenKhoaHoc, MoTa=@MoTa, TrinhDo=@TrinhDo, 
-            KyNang=COALESCE(@KyNang, KyNang),
             Listening=COALESCE(@Listening, Listening),
             Reading=COALESCE(@Reading, Reading),
             Speaking=COALESCE(@Speaking, Speaking),
