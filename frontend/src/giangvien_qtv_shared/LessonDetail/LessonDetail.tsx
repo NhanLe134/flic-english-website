@@ -71,6 +71,28 @@ const LessonDetail: React.FC = () => {
   const isVideo = fileUrl && /\.(mp4|webm|ogg)$/i.test(fileUrl);
   const isAudio = fileUrl && /\.(mp3|wav|m4a)$/i.test(fileUrl);
 
+  const getYoutubeEmbedUrl = (url: string) => {
+    if (!url) return "";
+    let videoId = "";
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
+  const getGoogleDriveEmbedUrl = (url: string) => {
+    if (!url) return "";
+    if (url.includes("drive.google.com")) {
+      return url.replace(/\/view(\?.*)?$/, "/preview");
+    }
+    return url;
+  };
+
+  const isYoutube = fileUrl && (fileUrl.includes("youtube.com") || fileUrl.includes("youtu.be"));
+  const isGoogleDrive = fileUrl && fileUrl.includes("drive.google.com");
+
   const markdownComponents = {
     ul: ({ children }: any) => (
       <ul style={{ paddingLeft: 24, margin: "4px 0" }}>{children}</ul>
@@ -175,7 +197,33 @@ const LessonDetail: React.FC = () => {
         </div>
       )}
 
-      {fileUrl && !isImage && !isPdf && !isVideo && !isAudio && (
+      {isYoutube && (
+        <div className="file-content" style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: 12, marginBottom: 20 }}>
+          <iframe
+            src={getYoutubeEmbedUrl(fileUrl)}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 12, border: "none" }}
+          />
+        </div>
+      )}
+
+      {isGoogleDrive && (
+        <div className="file-content" style={{ marginBottom: 20 }}>
+          <iframe
+            src={getGoogleDriveEmbedUrl(fileUrl)}
+            width="100%"
+            height="500px"
+            title="Google Drive player"
+            style={{ borderRadius: 12, border: "1px solid #e0d4c3" }}
+            allow="autoplay"
+          />
+        </div>
+      )}
+
+      {fileUrl && !isImage && !isPdf && !isVideo && !isAudio && !isYoutube && !isGoogleDrive && (
         <div className="file-download">
           <a href={fileUrl} target="_blank" rel="noreferrer">
             <FiFileText size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />

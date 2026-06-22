@@ -64,7 +64,7 @@ const ClassDetail = () => {
 
   const filteredExercises = exercises.filter((ex) => {
     const matchesSearch = ex.Title?.toLowerCase().includes(exerciseSearch.toLowerCase());
-    const isExam = ex.IsExam === 1 || ex.Type === "exam";
+    const isExam = ex.IsExam === 1 || ex.Type === "exam" || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
 
     if (filterType === "homework") {
       return matchesSearch && !isExam;

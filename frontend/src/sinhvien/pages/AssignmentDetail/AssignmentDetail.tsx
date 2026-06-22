@@ -11,6 +11,14 @@ interface MCQuestion {
   correct: string;
 }
 
+const getNormalizedType = (typeStr: string): string => {
+  const t = (typeStr || "").toLowerCase().trim();
+  if (["writing-order-words", "sắp xếp từ thành câu", "sắp xếp từ"].includes(t)) return "writing-order-words";
+  if (["writing-order-sentences", "sắp xếp câu thành đoạn văn", "sắp xếp câu"].includes(t)) return "writing-order-sentences";
+  if (["reading-vocab-mcq", "bài tập từ vựng", "nối từ", "từ vựng"].includes(t)) return "reading-vocab-mcq";
+  return t;
+};
+
 function AssignmentDetail() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,6 +43,7 @@ function AssignmentDetail() {
   const [orderedWords, setOrderedWords] = useState<Record<string | number, string[]>>({}); // questionIdx -> words
   const [shuffledWords, setShuffledWords] = useState<Record<string | number, string[]>>({}); // questionIdx -> words
   const [shuffledSentences, setShuffledSentences] = useState<Record<string | number, string[]>>({}); // questionIdx -> sentences
+  const [shuffledDefinitions, setShuffledDefinitions] = useState<Record<string | number, string[]>>({}); // questionIdx -> meanings matching
 
   // Multi-audio limit track
   const [listenCounts, setListenCounts] = useState<Record<string | number, number>>({});
@@ -103,7 +112,7 @@ function AssignmentDetail() {
     } catch (e) {}
 
     // Fallback to old custom text formatting
-    const exType = (exercise?.Type || "").toLowerCase();
+    const exType = getNormalizedType(exercise?.Type);
     const isMultiple = ["multiple", "quiz", "trắc nghiệm", "reading-vocab-mcq", "writing-tense-mcq"].includes(exType);
     const isListening = ["listening", "nghe", "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in"].includes(exType);
     const isReadingSplit = exType === "reading-split";
@@ -250,18 +259,35 @@ function AssignmentDetail() {
       .finally(() => setLoading(false));
   }, [id, maLopHoc]);
 
-  // Initializing words and sentences shuffle
+  // Initializing words, sentences and vocabulary definitions shuffle
   useEffect(() => {
     if (questionsList.length > 0 && !submitted) {
+      const normalizedExType = getNormalizedType(exercise?.Type);
       questionsList.forEach((q, idx) => {
-        if (exercise?.Type === "writing-order-words" || (q.correctSentence && !q.answers)) {
+        if (normalizedExType === "writing-order-words" || q.correctSentence || q.text) {
           const sentence = q.correctSentence || q.text || "";
           const words = sentence.split(/\s+/).map((w: string) => w.trim().replace(/[^a-zA-Z0-9']/g, "")).filter(Boolean);
-          setShuffledWords(prev => ({ ...prev, [idx]: [...words].sort(() => Math.random() - 0.5) }));
-          setOrderedWords(prev => ({ ...prev, [idx]: [] }));
+          setShuffledWords(prev => {
+            if (prev[idx]) return prev;
+            return { ...prev, [idx]: [...words].sort(() => Math.random() - 0.5) };
+          });
+          setOrderedWords(prev => {
+            if (prev[idx]) return prev;
+            return { ...prev, [idx]: [] };
+          });
         }
         if (q.sentences) {
-          setShuffledSentences(prev => ({ ...prev, [idx]: [...q.sentences].sort(() => Math.random() - 0.5) }));
+          setShuffledSentences(prev => {
+            if (prev[idx]) return prev;
+            return { ...prev, [idx]: [...q.sentences].sort(() => Math.random() - 0.5) };
+          });
+        }
+        if (normalizedExType === "reading-vocab-mcq" && q.vocabPairs) {
+          const meanings = q.vocabPairs.map((p: any) => p.meaning).filter(Boolean);
+          setShuffledDefinitions(prev => {
+            if (prev[idx]) return prev;
+            return { ...prev, [idx]: [...meanings].sort(() => Math.random() - 0.5) };
+          });
         }
       });
     }
@@ -271,7 +297,8 @@ function AssignmentDetail() {
         if (sec.questions) {
           sec.questions.forEach((q: any, qIdx: number) => {
             const key = `${sIdx}_${qIdx}`;
-            if (sec.type === "writing-order-words") {
+            const normalizedSecType = getNormalizedType(sec.type);
+            if (normalizedSecType === "writing-order-words") {
               const sentence = q.correctSentence || q.text || "";
               const words = sentence.split(/\s+/).map((w: string) => w.trim().replace(/[^a-zA-Z0-9']/g, "")).filter(Boolean);
               setShuffledWords(prev => {
@@ -283,10 +310,17 @@ function AssignmentDetail() {
                 return { ...prev, [key]: [] };
               });
             }
-            if (sec.type === "writing-order-sentences") {
+            if (normalizedSecType === "writing-order-sentences") {
               setShuffledSentences(prev => {
                 if (prev[key]) return prev;
                 return { ...prev, [key]: [...(q.sentences || [])].sort(() => Math.random() - 0.5) };
+              });
+            }
+            if (normalizedSecType === "reading-vocab-mcq" && q.vocabPairs) {
+              const meanings = q.vocabPairs.map((p: any) => p.meaning).filter(Boolean);
+              setShuffledDefinitions(prev => {
+                if (prev[key]) return prev;
+                return { ...prev, [key]: [...meanings].sort(() => Math.random() - 0.5) };
               });
             }
           });
@@ -456,9 +490,16 @@ function AssignmentDetail() {
             };
 
             if (sec.type === "listening-mcq" || sec.type === "reading-split") {
-              const answers: Record<number, string> = {};
-              sec.questions.forEach((_: any, qIdx: number) => {
-                answers[qIdx] = mcAnswers[`${secIdx}_${qIdx}`] || "";
+              const answers: Record<string, string> = {};
+              sec.questions.forEach((q: any, qIdx: number) => {
+                if (q.subQuestions && q.subQuestions.length > 0) {
+                  q.subQuestions.forEach((_: any, subIdx: number) => {
+                    const key = `${qIdx}_${subIdx}`;
+                    answers[key] = mcAnswers[`${secIdx}_${qIdx}_${subIdx}`] || "";
+                  });
+                } else {
+                  answers[qIdx] = mcAnswers[`${secIdx}_${qIdx}`] || "";
+                }
               });
               sectionResponse.answers = answers;
             } else if (sec.type === "writing-essay") {
@@ -519,11 +560,38 @@ function AssignmentDetail() {
                     });
                     qResult.sentences = stdSents;
                     qResult.score = correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
-                  } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
-                    const ans = mcAnswers[key] || "";
-                    qResult.chosenAnswer = ans;
-                    qResult.correctAnswer = q.correct;
-                    qResult.score = ans === q.correct ? 10 : 0;
+                  } else if (sec.type === "reading-vocab-mcq") {
+                    const vocabPairs = q.vocabPairs || [];
+                    let correctCount = 0;
+                    const matchedPairs = vocabPairs.map((pair: any) => {
+                      const ans = mcAnswers[`${secIdx}_${qIdx}_${pair.word}`] || "";
+                      const isCorrect = ans === pair.meaning;
+                      if (isCorrect) correctCount++;
+                      return {
+                        word: pair.word,
+                        meaning: pair.meaning,
+                        studentAnswer: ans,
+                        isCorrect
+                      };
+                    });
+                    qResult.vocabPairs = matchedPairs;
+                    qResult.score = vocabPairs.length > 0 ? (correctCount / vocabPairs.length) * 10 : 0;
+                  } else if (sec.type === "writing-tense-mcq" || sec.type === "multiple") {
+                    if (q.subQuestions && q.subQuestions.length > 0) {
+                      const subResults: any[] = [];
+                      q.subQuestions.forEach((sub: any, subIdx: number) => {
+                        const ans = mcAnswers[`${secIdx}_${qIdx}_${subIdx}`] || "";
+                        subResults.push({ chosen: ans, correct: sub.correct });
+                      });
+                      qResult.subQuestions = subResults;
+                      const correctCount = subResults.filter(r => r.chosen === r.correct).length;
+                      qResult.score = (correctCount / q.subQuestions.length) * 10;
+                    } else {
+                      const ans = mcAnswers[key] || "";
+                      qResult.chosenAnswer = ans;
+                      qResult.correctAnswer = q.correct;
+                      qResult.score = ans === q.correct ? 10 : 0;
+                    }
                   }
 
                   return qResult;
@@ -543,9 +611,17 @@ function AssignmentDetail() {
         parsedContent.sections.forEach((sec: any, secIdx: number) => {
           if (sec.type === "listening-mcq" || sec.type === "reading-split") {
             sec.questions.forEach((q: any, qIdx: number) => {
-              const ans = mcAnswers[`${secIdx}_${qIdx}`];
-              if (ans === q.correct) totalExamPoints += 10;
-              examGradableQuestions++;
+              if (q.subQuestions && q.subQuestions.length > 0) {
+                q.subQuestions.forEach((sub: any, subIdx: number) => {
+                  const ans = mcAnswers[`${secIdx}_${qIdx}_${subIdx}`] || "";
+                  if (ans === sub.correct) totalExamPoints += 10;
+                  examGradableQuestions++;
+                });
+              } else {
+                const ans = mcAnswers[`${secIdx}_${qIdx}`];
+                if (ans === q.correct) totalExamPoints += 10;
+                examGradableQuestions++;
+              }
             });
           } else if (sec.type === "writing-essay" || sec.type === "speaking-topic") {
             isFullyAutoGraded = false; // Requires teacher grading
@@ -586,10 +662,27 @@ function AssignmentDetail() {
                 });
                 totalExamPoints += correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
                 examGradableQuestions++;
-              } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
-                const ans = mcAnswers[key] || "";
-                if (ans === q.correct) totalExamPoints += 10;
+              } else if (sec.type === "reading-vocab-mcq") {
+                const vocabPairs = q.vocabPairs || [];
+                let correctCount = 0;
+                vocabPairs.forEach((pair: any) => {
+                  const ans = mcAnswers[`${secIdx}_${qIdx}_${pair.word}`] || "";
+                  if (ans === pair.meaning) correctCount++;
+                });
+                totalExamPoints += vocabPairs.length > 0 ? (correctCount / vocabPairs.length) * 10 : 0;
                 examGradableQuestions++;
+              } else if (sec.type === "writing-tense-mcq" || sec.type === "multiple") {
+                if (q.subQuestions && q.subQuestions.length > 0) {
+                  q.subQuestions.forEach((sub: any, subIdx: number) => {
+                    const ans = mcAnswers[`${secIdx}_${qIdx}_${subIdx}`] || "";
+                    if (ans === sub.correct) totalExamPoints += 10;
+                    examGradableQuestions++;
+                  });
+                } else {
+                  const ans = mcAnswers[key] || "";
+                  if (ans === q.correct) totalExamPoints += 10;
+                  examGradableQuestions++;
+                }
               }
             });
           }
@@ -625,7 +718,7 @@ function AssignmentDetail() {
         submissionData.isExam = false;
         submissionData.questions = await Promise.all(
           questionsList.map(async (q, qIdx) => {
-            const questionType = (exercise?.Type || "").toLowerCase();
+            const questionType = getNormalizedType(exercise?.Type);
             const qResult: any = {
               questionIdx: qIdx,
               type: questionType
@@ -633,11 +726,39 @@ function AssignmentDetail() {
 
             // Grade individual question
             let qScore = 0;
-            if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
-              const ans = mcAnswers[qIdx] || "";
-              qResult.chosenAnswer = ans;
-              qResult.correctAnswer = q.correct;
-              qResult.score = ans === q.correct ? 10 : 0;
+            if (questionType === "reading-vocab-mcq") {
+              const vocabPairs = q.vocabPairs || [];
+              let correctCount = 0;
+              const matchedPairs = vocabPairs.map((pair: any) => {
+                const ans = mcAnswers[`${qIdx}_${pair.word}`] || "";
+                const isCorrect = ans === pair.meaning;
+                if (isCorrect) correctCount++;
+                return {
+                  word: pair.word,
+                  meaning: pair.meaning,
+                  studentAnswer: ans,
+                  isCorrect
+                };
+              });
+              qResult.vocabPairs = matchedPairs;
+              qResult.score = vocabPairs.length > 0 ? (correctCount / vocabPairs.length) * 10 : 0;
+            } else if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
+               if (q.subQuestions && q.subQuestions.length > 0) {
+                 const subResults: any[] = [];
+                 let correctSubCount = 0;
+                 q.subQuestions.forEach((sub: any, subIdx: number) => {
+                   const ans = mcAnswers[`${qIdx}_${subIdx}`] || "";
+                   if (ans === sub.correct) correctSubCount++;
+                   subResults.push({ chosen: ans, correct: sub.correct });
+                 });
+                 qResult.subQuestions = subResults;
+                 qResult.score = (correctSubCount / q.subQuestions.length) * 10;
+               } else {
+                 const ans = mcAnswers[qIdx] || "";
+                 qResult.chosenAnswer = ans;
+                 qResult.correctAnswer = q.correct;
+                 qResult.score = ans === q.correct ? 10 : 0;
+               }
             } else if (questionType === "listening-image") {
               const ans = mcAnswers[qIdx] || "";
               qResult.chosenAnswer = ans;
@@ -757,6 +878,85 @@ function AssignmentDetail() {
     }
   };
 
+  // --- Drag & Drop HTML5 Helpers ---
+  const handleSentenceDragStart = (e: React.DragEvent, index: number, key: string | number) => {
+    e.dataTransfer.setData("text/plain", index.toString());
+    e.dataTransfer.setData("key", key.toString());
+  };
+
+  const handleSentenceDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleSentenceDrop = (e: React.DragEvent, targetIndex: number, key: string | number) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    const sourceKey = e.dataTransfer.getData("key");
+    if (sourceKey !== key.toString()) return;
+
+    const sSents = [...(shuffledSentences[key] || [])];
+    const draggedItem = sSents[sourceIndex];
+    sSents.splice(sourceIndex, 1);
+    sSents.splice(targetIndex, 0, draggedItem);
+
+    setShuffledSentences(prev => ({ ...prev, [key]: sSents }));
+  };
+
+  const handleWordDragStart = (e: React.DragEvent, index: number, key: string | number, source: "ordered" | "shuffled") => {
+    e.dataTransfer.setData("wordIndex", index.toString());
+    e.dataTransfer.setData("wordKey", key.toString());
+    e.dataTransfer.setData("wordSource", source);
+  };
+
+  const handleWordDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleWordDropOnOrdered = (e: React.DragEvent, targetIndex: number, key: string | number) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData("wordIndex"), 10);
+    const sourceKey = e.dataTransfer.getData("wordKey");
+    const source = e.dataTransfer.getData("wordSource");
+
+    if (sourceKey !== key.toString()) return;
+
+    const oWords = [...(orderedWords[key] || [])];
+    const sWords = [...(shuffledWords[key] || [])];
+
+    if (source === "ordered") {
+      const dragged = oWords[sourceIndex];
+      oWords.splice(sourceIndex, 1);
+      oWords.splice(targetIndex, 0, dragged);
+      setOrderedWords(prev => ({ ...prev, [key]: oWords }));
+    } else {
+      const dragged = sWords[sourceIndex];
+      oWords.splice(targetIndex, 0, dragged);
+      setOrderedWords(prev => ({ ...prev, [key]: oWords }));
+      setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== sourceIndex) }));
+    }
+  };
+
+  const handleWordDropOnOrderedContainer = (e: React.DragEvent, key: string | number) => {
+    e.preventDefault();
+    const source = e.dataTransfer.getData("wordSource");
+    if (source === "ordered") return;
+
+    const sourceIndex = parseInt(e.dataTransfer.getData("wordIndex"), 10);
+    const sourceKey = e.dataTransfer.getData("wordKey");
+
+    if (sourceKey !== key.toString()) return;
+
+    const oWords = [...(orderedWords[key] || [])];
+    const sWords = [...(shuffledWords[key] || [])];
+
+    const dragged = sWords[sourceIndex];
+    setOrderedWords(prev => ({ ...prev, [key]: [...oWords, dragged] }));
+    setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== sourceIndex) }));
+  };
+
+  // Click-to-Match state for Vocabulary Matching
+  const [selectedWordIdx, setSelectedWordIdx] = useState<{ qIdx: string | number; pIdx: number } | null>(null);
+
   if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Đang tải...</div>;
   if (!exercise) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Không tìm thấy bài tập.</div>;
 
@@ -821,9 +1021,10 @@ function AssignmentDetail() {
   };
 
   const renderCurrentQuestionBlock = (q: any, qIdx: number) => {
-    const questionType = (exercise?.Type || "").toLowerCase();
+    const questionType = getNormalizedType(exercise?.Type);
 
     if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
+      const hasSubQ = q.subQuestions && q.subQuestions.length > 0;
       return (
         <div>
           {q.audioUrl && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
@@ -834,7 +1035,18 @@ function AssignmentDetail() {
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx)}
+          {q.prompt && (
+            <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12, whiteSpace: "pre-wrap" }}>
+              <p style={{ margin: 0, fontWeight: 600, color: "#5a3e2b" }}>{q.prompt}</p>
+            </div>
+          )}
+          {hasSubQ ? (
+            q.subQuestions.map((sub: any, subIdx: number) => (
+              renderMCQBlock(sub, subIdx, `${qIdx}`)
+            ))
+          ) : (
+            renderMCQBlock(q, qIdx)
+          )}
         </div>
       );
     }
@@ -1019,30 +1231,55 @@ function AssignmentDetail() {
             <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
           </div>
 
-          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
+          <div
+            style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}
+            onDragOver={handleWordDragOver}
+            onDrop={e => handleWordDropOnOrderedContainer(e, qIdx)}
+          >
             {oWords.map((w, i) => (
-              <span key={i} onClick={() => {
-                if (submitted) return;
-                setOrderedWords(prev => ({ ...prev, [qIdx]: oWords.filter((_, idx) => idx !== i) }));
-                setShuffledWords(prev => ({ ...prev, [qIdx]: [...sWords, w] }));
-              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
+              <span
+                key={i}
+                draggable={!submitted}
+                onDragStart={e => handleWordDragStart(e, i, qIdx, "ordered")}
+                onDragOver={handleWordDragOver}
+                onDrop={e => {
+                  e.stopPropagation();
+                  handleWordDropOnOrdered(e, i, qIdx);
+                }}
+                onClick={() => {
+                  if (submitted) return;
+                  setOrderedWords(prev => ({ ...prev, [qIdx]: oWords.filter((_, idx) => idx !== i) }));
+                  setShuffledWords(prev => ({ ...prev, [qIdx]: [...sWords, w] }));
+                }}
+                style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "grab" }}
+              >
+                {w} ✕
+              </span>
             ))}
           </div>
 
           {!submitted && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {sWords.map((w, i) => (
-                <span key={i} onClick={() => {
-                  setOrderedWords(prev => ({ ...prev, [qIdx]: [...oWords, w] }));
-                  setShuffledWords(prev => ({ ...prev, [qIdx]: sWords.filter((_, idx) => idx !== i) }));
-                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
+                <span
+                  key={i}
+                  draggable={true}
+                  onDragStart={e => handleWordDragStart(e, i, qIdx, "shuffled")}
+                  onClick={() => {
+                    setOrderedWords(prev => ({ ...prev, [qIdx]: [...oWords, w] }));
+                    setShuffledWords(prev => ({ ...prev, [qIdx]: sWords.filter((_, idx) => idx !== i) }));
+                  }}
+                  style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "grab" }}
+                >
+                  {w}
+                </span>
               ))}
             </div>
           )}
 
           {submitted && (
             <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
+              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence || q.text}</p>
             </div>
           )}
         </div>
@@ -1055,12 +1292,29 @@ function AssignmentDetail() {
 
       return (
         <div>
-          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic (Bạn có thể click ▲/▼ hoặc kéo thả các câu để di chuyển):</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {sSents.map((sent, idx) => {
               const isCorrect = submitted && sent === correctSentences[idx];
               return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
+                <div
+                  key={idx}
+                  draggable={!submitted}
+                  onDragStart={e => handleSentenceDragStart(e, idx, qIdx)}
+                  onDragOver={handleSentenceDragOver}
+                  onDrop={e => handleSentenceDrop(e, idx, qIdx)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: 10,
+                    border: "1px solid #e0d8cc",
+                    borderRadius: 8,
+                    background: "#fafafa",
+                    cursor: submitted ? "default" : "grab"
+                  }}
+                >
+                  {!submitted && <span style={{ color: "#a8a29e", cursor: "grab", paddingRight: 5, userSelect: "none" }}>☰</span>}
                   <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
                   <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
                   {!submitted && (
@@ -1085,6 +1339,154 @@ function AssignmentDetail() {
               );
             })}
           </div>
+        </div>
+      );
+    }
+
+    if (questionType === "reading-vocab-mcq") {
+      const vocabPairs = q.vocabPairs || [];
+      const leftWords = vocabPairs.map((p: any) => p.word);
+      const rightMeanings = shuffledDefinitions[qIdx] || [];
+
+      const handleMatchClick = (side: "left" | "right", itemIdx: number, val: string) => {
+        if (submitted || isOverdue) return;
+        if (side === "left") {
+          if (selectedWordIdx && selectedWordIdx.qIdx === qIdx && selectedWordIdx.side === "left" && selectedWordIdx.pIdx === itemIdx) {
+            setSelectedWordIdx(null);
+          } else {
+            setSelectedWordIdx({ qIdx, side: "left", pIdx: itemIdx, val });
+          }
+        } else {
+          if (selectedWordIdx && selectedWordIdx.qIdx === qIdx && selectedWordIdx.side === "left") {
+            const word = selectedWordIdx.val;
+            const meaning = val;
+            setMcAnswers(prev => ({ ...prev, [`${qIdx}_${word}`]: meaning }));
+            setSelectedWordIdx(null);
+          }
+        }
+      };
+
+      const getMatchIndex = (wordOrMeaning: string, side: "left" | "right") => {
+        let matchIdx = -1;
+        leftWords.forEach((w: string, idx: number) => {
+          const matchedMeaning = mcAnswers[`${qIdx}_${w}`];
+          if (side === "left" && w === wordOrMeaning && matchedMeaning) {
+            matchIdx = idx;
+          }
+          if (side === "right" && matchedMeaning === wordOrMeaning) {
+            matchIdx = idx;
+          }
+        });
+        return matchIdx;
+      };
+
+      const matchColors = [
+        { bg: "#eff6ff", border: "#bfdbfe" },
+        { bg: "#f0fdf4", border: "#bbf7d0" },
+        { bg: "#fdf2f8", border: "#fbcfe8" },
+        { bg: "#faf5ff", border: "#e9d5ff" },
+        { bg: "#fff7ed", border: "#ffedd5" },
+        { bg: "#f0fdfa", border: "#ccfbf1" },
+        { bg: "#fefce8", border: "#fef08a" },
+        { bg: "#ecfeff", border: "#cffafe" },
+      ];
+
+      return (
+        <div>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 15 }}>
+            Ghép các từ bên trái với định nghĩa/diễn giải tiếng Anh tương ứng bên phải (Bấm chọn từ bên trái, sau đó bấm chọn nghĩa tương ứng bên phải):
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={{ fontWeight: 700, color: "#000080", margin: "0 0 5px 0" }}>Từ vựng</p>
+              {leftWords.map((w: string, idx: number) => {
+                const matchIdx = getMatchIndex(w, "left");
+                const isSelected = selectedWordIdx && selectedWordIdx.qIdx === qIdx && selectedWordIdx.side === "left" && selectedWordIdx.pIdx === idx;
+                const color = matchIdx !== -1 ? matchColors[matchIdx % matchColors.length] : null;
+                const isCorrect = submitted && mcAnswers[`${qIdx}_${w}`] === vocabPairs.find((p: any) => p.word === w)?.meaning;
+                const isWrong = submitted && mcAnswers[`${qIdx}_${w}`] && !isCorrect;
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleMatchClick("left", idx, w)}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 10,
+                      border: isSelected ? "2.5px solid #000080" : color ? `1.5px solid ${color.border}` : "1.5px solid #e2e8f0",
+                      background: submitted ? (isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "#ffffff") : (color ? color.bg : "#ffffff"),
+                      cursor: submitted ? "default" : "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      borderColor: submitted ? (isCorrect ? "#22c55e" : isWrong ? "#ef4444" : "#e2e8f0") : (isSelected ? "#000080" : color?.border || "#e2e8f0")
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{w}</span>
+                    {matchIdx !== -1 && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: "#e2e8f0", padding: "2px 6px", borderRadius: 10, color: "#475569" }}>
+                        {matchIdx + 1}
+                      </span>
+                    )}
+                    {submitted && (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626", marginLeft: 8 }}>
+                        {isCorrect ? "✓ Đúng" : "✗ Sai"}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={{ fontWeight: 700, color: "#000080", margin: "0 0 5px 0" }}>Định nghĩa / Diễn giải</p>
+              {rightMeanings.map((m: string, idx: number) => {
+                const matchIdx = getMatchIndex(m, "right");
+                const color = matchIdx !== -1 ? matchColors[matchIdx % matchColors.length] : null;
+                const leftWord = leftWords.find((w: string) => mcAnswers[`${qIdx}_${w}`] === m);
+                const isCorrect = submitted && leftWord && mcAnswers[`${qIdx}_${leftWord}`] === vocabPairs.find((p: any) => p.word === leftWord)?.meaning;
+                const isWrong = submitted && leftWord && !isCorrect;
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleMatchClick("right", idx, m)}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 10,
+                      border: color ? `1.5px solid ${color.border}` : "1.5px solid #e2e8f0",
+                      background: submitted ? (isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "#ffffff") : (color ? color.bg : "#ffffff"),
+                      cursor: submitted ? "default" : "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      borderColor: submitted ? (isCorrect ? "#22c55e" : isWrong ? "#ef4444" : "#e2e8f0") : (color?.border || "#e2e8f0")
+                    }}
+                  >
+                    <span style={{ fontSize: 13, color: "#334155" }}>{m}</span>
+                    {matchIdx !== -1 && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: "#e2e8f0", padding: "2px 6px", borderRadius: 10, color: "#475569" }}>
+                        {matchIdx + 1}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {submitted && (
+            <div style={{ marginTop: 20, background: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #e2e8f0" }}>
+              <p style={{ margin: "0 0 10px 0", fontWeight: 700, color: "#000080" }}>Đáp án đúng:</p>
+              {vocabPairs.map((pair: any, pIdx: number) => (
+                <p key={pIdx} style={{ margin: "4px 0", fontSize: 13 }}>
+                  <strong style={{ color: "#000080" }}>{pair.word}</strong>: {pair.meaning}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
@@ -1136,9 +1538,10 @@ function AssignmentDetail() {
   const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
     const key = `${sIdx}_${qIdx}`;
 
-    if (secType === "listening-mcq" || secType === "writing-tense-mcq" || secType === "reading-vocab-mcq") {
+    if (secType === "listening-mcq" || secType === "writing-tense-mcq" || secType === "multiple") {
+      const hasSubQ = q.subQuestions && q.subQuestions.length > 0;
       return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
+        <div key={qIdx} style={{ marginBottom: 20, borderBottom: "1px dashed #e0d8cc", paddingBottom: 15 }}>
           {q.audioUrl && (
             <div style={{ marginBottom: 12 }}>
               <audio controls style={{ width: "100%" }}>
@@ -1147,7 +1550,166 @@ function AssignmentDetail() {
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx, `${sIdx}`)}
+          {q.prompt && (
+            <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12, whiteSpace: "pre-wrap" }}>
+              <p style={{ margin: 0, fontWeight: 600, color: "#5a3e2b" }}>{q.prompt}</p>
+            </div>
+          )}
+          {hasSubQ ? (
+            q.subQuestions.map((sub: any, subIdx: number) => (
+              renderMCQBlock(sub, subIdx, `${sIdx}_${qIdx}`)
+            ))
+          ) : (
+            renderMCQBlock(q, qIdx, `${sIdx}`)
+          )}
+        </div>
+      );
+    }
+
+    if (secType === "reading-vocab-mcq") {
+      const vocabPairs = q.vocabPairs || [];
+      const leftWords = vocabPairs.map((p: any) => p.word);
+      const rightMeanings = shuffledDefinitions[key] || [];
+
+      const handleMatchClick = (side: "left" | "right", itemIdx: number, val: string) => {
+        if (submitted || !examStarted || examEnded) return;
+        if (side === "left") {
+          if (selectedWordIdx && selectedWordIdx.qIdx === key && selectedWordIdx.side === "left" && selectedWordIdx.pIdx === itemIdx) {
+            setSelectedWordIdx(null);
+          } else {
+            setSelectedWordIdx({ qIdx: key, side: "left", pIdx: itemIdx, val });
+          }
+        } else {
+          if (selectedWordIdx && selectedWordIdx.qIdx === key && selectedWordIdx.side === "left") {
+            const word = selectedWordIdx.val;
+            const meaning = val;
+            setMcAnswers(prev => ({ ...prev, [`${key}_${word}`]: meaning }));
+            setSelectedWordIdx(null);
+          }
+        }
+      };
+
+      const getMatchIndex = (wordOrMeaning: string, side: "left" | "right") => {
+        let matchIdx = -1;
+        leftWords.forEach((w: string, idx: number) => {
+          const matchedMeaning = mcAnswers[`${key}_${w}`];
+          if (side === "left" && w === wordOrMeaning && matchedMeaning) {
+            matchIdx = idx;
+          }
+          if (side === "right" && matchedMeaning === wordOrMeaning) {
+            matchIdx = idx;
+          }
+        });
+        return matchIdx;
+      };
+
+      const matchColors = [
+        { bg: "#eff6ff", border: "#bfdbfe" },
+        { bg: "#f0fdf4", border: "#bbf7d0" },
+        { bg: "#fdf2f8", border: "#fbcfe8" },
+        { bg: "#faf5ff", border: "#e9d5ff" },
+        { bg: "#fff7ed", border: "#ffedd5" },
+        { bg: "#f0fdfa", border: "#ccfbf1" },
+        { bg: "#fefce8", border: "#fef08a" },
+        { bg: "#ecfeff", border: "#cffafe" },
+      ];
+
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 15 }}>
+            Ghép các từ bên trái với định nghĩa/diễn giải tiếng Anh tương ứng bên phải (Bấm chọn từ bên trái, sau đó bấm chọn nghĩa tương ứng bên phải):
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={{ fontWeight: 700, color: "#000080", margin: "0 0 5px 0" }}>Từ vựng</p>
+              {leftWords.map((w: string, idx: number) => {
+                const matchIdx = getMatchIndex(w, "left");
+                const isSelected = selectedWordIdx && selectedWordIdx.qIdx === key && selectedWordIdx.side === "left" && selectedWordIdx.pIdx === idx;
+                const color = matchIdx !== -1 ? matchColors[matchIdx % matchColors.length] : null;
+                const isCorrect = submitted && mcAnswers[`${key}_${w}`] === vocabPairs.find((p: any) => p.word === w)?.meaning;
+                const isWrong = submitted && mcAnswers[`${key}_${w}`] && !isCorrect;
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleMatchClick("left", idx, w)}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 10,
+                      border: isSelected ? "2.5px solid #000080" : color ? `1.5px solid ${color.border}` : "1.5px solid #e2e8f0",
+                      background: submitted ? (isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "#ffffff") : (color ? color.bg : "#ffffff"),
+                      cursor: submitted ? "default" : "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      borderColor: submitted ? (isCorrect ? "#22c55e" : isWrong ? "#ef4444" : "#e2e8f0") : (isSelected ? "#000080" : color?.border || "#e2e8f0")
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{w}</span>
+                    {matchIdx !== -1 && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: "#e2e8f0", padding: "2px 6px", borderRadius: 10, color: "#475569" }}>
+                        {matchIdx + 1}
+                      </span>
+                    )}
+                    {submitted && (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626", marginLeft: 8 }}>
+                        {isCorrect ? "✓ Đúng" : "✗ Sai"}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={{ fontWeight: 700, color: "#000080", margin: "0 0 5px 0" }}>Định nghĩa / Diễn giải</p>
+              {rightMeanings.map((m: string, idx: number) => {
+                const matchIdx = getMatchIndex(m, "right");
+                const color = matchIdx !== -1 ? matchColors[matchIdx % matchColors.length] : null;
+                const leftWord = leftWords.find((w: string) => mcAnswers[`${key}_${w}`] === m);
+                const isCorrect = submitted && leftWord && mcAnswers[`${key}_${leftWord}`] === vocabPairs.find((p: any) => p.word === leftWord)?.meaning;
+                const isWrong = submitted && leftWord && !isCorrect;
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleMatchClick("right", idx, m)}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 10,
+                      border: color ? `1.5px solid ${color.border}` : "1.5px solid #e2e8f0",
+                      background: submitted ? (isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "#ffffff") : (color ? color.bg : "#ffffff"),
+                      cursor: submitted ? "default" : "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      borderColor: submitted ? (isCorrect ? "#22c55e" : isWrong ? "#ef4444" : "#e2e8f0") : (color?.border || "#e2e8f0")
+                    }}
+                  >
+                    <span style={{ fontSize: 13, color: "#334155" }}>{m}</span>
+                    {matchIdx !== -1 && (
+                      <span style={{ fontSize: 10, fontWeight: 700, background: "#e2e8f0", padding: "2px 6px", borderRadius: 10, color: "#475569" }}>
+                        {matchIdx + 1}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {submitted && (
+            <div style={{ marginTop: 20, background: "#f8fafc", padding: 16, borderRadius: 10, border: "1px solid #e2e8f0" }}>
+              <p style={{ margin: "0 0 10px 0", fontWeight: 700, color: "#000080" }}>Đáp án đúng:</p>
+              {vocabPairs.map((pair: any, pIdx: number) => (
+                <p key={pIdx} style={{ margin: "4px 0", fontSize: 13 }}>
+                  <strong style={{ color: "#000080" }}>{pair.word}</strong>: {pair.meaning}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
@@ -1288,30 +1850,56 @@ function AssignmentDetail() {
             <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
           </div>
 
-          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
+          <div
+            style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}
+            onDragOver={handleWordDragOver}
+            onDrop={e => handleWordDropOnOrderedContainer(e, key)}
+          >
             {oWords.map((w, i) => (
-              <span key={i} onClick={() => {
-                if (submitted) return;
-                setOrderedWords(prev => ({ ...prev, [key]: oWords.filter((_, idx) => idx !== i) }));
-                setShuffledWords(prev => ({ ...prev, [key]: [...sWords, w] }));
-              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
+              <span
+                key={i}
+                draggable={submitted ? false : (!examStarted || examEnded ? false : true)}
+                onDragStart={e => handleWordDragStart(e, i, key, "ordered")}
+                onDragOver={handleWordDragOver}
+                onDrop={e => {
+                  e.stopPropagation();
+                  handleWordDropOnOrdered(e, i, key);
+                }}
+                onClick={() => {
+                  if (submitted || !examStarted || examEnded) return;
+                  setOrderedWords(prev => ({ ...prev, [key]: oWords.filter((_, idx) => idx !== i) }));
+                  setShuffledWords(prev => ({ ...prev, [key]: [...sWords, w] }));
+                }}
+                style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted || !examStarted || examEnded ? "default" : "grab" }}
+              >
+                {w} ✕
+              </span>
             ))}
           </div>
 
           {!submitted && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {sWords.map((w, i) => (
-                <span key={i} onClick={() => {
-                  setOrderedWords(prev => ({ ...prev, [key]: [...oWords, w] }));
-                  setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== i) }));
-                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
+                <span
+                  key={i}
+                  draggable={!examStarted || examEnded ? false : true}
+                  onDragStart={e => handleWordDragStart(e, i, key, "shuffled")}
+                  onClick={() => {
+                    if (!examStarted || examEnded) return;
+                    setOrderedWords(prev => ({ ...prev, [key]: [...oWords, w] }));
+                    setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== i) }));
+                  }}
+                  style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: !examStarted || examEnded ? "default" : "grab" }}
+                >
+                  {w}
+                </span>
               ))}
             </div>
           )}
 
           {submitted && (
             <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
+              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence || q.text}</p>
             </div>
           )}
         </div>
@@ -1324,11 +1912,28 @@ function AssignmentDetail() {
 
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic (Bạn có thể click ▲/▼ hoặc kéo thả các câu để di chuyển):</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {sSents.map((sent, idx) => {
               return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
+                <div
+                  key={idx}
+                  draggable={submitted ? false : (!examStarted || examEnded ? false : true)}
+                  onDragStart={e => handleSentenceDragStart(e, idx, key)}
+                  onDragOver={handleSentenceDragOver}
+                  onDrop={e => handleSentenceDrop(e, idx, key)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: 10,
+                    border: "1px solid #e0d8cc",
+                    borderRadius: 8,
+                    background: "#fafafa",
+                    cursor: submitted || !examStarted || examEnded ? "default" : "grab"
+                  }}
+                >
+                  {!submitted && examStarted && !examEnded && <span style={{ color: "#a8a29e", cursor: "grab", paddingRight: 5, userSelect: "none" }}>☰</span>}
                   <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
                   <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
                   {!submitted && (
@@ -1358,6 +1963,23 @@ function AssignmentDetail() {
     }
 
     if (secType === "reading-split") {
+      const hasSubQ = q.subQuestions && q.subQuestions.length > 0;
+      if (hasSubQ) {
+        return (
+          <div key={qIdx} style={{ display: "flex", gap: 20, height: 500, borderBottom: "1.5px solid #e0d8cc", paddingBottom: 15, marginBottom: 15 }}>
+            <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
+              <h5 style={{ margin: 0, fontWeight: 700 }}>📖 Reading Passage</h5>
+              <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{q.text}</p>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <h5 style={{ margin: 0, fontWeight: 700, marginBottom: 10 }}>❓ Questions</h5>
+              {q.subQuestions.map((sub: any, subIdx: number) => (
+                renderMCQBlock(sub, subIdx, `${sIdx}_${qIdx}`)
+              ))}
+            </div>
+          </div>
+        );
+      }
       return renderMCQBlock(q, qIdx, `${sIdx}`);
     }
 
@@ -1487,7 +2109,7 @@ function AssignmentDetail() {
 
                 return (
                   <div key={sIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}>
-                    <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
+                    <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15, whiteSpace: "pre-wrap" }}>{sec.title}</h3>
 
                     {sec.type === "writing-essay" && (
                       <div>
@@ -1550,15 +2172,23 @@ function AssignmentDetail() {
                     )}
 
                     {sec.type === "reading-split" && (
-                      <div style={{ display: "flex", gap: 20, height: 500 }}>
-                        <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
-                          <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{sec.content}</p>
-                        </div>
-                        <div style={{ flex: 1, overflowY: "auto" }}>
-                          {sec.questions?.map((q: any, qIdx: number) => (
+                      <div>
+                        {sec.questions && sec.questions.some((q: any) => q.subQuestions && q.subQuestions.length > 0) ? (
+                          sec.questions.map((q: any, qIdx: number) => (
                             renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
-                          ))}
-                        </div>
+                          ))
+                        ) : (
+                          <div style={{ display: "flex", gap: 20, height: 500 }}>
+                            <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
+                              <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{sec.content}</p>
+                            </div>
+                            <div style={{ flex: 1, overflowY: "auto" }}>
+                              {sec.questions?.map((q: any, qIdx: number) => (
+                                renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -1583,7 +2213,7 @@ function AssignmentDetail() {
       ) : (
         /* ────────────────── REGULAR MULTI-QUESTION SOLVER ────────────────── */
         <div>
-          {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq" && (
+          {exercise?.AudioUrl && getNormalizedType(exercise?.Type) === "listening-mcq" && (
             <div style={{
               background: "#fff",
               border: "1px solid #e0d4c3",
