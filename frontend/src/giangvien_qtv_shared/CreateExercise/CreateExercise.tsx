@@ -1625,7 +1625,7 @@ const CreateExercise = () => {
                           Danh sách các cặp từ nối (Tiếng Anh - Diễn giải tiếng Anh)
                         </label>
                         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                          {(q.vocabPairs || [{ word: "", meaning: "" }]).map((pair, pIdx) => (
+                          {(q.vocabPairs || [{ word: "", meaning: "" }]).map((pair: any, pIdx: number) => (
                             <div key={pIdx} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                               <input
                                 type="text"
@@ -1673,7 +1673,7 @@ const CreateExercise = () => {
                                     const copy = [...examSections];
                                     const targetQ = copy[secIdx].questions?.[qIdx];
                                     if (targetQ) {
-                                      targetQ.vocabPairs = (targetQ.vocabPairs || []).filter((_, idx) => idx !== pIdx);
+                                      targetQ.vocabPairs = (targetQ.vocabPairs || []).filter((_: any, idx: number) => idx !== pIdx);
                                       setExamSections(copy);
                                     }
                                   }}
@@ -2378,7 +2378,7 @@ const CreateExercise = () => {
                       Danh sách các cặp từ nối (Tiếng Anh - Diễn giải tiếng Anh)
                     </label>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                      {(q.vocabPairs || [{ word: "", meaning: "" }]).map((pair, pIdx) => (
+                      {(q.vocabPairs || [{ word: "", meaning: "" }]).map((pair: any, pIdx: number) => (
                         <div key={pIdx} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                           <input
                             type="text"
@@ -2413,7 +2413,7 @@ const CreateExercise = () => {
                               className="remove-btn"
                               style={{ padding: "8px 12px" }}
                               onClick={() => {
-                                const copyPairs = (q.vocabPairs || []).filter((_, idx) => idx !== pIdx);
+                                const copyPairs = (q.vocabPairs || []).filter((_: any, idx: number) => idx !== pIdx);
                                 updateQuestionItemField(qIndex, "vocabPairs", copyPairs);
                               }}
                             >

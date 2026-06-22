@@ -397,7 +397,7 @@ const ChamBaiPage = () => {
 
                   {sec.type === "reading-vocab-mcq" && (
                     <div>
-                      {exerciseSection?.questions?.map((q: any, qIdx: number) => {
+                      {exerciseSection?.questions?.map((_: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
                         const pairs = qSub.vocabPairs || [];
                         return (
