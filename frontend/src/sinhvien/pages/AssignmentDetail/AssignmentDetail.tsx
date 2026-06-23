@@ -33,6 +33,8 @@ function AssignmentDetail() {
   const maNguoiDung = user.MaNguoiDung;
 
   const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [lockMessage, setLockMessage] = useState<string>("");
 
   useEffect(() => {
     if (!maNguoiDung) return;
@@ -45,6 +47,39 @@ function AssignmentDetail() {
       })
       .catch(err => console.error("Error fetching student info:", err));
   }, [maNguoiDung]);
+
+  useEffect(() => {
+    if (!exercise || !maSinhVien || user.VaiTro !== "Sinh Viên") return;
+
+    if (exercise.MaBaiHoc) {
+      const checkProgress = async () => {
+        try {
+          const mtRes = await fetch(`${API}/minitest/baigiang/${exercise.MaBaiHoc}`);
+          const mtData = await mtRes.json();
+          const hasMinitest = mtData && mtData.MaMinitest;
+
+          const progRes = await fetch(`${API}/student/progress/minitest/${exercise.MaBaiHoc}/${maSinhVien}`);
+          const progData = await progRes.json();
+
+          const daXemVideo = progData.DaXemVideo === 1;
+          const daDatMinitest = progData.DaDatMinitest === 1;
+
+          if (!daXemVideo) {
+            setIsLocked(true);
+            setLockMessage("Bạn cần xem hết video bài giảng để mở khóa bài tập này.");
+          } else if (hasMinitest && !daDatMinitest) {
+            setIsLocked(true);
+            setLockMessage("Bạn đã xem xong bài giảng nhưng cần hoàn thành và đạt bài Minitest để mở khóa bài tập này.");
+          } else {
+            setIsLocked(false);
+          }
+        } catch (err) {
+          console.error("Lỗi khi kiểm tra tiến trình học tập:", err);
+        }
+      };
+      checkProgress();
+    }
+  }, [exercise, maSinhVien, user.VaiTro]);
 
   const [exercise, setExercise] = useState<any>(null);
   const [lopInfo, setLopInfo] = useState<any>(null);
@@ -852,6 +887,46 @@ function AssignmentDetail() {
 
   if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Loading...</div>;
   if (!exercise) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Exercise not found.</div>;
+
+  if (isLocked) {
+    return (
+      <div className="ad-content" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", padding: "40px 20px" }}>
+        <button className="ad-back" onClick={() => navigate(-1)} style={{ alignSelf: "flex-start", marginBottom: 20 }}>← Back</button>
+        <div style={{
+          background: "#fff",
+          borderRadius: 16,
+          padding: "40px 30px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+          textAlign: "center",
+          maxWidth: 500,
+          border: "1px solid #fee2e2"
+        }}>
+          <div style={{ fontSize: 64, marginBottom: 20 }}>🔒</div>
+          <h2 style={{ color: "#1e3a8a", marginBottom: 16, fontWeight: 700, fontSize: "24px" }}>Bài tập đang bị khóa</h2>
+          <p style={{ color: "#4b5563", fontSize: 16, lineHeight: 1.6, marginBottom: 24 }}>
+            {lockMessage}
+          </p>
+          <button 
+            onClick={() => navigate(-1)}
+            style={{
+              background: "linear-gradient(135deg, #f95800, #ff7e40)",
+              color: "#fff",
+              border: "none",
+              padding: "12px 28px",
+              borderRadius: 30,
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 4px 15px rgba(249, 88, 0, 0.3)",
+              transition: "all 0.2s"
+            }}
+          >
+            Quay lại bài giảng
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // RENDER QUESTION SUB-COMPONENTS
   const renderMCQBlock = (q: any, qIdx: number, subIdxPrefix?: string) => {

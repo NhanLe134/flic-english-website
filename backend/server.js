@@ -819,10 +819,21 @@ app.get("/baitap/buoihoc/:buoiHocId", async (req, res) => {
       .query(`
         SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                CAST(e.LaBaiKiemTra AS INT) AS IsExam,
-               e.NgayTao AS CreatedDate, e.TrangThai, e.TrangThaiDuyet
+               e.NgayTao AS CreatedDate, e.TrangThai, e.TrangThaiDuyet,
+               e.MaBaiHoc
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         WHERE bh.MaBuoiHoc = @buoiHocId
+
+        UNION ALL
+
+        SELECT k.MaBaiKiemTra AS MaBaiTap, k.TenBai AS Title, 'exam' AS Type, 
+               1 AS IsExam,
+               NULL AS CreatedDate, k.TrangThai,
+               CASE WHEN k.TrangThai = 'published' THEN N'Đã duyệt' WHEN k.TrangThai = 'rejected' THEN N'Từ chối' ELSE N'Chờ duyệt' END AS TrangThaiDuyet,
+               NULL AS MaBaiHoc
+        FROM BAIKIEMTRA k
+        WHERE k.MaBuoiHoc = @buoiHocId
       `);
     res.json(result.recordset);
   } catch (err) { res.status(500).send("Lỗi server"); }
@@ -837,11 +848,34 @@ app.get("/baitap/:id", async (req, res) => {
         SELECT MaBaiTap, TieuDe AS Title, DangBai AS Type, 
                CAST(LaBaiKiemTra AS INT) AS IsExam,
                NgayTao AS CreatedDate, NoiDung AS Content, CauHoi AS Questions,
-               TrangThai, TrangThaiDuyet, FileDinhKem, LinkAmThanh AS AudioUrl
+               TrangThai, TrangThaiDuyet, FileDinhKem, LinkAmThanh AS AudioUrl,
+               MaBaiHoc
         FROM BAITAP 
         WHERE MaBaiTap = @id
       `);
-    res.json(result.recordset[0]);
+    if (result.recordset.length > 0) {
+      return res.json(result.recordset[0]);
+    }
+
+    // Try finding in BAIKIEMTRA
+    const examResult = await pool.request()
+      .input("id", parseInt(req.params.id))
+      .query(`
+        SELECT MaBaiKiemTra AS MaBaiTap, TenBai AS Title, 'exam' AS Type, 
+               1 AS IsExam,
+               NULL AS CreatedDate, NoiDung AS Content, CauHoi AS Questions,
+               TrangThai,
+               CASE WHEN TrangThai = 'published' THEN N'Đã duyệt' WHEN TrangThai = 'rejected' THEN N'Từ chối' ELSE N'Chờ duyệt' END AS TrangThaiDuyet,
+               NULL AS FileDinhKem, NULL AS AudioUrl,
+               NULL AS MaBaiHoc
+        FROM BAIKIEMTRA 
+        WHERE MaBaiKiemTra = @id
+      `);
+    if (examResult.recordset.length > 0) {
+      return res.json(examResult.recordset[0]);
+    }
+
+    res.status(404).json({ message: "Không tìm thấy nội dung" });
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
@@ -936,12 +970,25 @@ app.delete("/baitap/:id", async (req, res) => {
       .input("id", id)
       .query(`DELETE FROM BAINOP WHERE MaBaiTap = @id`);
 
-    // Sau đó mới xóa exercise
+    // Xóa bài tập
     await pool.request()
       .input("id", id)
       .query(`DELETE FROM BAITAP WHERE MaBaiTap = @id`);
 
-    res.json({ message: "Xóa bài tập thành công" });
+    // Xóa dữ liệu thi liên quan trong BAIKIEMTRA
+    await pool.request()
+      .input("id", id)
+      .query(`DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+
+    await pool.request()
+      .input("id", id)
+      .query(`DELETE FROM CAUHOI WHERE MaBaiKiemTra = @id`);
+
+    await pool.request()
+      .input("id", id)
+      .query(`DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+
+    res.json({ message: "Xóa thành công" });
   } catch (err) {
     console.error(err);
     res.status(500).send("Lỗi server");
@@ -953,7 +1000,7 @@ app.get("/baigiang/detail/:id", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("id", req.params.id)
-      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl FROM BAIHOCKHOAHOC WHERE MaBaiHoc = @id`); // ← thêm FileUrl
+      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl, MaBuoiHoc FROM BAIHOCKHOAHOC WHERE MaBaiHoc = @id`); // ← thêm FileUrl
     res.json(result.recordset[0]);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -1762,33 +1809,6 @@ app.post("/baitap/create", async (req, res) => {
     } = req.body;
 
     const pool = await poolPromise;
-    let targetMaBaiHoc = MaBaiHoc;
-
-    if (!targetMaBaiHoc && MaBuoiHoc) {
-      // Tìm bài giảng đầu tiên của buổi học này để gán
-      const bhResult = await pool.request()
-        .input("buoiHocId", MaBuoiHoc)
-        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
-      if (bhResult.recordset.length > 0) {
-        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-      } else {
-        // Tạo bài giảng rỗng tạm thời cho buổi học
-        const insertBh = await pool.request()
-          .input("buoiHocId", MaBuoiHoc)
-          .query(`
-            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
-            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
-            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-          `);
-        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
-      }
-    }
-
-    if (!targetMaBaiHoc) {
-      return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
-    }
-
-    // Resolve MaGiangVien if not passed or null
     let resolvedMaGiangVien = MaGiangVien;
     if (!resolvedMaGiangVien && MaBuoiHoc) {
       const classTeacherResult = await pool.request()
@@ -1807,30 +1827,94 @@ app.post("/baitap/create", async (req, res) => {
     const finalTrangThaiCreate = TrangThai || "pending";
     const finalTrangThaiDuyetCreate = finalTrangThaiCreate === "published" ? 'Đã duyệt' : (finalTrangThaiCreate === "rejected" ? 'Từ chối' : 'Chờ duyệt');
 
-    await pool.request()
-      .input("TieuDe",        Title)
-      .input("DangBai",       DangBai || (Type !== "exam" ? Type : null) || null)
-      .input("NoiDung",       Content     || "")
-      .input("CauHoi",        Questions   || "")
-      .input("NgayTao",       CreatedDate || new Date().toISOString().split('T')[0])
-      .input("MaBaiHoc",      targetMaBaiHoc)
-      .input("LinkAmThanh",   AudioUrl    || "")
-      .input("HienThiDapAn",  ShowAnswer  ? 1 : 0)
-      .input("HocThuMienPhi", IsFree      ? 1 : 0)
-      .input("LaBaiKiemTra",  (Type === "exam" || IsExam) ? 1 : 0)
-      .input("TrangThai",     finalTrangThaiCreate)
-      .input("TrangThaiDuyet", finalTrangThaiDuyetCreate)
-      .input("KyNang",        KyNang      || null)
-      .input("MaGiangVien",   resolvedMaGiangVien || null)
-      .input("FileDinhKem",   FileDinhKem || null)
-      .query(`
-        INSERT INTO BAITAP
-          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem)
-        VALUES
-          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem)
-      `);
+    const isExamMode = (Type === "exam" || IsExam === 1 || IsExam === true || req.body.LaBaiKiemTra === 1 || req.body.LaBaiKiemTra === true);
 
-    res.json({ message: "Thêm bài tập thành công" });
+    if (isExamMode) {
+      // Parse timing details from Content JSON
+      let durationVal = 45;
+      let startTimeVal = null;
+      let deadlineVal = null;
+      try {
+        if (Content) {
+          const parsedContent = JSON.parse(Content);
+          durationVal = parsedContent.duration || durationVal;
+          startTimeVal = parsedContent.startTime || startTimeVal;
+          deadlineVal = parsedContent.deadline || deadlineVal;
+        }
+      } catch (err) {
+        console.error("Error parsing exam content JSON:", err);
+      }
+
+      await pool.request()
+        .input("TenBai", Title)
+        .input("ThoiGian", durationVal)
+        .input("NgayBatDau", startTimeVal)
+        .input("HanNop", deadlineVal)
+        .input("MaBuoiHoc", MaBuoiHoc)
+        .input("MaGiangVien", resolvedMaGiangVien || null)
+        .input("TongDiem", 10.0)
+        .input("ShowAnswer", ShowAnswer ? 1 : 0)
+        .input("TrangThai", finalTrangThaiDuyetCreate)
+        .input("NoiDung", Content || "")
+        .input("CauHoi", Questions || "")
+        .query(`
+          INSERT INTO BAIKIEMTRA 
+            (TenBai, ThoiGian, NgayBatDau, HanNop, MaBuoiHoc, MaGiangVien, TongDiem, ShowAnswer, TrangThai, NoiDung, CauHoi)
+          VALUES 
+            (@TenBai, @ThoiGian, @NgayBatDau, @HanNop, @MaBuoiHoc, @MaGiangVien, @TongDiem, @ShowAnswer, @TrangThai, @NoiDung, @CauHoi)
+        `);
+
+      res.json({ message: "Thêm bài kiểm tra thành công" });
+    } else {
+      let targetMaBaiHoc = MaBaiHoc;
+
+      if (!targetMaBaiHoc && MaBuoiHoc) {
+        const bhResult = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+        if (bhResult.recordset.length > 0) {
+          targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+        } else {
+          const insertBh = await pool.request()
+            .input("buoiHocId", MaBuoiHoc)
+            .query(`
+              INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
+              VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+              SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+            `);
+          targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+        }
+      }
+
+      if (!targetMaBaiHoc) {
+        return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
+      }
+
+      await pool.request()
+        .input("TieuDe",        Title)
+        .input("DangBai",       DangBai || Type || null)
+        .input("NoiDung",       Content     || "")
+        .input("CauHoi",        Questions   || "")
+        .input("NgayTao",       CreatedDate || new Date().toISOString().split('T')[0])
+        .input("MaBaiHoc",      targetMaBaiHoc)
+        .input("LinkAmThanh",   AudioUrl    || "")
+        .input("HienThiDapAn",  ShowAnswer  ? 1 : 0)
+        .input("HocThuMienPhi", IsFree      ? 1 : 0)
+        .input("LaBaiKiemTra",  0)
+        .input("TrangThai",     finalTrangThaiCreate)
+        .input("TrangThaiDuyet", finalTrangThaiDuyetCreate)
+        .input("KyNang",        KyNang      || null)
+        .input("MaGiangVien",   resolvedMaGiangVien || null)
+        .input("FileDinhKem",   FileDinhKem || null)
+        .query(`
+          INSERT INTO BAITAP
+            (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem)
+          VALUES
+            (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem)
+        `);
+
+      res.json({ message: "Thêm bài tập thành công" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send("Lỗi server");
@@ -3685,6 +3769,155 @@ app.post("/baigiang/:id/clone", async (req, res) => {
   }
 });
 
+
+
+// ===== MINITEST & STUDENT PROGRESS ROUTES =====
+
+// 1. Tạo hoặc Cập nhật Minitest của Bài giảng
+app.post("/minitest/create", async (req, res) => {
+  try {
+    const { MaBaiHoc, CauHoi, DiemDat } = req.body;
+    if (!MaBaiHoc) return res.status(400).json({ message: "Thiếu MaBaiHoc" });
+
+    const pool = await poolPromise;
+    // Kiểm tra đã có minitest cho bài giảng này chưa
+    const check = await pool.request()
+      .input("MaBaiHoc", MaBaiHoc)
+      .query(`SELECT MaMinitest FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc`);
+
+    if (check.recordset.length > 0) {
+      // Cập nhật
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("CauHoi", CauHoi || "")
+        .input("DiemDat", DiemDat ?? 100)
+        .query(`UPDATE MINITEST SET CauHoi = @CauHoi, DiemDat = @DiemDat WHERE MaBaiHoc = @MaBaiHoc`);
+      res.json({ message: "Cập nhật Minitest thành công" });
+    } else {
+      // Tạo mới
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("CauHoi", CauHoi || "")
+        .input("DiemDat", DiemDat ?? 100)
+        .query(`INSERT INTO MINITEST (MaBaiHoc, CauHoi, DiemDat) VALUES (@MaBaiHoc, @CauHoi, @DiemDat)`);
+      res.json({ message: "Tạo Minitest thành công" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 2. Lấy đề bài Minitest của Bài giảng
+app.get("/minitest/baigiang/:maBaiHoc", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("MaBaiHoc", parseInt(req.params.maBaiHoc))
+      .query(`SELECT MaMinitest, MaBaiHoc, CauHoi, DiemDat FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc`);
+    res.json(result.recordset[0] || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 3. Lấy tiến độ học tập (Video & Minitest) của sinh viên
+app.get("/student/progress/minitest/:maBaiHoc/:maSinhVien", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const parsedSV = parseStudentId(req.params.maSinhVien);
+    const result = await pool.request()
+      .input("MaBaiHoc", parseInt(req.params.maBaiHoc))
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT DaXemVideo, DaDatMinitest FROM TIENDO_MINITEST WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+
+    if (result.recordset.length > 0) {
+      const record = result.recordset[0];
+      res.json({
+        DaXemVideo: record.DaXemVideo ? 1 : 0,
+        DaDatMinitest: record.DaDatMinitest ? 1 : 0
+      });
+    } else {
+      // Trả về tiến độ mặc định (chưa bắt đầu)
+      res.json({ DaXemVideo: 0, DaDatMinitest: 0 });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 4. Đánh dấu xem hết video bài giảng
+app.post("/student/progress/video/complete", async (req, res) => {
+  try {
+    const { MaBaiHoc, MaSinhVien } = req.body;
+    if (!MaBaiHoc || !MaSinhVien) return res.status(400).json({ message: "Thiếu thông tin" });
+
+    const pool = await poolPromise;
+    const parsedSV = parseStudentId(MaSinhVien);
+
+    const check = await pool.request()
+      .input("MaBaiHoc", MaBaiHoc)
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT MaTienDo FROM TIENDO_MINITEST WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+
+    if (check.recordset.length > 0) {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .query(`UPDATE TIENDO_MINITEST SET DaXemVideo = 1, NgayCapNhat = GETDATE() WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+    } else {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .query(`INSERT INTO TIENDO_MINITEST (MaBaiHoc, MaSinhVien, DaXemVideo, DaDatMinitest, NgayCapNhat) VALUES (@MaBaiHoc, @MaSinhVien, 1, 0, GETDATE())`);
+    }
+    res.json({ message: "Đã ghi nhận hoàn thành xem video" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 5. Nộp kết quả làm Minitest
+app.post("/student/progress/minitest/submit", async (req, res) => {
+  try {
+    const { MaBaiHoc, MaSinhVien, Passed } = req.body;
+    if (!MaBaiHoc || !MaSinhVien) return res.status(400).json({ message: "Thiếu thông tin" });
+
+    const pool = await poolPromise;
+    const parsedSV = parseStudentId(MaSinhVien);
+
+    const check = await pool.request()
+      .input("MaBaiHoc", MaBaiHoc)
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT MaTienDo FROM TIENDO_MINITEST WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+
+    const finalDaXemVideo = Passed ? 1 : 0;
+    const finalDaDatMinitest = Passed ? 1 : 0;
+
+    if (check.recordset.length > 0) {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .input("DaXemVideo", finalDaXemVideo)
+        .input("DaDatMinitest", finalDaDatMinitest)
+        .query(`UPDATE TIENDO_MINITEST SET DaXemVideo = @DaXemVideo, DaDatMinitest = @DaDatMinitest, NgayCapNhat = GETDATE() WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+    } else {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .input("DaXemVideo", finalDaXemVideo)
+        .input("DaDatMinitest", finalDaDatMinitest)
+        .query(`INSERT INTO TIENDO_MINITEST (MaBaiHoc, MaSinhVien, DaXemVideo, DaDatMinitest, NgayCapNhat) VALUES (@MaBaiHoc, @MaSinhVien, @DaXemVideo, @DaDatMinitest, GETDATE())`);
+    }
+    res.json({ message: "Đã nộp kết quả Minitest", Passed: !!Passed });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
 
 
 const initDb = async () => {
