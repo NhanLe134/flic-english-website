@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+﻿import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./KetQuaHocTapHocVien.css";
 
@@ -143,3 +143,4 @@ const KetQuaHocTapHocVien = () => {
 };
 
 export default KetQuaHocTapHocVien;
+

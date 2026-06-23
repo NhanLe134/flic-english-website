@@ -1,4 +1,4 @@
-import "./LessonDetailSV.css";
+﻿import "./LessonDetailSV.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
@@ -62,7 +62,8 @@ function BaiGiangSV() {
         </div>
   );
 
-  const fileUrl = baiGiang.FileUrl || null;
+  const rawFileUrl = baiGiang.FileUrl || null;
+  const fileUrl = rawFileUrl ? (rawFileUrl.startsWith("http") ? rawFileUrl : `${API}${rawFileUrl}`) : null;
   const noiDung = baiGiang.NoiDung || "";
 
   const isImage = fileUrl && /\.(png|jpg|jpeg|gif|webp)$/i.test(fileUrl);

@@ -1,4 +1,4 @@
-import "./CreateExercise.css";
+﻿import "./CreateExercise.css";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -2856,3 +2856,4 @@ const CreateExercise = () => {
 };
 
 export default CreateExercise;
+

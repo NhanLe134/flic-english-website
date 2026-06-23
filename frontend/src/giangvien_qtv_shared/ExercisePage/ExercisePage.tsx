@@ -313,3 +313,4 @@ const ExercisePage = () => {
 };
 
 export default ExercisePage;
+

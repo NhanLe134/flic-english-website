@@ -1,4 +1,4 @@
-import "./CourseDetail.css";
+﻿import "./CourseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -178,3 +178,4 @@ const CourseDetail = () => {
 };
 
 export default CourseDetail;
+

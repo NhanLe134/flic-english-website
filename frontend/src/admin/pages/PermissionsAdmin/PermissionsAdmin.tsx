@@ -1,4 +1,4 @@
-import "./PermissionsAdmin.css";
+﻿import "./PermissionsAdmin.css";
 import { useState, useEffect } from "react";
 
 const API = "http://localhost:5000";
@@ -252,3 +252,4 @@ export default function PermissionsAdmin() {
     </div>
   );
 }
+

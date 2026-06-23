@@ -1,4 +1,4 @@
-import "./DocDetail.css";
+﻿import "./DocDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import dailyImg from "../../../assets/daily.png";
@@ -86,7 +86,7 @@ function DocDetail() {
                 )}
                 {doc.FileUrl && (
                   <a
-                    href={doc.FileUrl}
+                    href={doc.FileUrl.startsWith("http") ? doc.FileUrl : `${API}${doc.FileUrl}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{ background:"#e8f5e9", color:"#2e7d32", padding:"4px 12px", borderRadius:20, fontSize:13, textDecoration:"none", fontWeight:600 }}

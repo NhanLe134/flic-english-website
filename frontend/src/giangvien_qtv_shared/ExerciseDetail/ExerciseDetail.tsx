@@ -1,4 +1,4 @@
-import "./ExerciseDetail.css";
+﻿import "./ExerciseDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -315,3 +315,4 @@ const ExerciseDetail = () => {
 };
 
 export default ExerciseDetail;
+

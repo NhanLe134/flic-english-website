@@ -1,4 +1,4 @@
-import "./EditPersonalInfo.css";
+﻿import "./EditPersonalInfo.css";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
@@ -62,8 +62,8 @@ const EditPersonalInfo = () => {
         if (!uploadRes.ok) throw new Error("Upload thất bại");
 
         const uploadData = await uploadRes.json();
-        const fileUrl = `http://localhost:5000${uploadData.url}`;
-        setFormData(prev => ({ ...prev, avatar: fileUrl }));
+        const relativeUrl = uploadData.url; // e.g. /uploads/filename.png
+        setFormData(prev => ({ ...prev, avatar: relativeUrl }));
       } catch (err) {
         console.error("Lỗi upload ảnh:", err);
         alert("Lỗi khi tải ảnh đại diện lên máy chủ");
@@ -100,7 +100,9 @@ const EditPersonalInfo = () => {
       user.Email = formData.Email;
       user.AnhDaiDien = formData.avatar;
       sessionStorage.setItem("user", JSON.stringify(user));
-      setAvatar(formData.avatar);
+      
+      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://localhost:5000${formData.avatar}`) : null;
+      setAvatar(absoluteUrl);
 
       setShowPopup(true);
       setTimeout(() => navigate("/thong-tin-ca-nhan"), 1500);
@@ -114,6 +116,8 @@ const EditPersonalInfo = () => {
   const initials = formData.HoTen
     ? formData.HoTen.split(" ").pop()?.charAt(0).toUpperCase()
     : "?";
+
+  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://localhost:5000${formData.avatar}`) : "";
 
   return (
     <div className="epi-wrapper">
@@ -130,8 +134,8 @@ const EditPersonalInfo = () => {
         {/* AVATAR */}
         <div className="profile-left">
           <div className="profile-avatar">
-            {formData.avatar
-              ? <img src={formData.avatar} alt="avatar" />
+            {displayAvatar
+              ? <img src={displayAvatar} alt="avatar" />
               : initials
             }
           </div>
@@ -192,3 +196,4 @@ const EditPersonalInfo = () => {
 };
 
 export default EditPersonalInfo;
+

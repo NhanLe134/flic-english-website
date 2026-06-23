@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./StudentNavbar.css";
 import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
 
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
 const userIcon = import.meta.env.BASE_URL + "user.png";
+
+const API = "http://localhost:5000";
 
 export default function StudentNavbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -20,7 +22,8 @@ export default function StudentNavbar() {
     try {
       const user = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
       setHoTen(user.HoTen || "Sinh Viên");
-      setAvatarUrl(user.AnhDaiDien || userIcon);
+      const avatar = user.AnhDaiDien;
+      setAvatarUrl(avatar ? (avatar.startsWith("http") ? avatar : `${API}${avatar}`) : userIcon);
     } catch (e) {
       console.error("Error syncing user info in navbar", e);
     }
@@ -197,3 +200,4 @@ export default function StudentNavbar() {
     </header>
   );
 }
+

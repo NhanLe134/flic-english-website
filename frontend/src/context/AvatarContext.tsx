@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+﻿import { createContext, useContext, useState } from "react";
 
 interface AvatarContextType {
   avatar: string | null;
@@ -17,7 +17,9 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
     const userStr = sessionStorage.getItem("user");
     if (userStr) {
       const user = JSON.parse(userStr);
-      return user.AnhDaiDien || null;
+      const path = user.AnhDaiDien;
+      if (!path) return null;
+      return path.startsWith("http") ? path : `http://localhost:5000${path}`;
     }
     return null;
   });
@@ -42,18 +44,19 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       if (!uploadRes.ok) throw new Error("Upload thất bại");
 
       const uploadData = await uploadRes.json();
-      const fileUrl = `http://localhost:5000${uploadData.url}`;
+      const relativeUrl = uploadData.url; // e.g. /uploads/filename.png
+      const absoluteUrl = `http://localhost:5000${relativeUrl}`;
 
       // 2. Cập nhật state và sessionStorage
-      setAvatar(fileUrl);
-      user.AnhDaiDien = fileUrl;
+      setAvatar(absoluteUrl);
+      user.AnhDaiDien = relativeUrl;
       sessionStorage.setItem("user", JSON.stringify(user));
 
-      // 3. Lưu link URL vào database cột AnhDaiDien
+      // 3. Lưu link relative URL vào database cột AnhDaiDien
       await fetch(`http://localhost:5000/users/${user.MaNguoiDung}/anh-dai-dien`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ AnhDaiDien: fileUrl })
+        body: JSON.stringify({ AnhDaiDien: relativeUrl })
       });
     } catch (err) {
       console.error("Lỗi cập nhật ảnh đại diện:", err);

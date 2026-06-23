@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 import "./AssignmentDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -1846,3 +1846,4 @@ function AssignmentDetail() {
 }
 
 export default AssignmentDetail;
+

@@ -1,4 +1,4 @@
-import "./Register.css";
+﻿import "./Register.css";
 import Navbar from "../../components/Navbar";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
@@ -337,3 +337,4 @@ const Register = ({ isModal = false }: RegisterProps) => {
 };
 
 export default Register;
+

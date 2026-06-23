@@ -1,4 +1,4 @@
-import "./ClassDetailSV.css";
+﻿import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -629,3 +629,4 @@ export default function ClassDetailSV() {
     </div>
   );
 }
+

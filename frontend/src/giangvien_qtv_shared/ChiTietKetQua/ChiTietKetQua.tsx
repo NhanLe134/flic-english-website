@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import "./ChiTietKetQua.css";
@@ -204,3 +204,4 @@ const ChiTietKetQua = () => {
 };
 
 export default ChiTietKetQua;
+

@@ -1,4 +1,4 @@
-import "./LessonDiscussionPage.css";
+﻿import "./LessonDiscussionPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiArrowLeft, FiMessageSquare, FiTrash2, FiSend, FiThumbsUp, FiUser } from "react-icons/fi";
@@ -288,3 +288,4 @@ const LessonDiscussionPage = () => {
 };
 
 export default LessonDiscussionPage;
+

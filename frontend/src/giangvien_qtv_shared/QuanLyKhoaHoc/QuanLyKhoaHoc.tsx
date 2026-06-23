@@ -1,4 +1,4 @@
-import "./QuanLyKhoaHoc.css";
+﻿import "./QuanLyKhoaHoc.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUsers, FiCheckSquare } from "react-icons/fi";
@@ -145,3 +145,4 @@ const QuanLyKhoaHoc = () => {
 };
 
 export default QuanLyKhoaHoc;
+

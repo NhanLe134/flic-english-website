@@ -89,9 +89,9 @@ app.post("/register", async (req, res) => {
       .input("password", password)
       .input("name", name)
       .input("email", email)
-      .input("ngaySinh", ngaySinh || null)   // ← thêm
-      .query(`INSERT INTO NGUOIDUNG (TenDangNhap, MatKhau, HoTen, Email, NgaySinh, TrangThai, NgayTao)
-              VALUES (@username, @password, @name, @email, @ngaySinh, 'active', GETDATE())`);
+      .input("ngaySinh", ngaySinh || null)
+      .query(`INSERT INTO NGUOIDUNG (TenDangNhap, MatKhau, HoTen, Email, NgaySinh, TrangThai, NgayTao, MaVaiTro)
+              VALUES (@username, @password, @name, @email, @ngaySinh, 'active', GETDATE(), 5)`);
     res.json({ message: "Đăng ký thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -103,15 +103,13 @@ app.get("/users/role/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           CASE
-            WHEN a.MaNguoiDung IS NOT NULL THEN N'Quản Trị Viên'
-            WHEN g.MaNguoiDung IS NOT NULL THEN N'Giảng Viên'
-            WHEN q.MaNguoiDung IS NOT NULL THEN N'Quản Trị Nội Dung'
+            WHEN n.MaVaiTro = 1 THEN N'Quản Trị Viên'
+            WHEN n.MaVaiTro = 2 THEN N'Giảng Viên'
+            WHEN n.MaVaiTro = 4 THEN N'Quản Trị Nội Dung'
+            WHEN n.MaVaiTro = 3 OR n.MaVaiTro = 5 THEN N'Học Viên'
             ELSE N'Học Viên'
           END AS VaiTro
         FROM NGUOIDUNG n
-        LEFT JOIN ADMIN a ON n.MaNguoiDung = a.MaNguoiDung
-        LEFT JOIN GIANGVIEN g ON n.MaNguoiDung = g.MaNguoiDung
-        LEFT JOIN QUANTRIVIENNOIDUNG q ON n.MaNguoiDung = q.MaNguoiDung
         WHERE n.MaNguoiDung = @id
       `)
     res.json(result.recordset[0] || { VaiTro: "Học Viên" })
@@ -149,40 +147,24 @@ app.get("/courses/:id/details", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-app.post("/register-course", async (req, res) => {
-  try {
-    const { maKhoaHoc, maSinhVien } = req.body;
-    if (!maKhoaHoc || !maSinhVien) return res.status(400).json({ message: "Thiếu dữ liệu" });
-    const pool = await poolPromise;
-    const check = await pool.request()
-      .input("maKhoaHoc", maKhoaHoc).input("maSinhVien", maSinhVien)
-      .query(`SELECT * FROM DANGKYKHOAHOC WHERE MaKhoaHoc=@maKhoaHoc AND MaSinhVien=@maSinhVien`);
-    if (check.recordset.length > 0) return res.json({ message: "Sinh viên đã đăng ký khóa học này rồi" });
-    await pool.request()
-      .input("maKhoaHoc", maKhoaHoc).input("maSinhVien", maSinhVien)
-      .query(`INSERT INTO DANGKYKHOAHOC (MaKhoaHoc, MaSinhVien, NgayDangKy, TrangThai) VALUES (@maKhoaHoc, @maSinhVien, GETDATE(), N'Đã đăng ký')`);
-    res.json({ message: "Đăng ký khóa học thành công" });
-  } catch (err) { res.status(500).send(err.message); }
-});
 // Tạo khóa học mới
 app.post("/qtv/khoahoc", async (req, res) => {
-  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, KyNang, Listening, Reading, Speaking, Writing } = req.body
+  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, Listening, Reading, Speaking, Writing } = req.body
   try {
     const pool = await poolPromise
     const result = await pool.request()
       .input("TenKhoaHoc", TenKhoaHoc)
       .input("MoTa", MoTa || "")
       .input("TrinhDo", TrinhDo || "")
-      .input("KyNang", KyNang || null)
       .input("Listening", Listening !== undefined ? Number(Listening) : 0)
       .input("Reading", Reading !== undefined ? Number(Reading) : 0)
       .input("Speaking", Speaking !== undefined ? Number(Speaking) : 0)
       .input("Writing", Writing !== undefined ? Number(Writing) : 0)
       .input("MaNguoiDung", MaNguoiDung)
       .query(`
-        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, KyNang, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao)
+        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao)
         OUTPUT INSERTED.MaKhoaHoc
-        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @KyNang, @Listening, @Reading, @Speaking, @Writing, 'Pending', @MaNguoiDung, GETDATE())
+        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @Listening, @Reading, @Speaking, @Writing, 'Pending', @MaNguoiDung, GETDATE())
       `)
     const newId = result.recordset[0].MaKhoaHoc
     res.json({
@@ -409,16 +391,7 @@ app.get("/qtv/baigiang", async (req, res) => {
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
-app.get("/my-courses/:maSinhVien", async (req, res) => {
-  try {
-    const pool = await poolPromise;
-    const parsedSV = parseStudentId(req.params.maSinhVien);
-    const result = await pool.request()
-      .input("maSinhVien", parsedSV)
-      .query(`SELECT K.TenKhoaHoc, D.NgayDangKy, D.TrangThai FROM DANGKYKHOAHOC D JOIN KHOAHOC K ON D.MaKhoaHoc=K.MaKhoaHoc WHERE D.MaSinhVien=@maSinhVien ORDER BY D.NgayDangKy DESC`);
-    res.json(result.recordset);
-  } catch (err) { res.status(500).send(err.message); }
-});
+
 
 
 // Lấy danh sách giảng viên cho dropdown
@@ -1735,7 +1708,6 @@ app.get("/admin/khoahoc", async (req, res) => {
         kh.TenKhoaHoc,
         kh.MoTa,
         kh.TrinhDo,
-        kh.KyNang,
         kh.Listening,
         kh.Reading,
         kh.Writing,
@@ -2007,6 +1979,15 @@ app.post("/qtv/lophoc/:id/ghidanh", async (req, res) => {
           )
       `)
 
+    // Tự động cập nhật MaVaiTro = 3 (Học viên đã đăng ký khóa học) trong bảng NGUOIDUNG
+    await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        UPDATE NGUOIDUNG
+        SET MaVaiTro = 3
+        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
+      `)
+
     res.json({ message: "Đã ghi danh thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -2037,6 +2018,22 @@ app.delete("/qtv/lophoc/:id/ghidanh/:maSinhVien", async (req, res) => {
           )
       `)
 
+    // Tự động cập nhật lại MaVaiTro dựa trên trạng thái học tập thực tế (nếu không còn lớp nào đang học thì về 5)
+    await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        UPDATE NGUOIDUNG
+        SET MaVaiTro = CASE 
+          WHEN EXISTS (
+              SELECT 1 
+              FROM SINHVIEN_LOPHOC sl
+              WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai = N'Đang học'
+          ) THEN 3
+          ELSE 5
+        END
+        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
+      `)
+
     res.json({ message: "Đã hủy ghi danh" })
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -2058,7 +2055,7 @@ app.get("/lophoc/:id/students/count", async (req, res) => {
 // ── Sửa khóa học ──
 app.put("/admin/khoahoc/:id", async (req, res) => {
   try {
-    const { TenKhoaHoc, MoTa, TrinhDo, KyNang, Listening, Reading, Speaking, Writing } = req.body
+    const { TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing } = req.body
     const pool = await poolPromise
     
     // Check if course has classes
@@ -2076,9 +2073,8 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       // Hạn chế thay đổi kỹ năng khi đã có lớp trong khóa
       const currentCourse = await pool.request()
         .input("id", req.params.id)
-        .query(`SELECT KyNang, Listening, Reading, Speaking, Writing FROM KHOAHOC WHERE MaKhoaHoc=@id`);
+        .query(`SELECT Listening, Reading, Speaking, Writing FROM KHOAHOC WHERE MaKhoaHoc=@id`);
       const row = currentCourse.recordset[0];
-      const currentKyNang = row?.KyNang || "";
       const currentL = row?.Listening ? 1 : 0;
       const currentR = row?.Reading ? 1 : 0;
       const currentS = row?.Speaking ? 1 : 0;
@@ -2089,8 +2085,7 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       const newS = Speaking !== undefined ? Number(Speaking) : currentS;
       const newW = Writing !== undefined ? Number(Writing) : currentW;
 
-      if ((KyNang !== undefined && KyNang !== currentKyNang) ||
-          (Listening !== undefined && newL !== currentL) ||
+      if ((Listening !== undefined && newL !== currentL) ||
           (Reading !== undefined && newR !== currentR) ||
           (Speaking !== undefined && newS !== currentS) ||
           (Writing !== undefined && newW !== currentW)) {
@@ -2103,7 +2098,6 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       .input("TenKhoaHoc", TenKhoaHoc)
       .input("MoTa", MoTa || "")
       .input("TrinhDo", TrinhDo || "")
-      .input("KyNang", KyNang === undefined ? null : KyNang)
       .input("Listening", Listening !== undefined ? Number(Listening) : null)
       .input("Reading", Reading !== undefined ? Number(Reading) : null)
       .input("Speaking", Speaking !== undefined ? Number(Speaking) : null)
@@ -2111,7 +2105,6 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       .query(`
         UPDATE KHOAHOC 
         SET TenKhoaHoc=@TenKhoaHoc, MoTa=@MoTa, TrinhDo=@TrinhDo, 
-            KyNang=COALESCE(@KyNang, KyNang),
             Listening=COALESCE(@Listening, Listening),
             Reading=COALESCE(@Reading, Reading),
             Speaking=COALESCE(@Speaking, Speaking),
@@ -2708,17 +2701,13 @@ app.get("/admin/users", async (req, res) => {
         n.MaNguoiDung, n.TenDangNhap, n.HoTen, n.Email,
         n.TrangThai, n.NgayTao,
         CASE 
-          WHEN a.MaNguoiDung IS NOT NULL THEN N'Quản Trị Viên'
-          WHEN g.MaNguoiDung IS NOT NULL THEN N'Giảng Viên'
-          WHEN q.MaNguoiDung IS NOT NULL THEN N'Quản Trị Nội Dung'
-          WHEN s.MaNguoiDung IS NOT NULL THEN N'Học Viên'
+          WHEN n.MaVaiTro = 1 THEN N'Quản Trị Viên'
+          WHEN n.MaVaiTro = 2 THEN N'Giảng Viên'
+          WHEN n.MaVaiTro = 4 THEN N'Quản Trị Nội Dung'
+          WHEN n.MaVaiTro = 3 OR n.MaVaiTro = 5 THEN N'Học Viên'
           ELSE N'Học Viên'
         END AS VaiTro
       FROM NGUOIDUNG n
-      LEFT JOIN ADMIN a ON n.MaNguoiDung = a.MaNguoiDung
-      LEFT JOIN GIANGVIEN g ON n.MaNguoiDung = g.MaNguoiDung
-      LEFT JOIN QUANTRIVIENNOIDUNG q ON n.MaNguoiDung = q.MaNguoiDung
-      LEFT JOIN SINHVIEN s ON n.MaNguoiDung = s.MaNguoiDung
       ORDER BY n.NgayTao DESC
     `)
     res.json(result.recordset)
@@ -2753,17 +2742,24 @@ app.post("/admin/users", async (req, res) => {
   try {
     const { TenDangNhap, HoTen, Email, MatKhau, VaiTro } = req.body
     const pool = await poolPromise
+
+    let maVaiTro = 5; // Mặc định: Học viên chưa có lớp học
+    if (VaiTro === "Giảng Viên") maVaiTro = 2;
+    else if (VaiTro === "Quản Trị Nội Dung") maVaiTro = 4;
+    else if (VaiTro === "Quản Trị Viên") maVaiTro = 1;
+
     // Tạo NGUOIDUNG
     const result = await pool.request()
       .input("TenDangNhap", TenDangNhap)
       .input("HoTen", HoTen)
       .input("Email", Email)
       .input("MatKhau", MatKhau || "123456")
-      .query(`INSERT INTO NGUOIDUNG (TenDangNhap,HoTen,Email,MatKhau,TrangThai,NgayTao)
+      .input("MaVaiTro", maVaiTro)
+      .query(`INSERT INTO NGUOIDUNG (TenDangNhap,HoTen,Email,MatKhau,TrangThai,NgayTao,MaVaiTro)
               OUTPUT INSERTED.MaNguoiDung
-              VALUES (@TenDangNhap,@HoTen,@Email,@MatKhau,N'Active',GETDATE())`)
+              VALUES (@TenDangNhap,@HoTen,@Email,@MatKhau,N'Active',GETDATE(),@MaVaiTro)`)
     const newId = result.recordset[0].MaNguoiDung
-    // Gán vai trò
+    // Gán vai trò vào các bảng con để lưu trữ thuộc tính đặc thù
     if (VaiTro === "Giảng Viên") {
       await pool.request().input("id", newId)
         .query(`INSERT INTO GIANGVIEN (MaNguoiDung) VALUES (@id)`)

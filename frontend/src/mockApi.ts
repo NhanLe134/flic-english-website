@@ -1,4 +1,4 @@
-// Mock API Interceptor for FLIC English Website Frontend
+﻿// Mock API Interceptor for FLIC English Website Frontend
 // Overrides window.fetch to support standalone frontend development
 
 const originalFetch = window.fetch;
@@ -1494,3 +1494,4 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 };
 
 console.log("Mock API interceptor initialized successfully!");
+

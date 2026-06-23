@@ -1,4 +1,4 @@
-import "./PersonalInfoView.css";
+﻿import "./PersonalInfoView.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAvatar } from "../../context/AvatarContext";
@@ -28,6 +28,8 @@ const PersonalInfoView = () => {
 
   if (!data) return <p>Đang tải...</p>;
 
+  const displayAvatar = avatar || (data.AnhDaiDien ? (data.AnhDaiDien.startsWith("http") ? data.AnhDaiDien : `http://localhost:5000${data.AnhDaiDien}`) : null);
+
   return (
     <div className="piv-wrapper">
       <div className="piv-header-row">
@@ -41,8 +43,8 @@ const PersonalInfoView = () => {
         {/* LEFT CARD */}
         <div className="piv-sidebar-card">
           <div className="piv-avatar-wrapper">
-            {avatar || data.AnhDaiDien ? (
-              <img src={avatar || data.AnhDaiDien} alt="avatar" />
+            {displayAvatar ? (
+              <img src={displayAvatar} alt="avatar" />
             ) : (
               <div className="piv-avatar-initial">{data.HoTen?.charAt(0).toUpperCase()}</div>
             )}
@@ -95,3 +97,4 @@ const PersonalInfoView = () => {
 };
 
 export default PersonalInfoView;
+

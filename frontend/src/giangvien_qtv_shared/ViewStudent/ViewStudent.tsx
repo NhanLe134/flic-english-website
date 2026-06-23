@@ -1,4 +1,4 @@
-import "./ViewStudent.css";
+﻿import "./ViewStudent.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiArrowLeft } from "react-icons/fi";
@@ -193,3 +193,4 @@ const ViewStudent = () => {
 };
 
 export default ViewStudent;
+

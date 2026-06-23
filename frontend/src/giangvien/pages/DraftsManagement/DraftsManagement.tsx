@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend } from "react-icons/fi";
 import "./DraftsManagement.css";
@@ -259,3 +259,4 @@ const DraftsManagement = () => {
 };
 
 export default DraftsManagement;
+

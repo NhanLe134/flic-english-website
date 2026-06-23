@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+﻿import React, { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./AddLesson.css";
 import {
@@ -73,7 +73,7 @@ const AddLesson: React.FC = () => {
           body: formData
         });
         const uploadData = await uploadRes.json();
-        fileUrl = uploadData.url ? `http://localhost:5000${uploadData.url}` : "";
+        fileUrl = uploadData.url || "";
       }
 
       if (link && !fileUrl) fileUrl = link;
@@ -306,3 +306,4 @@ const AddLesson: React.FC = () => {
 };
 
 export default AddLesson;
+
