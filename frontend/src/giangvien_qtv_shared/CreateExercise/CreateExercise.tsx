@@ -1,6 +1,7 @@
-﻿import "./CreateExercise.css";
+import "./CreateExercise.css";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 
 interface Question {
   question: string;
@@ -33,7 +34,7 @@ const getDangBaiOptions = (kn: string): string[] => {
   if (kn === "Nghe") return ["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"];
   if (kn === "Noi") return ["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"];
   if (kn === "Doc") return ["Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Nối từ"];
-  if (kn === "Viet") return ["Sắp xếp từ thành câu", "Trắc nghiệm xác định thì", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"];
+  if (kn === "Viet") return ["Sắp xếp từ thành câu", "Trắc nghiệm", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"];
   return [];
 };
 
@@ -47,10 +48,163 @@ const mapDangBaiToType = (db: string): string => {
   if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
   if (db === "Bài tập từ vựng" || db === "Nối từ") return "reading-vocab-mcq";
   if (db === "Sắp xếp từ thành câu") return "writing-order-words";
-  if (db === "Trắc nghiệm xác định thì") return "writing-tense-mcq";
+  if (db === "Trắc nghiệm xác định thì" || db === "Trắc nghiệm") return "writing-tense-mcq";
   if (db === "Viết đoạn văn ngắn") return "writing-essay";
   if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
   return "multiple";
+};
+
+const cleanSectionTitle = (title: string) => {
+  if (!title) return "";
+  return title.replace(/^phần\s*\d+\s*[:\-.]?\s*/i, "").trim();
+};
+
+const stripHtml = (html: string) => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+};
+
+const RichTextarea = ({
+  value,
+  onChange,
+  placeholder,
+  className,
+  style,
+  rows
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  rows?: number;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      const normalizedValue = value || "";
+      if (document.activeElement !== ref.current || normalizedValue === "") {
+        if (ref.current.innerHTML !== normalizedValue) {
+          ref.current.innerHTML = normalizedValue;
+        }
+      }
+    }
+  }, [value]);
+
+  const handleInput = () => {
+    if (ref.current) {
+      let val = ref.current.innerHTML;
+      if (val === "<br>" || val === "<br/>" || val === "<div><br></div>" || val === "<div><br/></div>") {
+        val = "";
+      }
+      onChange(val);
+    }
+  };
+
+  const calculatedMinHeight = rows ? `${rows * 20 + 20}px` : "60px";
+
+  return (
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      className={`exercise-content rich-editable ${className || ""}`}
+      style={{
+        outline: "none",
+        minHeight: calculatedMinHeight,
+        whiteSpace: "pre-wrap",
+        overflowWrap: "break-word",
+        display: "block",
+        ...style
+      }}
+      placeholder={placeholder}
+      onInput={handleInput}
+    />
+  );
+};
+
+const getQuestionSummary = (q: any, type: string) => {
+  let text = "";
+  if (type === "listening-mcq") {
+    text = q.prompt || (q.subQuestions?.[0]?.question);
+  } else if (type === "writing-tense-mcq") {
+    text = q.question;
+  } else if (type === "reading-vocab-mcq") {
+    const pairs = q.vocabPairs || [];
+    if (pairs.length > 0) {
+      text = pairs.map((p: any) => `${p.word || "?"}: ${p.meaning || "?"}`).join(", ");
+    } else {
+      text = "Chưa có cặp từ vựng";
+    }
+  } else if (type === "listening-image") {
+    text = `[Hình ảnh & Audio - Đáp án: ${q.correct || "A"}]`;
+  } else if (type === "listening-dictation") {
+    text = q.text;
+  } else if (type === "listening-fill-in") {
+    text = q.text;
+  } else if (type === "speaking-pronounce") {
+    text = q.text;
+  } else if (type === "writing-order-words") {
+    text = q.correctSentence || q.text;
+  } else if (type === "writing-order-sentences") {
+    const sents = q.sentences || [];
+    text = sents.filter((s: string) => s && s.trim() !== "").join(" / ");
+  } else if (type === "reading-split") {
+    text = q.text || (q.subQuestions?.[0]?.question);
+  } else if (type === "speaking-topic") {
+    text = q.prompt;
+  }
+  
+  if (!text || text.trim() === "") return "(Chưa nhập nội dung)";
+  const cleanText = text.replace(/<[^>]*>/g, "");
+  if (cleanText.length > 50) return cleanText.substring(0, 50) + "...";
+  return cleanText;
+};
+
+const QuestionCard = ({ secIdx, qIdx, sec, q, onRemove, isCollapsed, onToggle, children }: any) => {
+  return (
+    <div style={{ background: "#f8fafc", border: "1.5px solid #cbd5e1", borderRadius: 12, marginTop: 15, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+      {/* Question Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "#e2e8f0",
+          padding: "10px 16px",
+          cursor: "pointer",
+          userSelect: "none"
+        }}
+        onClick={onToggle}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "12px", transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.1s ease", color: "#475569" }}>▼</span>
+          <h5 style={{ color: "#000080", fontSize: 13, fontWeight: 700, margin: 0 }}>
+            Câu hỏi {qIdx + 1}: <span style={{ color: "#475569", fontWeight: "normal", fontStyle: "italic", marginLeft: "4px" }}>{getQuestionSummary(q, sec.type)}</span>
+          </h5>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={e => e.stopPropagation()}>
+          {sec.questions && sec.questions.length > 1 && (
+            <button
+              type="button"
+              className="remove-btn"
+              style={{ padding: "3px 8px", fontSize: 11, background: "#fee2e2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", cursor: "pointer", margin: 0 }}
+              onClick={onRemove}
+            >
+              ✕ Xóa
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!isCollapsed && (
+        <div style={{ padding: 16 }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const CreateExercise = () => {
@@ -82,6 +236,7 @@ const CreateExercise = () => {
   // States for Exam Builder
   const [examDuration, setExamDuration] = useState(50);
   const [examStartTime, setExamStartTime] = useState("");
+  const [openingMode, setOpeningMode] = useState<"scheduled" | "manual">("scheduled");
   const [commonAudioUrl, setCommonAudioUrl] = useState("");
   const [examSections, setExamSections] = useState<ExamSection[]>([
     {
@@ -91,6 +246,33 @@ const CreateExercise = () => {
       questions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
     }
   ]);
+
+  // States for Accordion collapses
+  const [collapsedSections, setCollapsedSections] = useState<Record<number, boolean>>({});
+  const [collapsedQuestions, setCollapsedQuestions] = useState<Record<string, boolean>>({});
+
+  const toggleSectionCollapse = (secIdx: number) => {
+    setCollapsedSections(prev => ({ ...prev, [secIdx]: !prev[secIdx] }));
+  };
+
+  const toggleQuestionCollapse = (secIdx: number, qIdx: number) => {
+    const key = `${secIdx}_${qIdx}`;
+    setCollapsedQuestions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const collapseAllSections = () => {
+    const collapsed: Record<number, boolean> = {};
+    examSections.forEach((_, idx) => {
+      collapsed[idx] = true;
+    });
+    setCollapsedSections(collapsed);
+  };
+
+  const expandAllSections = () => {
+    setCollapsedSections({});
+  };
+
+
 
   // Unified state for multiple questions in regular exercises
   const [questions, setQuestions] = useState<any[]>([
@@ -109,6 +291,201 @@ const CreateExercise = () => {
       subQuestions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
     }
   ]);
+
+  // Formatter states & handlers
+  const [activeEl, setActiveEl] = useState<HTMLElement | null>(null);
+  const [toolbarCoords, setToolbarCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const applyFormat = (type: "b" | "i" | "u", targetEl?: HTMLElement) => {
+    const el = targetEl || activeEl;
+    if (!el) return;
+
+    if (el.contentEditable === "true" || el.getAttribute("contenteditable") === "true") {
+      el.focus();
+      const cmdMap = {
+        b: "bold",
+        i: "italic",
+        u: "underline"
+      };
+      document.execCommand(cmdMap[type], false);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+
+    // Fallback for standard input/textarea
+    const textEl = el as HTMLInputElement | HTMLTextAreaElement;
+    const start = textEl.selectionStart ?? 0;
+    const end = textEl.selectionEnd ?? 0;
+    const val = textEl.value;
+    const selectedText = val.substring(start, end);
+
+    const tagMap = {
+      b: { open: "<b>", close: "</b>" },
+      i: { open: "<i>", close: "</i>" },
+      u: { open: "<u>", close: "</u>" }
+    };
+
+    const { open, close } = tagMap[type];
+    let newText;
+    if (selectedText.startsWith(open) && selectedText.endsWith(close)) {
+      newText = selectedText.slice(open.length, -close.length);
+    } else {
+      newText = open + selectedText + close;
+    }
+
+    const newValue = val.substring(0, start) + newText + val.substring(end);
+
+    const prototype = textEl.tagName === "INPUT" ? window.HTMLInputElement.prototype : window.HTMLTextAreaElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+    if (setter) {
+      setter.call(textEl, newValue);
+      textEl.dispatchEvent(new Event("input", { bubbles: true }));
+
+      // Restore selection
+      setTimeout(() => {
+        textEl.focus();
+        textEl.setSelectionRange(start, start + newText.length);
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.contentEditable === "true" || target.getAttribute("contenteditable") === "true") &&
+        (target as HTMLInputElement).type !== "checkbox" &&
+        (target as HTMLInputElement).type !== "radio" &&
+        (target as HTMLInputElement).type !== "file" &&
+        (target as HTMLInputElement).type !== "date" &&
+        (target as HTMLInputElement).type !== "datetime-local" &&
+        (target as HTMLInputElement).type !== "number"
+      ) {
+        setActiveEl(target);
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement as HTMLElement;
+        if (
+          !active ||
+          (active.tagName !== "INPUT" && active.tagName !== "TEXTAREA" && active.contentEditable !== "true" && active.getAttribute("contenteditable") !== "true")
+        ) {
+          setActiveEl(null);
+        }
+      }, 200); // 200ms is safe for mouse clicks on formatting buttons
+    };
+
+    window.addEventListener("focusin", handleFocusIn);
+    window.addEventListener("focusout", handleFocusOut);
+    return () => {
+      window.removeEventListener("focusin", handleFocusIn);
+      window.removeEventListener("focusout", handleFocusOut);
+    };
+  }, []);
+
+  const updateToolbarPosition = () => {
+    if (!activeEl) return;
+    const rect = activeEl.getBoundingClientRect();
+    setToolbarCoords({
+      top: rect.top + window.scrollY - 8,
+      left: rect.left + window.scrollX + rect.width / 2
+    });
+  };
+
+  useEffect(() => {
+    if (activeEl) {
+      updateToolbarPosition();
+      window.addEventListener("resize", updateToolbarPosition);
+      window.addEventListener("scroll", updateToolbarPosition, true);
+      return () => {
+        window.removeEventListener("resize", updateToolbarPosition);
+        window.removeEventListener("scroll", updateToolbarPosition, true);
+      };
+    }
+  }, [activeEl]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && ["b", "i", "u"].includes(e.key.toLowerCase())) {
+        const el = document.activeElement as HTMLElement;
+        if (
+          el &&
+          (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.contentEditable === "true" || el.getAttribute("contenteditable") === "true") &&
+          (el as HTMLInputElement).type !== "checkbox" &&
+          (el as HTMLInputElement).type !== "radio" &&
+          (el as HTMLInputElement).type !== "file" &&
+          (el as HTMLInputElement).type !== "date" &&
+          (el as HTMLInputElement).type !== "datetime-local" &&
+          (el as HTMLInputElement).type !== "number"
+        ) {
+          if (el.contentEditable === "true" || el.getAttribute("contenteditable") === "true") {
+            setTimeout(() => {
+              el.dispatchEvent(new Event("input", { bubbles: true }));
+            }, 0);
+          } else {
+            e.preventDefault();
+            applyFormat(e.key.toLowerCase() as "b" | "i" | "u", el);
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeEl]);
+
+  const renderFormattingToolbar = () => {
+    if (!activeEl || !toolbarCoords) return null;
+
+    return createPortal(
+      <div
+        className="formatting-toolbar"
+        style={{
+          top: toolbarCoords.top,
+          left: toolbarCoords.left
+        }}
+      >
+        <button
+          type="button"
+          className="formatting-btn bold"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("b");
+          }}
+          title="Bôi đậm (Ctrl+B)"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          className="formatting-btn italic"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("i");
+          }}
+          title="In nghiêng (Ctrl+I)"
+        >
+          I
+        </button>
+        <button
+          type="button"
+          className="formatting-btn underline"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            applyFormat("u");
+          }}
+          title="Gạch chân (Ctrl+U)"
+        >
+          U
+        </button>
+      </div>,
+      document.body
+    );
+  };
 
   useEffect(() => {
     if (!maBaiHocParam) return;
@@ -266,20 +643,27 @@ const CreateExercise = () => {
 
       if (secIdx !== undefined) {
         const copy = [...examSections];
-        copy[secIdx].content = passage;
-        copy[secIdx].questions = subQuestions.map(sq => ({
-          question: sq.question,
-          answers: sq.answers,
-          correct: sq.correct,
-          explanation: "",
-          audioUrl: "",
-          imageUrl: "",
-          text: "",
-          prompt: "",
-          vocabPairs: [{ word: "", meaning: "" }],
-          fillInAnswers: [],
-          sentences: [""]
-        }));
+        copy[secIdx].questions = [
+          {
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            explanation: "",
+            audioUrl: "",
+            imageUrl: "",
+            text: passage,
+            prompt: "",
+            vocabPairs: [{ word: "", meaning: "" }],
+            fillInAnswers: [],
+            sentences: [""],
+            subQuestions: subQuestions.map(sq => ({
+              question: sq.question,
+              answers: sq.answers,
+              correct: sq.correct,
+              explanation: ""
+            }))
+          }
+        ];
         setExamSections(copy);
         alert(`Đã quét và điền thành công phần thi Đọc hiểu (Phần ${secIdx + 1}) với ${subQuestions.length} câu hỏi!`);
       } else {
@@ -304,8 +688,119 @@ const CreateExercise = () => {
       return;
     }
 
-    // 2. Dạng trắc nghiệm (multiple, listening-mcq, writing-tense-mcq, reading-vocab-mcq)
-    if (["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq"].includes(targetType)) {
+    // 2. Dạng trắc nghiệm nhóm/ngữ cảnh (multiple, listening-mcq)
+    if (targetType === "multiple" || targetType === "listening-mcq") {
+      const groupBoundary = /(?=\[(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc)\s*\d*\]|^(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc)\s*\d*\s*[\.\:\-])/im;
+      const groupBlocks = text.split(groupBoundary).map(g => g.trim()).filter(Boolean);
+      const parsedGroups: any[] = [];
+
+      for (const groupBlock of groupBlocks) {
+        const firstQIdx = groupBlock.search(/(?:Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i);
+        let groupPrompt = "";
+        let questionsText = groupBlock;
+
+        if (firstQIdx !== -1) {
+          groupPrompt = groupBlock.substring(0, firstQIdx).trim();
+          questionsText = groupBlock.substring(firstQIdx).trim();
+        } else {
+          groupPrompt = groupBlock.trim();
+          questionsText = "";
+        }
+
+        // Clean group markers from prompt for clean display
+        groupPrompt = groupPrompt
+          .replace(/^\[(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc)\s*\d*\]\s*/i, "")
+          .replace(/^(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc|Prompt)\s*\d*\s*[\.\:\-]\s*/im, "")
+          .trim();
+
+        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+        const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
+        const subQuestions: any[] = [];
+
+        for (const block of qBlocks) {
+          const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length < 2) continue;
+
+          let questionText = "";
+          let answers = ["", "", "", ""];
+          let correct = "A";
+          let explanation = "";
+
+          for (let line of lines) {
+            if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
+              correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+            } else if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+              explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+            } else {
+              if (answers.every(a => !a)) {
+                if (questionText) questionText += "\n";
+                questionText += line;
+              } else {
+                if (explanation) {
+                  explanation += "\n" + line;
+                }
+              }
+            }
+          }
+
+          questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+          subQuestions.push({
+            question: questionText,
+            answers,
+            correct,
+            explanation
+          });
+        }
+
+        if (subQuestions.length > 0) {
+          parsedGroups.push({
+            prompt: groupPrompt,
+            subQuestions
+          });
+        }
+      }
+
+      if (parsedGroups.length > 0) {
+        const formattedQuestions = parsedGroups.map(pg => ({
+          question: "",
+          answers: ["", "", "", ""],
+          correct: "A",
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: "",
+          prompt: pg.prompt,
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""],
+          subQuestions: pg.subQuestions
+        }));
+
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = formattedQuestions;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsedGroups.reduce((acc, g) => acc + g.subQuestions.length, 0)} câu hỏi trắc nghiệm chia thành ${parsedGroups.length} nhóm!`);
+        } else {
+          setQuestions(formattedQuestions);
+          alert(`Đã quét thành công ${parsedGroups.reduce((acc, g) => acc + g.subQuestions.length, 0)} câu hỏi trắc nghiệm chia thành ${parsedGroups.length} nhóm!`);
+        }
+      } else {
+        alert("Không thể phân tích câu hỏi nhóm nào. Vui lòng kiểm tra lại định dạng file.");
+      }
+      return;
+    }
+
+    // 3. Dạng trắc nghiệm phẳng (writing-tense-mcq)
+    if (targetType === "writing-tense-mcq") {
       const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
@@ -376,7 +871,7 @@ const CreateExercise = () => {
       return;
     }
 
-    // 3. Dạng Nghe chép chính tả (listening-dictation) & Luyện phát âm (speaking-pronounce)
+    // 4. Dạng Nghe chép chính tả (listening-dictation) & Luyện phát âm (speaking-pronounce)
     if (targetType === "listening-dictation" || targetType === "speaking-pronounce") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const parsed = lines.map(line => ({
@@ -409,7 +904,7 @@ const CreateExercise = () => {
       return;
     }
 
-    // 4. Sắp xếp câu thành đoạn văn (writing-order-sentences)
+    // 5. Sắp xếp câu thành đoạn văn (writing-order-sentences)
     if (targetType === "writing-order-sentences") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       if (lines.length > 0) {
@@ -441,7 +936,7 @@ const CreateExercise = () => {
       return;
     }
 
-    // 5. Sắp xếp từ thành câu (writing-order-words)
+    // 6. Sắp xếp từ thành câu (writing-order-words)
     if (targetType === "writing-order-words") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const parsed: any[] = [];
@@ -456,8 +951,9 @@ const CreateExercise = () => {
             explanation: "",
             audioUrl: "",
             imageUrl: "",
-            text: correctLine,
-            prompt: promptLine,
+            text: promptLine,
+            correctSentence: correctLine,
+            prompt: "",
             vocabPairs: [{ word: "", meaning: "" }],
             fillInAnswers: [],
             sentences: [""]
@@ -481,7 +977,7 @@ const CreateExercise = () => {
       return;
     }
 
-    // 6. Điền từ vào đoạn văn (listening-fill-in)
+    // 7. Điền từ vào đoạn văn (listening-fill-in)
     if (targetType === "listening-fill-in") {
       let passage = "";
       let answersText = "";
@@ -531,7 +1027,8 @@ const CreateExercise = () => {
       }
       return;
     }
-    // 7. Bài tập từ vựng nối từ (reading-vocab-mcq)
+
+    // 8. Bài tập từ vựng nối từ (reading-vocab-mcq)
     if (targetType === "reading-vocab-mcq") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const vocabPairs: { word: string; meaning: string }[] = [];
@@ -719,9 +1216,318 @@ const CreateExercise = () => {
         type: defaultType,
         title: `Phần ${examSections.length + 1}`,
         audioUrl: "",
-        questions: (defaultType === "speaking-topic" || defaultType === "writing-essay") ? [] : [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
+        questions: defaultType === "writing-essay" ? [] : (defaultType === "speaking-topic" ? [{ prompt: "", imageUrl: "", audioUrl: "", question: "", answers: [], correct: "" }] : [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }])
       }
     ]);
+  };
+
+  const applyPreset = (presetType: "toeic2" | "toeic4" | "vstep4") => {
+    const confirmMsg = "Áp dụng cấu trúc mẫu sẽ XÓA và THAY THẾ toàn bộ phần thi hiện tại. Bạn có chắc chắn muốn tiếp tục?";
+    if (!window.confirm(confirmMsg)) return;
+
+    let newSections: ExamSection[] = [];
+
+    if (presetType === "toeic2") {
+      newSections = [
+        {
+          type: "listening-image",
+          title: "Part 1: Photographs (Mô tả tranh nghe)",
+          questions: Array.from({ length: 6 }).map(() => ({
+            question: "",
+            answers: ["A", "B", "C", "D"],
+            correct: "A",
+            imageUrl: "",
+            audioUrl: ""
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Part 2: Question-Response (Hỏi & Đáp)",
+          questions: Array.from({ length: 25 }).map(() => ({
+            question: "",
+            answers: ["A", "B", "C", "D"],
+            correct: "A",
+            audioUrl: ""
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Part 3: Conversations (Hội thoại)",
+          questions: Array.from({ length: 13 }).map(() => ({
+            prompt: "",
+            audioUrl: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Part 4: Talks (Bài nói ngắn)",
+          questions: Array.from({ length: 10 }).map(() => ({
+            prompt: "",
+            audioUrl: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "writing-tense-mcq",
+          title: "Part 5: Incomplete Sentences (Điền câu)",
+          questions: Array.from({ length: 30 }).map(() => ({
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            explanation: ""
+          }))
+        },
+        {
+          type: "listening-fill-in",
+          title: "Part 6: Text Completion (Điền đoạn văn)",
+          questions: Array.from({ length: 4 }).map(() => ({
+            text: "",
+            fillInAnswers: ["", "", "", ""]
+          }))
+        },
+        {
+          type: "reading-split",
+          title: "Part 7: Reading Comprehension (Đọc hiểu)",
+          questions: Array.from({ length: 10 }).map(() => ({
+            text: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        }
+      ];
+    } else if (presetType === "toeic4") {
+      newSections = [
+        {
+          type: "listening-image",
+          title: "Part 1: Photographs (Mô tả tranh nghe)",
+          questions: Array.from({ length: 6 }).map(() => ({
+            question: "",
+            answers: ["A", "B", "C", "D"],
+            correct: "A",
+            imageUrl: "",
+            audioUrl: ""
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Part 2: Question-Response (Hỏi & Đáp)",
+          questions: Array.from({ length: 25 }).map(() => ({
+            question: "",
+            answers: ["A", "B", "C", "D"],
+            correct: "A",
+            audioUrl: ""
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Part 3: Conversations (Hội thoại)",
+          questions: Array.from({ length: 13 }).map(() => ({
+            prompt: "",
+            audioUrl: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Part 4: Talks (Bài nói ngắn)",
+          questions: Array.from({ length: 10 }).map(() => ({
+            prompt: "",
+            audioUrl: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "writing-tense-mcq",
+          title: "Part 5: Incomplete Sentences (Điền câu)",
+          questions: Array.from({ length: 30 }).map(() => ({
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            explanation: ""
+          }))
+        },
+        {
+          type: "listening-fill-in",
+          title: "Part 6: Text Completion (Điền đoạn văn)",
+          questions: Array.from({ length: 4 }).map(() => ({
+            text: "",
+            fillInAnswers: ["", "", "", ""]
+          }))
+        },
+        {
+          type: "reading-split",
+          title: "Part 7: Reading Comprehension (Đọc hiểu)",
+          questions: Array.from({ length: 10 }).map(() => ({
+            text: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "speaking-pronounce",
+          title: "Part 8: Read a text aloud (Đọc to)",
+          questions: Array.from({ length: 2 }).map(() => ({
+            text: "",
+            level: "Đọc theo câu",
+            explanation: ""
+          }))
+        },
+        {
+          type: "speaking-topic",
+          title: "Part 9: Describe a picture & Respond to questions (Nói mô tả & Trả lời)",
+          questions: Array.from({ length: 5 }).map(() => ({
+            prompt: "",
+            imageUrl: "",
+            audioUrl: ""
+          }))
+        },
+        {
+          type: "speaking-topic",
+          title: "Part 10: Express an opinion (Bày tỏ ý kiến nói)",
+          questions: [
+            {
+              prompt: "",
+              imageUrl: "",
+              audioUrl: ""
+            }
+          ]
+        },
+        {
+          type: "writing-essay",
+          title: "Part 11: Writing (Viết mô tả & Viết thư & Viết luận)",
+          content: "Nhập các hướng dẫn/đề bài viết chung ở đây...",
+          questions: []
+        }
+      ];
+    } else if (presetType === "vstep4") {
+      newSections = [
+        {
+          type: "listening-mcq",
+          title: "Listening Part 1: Short Instructions/Announcements (Nghe thông báo ngắn)",
+          questions: Array.from({ length: 8 }).map(() => ({
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            audioUrl: ""
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Listening Part 2: Conversations (Nghe hội thoại)",
+          questions: Array.from({ length: 3 }).map(() => ({
+            prompt: "",
+            audioUrl: "",
+            subQuestions: Array.from({ length: 4 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "listening-mcq",
+          title: "Listening Part 3: Lectures/Talks (Nghe bài nói ngắn)",
+          questions: Array.from({ length: 3 }).map(() => ({
+            prompt: "",
+            audioUrl: "",
+            subQuestions: Array.from({ length: 5 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "reading-split",
+          title: "Reading: 4 Passages (Đọc hiểu 4 bài)",
+          questions: Array.from({ length: 4 }).map(() => ({
+            text: "",
+            subQuestions: Array.from({ length: 10 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
+          }))
+        },
+        {
+          type: "writing-essay",
+          title: "Writing Task 1: Email/Letter writing (Viết thư)",
+          content: "Write a letter to...",
+          questions: []
+        },
+        {
+          type: "writing-essay",
+          title: "Writing Task 2: Essay writing (Viết luận)",
+          content: "Write an essay discussing...",
+          questions: []
+        },
+        {
+          type: "speaking-topic",
+          title: "Speaking Part 1: Social Interaction (Giao tiếp xã hội)",
+          questions: Array.from({ length: 2 }).map(() => ({
+            prompt: "",
+            subQuestions: Array.from({ length: 3 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A"
+            }))
+          }))
+        },
+        {
+          type: "speaking-topic",
+          title: "Speaking Part 2: Solution Discussion (Thảo luận giải pháp)",
+          questions: [
+            {
+              prompt: "A situation with 3 options..."
+            }
+          ]
+        },
+        {
+          type: "speaking-topic",
+          title: "Speaking Part 3: Topic Development (Phát triển chủ đề)",
+          questions: [
+            {
+              prompt: "A mindmap topic development..."
+            }
+          ]
+        }
+      ];
+    }
+
+    setExamSections(newSections);
+    setCollapsedSections({});
   };
 
   const removeExamSection = (idx: number) => {
@@ -855,8 +1661,10 @@ const CreateExercise = () => {
         const examContent = {
           isExam: true,
           duration: examDuration,
-          startTime: examStartTime,
+          startTime: openingMode === "scheduled" ? examStartTime : null,
           deadline: deadline || null,
+          openingMode: openingMode,
+          isOpened: openingMode === "manual" ? false : true,
           sections: examSections
         };
         contentStr = JSON.stringify(examContent);
@@ -1080,21 +1888,40 @@ const CreateExercise = () => {
                 borderLeft: "4px solid #000080",
                 lineHeight: "1.5"
               }}>
-                {type === "multiple" || type === "listening-mcq" || type === "writing-tense-mcq" ? (
-                  `Mẫu file Trắc nghiệm MCQ (Có thể tạo nhiều câu liên tiếp):\n` +
-                  `Câu 1: What is the capital of France?\n` +
-                  `A. London\n` +
-                  `B. Paris\n` +
-                  `C. Rome\n` +
-                  `D. Berlin\n` +
+                {type === "multiple" || type === "listening-mcq" ? (
+                  `Mẫu file Trắc nghiệm nhóm / Nghe Audio MCQ (Hỗ trợ chia theo nhóm/ngữ cảnh):\n` +
+                  `[Nhóm 1]\n` +
+                  `Ngữ cảnh: Dialogue between a student and a teacher. (tùy chọn)\n` +
+                  `Câu 1: What does the student need help with?\n` +
+                  `A. Homework\n` +
+                  `B. Registration\n` +
+                  `C. Examination\n` +
+                  `D. Dormitory\n` +
                   `Đáp án đúng: B\n` +
-                  `Giải thích: Paris là thủ đô nước Pháp (tùy chọn)\n\n` +
-                  `Câu 2: How many colors are there in a rainbow?\n` +
-                  `A. 5\n` +
-                  `B. 6\n` +
-                  `C. 7\n` +
-                  `D. 8\n` +
-                  `Đáp án đúng: C`
+                  `Giải thích: Học viên cần giúp đăng ký môn học (tùy chọn)\n\n` +
+                  `Câu 2: When is the deadline?\n` +
+                  `A. Today\n` +
+                  `B. Tomorrow\n` +
+                  `C. Friday\n` +
+                  `D. Next week\n` +
+                  `Đáp án đúng: C\n\n` +
+                  `[Nhóm 2]\n` +
+                  `Ngữ cảnh: Announcement in the railway station. (tùy chọn)\n` +
+                  `Câu 3: Why is the train delayed?\n` +
+                  `A. Bad weather\n` +
+                  `B. Technical issues\n` +
+                  `C. Late arrival\n` +
+                  `D. Track maintenance\n` +
+                  `Đáp án đúng: B`
+                ) : type === "writing-tense-mcq" ? (
+                  `Mẫu file Trắc nghiệm MCQ:\n` +
+                  `Câu 1: She _______ English for 5 years.\n` +
+                  `A. has studied\n` +
+                  `B. studies\n` +
+                  `C. studied\n` +
+                  `D. is studying\n` +
+                  `Đáp án đúng: A\n` +
+                  `Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hiện tại (tùy chọn)`
                 ) : type === "reading-vocab-mcq" ? (
                   `Mẫu file Bài tập từ vựng nối từ (Mỗi dòng là một cặp từ cách nhau bởi dấu gạch ngang, 1 bên từ tiếng Anh - 1 bên diễn giải nghĩa cũng bằng tiếng Anh):\n` +
                   `cat - a small domesticated carnivorous mammal with soft fur\n` +
@@ -1251,53 +2078,315 @@ const CreateExercise = () => {
 
         {/* ────────────────── EXAM BUILDER SECTION ────────────────── */}
         {isExam ? (
-          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
-            <h3 style={{ color: "#000080", marginBottom: 20, fontSize: "18px", fontWeight: 700 }}>⚙️ Cấu hình Bài Kiểm Tra</h3>
-            
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "24px", alignItems: "start", borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
+            {/* LEFT SIDEBAR (STICKY OUTLINE PANEL & CONFIGS) */}
+            <div style={{
+              position: "sticky",
+              top: "20px",
+              background: "#ffffff",
+              padding: "20px",
+              borderRadius: "12px",
+              border: "1.5px solid #e2e8f0",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+              maxHeight: "calc(100vh - 120px)",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px"
+            }}>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Thời lượng (phút)</label>
-                <input
-                  type="number"
-                  className="exercise-content"
-                  style={{ marginTop: 0 }}
-                  value={examDuration}
-                  onChange={e => setExamDuration(Number(e.target.value))}
-                />
+                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>⚙️ Cấu hình đề thi</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Hình thức mở đề</label>
+                    <select
+                      className="exercise-type"
+                      style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
+                      value={openingMode}
+                      onChange={e => setOpeningMode(e.target.value as any)}
+                    >
+                      <option value="scheduled">Tự động mở theo lịch</option>
+                      <option value="manual">Đóng/Mở thủ công</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Thời lượng (phút)</label>
+                    <input
+                      type="number"
+                      className="exercise-type"
+                      style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
+                      value={examDuration}
+                      onChange={e => setExamDuration(Number(e.target.value))}
+                    />
+                  </div>
+                  {openingMode === "scheduled" && (
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Thời gian bắt đầu</label>
+                      <input
+                        type="datetime-local"
+                        className="exercise-type"
+                        style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
+                        value={examStartTime}
+                        onChange={e => setExamStartTime(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Thời gian bắt đầu</label>
-                <input
-                  type="datetime-local"
-                  className="exercise-type"
-                  style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-                  value={examStartTime}
-                  onChange={e => setExamStartTime(e.target.value)}
-                />
+                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>📝 Cấu trúc đề mẫu</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset("toeic2")}
+                    style={{
+                      padding: "8px 12px",
+                      fontSize: "12px",
+                      background: "#f8fafc",
+                      border: "1.5px solid #cbd5e1",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      color: "#475569",
+                      textAlign: "left",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#F95800";
+                      e.currentTarget.style.color = "#F95800";
+                      e.currentTarget.style.background = "#fff4ec";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#cbd5e1";
+                      e.currentTarget.style.color = "#475569";
+                      e.currentTarget.style.background = "#f8fafc";
+                    }}
+                  >
+                    🎯 TOEIC 2 Kỹ năng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset("toeic4")}
+                    style={{
+                      padding: "8px 12px",
+                      fontSize: "12px",
+                      background: "#f8fafc",
+                      border: "1.5px solid #cbd5e1",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      color: "#475569",
+                      textAlign: "left",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#F95800";
+                      e.currentTarget.style.color = "#F95800";
+                      e.currentTarget.style.background = "#fff4ec";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#cbd5e1";
+                      e.currentTarget.style.color = "#475569";
+                      e.currentTarget.style.background = "#f8fafc";
+                    }}
+                  >
+                    🎯 TOEIC 4 Kỹ năng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset("vstep4")}
+                    style={{
+                      padding: "8px 12px",
+                      fontSize: "12px",
+                      background: "#f8fafc",
+                      border: "1.5px solid #cbd5e1",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      color: "#475569",
+                      textAlign: "left",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#F95800";
+                      e.currentTarget.style.color = "#F95800";
+                      e.currentTarget.style.background = "#fff4ec";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#cbd5e1";
+                      e.currentTarget.style.color = "#475569";
+                      e.currentTarget.style.background = "#f8fafc";
+                    }}
+                  >
+                    🎓 VSTEP 4 Kỹ năng
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>🗺️ Sơ đồ đề thi</h3>
+                
+                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                  <button
+                    type="button"
+                    onClick={expandAllSections}
+                    style={{ flex: 1, padding: "5px 8px", fontSize: "11px", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "600", color: "#475569" }}
+                  >
+                    Mở tất cả
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAllSections}
+                    style={{ flex: 1, padding: "5px 8px", fontSize: "11px", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "600", color: "#475569" }}
+                  >
+                    Thu tất cả
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "250px", overflowY: "auto", paddingRight: "4px" }}>
+                  {examSections.map((sec, idx) => {
+                    const isCollapsed = !!collapsedSections[idx];
+                    const count = sec.questions?.length || 0;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          const el = document.getElementById(`exam-section-card-${idx}`);
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }}
+                        style={{
+                          padding: "8px 12px",
+                          background: isCollapsed ? "#f8fafc" : "#fff3e0",
+                          border: `1.5px solid ${isCollapsed ? "#e2e8f0" : "#F95800"}`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          color: isCollapsed ? "#475569" : "#F95800",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        <span
+                          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "150px" }}
+                          title={stripHtml(cleanSectionTitle(sec.title || `Phần ${idx + 1}`))}
+                        >
+                          Phần {idx + 1}: {stripHtml(cleanSectionTitle(sec.title || `Phần ${idx + 1}`))}
+                        </span>
+                        <span style={{ fontSize: "10px", background: isCollapsed ? "#e2e8f0" : "#F95800", color: isCollapsed ? "#475569" : "#fff", padding: "2px 6px", borderRadius: "10px" }}>
+                          {sec.type === "writing-essay" ? "Tự luận" : `${count} nhóm`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={addExamSection}
+                  style={{
+                    background: "#000080",
+                    color: "#fff",
+                    border: "none",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
+                  }}
+                >
+                  ➕ Thêm Phần Bài Thi
+                </button>
               </div>
             </div>
 
-            <h4 style={{ color: "#000080", borderBottom: "1.5px solid #000080", paddingBottom: 10, marginBottom: 20, fontSize: "16px", fontWeight: 700 }}>📚 Các Phần Bài Thi (Exam Sections)</h4>
+            {/* RIGHT EDITOR PANEL (SECTIONS ACCORDION) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px", width: "100%" }}>
+              {examSections.map((sec, secIdx) => {
+                const isSecCollapsed = !!collapsedSections[secIdx];
+                return (
+                  <div
+                    key={secIdx}
+                    id={`exam-section-card-${secIdx}`}
+                    className="question-block"
+                    style={{
+                      borderLeft: "5px solid #F95800",
+                      position: "relative",
+                      margin: 0,
+                      background: "#ffffff",
+                      borderRadius: "12px",
+                      boxShadow: "0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px 0 rgba(0,0,0,0.03)",
+                      padding: "20px",
+                      border: "1px solid #e2e8f0",
+                      borderLeftWidth: "5px",
+                      borderLeftColor: "#F95800"
+                    }}
+                  >
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      borderBottom: isSecCollapsed ? "none" : "1.5px solid #f1f5f9",
+                      paddingBottom: isSecCollapsed ? "0" : "14px",
+                      marginBottom: isSecCollapsed ? "0" : "16px",
+                      cursor: "pointer"
+                    }}
+                    onClick={() => toggleSectionCollapse(secIdx)}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: 0, marginRight: "12px" }}>
+                        <span style={{ fontSize: "16px", transform: isSecCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s ease", flexShrink: 0 }}>▼</span>
+                        <h4
+                          style={{ fontSize: 16, margin: 0, fontWeight: "700", color: "#000080", wordBreak: "break-word", flex: 1, minWidth: 0 }}
+                          dangerouslySetInnerHTML={{
+                            __html: `Phần ${secIdx + 1}: ${cleanSectionTitle(sec.title || `Phần ${secIdx + 1}`)}`
+                          }}
+                        />
+                        <span style={{ fontSize: "11px", color: "#666", background: "#f1f5f9", padding: "2px 8px", borderRadius: "12px", fontWeight: "600", flexShrink: 0 }}>
+                          {sec.type === "writing-essay" ? "Tự luận" : `${sec.questions?.length || 0} câu hỏi/nhóm`}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }} onClick={e => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          style={{ margin: 0, background: "#fff", border: "1px solid #fee2e2", color: "#ef4444", padding: "4px 8px", borderRadius: "6px" }}
+                          onClick={() => {
+                            if (window.confirm("Bạn có chắc chắn muốn xóa phần thi này?")) {
+                              removeExamSection(secIdx);
+                            }
+                          }}
+                        >
+                          ✕ Xóa phần
+                        </button>
+                      </div>
+                    </div>
 
-            {examSections.map((sec, secIdx) => (
-              <div key={secIdx} className="question-block" style={{ borderLeft: "4px solid #F95800", position: "relative", marginBottom: 24 }}>
-                <div className="question-block-header">
-                  <h4 style={{ fontSize: 16, whiteSpace: "pre-wrap" }}>Phần {secIdx + 1}: {sec.title}</h4>
-                  <button className="remove-btn" onClick={() => removeExamSection(secIdx)}>✕ Xóa phần này</button>
-                </div>
+                    {!isSecCollapsed && (
+                      <div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 15, marginBottom: 15 }}>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Tiêu đề phần</label>
-                    <textarea
+                    <RichTextarea
                       className="exercise-content"
-                      style={{ marginTop: 4, width: "100%", minHeight: "60px", resize: "vertical" }}
+                      style={{ marginTop: 4, width: "100%" }}
                       value={sec.title}
-                      onChange={e => {
+                      onChange={val => {
                         const copy = [...examSections];
-                        copy[secIdx].title = e.target.value;
+                        copy[secIdx].title = val;
                         setExamSections(copy);
                       }}
+                      rows={2}
                     />
                   </div>
                   <div>
@@ -1345,7 +2434,10 @@ const CreateExercise = () => {
                         // Otherwise, update type normally
                         copy[secIdx].type = val;
                         // Reset properties based on type
-                        if (val === "speaking-topic" || val === "writing-essay") {
+                        if (val === "speaking-topic") {
+                          copy[secIdx].questions = [{ prompt: "", imageUrl: "", audioUrl: "", question: "", answers: [], correct: "" }];
+                          copy[secIdx].content = "";
+                        } else if (val === "writing-essay") {
                           copy[secIdx].questions = [];
                           copy[secIdx].content = "";
                         } else {
@@ -1376,7 +2468,7 @@ const CreateExercise = () => {
                       <option value="reading-split">Đọc: Trắc nghiệm đọc hiểu (chia đôi màn hình)</option>
                       <option value="reading-vocab-mcq">Đọc: Nối từ</option>
                       <option value="writing-order-words">Viết: Sắp xếp từ thành câu</option>
-                      <option value="writing-tense-mcq">Viết: Trắc nghiệm xác định thì</option>
+                      <option value="writing-tense-mcq">Viết: Trắc nghiệm</option>
                       <option value="writing-essay">Viết: Viết đoạn văn ngắn</option>
                       <option value="writing-order-sentences">Viết: Sắp xếp câu thành đoạn văn</option>
                     </select>
@@ -1410,14 +2502,39 @@ const CreateExercise = () => {
                       borderLeft: "4px solid #000080",
                       lineHeight: "1.5"
                     }}>
-                      {sec.type === "multiple" || sec.type === "listening-mcq" || sec.type === "writing-tense-mcq" ? (
-                        `Mẫu file Trắc nghiệm MCQ:\n` +
-                        `Câu 1: What is the capital of France?\n` +
-                        `A. London\n` +
-                        `B. Paris\n` +
-                        `C. Rome\n` +
-                        `D. Berlin\n` +
+                      {sec.type === "multiple" || sec.type === "listening-mcq" ? (
+                        `Mẫu file Trắc nghiệm nhóm / Nghe Audio MCQ (Hỗ trợ chia theo nhóm/ngữ cảnh):\n` +
+                        `[Nhóm 1]\n` +
+                        `Ngữ cảnh: Dialogue between a student and a teacher. (tùy chọn)\n` +
+                        `Câu 1: What does the student need help with?\n` +
+                        `A. Homework\n` +
+                        `B. Registration\n` +
+                        `C. Examination\n` +
+                        `D. Dormitory\n` +
+                        `Đáp án đúng: B\n\n` +
+                        `Câu 2: When is the deadline?\n` +
+                        `A. Today\n` +
+                        `B. Tomorrow\n` +
+                        `C. Friday\n` +
+                        `D. Next week\n` +
+                        `Đáp án đúng: C\n\n` +
+                        `[Nhóm 2]\n` +
+                        `Ngữ cảnh: Announcement in the railway station. (tùy chọn)\n` +
+                        `Câu 3: Why is the train delayed?\n` +
+                        `A. Bad weather\n` +
+                        `B. Technical issues\n` +
+                        `C. Late arrival\n` +
+                        `D. Track maintenance\n` +
                         `Đáp án đúng: B`
+                      ) : sec.type === "writing-tense-mcq" ? (
+                        `Mẫu file Trắc nghiệm MCQ:\n` +
+                        `Câu 1: She _______ English for 5 years.\n` +
+                        `A. has studied\n` +
+                        `B. studies\n` +
+                        `C. studied\n` +
+                        `D. is studying\n` +
+                        `Đáp án đúng: A\n` +
+                        `Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hiện tại (tùy chọn)`
                       ) : sec.type === "reading-vocab-mcq" ? (
                         `Mẫu file Bài tập từ vựng nối từ:\n` +
                         `Mỗi dòng là một cặp từ cách nhau bởi dấu gạch ngang (1 bên từ tiếng Anh - 1 bên diễn giải nghĩa cũng bằng tiếng Anh). Ví dụ:\n` +
@@ -1489,7 +2606,7 @@ const CreateExercise = () => {
                 )}
 
                 {/* Section Specific Inputs */}
-                {(sec.type === "listening-mcq" || sec.type === "writing-tense-mcq") && (
+                {sec.type === "listening-mcq" && (
                   <div>
                     {sec.type === "listening-mcq" && (
                       <div style={{ marginBottom: 15 }}>
@@ -1509,14 +2626,16 @@ const CreateExercise = () => {
                     )}
 
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#f8fafc", padding: 16, border: "1px dashed #cbd5e1", borderRadius: 12, marginTop: 15 }}>
-                        <div className="question-block-header">
-                          <h5 style={{ color: "#000080", fontSize: 14, fontWeight: 700 }}>Nhóm câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa nhóm</button>
-                          )}
-                        </div>
-
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         {sec.type === "listening-mcq" && (
                            <div style={{ marginBottom: 12 }}>
                             <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Audio bài nghe cho nhóm này (Tùy chọn)</label>
@@ -1536,11 +2655,11 @@ const CreateExercise = () => {
 
                         <div style={{ marginBottom: 12 }}>
                           <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Ngữ cảnh / Đề dẫn chung cho nhóm (Tùy chọn)</label>
-                          <textarea
+                          <RichTextarea
                             className="exercise-content"
                             placeholder="Nhập phần dẫn hoặc ngữ cảnh chung..."
                             value={q.prompt || ""}
-                            onChange={e => updateQuestionInSection(secIdx, qIdx, "prompt", e.target.value)}
+                            onChange={val => updateQuestionInSection(secIdx, qIdx, "prompt", val)}
                             rows={2}
                           />
                         </div>
@@ -1607,9 +2726,74 @@ const CreateExercise = () => {
                             onClick={() => addSubQuestionToSection(secIdx, qIdx)}
                           >+ Thêm câu hỏi phụ</button>
                         </div>
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 15, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm nhóm câu hỏi</button>
+                  </div>
+                )}
+
+                {/* ── EXAM TENSE MCQ (writing-tense-mcq / Trắc nghiệm) ── */}
+                {sec.type === "writing-tense-mcq" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu hỏi</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Nhập câu hỏi..."
+                          value={q.question || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "question", e.target.value)}
+                        />
+                        {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                          <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
+                            <span style={{ fontWeight: "bold", width: 20 }}>{lbl}.</span>
+                            <input
+                              type="text"
+                              placeholder={`Lựa chọn ${lbl}`}
+                              className="exercise-content"
+                              style={{ margin: 0 }}
+                              value={q.answers[aIdx] || ""}
+                              onChange={e => {
+                                const copyAnswers = [...q.answers];
+                                copyAnswers[aIdx] = e.target.value;
+                                updateQuestionInSection(secIdx, qIdx, "answers", copyAnswers);
+                              }}
+                            />
+                          </div>
+                        ))}
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Đáp án đúng</label>
+                        <select
+                          className="exercise-type"
+                          style={{ width: "100%", marginTop: 4 }}
+                          value={q.correct || "A"}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "correct", e.target.value)}
+                        >
+                          <option value="A">Đáp án đúng: A</option>
+                          <option value="B">Đáp án đúng: B</option>
+                          <option value="C">Đáp án đúng: C</option>
+                          <option value="D">Đáp án đúng: D</option>
+                        </select>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích tại sao chọn đáp án này..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
+                      </QuestionCard>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi trắc nghiệm</button>
                   </div>
                 )}
 
@@ -1617,10 +2801,16 @@ const CreateExercise = () => {
                 {sec.type === "reading-vocab-mcq" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#f8fafc", padding: 16, border: "1px dashed #cbd5e1", borderRadius: 12, marginTop: 15 }}>
-                        <div className="question-block-header">
-                          <h5 style={{ color: "#000080", fontSize: 14, fontWeight: 700 }}>Bảng nối từ vựng</h5>
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginBottom: 5 }}>
                           Danh sách các cặp từ nối (Tiếng Anh - Diễn giải tiếng Anh)
                         </label>
@@ -1709,7 +2899,7 @@ const CreateExercise = () => {
                         >
                           + Thêm cặp từ vựng
                         </button>
-                      </div>
+                      </QuestionCard>
                     ))}
                   </div>
                 )}
@@ -1717,13 +2907,16 @@ const CreateExercise = () => {
                 {sec.type === "listening-image" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
-                        <div className="question-block-header">
-                          <h5>Câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
-                          )}
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Hình ảnh đề bài</label>
                         <input
                           type="file"
@@ -1761,7 +2954,7 @@ const CreateExercise = () => {
                           <option value="C">Đáp án đúng: C</option>
                           <option value="D">Đáp án đúng: D</option>
                         </select>
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi hình ảnh</button>
                   </div>
@@ -1770,13 +2963,16 @@ const CreateExercise = () => {
                 {sec.type === "listening-dictation" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
-                        <div className="question-block-header">
-                          <h5>Câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
-                          )}
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
                         <input
                           type="file"
@@ -1798,7 +2994,7 @@ const CreateExercise = () => {
                           value={q.text || ""}
                           onChange={e => updateQuestionInSection(secIdx, qIdx, "text", e.target.value)}
                         />
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu nghe chép chính tả</button>
                   </div>
@@ -1807,13 +3003,16 @@ const CreateExercise = () => {
                 {sec.type === "listening-fill-in" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
-                        <div className="question-block-header">
-                          <h5>Câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
-                          )}
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
                         <input
                           type="file"
@@ -1828,13 +3027,12 @@ const CreateExercise = () => {
                         {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
 
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đoạn văn (Dùng [1], [2]... để tạo ô trống)</label>
-                        <textarea
+                        <RichTextarea
                           className="exercise-content"
                           rows={3}
                           placeholder="Yesterday, I went to the [1] and bought [2]..."
                           value={q.text || ""}
-                          onChange={e => {
-                            const val = e.target.value;
+                          onChange={val => {
                             const blanksCount = (val.match(/\[\d+\]/g) || []).length;
                             const currentAnswers = q.fillInAnswers || [];
                             const nextAnswers = Array.from({ length: blanksCount }).map((_, i) => currentAnswers[i] || "");
@@ -1870,7 +3068,7 @@ const CreateExercise = () => {
                             ))}
                           </div>
                         )}
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi điền từ</button>
                   </div>
@@ -1879,13 +3077,16 @@ const CreateExercise = () => {
                 {sec.type === "speaking-pronounce" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
-                        <div className="question-block-header">
-                          <h5>Câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
-                          )}
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Từ vựng / Câu mẫu phát âm</label>
                         <input
                           type="text"
@@ -1912,7 +3113,7 @@ const CreateExercise = () => {
                           value={q.explanation || ""}
                           onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
                         />
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu luyện phát âm</button>
                   </div>
@@ -1921,13 +3122,16 @@ const CreateExercise = () => {
                 {sec.type === "writing-order-words" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
-                        <div className="question-block-header">
-                          <h5>Câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
-                          )}
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu gợi ý / Câu gốc (tiếng Việt)</label>
                         <input
                           type="text"
@@ -1944,7 +3148,7 @@ const CreateExercise = () => {
                           value={q.correctSentence || ""}
                           onChange={e => updateQuestionInSection(secIdx, qIdx, "correctSentence", e.target.value)}
                         />
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu sắp xếp từ</button>
                   </div>
@@ -1953,13 +3157,16 @@ const CreateExercise = () => {
                 {sec.type === "writing-order-sentences" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
-                        <div className="question-block-header">
-                          <h5>Câu hỏi {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa</button>
-                          )}
-                        </div>
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <p style={{ fontSize: 12, color: "#888", marginBottom: 5 }}>Nhập các câu của đoạn văn theo thứ tự đúng logic:</p>
                         {q.sentences?.map((sText, sIdx) => (
                           <div key={sIdx} style={{ display: "flex", gap: 10, alignItems: "center", margin: "4px 0" }}>
@@ -2008,7 +3215,7 @@ const CreateExercise = () => {
                             setExamSections(copy);
                           }}
                         >+ Thêm câu tiếp theo</button>
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu sắp xếp câu</button>
                   </div>
@@ -2017,21 +3224,23 @@ const CreateExercise = () => {
                 {sec.type === "reading-split" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
-                      <div key={qIdx} style={{ background: "#f8fafc", padding: 16, border: "1px dashed #cbd5e1", borderRadius: 12, marginTop: 15 }}>
-                        <div className="question-block-header">
-                          <h5 style={{ color: "#000080", fontSize: 14, fontWeight: 700 }}>Nhóm bài đọc {qIdx + 1}</h5>
-                          {sec.questions && sec.questions.length > 1 && (
-                            <button type="button" className="remove-btn" style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => removeQuestionFromSection(secIdx, qIdx)}>Xóa nhóm</button>
-                          )}
-                        </div>
-
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
                         <div style={{ marginBottom: 12 }}>
                           <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>📖 Bài đọc dài (Hiển thị bên trái)</label>
-                          <textarea
+                          <RichTextarea
                             className="exercise-content"
                             rows={5}
                             value={q.text || ""}
-                            onChange={e => updateQuestionInSection(secIdx, qIdx, "text", e.target.value)}
+                            onChange={val => updateQuestionInSection(secIdx, qIdx, "text", val)}
                             placeholder="Nhập bài đọc cho nhóm này..."
                           />
                         </div>
@@ -2090,7 +3299,7 @@ const CreateExercise = () => {
                             onClick={() => addSubQuestionToSection(secIdx, qIdx)}
                           >+ Thêm câu hỏi phụ</button>
                         </div>
-                      </div>
+                      </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 15, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm nhóm bài đọc</button>
                   </div>
@@ -2098,53 +3307,78 @@ const CreateExercise = () => {
 
                 {sec.type === "speaking-topic" && (
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🗣️ Chủ đề / Topic nói</label>
-                    <textarea
-                      className="exercise-content"
-                      rows={3}
-                      value={sec.content || ""}
-                      onChange={e => {
-                        const copy = [...examSections];
-                        copy[secIdx].content = e.target.value;
-                        setExamSections(copy);
-                      }}
-                      placeholder="Nhập yêu cầu bài nói..."
-                    />
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>🖼️ Ảnh gợi ý</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={async e => {
-                        if (e.target.files && e.target.files[0]) {
-                          await handleExamSectionUpload(secIdx, "imageUrl", e.target.files[0]);
-                        }
-                      }}
-                      style={{ display: "block", marginTop: 5 }}
-                    />
-                    {sec.imageUrl && <img src={sec.imageUrl} alt="Exam prompt suggestion" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
+                    {sec.questions?.map((q, qIdx) => (
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài / Topic bằng chữ</label>
+                        <RichTextarea
+                          className="exercise-content"
+                          rows={3}
+                          placeholder="Nhập đề bài nói..."
+                          value={q.prompt || ""}
+                          onChange={val => updateQuestionInSection(secIdx, qIdx, "prompt", val)}
+                        />
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Hình ảnh gợi ý</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamQuestionFileUpload(secIdx, qIdx, "imageUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5 }}
+                        />
+                        {q.imageUrl && <img src={q.imageUrl} alt="Topic hint" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
+
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>🎵 Audio đề bài (Tùy chọn)</label>
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          onChange={async e => {
+                            if (e.target.files && e.target.files[0]) {
+                              await handleExamQuestionFileUpload(secIdx, qIdx, "audioUrl", e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: "block", marginTop: 5 }}
+                        />
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+                      </QuestionCard>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm chủ đề nói</button>
                   </div>
                 )}
 
                 {sec.type === "writing-essay" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>✍️ Đề bài viết luận</label>
-                    <textarea
+                    <RichTextarea
                       className="exercise-content"
                       rows={4}
                       value={sec.content || ""}
-                      onChange={e => {
+                      onChange={val => {
                         const copy = [...examSections];
-                        copy[secIdx].content = e.target.value;
+                        copy[secIdx].content = val;
                         setExamSections(copy);
                       }}
                       placeholder="Nhập đề bài viết luận..."
                     />
                   </div>
                 )}
-              </div>
-            ))}
-
-            <button type="button" className="add-content" onClick={addExamSection}>+ Thêm phần (Add Section)</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : (
           /* ────────────────── DYNAMIC MULTI-QUESTION BUILDERS ────────────────── */
@@ -2248,12 +3482,12 @@ const CreateExercise = () => {
                 {type === "speaking-topic" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài / Topic bằng chữ</label>
-                    <textarea
+                    <RichTextarea
                       className="exercise-content"
                       rows={3}
                       placeholder="Nhập đề bài nói..."
                       value={q.prompt || ""}
-                      onChange={e => updateQuestionItemField(qIndex, "prompt", e.target.value)}
+                      onChange={val => updateQuestionItemField(qIndex, "prompt", val)}
                     />
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Hình ảnh gợi ý</label>
                     <input
@@ -2267,11 +3501,78 @@ const CreateExercise = () => {
                       style={{ display: "block", marginTop: 5 }}
                     />
                     {q.imageUrl && <img src={q.imageUrl} alt="Topic hint" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>🎵 Audio đề bài (Tùy chọn)</label>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleQuestionFileUpload(qIndex, "audioUrl", e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: "block", marginTop: 5 }}
+                    />
+                    {q.audioUrl && <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+                  </div>
+                )}
+
+                {/* ── SIMPLE MCQ (writing-tense-mcq / Trắc nghiệm) ── */}
+                {type === "writing-tense-mcq" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu hỏi</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Nhập câu hỏi..."
+                      value={q.question || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "question", e.target.value)}
+                    />
+                    
+                    {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                      <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
+                        <span style={{ fontWeight: "bold", width: 20 }}>{lbl}.</span>
+                        <input
+                          type="text"
+                          placeholder={`Lựa chọn ${lbl}`}
+                          className="exercise-content"
+                          style={{ margin: 0 }}
+                          value={q.answers[aIdx] || ""}
+                          onChange={e => {
+                            const copyAnswers = [...q.answers];
+                            copyAnswers[aIdx] = e.target.value;
+                            updateQuestionItemField(qIndex, "answers", copyAnswers);
+                          }}
+                        />
+                      </div>
+                    ))}
+                    
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Đáp án đúng</label>
+                    <select
+                      className="exercise-type"
+                      style={{ width: "100%", marginTop: 4 }}
+                      value={q.correct || "A"}
+                      onChange={e => updateQuestionItemField(qIndex, "correct", e.target.value)}
+                    >
+                      <option value="A">Đáp án đúng: A</option>
+                      <option value="B">Đáp án đúng: B</option>
+                      <option value="C">Đáp án đúng: C</option>
+                      <option value="D">Đáp án đúng: D</option>
+                    </select>
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Giải thích tại sao chọn đáp án này..."
+                      value={q.explanation || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "explanation", e.target.value)}
+                    />
                   </div>
                 )}
 
                 {/* ── LISTENING MCQ & TENSE MCQ & VOCAB MCQ ── */}
-                {(type === "listening-mcq" || type === "writing-tense-mcq" || type === "multiple") && (
+                {(type === "listening-mcq" || type === "multiple") && (
                   <div>
                     {type === "listening-mcq" && (
                       <div style={{ marginBottom: 12 }}>
@@ -2297,11 +3598,11 @@ const CreateExercise = () => {
 
                     <div style={{ marginBottom: 12 }}>
                       <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block" }}>Đề bài chung / Đoạn văn / Hướng dẫn (Tùy chọn)</label>
-                      <textarea
+                      <RichTextarea
                         className="exercise-content"
                         placeholder="Nhập đề bài chung, đoạn văn ngữ cảnh..."
                         value={q.prompt || ""}
-                        onChange={e => updateQuestionItemField(qIndex, "prompt", e.target.value)}
+                        onChange={val => updateQuestionItemField(qIndex, "prompt", val)}
                         rows={2}
                       />
                     </div>
@@ -2533,13 +3834,12 @@ const CreateExercise = () => {
                     {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
 
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đoạn văn (Dùng [1], [2]... để tạo ô trống)</label>
-                    <textarea
+                    <RichTextarea
                       className="exercise-content"
                       rows={3}
                       placeholder="Yesterday, I went to the [1] and bought [2]..."
                       value={q.text || ""}
-                      onChange={e => {
-                        const val = e.target.value;
+                      onChange={val => {
                         const blanksCount = (val.match(/\[\d+\]/g) || []).length;
                         const currentAnswers = q.fillInAnswers || [];
                         const nextAnswers = Array.from({ length: blanksCount }).map((_, i) => currentAnswers[i] || "");
@@ -2599,12 +3899,12 @@ const CreateExercise = () => {
                 {type === "writing-essay" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài viết luận</label>
-                    <textarea
+                    <RichTextarea
                       className="exercise-content"
                       rows={4}
                       placeholder="Write a short letter..."
                       value={q.prompt || ""}
-                      onChange={e => updateQuestionItemField(qIndex, "prompt", e.target.value)}
+                      onChange={val => updateQuestionItemField(qIndex, "prompt", val)}
                     />
                   </div>
                 )}
@@ -2658,12 +3958,12 @@ const CreateExercise = () => {
                 {type === "reading-split" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Bài đọc dài (Hiển thị bên trái)</label>
-                    <textarea
+                    <RichTextarea
                       className="exercise-content"
                       rows={5}
                       placeholder="Nhập bài đọc dài..."
                       value={q.text || ""}
-                      onChange={e => updateQuestionItemField(qIndex, "text", e.target.value)}
+                      onChange={val => updateQuestionItemField(qIndex, "text", val)}
                     />
                     
                     <div style={{ marginTop: 10 }}>
@@ -2799,6 +4099,9 @@ const CreateExercise = () => {
                 className="draft-btn"
                 style={{
                   flex: 1,
+                  height: "46px",
+                  fontSize: "15px",
+                  boxSizing: "border-box",
                   padding: "12px",
                   borderRadius: "10px",
                   background: "#fff",
@@ -2806,7 +4109,11 @@ const CreateExercise = () => {
                   color: "#F95800",
                   fontWeight: "600",
                   cursor: "pointer",
-                  transition: "background 0.2s"
+                  margin: 0,
+                  transition: "background 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
                 onClick={() => handleCreate("draft")}
                 onMouseOver={(e) => (e.currentTarget.style.background = "#fff4ec")}
@@ -2819,6 +4126,9 @@ const CreateExercise = () => {
                 className="save-btn"
                 style={{
                   flex: 1,
+                  height: "46px",
+                  fontSize: "15px",
+                  boxSizing: "border-box",
                   padding: "12px",
                   borderRadius: "10px",
                   background: "#F95800",
@@ -2826,9 +4136,12 @@ const CreateExercise = () => {
                   color: "#fff",
                   fontWeight: "600",
                   cursor: "pointer",
-                  marginTop: 0,
+                  margin: 0,
                   boxShadow: "none",
-                  transition: "background 0.2s"
+                  transition: "background 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
                 onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
                 onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
@@ -2851,6 +4164,7 @@ const CreateExercise = () => {
           </div>
         </div>
       )}
+      {renderFormattingToolbar()}
     </div>
   );
 };

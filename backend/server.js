@@ -1273,6 +1273,7 @@ app.get("/students/:maSinhVien", async (req, res) => {
           n.AnhDaiDien,
           s.Lop,
           s.MSSV,
+          s.BietDanh,
           k.TenKhoaHoc
         FROM SINHVIEN s
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -1292,7 +1293,7 @@ app.put("/students/:maSinhVien", async (req, res) => {
     const parsedSV = parseStudentId(req.params.maSinhVien);
     if (parsedSV === null) return res.status(400).json({ message: "Mã sinh viên không hợp lệ" });
 
-    const { HoTen, Email, GioiTinh, NgaySinh, Lop, MSSV } = req.body;
+    const { HoTen, Email, GioiTinh, NgaySinh, Lop, MSSV, BietDanh } = req.body;
     const pool = await poolPromise;
 
     // 1. Lấy MaNguoiDung từ MaSinhVien
@@ -1318,7 +1319,7 @@ app.put("/students/:maSinhVien", async (req, res) => {
         WHERE MaNguoiDung = @maNguoiDung
       `);
 
-    // 3. Cập nhật SINHVIEN (Lop, MSSV)
+    // 3. Cập nhật SINHVIEN (Lop, MSSV, BietDanh)
     let setClauses = [];
     const request = pool.request().input("maSinhVien", parsedSV);
     if (Lop !== undefined) {
@@ -1328,6 +1329,10 @@ app.put("/students/:maSinhVien", async (req, res) => {
     if (MSSV !== undefined) {
       request.input("MSSV", MSSV || null);
       setClauses.push("MSSV = @MSSV");
+    }
+    if (BietDanh !== undefined) {
+      request.input("BietDanh", BietDanh || null);
+      setClauses.push("BietDanh = @BietDanh");
     }
 
     if (setClauses.length > 0) {

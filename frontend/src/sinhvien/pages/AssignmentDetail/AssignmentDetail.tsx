@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 import "./AssignmentDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -380,38 +380,81 @@ function AssignmentDetail() {
 
   // Exam Start/Countdown ticks
   useEffect(() => {
-    if (!isExam || !parsedContent.startTime) return;
-    const interval = setInterval(() => {
-      const startMs = new Date(parsedContent.startTime).getTime();
-      const durationMs = (parsedContent.duration || 50) * 60 * 1000;
-      const endMs = startMs + durationMs;
-      const now = new Date().getTime();
+    if (!isExam) return;
 
-      if (now < startMs) {
-        setTimeToExamStart(Math.ceil((startMs - now) / 1000));
+    if (parsedContent.openingMode === "manual") {
+      const isOpened = !!parsedContent.isOpened;
+      if (!isOpened) {
         setExamStarted(false);
         setExamEnded(false);
-      } else if (now > endMs) {
         setTimeToExamStart(null);
-        setExamStarted(true);
-        setExamEnded(true);
-        setExamSecondsLeft(0);
-        clearInterval(interval);
-      } else {
-        setTimeToExamStart(null);
-        setExamStarted(true);
-        setExamEnded(false);
-        const secLeft = Math.ceil((endMs - now) / 1000);
-        setExamSecondsLeft(secLeft);
-        if (secLeft <= 0) {
+        return;
+      }
+
+      // If opened, we use a student-specific timer saved in localStorage
+      const sessionKey = `exam_start_time_${id}_${maNguoiDung}`;
+      let studentStartMsStr = localStorage.getItem(sessionKey);
+      if (!studentStartMsStr) {
+        studentStartMsStr = String(new Date().getTime());
+        localStorage.setItem(sessionKey, studentStartMsStr);
+      }
+      const studentStartMs = Number(studentStartMsStr);
+      const durationMs = (parsedContent.duration || 50) * 60 * 1000;
+      const endMs = studentStartMs + durationMs;
+
+      setExamStarted(true);
+      setTimeToExamStart(null);
+
+      const interval = setInterval(() => {
+        const now = new Date().getTime();
+        if (now > endMs) {
+          setExamEnded(true);
+          setExamSecondsLeft(0);
           clearInterval(interval);
           handleSubmit();
+        } else {
+          setExamEnded(false);
+          const secLeft = Math.ceil((endMs - now) / 1000);
+          setExamSecondsLeft(secLeft);
         }
-      }
-    }, 1000);
+      }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isExam, parsedContent]);
+      return () => clearInterval(interval);
+    } else {
+      // Scheduled mode
+      if (!parsedContent.startTime) return;
+      const interval = setInterval(() => {
+        const startMs = new Date(parsedContent.startTime).getTime();
+        const durationMs = (parsedContent.duration || 50) * 60 * 1000;
+        const endMs = startMs + durationMs;
+        const now = new Date().getTime();
+
+        if (now < startMs) {
+          setTimeToExamStart(Math.ceil((startMs - now) / 1000));
+          setExamStarted(false);
+          setExamEnded(false);
+        } else if (now > endMs) {
+          setTimeToExamStart(null);
+          setExamStarted(true);
+          setExamEnded(true);
+          setExamSecondsLeft(0);
+          clearInterval(interval);
+        } else {
+          setTimeToExamStart(null);
+          setExamStarted(true);
+          setExamEnded(false);
+          const secLeft = Math.ceil((endMs - now) / 1000);
+          setExamSecondsLeft(secLeft);
+          if (secLeft <= 0) {
+            clearInterval(interval);
+            handleSubmit();
+          }
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isExam, parsedContent, id, maNguoiDung]);
 
   // Ticking exam timer when running
   const formattedExamTime = useMemo(() => {
@@ -854,7 +897,9 @@ function AssignmentDetail() {
     return (
       <div key={qIdx} className={`ad-mcq-question-box ${submitted ? (isCorrect ? "correct-box" : isWrong ? "wrong-box" : "") : ""}`}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-          <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a", fontSize: 16 }}>Question {qIdx + 1}: {q.question}</p>
+          <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a", fontSize: 16 }}>
+            Question {qIdx + 1}: <span dangerouslySetInnerHTML={{ __html: q.question }} />
+          </p>
           {submitted && (
             <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4 }}>
               {isCorrect ? (
@@ -1060,7 +1105,7 @@ function AssignmentDetail() {
             <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <FiVolume2 /> Read the following sentence:
             </p>
-            <p className="ad-speaking-prompt-text">{q.text}</p>
+            <p className="ad-speaking-prompt-text" dangerouslySetInnerHTML={{ __html: q.text }} />
           </div>
 
           {!submitted ? (
@@ -1103,7 +1148,7 @@ function AssignmentDetail() {
             <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <FiFileText /> Topic Prompt:
             </p>
-            <p className="ad-speaking-prompt-text">{q.prompt}</p>
+            <p className="ad-speaking-prompt-text" dangerouslySetInnerHTML={{ __html: q.prompt }} />
           </div>
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
 
@@ -1151,7 +1196,7 @@ function AssignmentDetail() {
             <p className="ad-speaking-prompt-label" style={{ color: "#F95800", display: "flex", alignItems: "center", gap: 6 }}>
               <FiFileText /> Translation hint:
             </p>
-            <p className="ad-speaking-prompt-text" style={{ color: "#334155", fontSize: 15 }}>{q.text}</p>
+            <p className="ad-speaking-prompt-text" style={{ color: "#334155", fontSize: 15 }} dangerouslySetInnerHTML={{ __html: q.text }} />
           </div>
 
           <div className="ad-word-ordered-box">
@@ -1228,7 +1273,7 @@ function AssignmentDetail() {
       return (
         <div>
           <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.prompt}</p>
+            <p style={{ margin: 0, fontWeight: 700 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
           </div>
           {submitted ? (
             <div style={{ background: "#fafafa", padding: 12, border: "1px solid #e0d8cc", borderRadius: 8 }}>
@@ -1255,7 +1300,7 @@ function AssignmentDetail() {
             <h5 className="ad-panel-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <FiBookOpen /> Reading Passage
             </h5>
-            <p className="ad-passage-text">{q.text}</p>
+            <p className="ad-passage-text" dangerouslySetInnerHTML={{ __html: q.text }} />
           </div>
           <div className="ad-reading-questions-panel">
             <h5 className="ad-panel-title" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
@@ -1469,7 +1514,7 @@ function AssignmentDetail() {
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
             <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Translation hint:</p>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
+            <p style={{ margin: 0, fontWeight: 700 }} dangerouslySetInnerHTML={{ __html: q.text }} />
           </div>
 
           <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
@@ -1581,7 +1626,8 @@ function AssignmentDetail() {
         <div className="ad-banner ad-banner-exam">
           <h3>⏱️ Assessment Exam</h3>
           <p className="exam-meta">
-            Duration: <strong>{parsedContent.duration} minutes</strong> · Open time: {new Date(parsedContent.startTime).toLocaleString()}
+            Duration: <strong>{parsedContent.duration} minutes</strong> 
+            {parsedContent.openingMode === "manual" ? " · Hình thức: Đóng/Mở thủ công" : ` · Open time: ${new Date(parsedContent.startTime).toLocaleString()}`}
           </p>
 
           {timeToExamStart !== null && (
@@ -1626,7 +1672,13 @@ function AssignmentDetail() {
       {/* ────────────────── EXAM SOLVER INTERFACE ────────────────── */}
       {isExam ? (
         <div>
-          {timeToExamStart !== null ? (
+          {parsedContent.openingMode === "manual" && !parsedContent.isOpened && !submitted ? (
+            <div className="ad-exam-waiting" style={{ background: "#fffbeb", borderColor: "#fef3c7", color: "#b45309", padding: "30px", borderRadius: "12px", border: "1.5px solid #fef3c7", textAlign: "center", margin: "20px 0" }}>
+              <span style={{ fontSize: "48px", marginBottom: "16px", display: "block" }}>🔒</span>
+              <h3 style={{ color: "#b45309", fontSize: "20px", fontWeight: "700", marginBottom: "8px" }}>Bài kiểm tra hiện đang khóa/đóng</h3>
+              <p style={{ color: "#78350f", margin: 0 }}>Giáo viên chưa mở bài kiểm tra này. Vui lòng đợi giáo viên kích hoạt đề.</p>
+            </div>
+          ) : timeToExamStart !== null ? (
             <div className="ad-exam-waiting">
               <h3>Waiting for the exam to start...</h3>
               <p>The exam interface will automatically display when the countdown reaches 0.</p>
@@ -1645,9 +1697,10 @@ function AssignmentDetail() {
                     key={sIdx}
                     onClick={() => setActiveSectionIdx(sIdx)}
                     className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
-                  >
-                    {sec.title} ({sec.type.replace("-", " ")})
-                  </button>
+                    dangerouslySetInnerHTML={{
+                      __html: `${(sec.title.replace(/^phần\s*\d+\s*[:\-.]?\s*/i, "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()) || `Phần ${sIdx + 1}`} (${sec.type.replace("-", " ")})`
+                    }}
+                  />
                 ))}
               </div>
 
@@ -1657,12 +1710,17 @@ function AssignmentDetail() {
 
                 return (
                   <div key={sIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}>
-                    <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
+                    <h3
+                      style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}
+                      dangerouslySetInnerHTML={{
+                        __html: sec.title.replace(/^phần\s*\d+\s*[:\-.]?\s*/i, "").trim()
+                      }}
+                    />
 
                     {sec.type === "writing-essay" && (
                       <div>
                         <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-                          <p style={{ margin: 0, fontWeight: 700 }}>{sec.content}</p>
+                          <p style={{ margin: 0, fontWeight: 700 }} dangerouslySetInnerHTML={{ __html: sec.content }} />
                         </div>
                         {submitted ? (
                           <div style={{ background: "#fafafa", padding: 12, border: "1px solid #e0d8cc", borderRadius: 8 }}>
@@ -1687,7 +1745,7 @@ function AssignmentDetail() {
                           <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <FiFileText /> Topic Prompt:
                           </p>
-                          <p className="ad-speaking-prompt-text">{sec.content}</p>
+                          <p className="ad-speaking-prompt-text" dangerouslySetInnerHTML={{ __html: sec.content }} />
                         </div>
                         {sec.imageUrl && <img src={`${API}${sec.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
 
@@ -1727,7 +1785,7 @@ function AssignmentDetail() {
                     {sec.type === "reading-split" && (
                       <div className="ad-reading-split-container">
                         <div className="ad-reading-passage-panel">
-                          <p className="ad-passage-text">{sec.content}</p>
+                          <p className="ad-passage-text" dangerouslySetInnerHTML={{ __html: sec.content }} />
                         </div>
                         <div className="ad-reading-questions-panel">
                           {sec.questions?.map((q: any, qIdx: number) => (

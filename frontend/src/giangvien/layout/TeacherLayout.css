@@ -16,3 +16,10 @@
   overflow-y: auto;
   isolation: isolate;
 }
+
+/* Page titles in Teacher role */
+.teacher-content h1,
+.teacher-content h1.cd-title,
+.teacher-content .password-title {
+  color: #F95800 !important;
+}

@@ -1,7 +1,7 @@
 import styles from "./SidebarQTV.module.css"
 import { NavLink, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { FiBook, FiFileText, FiCheckSquare, FiLogOut } from "react-icons/fi"
+import { FiBook, FiFileText, FiCheckSquare, FiLogOut, FiUsers } from "react-icons/fi"
 
 const SidebarQTV = () => {
   const navigate = useNavigate()
@@ -31,6 +31,18 @@ const SidebarQTV = () => {
           <NavLink to="/QTV/khoahoc" className={({ isActive }) => isActive ? styles.active : ""}>
             <FiBook className="menu-icon" />
             <span>Khóa học</span>
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/QTV/quan-ly-de-thi" className={({ isActive }) => isActive ? styles.active : ""}>
+            <FiFileText className="menu-icon" />
+            <span>Quản lý đề thi thử</span>
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/QTV/hocvien" className={({ isActive }) => isActive ? styles.active : ""}>
+            <FiUsers className="menu-icon" />
+            <span>Danh sách Học viên</span>
           </NavLink>
         </li>
         <li>

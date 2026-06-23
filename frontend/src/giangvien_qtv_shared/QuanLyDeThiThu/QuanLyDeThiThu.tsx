@@ -324,6 +324,8 @@ const RichTextEditor = ({
 };
 
 const QuanLyDeThiThu = () => {
+  const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+  const isQTV = user?.VaiTro === "Quản Trị Nội Dung";
 
   // Practice tests lists
   const [tests, setTests] = useState<BaiTest[]>([]);
@@ -1134,7 +1136,16 @@ D. Visiting friends
   // Render WORKSPACE when editingTest is active
   if (editingTest) {
     return (
-      <div className="cd-wrapper anim-fade-in" style={{ paddingBottom: "60px", maxWidth: "100%", overflowX: "hidden" }}>
+      <div
+        className={`cd-wrapper anim-fade-in ${isQTV ? "qtv-compact" : ""}`}
+        style={{
+          paddingBottom: "60px",
+          maxWidth: isQTV ? "1200px" : "100%",
+          margin: isQTV ? "0 auto" : undefined,
+          boxSizing: "border-box",
+          overflowX: "hidden"
+        }}
+      >
         <span className="cd-back" onClick={handleLeaveEditor}>
           <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
           Quay lại danh sách đề thi
@@ -1205,7 +1216,7 @@ D. Visiting friends
                     fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", boxSizing: "border-box"
                   }}
                 >
-                  <FiCheckCircle size={18} /> Gửi duyệt
+                  <FiCheckCircle size={18} /> {isQTV ? "Đăng lên" : "Gửi duyệt"}
                 </button>
                 <button
                   onClick={() => handleSaveWorkspaceChanges("draft")}
@@ -2344,7 +2355,7 @@ D. Visiting friends
         </div>
 
         {/* SUBMISSIONS TABLE */}
-        <div style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "12px", overflow: "hidden" }}>
+        <div className="cd-table-container" style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "12px", overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "#f8fafc", borderBottom: "1px solid #cbd5e1", color: "#475569" }}>
@@ -2450,7 +2461,7 @@ D. Visiting friends
 
   // Otherwise, render normal practice tests list
   return (
-    <div className="cd-wrapper">
+    <div className={`cd-wrapper ${isQTV ? "qtv-compact" : ""}`}>
       {toastMessage && (
         <div style={{
           position: "fixed", top: "20px", right: "20px", background: "#107544", color: "white",
@@ -2469,9 +2480,11 @@ D. Visiting friends
         </div>
       </div>
 
+      <div className="cd-content" style={isQTV ? { padding: "0 32px 32px 32px" } : undefined}>
       {/* TABS BAR */}
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "24px" }}>
         <button
+          className="cd-tab-btn"
           onClick={() => setActiveTab("tests")}
           style={{
             padding: "10px 16px", borderRadius: "8px", border: "none",
@@ -2483,6 +2496,7 @@ D. Visiting friends
           Danh sách đề thi thử
         </button>
         <button
+          className="cd-tab-btn"
           onClick={() => setActiveTab("submissions")}
           style={{
             padding: "10px 16px", borderRadius: "8px", border: "none",
@@ -2636,6 +2650,7 @@ D. Visiting friends
       ) : (
         renderSubmissionsTab()
       )}
+      </div>
 
       {/* PREVIEW TEST QUESTIONS MODAL */}
       {showPreviewModal && previewTest && (

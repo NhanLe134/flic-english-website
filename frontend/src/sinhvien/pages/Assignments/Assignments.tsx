@@ -1,4 +1,4 @@
-﻿import "./Assignments.css";
+import "./Assignments.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -92,7 +92,37 @@ function Assignments() {
 
     const now = new Date().getTime();
 
-    if (isExam && startTime) {
+    if (isExam && parsedContent.openingMode === "manual") {
+      const isOpened = !!parsedContent.isOpened;
+      if (!isOpened) {
+        if (!daNop) {
+          buttonDisabled = true;
+          label = "Chưa mở";
+        }
+        subInfo = "Bài kiểm tra hiện tại đang đóng";
+      } else {
+        if (deadline) {
+          const deadlineMs = new Date(deadline).getTime();
+          if (now > deadlineMs) {
+            if (!daNop) {
+              buttonDisabled = true;
+              label = "Quá hạn";
+            }
+            subInfo = `Hạn chót: ${new Date(deadline).toLocaleString()} (Quá hạn)`;
+          } else {
+            if (!daNop) {
+              label = "Làm bài Thi ⏱️";
+            }
+            subInfo = `Hạn chót: ${new Date(deadline).toLocaleString()}`;
+          }
+        } else {
+          if (!daNop) {
+            label = "Làm bài Thi ⏱️";
+          }
+          subInfo = "Bài kiểm tra đang mở";
+        }
+      }
+    } else if (isExam && startTime) {
       const startMs = new Date(startTime).getTime();
       const endMs = startMs + duration * 60 * 1000;
       if (now < startMs) {

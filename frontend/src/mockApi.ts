@@ -1,4 +1,4 @@
-﻿// Mock API Interceptor for FLIC English Website Frontend
+// Mock API Interceptor for FLIC English Website Frontend
 // Overrides window.fetch to support standalone frontend development
 
 const originalFetch = window.fetch;
@@ -540,7 +540,15 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         Type: bodyObj?.Type || "Writing",
         TrangThai: bodyObj?.TrangThai || "published",
         CreatedDate: bodyObj?.CreatedDate || new Date().toISOString(),
-        MaBuoiHoc: Number(bodyObj?.MaBuoiHoc) || 1
+        MaBuoiHoc: Number(bodyObj?.MaBuoiHoc) || 1,
+        Content: bodyObj?.Content || "",
+        Questions: bodyObj?.Questions || "",
+        AudioUrl: bodyObj?.AudioUrl || "",
+        ShowAnswer: bodyObj?.ShowAnswer || 0,
+        IsFree: bodyObj?.IsFree || 0,
+        IsExam: bodyObj?.IsExam || 0,
+        KyNang: bodyObj?.KyNang || "",
+        DangBai: bodyObj?.DangBai || ""
       };
       db.exercisesList.push(newEx);
 
@@ -567,6 +575,40 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       return new Response(
         JSON.stringify({ success: true, message: "Tạo bài tập thành công" }),
         { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 8.1c TOGGLE OPEN STATE FOR EXAM
+    if (urlStr.includes("/baitap/toggle-open") && method === "POST") {
+      const { MaBaiTap } = bodyObj || {};
+      const ex = db.exercisesList.find(e => e.MaBaiTap === Number(MaBaiTap));
+      if (ex) {
+        try {
+          const content = JSON.parse(ex.Content || "{}");
+          const nextIsOpened = !content.isOpened;
+          content.isOpened = nextIsOpened;
+          ex.Content = JSON.stringify(content);
+
+          // Also update QTV approvals content if it exists
+          const appEx = db.approvals.exercises.find(e => e.MaBaiTap === Number(MaBaiTap));
+          if (appEx) {
+            appEx.Content = ex.Content;
+          }
+
+          return new Response(
+            JSON.stringify({ success: true, isOpened: nextIsOpened, message: "Cập nhật trạng thái đóng/mở thành công" }),
+            { status: 200, headers: { "Content-Type": "application/json" } }
+          );
+        } catch (e) {
+          return new Response(
+            JSON.stringify({ success: false, message: "Lỗi cấu trúc dữ liệu bài tập" }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      }
+      return new Response(
+        JSON.stringify({ success: false, message: "Không tìm thấy bài tập" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -749,9 +791,33 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     }
 
     // 13. GET BAITAP DETAILS
-    if (urlStr.includes("/baitap/") && method === "GET") {
+    if (urlStr.includes("/baitap/") && method === "GET" && !urlStr.includes("/buoihoc/") && !urlStr.includes("/status") && !urlStr.includes("/toggle-open")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]) || 1;
+
+      const exFromDb = db.exercisesList.find(e => e.MaBaiTap === id);
+      if (exFromDb && exFromDb.Content) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: exFromDb.MaBaiTap,
+            TenBai: exFromDb.Title,
+            Title: exFromDb.Title,
+            Type: exFromDb.Type,
+            TrangThai: exFromDb.TrangThai,
+            CreatedDate: exFromDb.CreatedDate,
+            MaBuoiHoc: exFromDb.MaBuoiHoc,
+            Content: exFromDb.Content,
+            Questions: exFromDb.Questions || "[]",
+            AudioUrl: exFromDb.AudioUrl || "",
+            ShowAnswer: exFromDb.ShowAnswer || 0,
+            IsFree: exFromDb.IsFree || 0,
+            IsExam: exFromDb.IsExam || 0,
+            KyNang: exFromDb.KyNang || "",
+            DangBai: exFromDb.DangBai || ""
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
 
       if (id === 10) {
         return new Response(
@@ -1108,7 +1174,13 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       } else if (urlStr.includes("/baihocmo/")) {
         db.approvals.baihocmo.forEach(item => item.TrangThai = newStatus);
       } else if (urlStr.includes("/baitap/")) {
-        db.approvals.exercises.forEach(item => item.TrangThai = newStatus);
+        db.approvals.exercises.forEach(item => {
+          item.TrangThai = newStatus;
+          const ex = db.exercisesList.find(e => e.MaBaiTap === item.MaBaiTap);
+          if (ex) {
+            ex.TrangThai = isApprove ? "published" : "rejected";
+          }
+        });
       } else if (urlStr.includes("/tailieu/")) {
         db.approvals.tailieu.forEach(item => item.TrangThai = newStatus);
       }

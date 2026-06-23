@@ -70,6 +70,7 @@ import EssayDetail from "./sinhvien/pages/EssayDetail/EssayDetail"
 import DanhSachBaiNop from "./giangvien_qtv_shared/DanhSachBaiNop/DanhSachBaiNop"
 import ChamBaiPage from "./giangvien_qtv_shared/ChamBaiPage/ChamBaiPage"
 import BaoCaoKetQuaQTV from "./qtv/pages/BaoCaoKetQuaQTV/BaoCaoKetQuaQTV"
+import StudentListQTV from "./qtv/pages/StudentListQTV/StudentListQTV"
 import BaiGiangSV from "./sinhvien/pages/LessonDetail/BaiGiangSV"
 import StudentLayout from "./sinhvien/layout/StudentLayout"
 import HocThuSV from "./sinhvien/pages/HocThuSV"
@@ -166,8 +167,10 @@ function App() {
           <Route index element={<Navigate to="khoahoc" />} />
           <Route path="khoahoc" element={<CoursePageQTV />} />
           <Route path="baocao" element={<BaoCaoKetQuaQTV />} />
+          <Route path="hocvien" element={<StudentListQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
           <Route path="create-exercise/:id" element={<CreateExercise />} />
+          <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
         </Route>
 
         {/*Sinh viên*/}

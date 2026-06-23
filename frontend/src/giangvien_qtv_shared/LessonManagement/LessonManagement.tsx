@@ -151,7 +151,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
           + Chọn BG có sẵn
         </button>
         <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
-          + Thêm bài học mới
+          + Thêm BG mới
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-﻿import "./QuanLyKhoaHoc.css";
+import "./QuanLyKhoaHoc.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUsers, FiCheckSquare } from "react-icons/fi";
@@ -54,7 +54,7 @@ const QuanLyKhoaHoc = () => {
   return (
     <div className="qlkh-wrapper">
       <div className="qlkh-content-card">
-        <h1>Khóa học của tôi</h1>
+        <h1 style={{ color: "#F95800" }}>Khóa học của tôi</h1>
 
         {/* STATS */}
         <div className="stats">

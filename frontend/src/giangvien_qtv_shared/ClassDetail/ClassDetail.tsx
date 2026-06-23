@@ -18,7 +18,7 @@ const ClassDetail = () => {
   const [studentCount, setStudentCount] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<ActiveTab>("exercises");
   const [exerciseSearch, setExerciseSearch] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "homework" | "exam">("all");
+  const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
   const [exercises, setExercises] = useState<any[]>([]);
 
   useEffect(() => {
@@ -63,15 +63,55 @@ const ClassDetail = () => {
 
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
+  const handleToggleOpen = async (maBaiTap: number) => {
+    try {
+      const res = await fetch("http://localhost:5000/baitap/toggle-open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ MaBaiTap: maBaiTap })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setExercises((prev: any[]) =>
+          prev.map((ex: any) => {
+            if (Number(ex.MaBaiTap) === Number(maBaiTap)) {
+              let parsed: any = {};
+              try {
+                if (ex.Content) parsed = JSON.parse(ex.Content);
+              } catch (e) {}
+              const updatedContent = JSON.stringify({
+                ...parsed,
+                isOpened: data.isOpened
+              });
+              return { ...ex, Content: updatedContent };
+            }
+            return ex;
+          })
+        );
+      } else {
+        alert("Lỗi: " + (data.message || "Không thể cập nhật trạng thái đóng/mở"));
+      }
+    } catch (err) {
+      alert("Lỗi kết nối: " + err);
+    }
+  };
+
   const filteredExercises = exercises.filter((ex: any) => {
     const matchesSearch = ex.Title?.toLowerCase().includes(exerciseSearch.toLowerCase());
-    const isExam = ex.IsExam === 1 || ex.Type === "exam" || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+    let parsedContent: any = {};
+    try {
+      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+    } catch (e) {}
+    const isExam = ex.IsExam === 1 || ex.Type === "exam" || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
 
     if (filterType === "homework") {
-      return matchesSearch && !isExam;
+      return matchesSearch && !isExam && ex.TrangThai !== "practice";
     }
     if (filterType === "exam") {
-      return matchesSearch && isExam;
+      return matchesSearch && isExam && ex.TrangThai !== "practice";
+    }
+    if (filterType === "practice") {
+      return matchesSearch && ex.TrangThai === "practice";
     }
     return matchesSearch;
   });
@@ -195,6 +235,7 @@ const ClassDetail = () => {
               <option value="all">Tất cả bài</option>
               <option value="homework">Bài tập</option>
               <option value="exam">Bài kiểm tra</option>
+              <option value="practice">Bài LTT</option>
             </select>
 
             <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
@@ -237,6 +278,58 @@ const ClassDetail = () => {
                   </div>
 
                   <p>{ex.Type || "Bài tập"}</p>
+                  
+                  {/* Lock/Unlock display for exams */}
+                  {(() => {
+                    let parsedContent: any = {};
+                    try {
+                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                    } catch (e) {}
+                    const isExam = ex.Type === "exam" || ex.IsExam === 1 || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+                    if (!isExam) return null;
+
+                    const isManual = parsedContent.openingMode === "manual";
+                    const isOpened = !!parsedContent.isOpened;
+                    const isApproved = ex.TrangThai === "published";
+
+                    return (
+                      <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <span style={{
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: !isApproved ? "#F95800" : isManual ? (isOpened ? "#16a34a" : "#64748b") : "#b45309",
+                          background: !isApproved ? "#fff3e0" : isManual ? (isOpened ? "#dcfce7" : "#f1f5f9") : "#fef3c7",
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          width: "fit-content"
+                        }}>
+                          {!isApproved ? "⏳ Đang chờ duyệt" : isManual ? (isOpened ? "🔓 Đang mở đề (Thủ công)" : "🔒 Đang đóng đề (Thủ công)") : "🕒 Tự động mở theo lịch"}
+                        </span>
+                        {isApproved && isManual && (
+                          <button
+                            onClick={() => handleToggleOpen(ex.MaBaiTap)}
+                            style={{
+                              background: isOpened ? "#fff" : "#F95800",
+                              color: isOpened ? "#64748b" : "#fff",
+                              border: isOpened ? "1.5px solid #cbd5e1" : "none",
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                              width: "fit-content"
+                            }}
+                          >
+                            {isOpened ? "Khóa đề" : "Mở đề"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <span className="content-date">
                     <FiCalendar size={14} />
                     {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}

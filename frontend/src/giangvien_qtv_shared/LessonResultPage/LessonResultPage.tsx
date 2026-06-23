@@ -1,4 +1,4 @@
-﻿import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo, Fragment } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -567,4 +567,3 @@ const LessonResultPage = () => {
 };
 
 export default LessonResultPage;
-

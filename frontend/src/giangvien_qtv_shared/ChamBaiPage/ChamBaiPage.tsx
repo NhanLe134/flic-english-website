@@ -1,4 +1,4 @@
-﻿import "./ChamBaiPage.css";
+import "./ChamBaiPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 
@@ -254,9 +254,12 @@ const ChamBaiPage = () => {
 
               return (
                 <div key={secIdx} style={{ border: "2px solid #e6caa5", borderRadius: 12, padding: 18, marginBottom: 24, background: "#fffbf5" }}>
-                  <h4 style={{ color: "#F95800", marginTop: 0, borderBottom: "1px solid #e6caa5", paddingBottom: 6, whiteSpace: "pre-wrap" }}>
-                    Phần {secIdx + 1}: {sec.title} ({sec.type.replace("-", " ").toUpperCase()})
-                  </h4>
+                  <h4
+                    style={{ color: "#F95800", marginTop: 0, borderBottom: "1px solid #e6caa5", paddingBottom: 6, whiteSpace: "pre-wrap" }}
+                    dangerouslySetInnerHTML={{
+                      __html: `Phần ${secIdx + 1}: ${sec.title.replace(/^phần\s*\d+\s*[:\-.]?\s*/i, "").trim()} (${sec.type.replace("-", " ").toUpperCase()})`
+                    }}
+                  />
 
                   {sec.type === "listening-mcq" && (
                     <div>
@@ -278,7 +281,7 @@ const ChamBaiPage = () => {
                             )}
                             {q.prompt && (
                               <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
-                                <p style={{ margin: 0, fontWeight: 600 }}>{q.prompt}</p>
+                                <p style={{ margin: 0, fontWeight: 600 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
                               </div>
                             )}
                             {hasSubQ ? (
@@ -299,7 +302,7 @@ const ChamBaiPage = () => {
                     <div>
                       {exerciseSection?.content && (
                         <div style={{ background: "#fff", border: "1px solid #e0d4c3", borderRadius: 8, padding: 12, marginBottom: 15, maxHeight: 150, overflowY: "auto" }}>
-                          <p style={{ margin: 0, fontStyle: "italic", whiteSpace: "pre-line", fontSize: 13 }}>{exerciseSection.content}</p>
+                          <p style={{ margin: 0, fontStyle: "italic", whiteSpace: "pre-line", fontSize: 13 }} dangerouslySetInnerHTML={{ __html: exerciseSection.content }} />
                         </div>
                       )}
                       {exerciseSection?.questions.map((q: any, qIdx: number) => {
@@ -308,7 +311,7 @@ const ChamBaiPage = () => {
                           <div key={qIdx} style={{ marginBottom: 20, borderBottom: "1px dashed #e0d8cc", paddingBottom: 15 }}>
                             {q.prompt && (
                               <div style={{ background: "#fff", border: "1px solid #e0d4c3", borderRadius: 8, padding: 12, marginBottom: 15, maxHeight: 150, overflowY: "auto" }}>
-                                <p style={{ margin: 0, fontStyle: "italic", whiteSpace: "pre-line", fontSize: 13 }}>{q.prompt}</p>
+                                <p style={{ margin: 0, fontStyle: "italic", whiteSpace: "pre-line", fontSize: 13 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
                               </div>
                             )}
                             {hasSubQ ? (
@@ -328,7 +331,7 @@ const ChamBaiPage = () => {
                   {sec.type === "writing-essay" && (
                     <div>
                       <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{exerciseSection?.content}</p>
+                        <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }} dangerouslySetInnerHTML={{ __html: exerciseSection?.content }} />
                       </div>
                       <div style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 12, borderRadius: 8 }}>
                         <p style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: 14 }}>{sec.essayText || <em style={{ color: "#aaa" }}>Học viên bỏ trống bài viết</em>}</p>
@@ -343,9 +346,29 @@ const ChamBaiPage = () => {
 
                   {sec.type === "speaking-topic" && (
                     <div>
-                      <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{exerciseSection?.content}</p>
-                      </div>
+                      {exerciseSection?.questions && exerciseSection.questions.length > 0 ? (
+                        exerciseSection.questions.map((q: any, qIdx: number) => (
+                          <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginBottom: 12 }}>
+                            <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
+                              <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>
+                                Chủ đề {qIdx + 1}: <span dangerouslySetInnerHTML={{ __html: q.prompt }} />
+                              </p>
+                            </div>
+                            {q.audioUrl && (
+                              <div style={{ marginBottom: 10 }}>
+                                <audio src={`${API}${q.audioUrl}`} controls style={{ width: "100%" }} />
+                              </div>
+                            )}
+                            {q.imageUrl && (
+                              <img src={`${API}${q.imageUrl}`} alt="Topic hint" style={{ maxHeight: 120, display: "block", marginBottom: 8 }} />
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
+                          <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{exerciseSection?.content}</p>
+                        </div>
+                      )}
                       <div style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 12, borderRadius: 8 }}>
                         <p style={{ margin: "0 0 8px", fontWeight: "600", fontSize: 13 }}>🎤 File ghi âm giọng nói học sinh:</p>
                         {sec.audioUrl ? (
@@ -378,7 +401,7 @@ const ChamBaiPage = () => {
                             )}
                             {q.prompt && (
                               <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
-                                <p style={{ margin: 0, fontWeight: 600 }}>{q.prompt}</p>
+                                <p style={{ margin: 0, fontWeight: 600 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
                               </div>
                             )}
                             {hasSubQ ? (
@@ -454,7 +477,9 @@ const ChamBaiPage = () => {
                               </div>
                               <div style={{ background: "#f0fdf4", padding: 10, borderRadius: 8, border: "1px solid #86efac" }}>
                                 <p style={{ margin: 0, fontSize: 12, color: "#166534" }}>Văn bản đúng:</p>
-                                <p style={{ margin: 0, fontWeight: 700, color: "green" }}>"{qSub.correctText || q.text}"</p>
+                                <p style={{ margin: 0, fontWeight: 700, color: "green" }}>
+                                  "<span dangerouslySetInnerHTML={{ __html: qSub.correctText || q.text || "" }} />"
+                                </p>
                               </div>
                             </div>
                             <p style={{ margin: "8px 0 0", fontSize: 13, color: "green", fontWeight: 700 }}> Máy chấm tự động: {qSub.score}/10</p>
@@ -498,7 +523,9 @@ const ChamBaiPage = () => {
                           <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
                             <div style={{ background: "#eff6ff", padding: 10, borderRadius: 8, marginBottom: 10 }}>
                               <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8" }}>Đoạn văn mẫu:</p>
-                              <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a" }}>"{qSub.correctText || q.text}"</p>
+                              <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a" }}>
+                                "<span dangerouslySetInnerHTML={{ __html: qSub.correctText || q.text || "" }} />"
+                              </p>
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                               <div style={{ background: "#fcf9f2", padding: 10, borderRadius: 8, border: "1px solid #f0e8dc" }}>
@@ -523,7 +550,9 @@ const ChamBaiPage = () => {
                         return (
                           <div key={qIdx} style={{ background: "#fff", padding: 12, border: "1px solid #e0d4c3", borderRadius: 8, marginTop: 10 }}>
                             <div style={{ background: "#fcf9f2", padding: 10, borderRadius: 8, marginBottom: 10 }}>
-                              <p style={{ margin: 0, fontSize: 12, color: "#666" }}>Đề bài: {q.text}</p>
+                              <p style={{ margin: 0, fontSize: 12, color: "#666" }}>
+                                Đề bài: <span dangerouslySetInnerHTML={{ __html: q.text }} />
+                              </p>
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                               <div style={{ background: qSub.score === 10 ? "#f0fdf4" : "#fef2f2", padding: 10, borderRadius: 8, border: `1px solid ${qSub.score === 10 ? "#86efac" : "#fecaca"}` }}>
