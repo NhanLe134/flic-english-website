@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styles from "./DuyetBaiQTV.module.css";
 import { FiSearch } from "react-icons/fi";
 
@@ -424,18 +424,30 @@ export default function DuyetBaiQTV() {
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                className={styles.approveBtn}
-                onClick={() => handleApproveStatus(selectedItem, "Đã duyệt")}
-              >
-                Phê duyệt
-              </button>
-              <button
-                className={styles.rejectBtn}
-                onClick={() => handleApproveStatus(selectedItem, "Từ chối")}
-              >
-                Từ chối
-              </button>
+              {getStatusLabel(selectedItem.TrangThai) === "Đã duyệt" ? (
+                <span className={`${styles.statusBadge} ${styles.statusApproved}`} style={{ fontSize: "14px", padding: "8px 16px" }}>
+                  Đã duyệt
+                </span>
+              ) : getStatusLabel(selectedItem.TrangThai) === "Từ chối" ? (
+                <span className={`${styles.statusBadge} ${styles.statusRejected}`} style={{ fontSize: "14px", padding: "8px 16px" }}>
+                  Từ chối
+                </span>
+              ) : (
+                <>
+                  <button
+                    className={styles.approveBtn}
+                    onClick={() => handleApproveStatus(selectedItem, "Đã duyệt")}
+                  >
+                    Phê duyệt
+                  </button>
+                  <button
+                    className={styles.rejectBtn}
+                    onClick={() => handleApproveStatus(selectedItem, "Từ chối")}
+                  >
+                    Từ chối
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

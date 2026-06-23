@@ -1,4 +1,4 @@
-﻿import "./MyCourses.css";
+import "./MyCourses.css";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -152,39 +152,33 @@ function MyCourses() {
       alert("Vui lòng nhập mã sinh viên.");
       return;
     }
-    if (!enrollClassId) {
-      alert("Vui lòng chọn lớp học.");
+    if (!enrollClassId.trim()) {
+      alert("Vui lòng nhập mã lớp học.");
       return;
     }
 
     try {
-      const res = await fetch(`${API}/qtv/lophoc/${enrollClassId.trim()}/ghidanh`, {
+      const res = await fetch(`${API}/student/lophoc/request-ghidanh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ MaSinhVien: enrollStudentId })
+        body: JSON.stringify({ 
+          MaLopHoc: enrollClassId.trim(), 
+          MaSinhVien: enrollStudentId 
+        })
       });
       const data = await res.json();
 
-      alert(data.message || "Đã thực hiện ghi danh.");
-
-      if (data.message && data.message.includes("thành công")) {
-        // Refresh classes list
-        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-        const userId = user.MaNguoiDung;
-        if (userId) {
-          setLoading(true);
-          const r = await fetch(`${API}/student/my-classes/${userId}`);
-          const classData = await r.json();
-          setClasses(Array.isArray(classData) ? classData : []);
-          setLoading(false);
-        }
+      if (res.ok) {
+        alert(data.message || "Gửi yêu cầu ghi danh thành công! Vui lòng chờ Quản trị viên phê duyệt.");
         setShowEnrollModal(false);
+      } else {
+        alert(data.message || "Lỗi khi gửi yêu cầu ghi danh.");
       }
     } catch (err) {
-      console.error("Error enrolling student:", err);
-      alert("Lỗi hệ thống khi ghi danh vào lớp.");
+      console.error("Error sending enrollment request:", err);
+      alert("Lỗi hệ thống khi gửi yêu cầu ghi danh.");
     }
   };
 
