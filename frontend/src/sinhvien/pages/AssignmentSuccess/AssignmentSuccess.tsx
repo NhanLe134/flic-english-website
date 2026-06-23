@@ -1,5 +1,6 @@
 import "./AssignmentSuccess.css";
 import { useNavigate, useLocation } from "react-router-dom";
+import { FiCheck } from "react-icons/fi";
 
 function AssignmentSuccess() {
   const navigate = useNavigate()
@@ -17,17 +18,14 @@ function AssignmentSuccess() {
   return (
         <div className="as-content">
 
-          <div className="as-header">
-            <h1 className="as-page-title">BÀI TẬP</h1>
-            <button className="as-back" onClick={() => navigate(-1)}>← Quay lại</button>
-          </div>
-
           <p className="as-assignment-name">{title}</p>
 
           <div className="as-card">
             {/* Icon */}
             <div className="as-icon-wrap">
-              <div className="as-icon">✓</div>
+              <div className="as-icon">
+                <FiCheck strokeWidth={3} />
+              </div>
             </div>
 
             <h2 className="as-success-title">NỘP BÀI THÀNH CÔNG</h2>
@@ -71,9 +69,9 @@ function AssignmentSuccess() {
             <div className="as-actions">
               <button
                 className="as-btn-outline"
-                onClick={() => navigate("/assignments")}
+                onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}
               >
-                Về danh sách bài tập
+                Quay lại danh sách bài tập
               </button>
               <button
                 className="as-btn-fill"

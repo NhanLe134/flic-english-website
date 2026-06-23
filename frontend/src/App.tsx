@@ -62,7 +62,6 @@ import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
 import Progress from "./sinhvien/pages/Progress/Progress"
 import Settings from "./sinhvien/pages/Settings/Settings"
-import Assignments from "./sinhvien/pages/Assignments/Assignments"
 import AssignmentDetail from "./sinhvien/pages/AssignmentDetail/AssignmentDetail"
 import AssignmentSuccess from "./sinhvien/pages/AssignmentSuccess/AssignmentSuccess"
 import QuizDetail from "./sinhvien/pages/QuizDetail/QuizDetail"
@@ -186,7 +185,6 @@ function App() {
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/assignments" element={<Assignments />} />
           <Route path="/baitap/:id" element={<AssignmentDetail />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />

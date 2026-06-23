@@ -1,9 +1,19 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 import "./AssignmentDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { FiVolume2, FiEdit3, FiBookOpen, FiFileText, FiCheckCircle, FiXCircle, FiClock, FiMic, FiAward, FiList } from "react-icons/fi";
 import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
+
+import { CauHoiTracNghiem } from "./CauHoiTracNghiem";
+import { NgheChonAnh } from "./NgheChonAnh";
+import { NgheChepChinhTa } from "./NgheChepChinhTa";
+import { NgheDienTu } from "./NgheDienTu";
+import { PhatAmTuDong } from "./PhatAmTuDong";
+import { NoiTheoChuDe } from "./NoiTheoChuDe";
+import { SapXepTu } from "./SapXepTu";
+import { SapXepCau } from "./SapXepCau";
+import { VietDoanVan } from "./VietDoanVan";
 
 const API = "http://localhost:5000";
 
@@ -845,61 +855,18 @@ function AssignmentDetail() {
 
   // RENDER QUESTION SUB-COMPONENTS
   const renderMCQBlock = (q: any, qIdx: number, subIdxPrefix?: string) => {
-    const key = subIdxPrefix !== undefined ? `${subIdxPrefix}_${qIdx}` : qIdx;
-    const chosen = mcAnswers[key] || "";
-    const optionsList = q.options || (q.answers?.map((t: string, i: number) => ({ label: ["A", "B", "C", "D"][i], text: t })) || []);
-    const isCorrect = submitted && chosen === q.correct;
-    const isWrong = submitted && chosen && chosen !== q.correct;
-
     return (
-      <div key={qIdx} className={`ad-mcq-question-box ${submitted ? (isCorrect ? "correct-box" : isWrong ? "wrong-box" : "") : ""}`}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-          <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a", fontSize: 16 }}>Question {qIdx + 1}: {q.question}</p>
-          {submitted && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4 }}>
-              {isCorrect ? (
-                <>
-                  <FiCheckCircle /> Correct
-                </>
-              ) : (
-                <>
-                  <FiXCircle /> Incorrect
-                </>
-              )}
-            </span>
-          )}
-        </div>
-        <div className="ad-mcq-list">
-          {optionsList.map((opt: any) => {
-            const isChosen = chosen === opt.label;
-            const isCorrectOpt = submitted && opt.label === q.correct;
-            const isWrongOpt = submitted && isChosen && opt.label !== q.correct;
-
-            return (
-              <label key={opt.label} className={`ad-mcq-option ${isCorrectOpt ? "correct" : isWrongOpt ? "wrong" : isChosen ? "chosen" : ""}`}>
-                <input
-                  type="radio"
-                  disabled={submitted || isOverdue || (isExam && !examStarted)}
-                  checked={isChosen}
-                  onChange={() => {
-                    setMcAnswers(prev => ({ ...prev, [key]: opt.label }));
-                  }}
-                />
-                <span className="ad-mcq-label-text">{opt.label}.</span>
-                {opt.text && opt.text.trim().toUpperCase() !== opt.label && (
-                  <span>{opt.text}</span>
-                )}
-              </label>
-            );
-          })}
-        </div>
-        {submitted && (
-          <div className="ad-explanation">
-            <p className="correct-ans">Correct answer: {q.correct}</p>
-            {q.explanation && <p className="exp-text">Explanation: {q.explanation}</p>}
-          </div>
-        )}
-      </div>
+      <CauHoiTracNghiem
+        q={q}
+        qIdx={qIdx}
+        subIdxPrefix={subIdxPrefix}
+        mcAnswers={mcAnswers}
+        setMcAnswers={setMcAnswers}
+        submitted={submitted}
+        isOverdue={isOverdue}
+        isExam={isExam}
+        examStarted={examStarted}
+      />
     );
   };
 
@@ -921,330 +888,130 @@ function AssignmentDetail() {
     }
 
     if (questionType === "listening-image") {
-      const img = q.imageUrl || exercise?.FileDinhKem || "";
-      const aud = q.audioUrl || exercise?.AudioUrl || "";
       return (
-        <div className="ad-listening-image-block">
-          {aud && !hideAudio && (
-            <div className="ad-listening-image-audio-wrapper">
-              <CustomAudioPlayer src={`${API}${aud}`} className="ad-listening-image-audio" />
-            </div>
-          )}
-          <div className="ad-listening-image-body">
-            <div className="ad-listening-image-left">
-              {img && <img src={`${API}${img}`} alt="Listening image visual" className="ad-listening-image-img" />}
-            </div>
-            <div className="ad-listening-image-right">
-              {renderMCQBlock({ question: "", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx)}
-            </div>
-          </div>
-        </div>
+        <NgheChonAnh
+          q={q}
+          qIdx={qIdx}
+          exercise={exercise}
+          hideAudio={hideAudio}
+          mcAnswers={mcAnswers}
+          setMcAnswers={setMcAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          isExam={isExam}
+          examStarted={examStarted}
+          API={API}
+        />
       );
     }
 
     if (questionType === "listening-dictation") {
-      const aud = q.audioUrl || exercise?.AudioUrl || "";
-      const studentAns = essayAnswers[qIdx] || "";
-      const score = submitted ? calcDictationScore(studentAns, q.text || "") : 0;
-      const isPerfect = score === 10;
-
       return (
-        <div className="ad-dictation-container">
-          {aud && (
-            <div className="ad-dictation-audio-wrapper">
-              <CustomAudioPlayer src={`${API}${aud}`} className="ad-dictation-audio" />
-            </div>
-          )}
-          <div className="ad-dictation-prompt">
-            <FiEdit3 className="ad-dictation-icon" style={{ verticalAlign: 'middle' }} />
-            <span>Listen and write exactly what you hear:</span>
-          </div>
-
-          {submitted ? (
-            <div className="ad-dictation-result-wrapper">
-              <div className="ad-dictation-score-row">
-                <div className={`ad-dictation-score-badge ${isPerfect ? "perfect" : "partial"}`}>
-                  {isPerfect ? "✓ Perfect Match" : `Score: ${score}/10`}
-                </div>
-              </div>
-              <div className="ad-dictation-comparison-grid">
-                <div className="ad-dictation-comparison-box student">
-                  <span className="ad-dictation-box-title">Your response:</span>
-                  <p className="ad-dictation-box-text">"{studentAns || "(Empty)"}"</p>
-                </div>
-                <div className="ad-dictation-comparison-box correct">
-                  <span className="ad-dictation-box-title">Correct answer:</span>
-                  <p className="ad-dictation-box-text">"{q.text}"</p>
-                </div>
-              </div>
-              {q.explanation && (
-                <div className="ad-dictation-explanation">
-                  <strong>Explanation:</strong> {q.explanation}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="ad-dictation-input-wrapper">
-              <textarea
-                className="ad-dictation-textarea"
-                disabled={isOverdue || (isExam && !examStarted)}
-                value={studentAns}
-                onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-                placeholder="Type what you hear..."
-                rows={3}
-              />
-            </div>
-          )}
-        </div>
+        <NgheChepChinhTa
+          q={q}
+          qIdx={qIdx}
+          exercise={exercise}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          isExam={isExam}
+          examStarted={examStarted}
+          API={API}
+        />
       );
     }
 
     if (questionType === "listening-fill-in") {
-      const parts = (q.text || "").split(/(\[\d+\])/g);
-      const correctAnswers = q.fillInAnswers || [];
-
       return (
-        <div>
-          {q.audioUrl && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${q.audioUrl}`} /></div>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b", display: "flex", alignItems: "center", gap: 6 }}>
-            <FiVolume2 /> Listen and fill in the blanks:
-          </p>
-          <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
-            {parts.map((part: string, idx: number) => {
-              const match = part.match(/^\[(\d+)\]$/);
-              if (match) {
-                const blankIdx = parseInt(match[1]) - 1;
-                const stdAns = (fillInAnswers[qIdx] || [])[blankIdx] || "";
-                const correctAns = correctAnswers[blankIdx] || "";
-                const isCorrect = submitted && stdAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
-
-                return (
-                  <span key={idx} style={{ display: "inline-block", margin: "0 4px" }}>
-                    <input
-                      type="text"
-                      disabled={submitted || isOverdue}
-                      value={stdAns}
-                      onChange={e => {
-                        const copyAnswers = [...(fillInAnswers[qIdx] || [])];
-                        copyAnswers[blankIdx] = e.target.value;
-                        setFillInAnswers(prev => ({ ...prev, [qIdx]: copyAnswers }));
-                      }}
-                      style={{
-                        padding: "2px 6px", borderRadius: 4, textAlign: "center", width: 100,
-                        border: `1.5px solid ${submitted ? (isCorrect ? "#22c55e" : "#ef4444") : "#e87722"}`,
-                        background: submitted ? (isCorrect ? "#f0fdf4" : "#fef2f2") : "#fff"
-                      }}
-                    />
-                    {submitted && !isCorrect && <span style={{ fontSize: 11, color: "#16a34a", display: "block" }}>({correctAns})</span>}
-                  </span>
-                );
-              }
-              return <span key={idx}>{part}</span>;
-            })}
-          </div>
-        </div>
+        <NgheDienTu
+          q={q}
+          qIdx={qIdx}
+          fillInAnswers={fillInAnswers}
+          setFillInAnswers={setFillInAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          API={API}
+        />
       );
     }
 
     if (questionType === "speaking-pronounce") {
-      const speechScore = speechScores[qIdx];
-      const spokenText = spokenTexts[qIdx] || "";
-      const isList = isListeningSTT[qIdx];
-
       return (
-        <div>
-          <span className="ad-speaking-level-badge">
-            <FiAward style={{ marginRight: 4, verticalAlign: "middle" }} /> Level: {q.level}
-          </span>
-          <div className="ad-speaking-prompt-box">
-            <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <FiVolume2 /> Read the following sentence:
-            </p>
-            <p className="ad-speaking-prompt-text">{q.text}</p>
-          </div>
-
-          {!submitted ? (
-            <div className="ad-recorder-dashed-box">
-              {isList ? (
-                <div>
-                  <span className="ad-recording-status">🔴 Listening...</span>
-                  <button onClick={() => stopSpeechRecognition(qIdx)} className="ad-record-stop-btn">Stop</button>
-                </div>
-              ) : (
-                <button disabled={isOverdue} onClick={() => startSpeechRecognition(qIdx, q.text)} className="ad-record-start-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <FiMic /> Click to speak
-                </button>
-              )}
-              {spokenText && (
-                <div className="ad-stt-text-output">
-                  <p>Heard: "{spokenText}"</p>
-                  <p className="ad-stt-score-display" style={{ color: (speechScore || 0) >= 7 ? "#22c55e" : "#f97316" }}>Score: {speechScore}/10</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0 }}><strong>Your reading:</strong> "{spokenText || "—"}"</p>
-              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Auto-grading score:</strong> {speechScore}/10</p>
-            </div>
-          )}
-        </div>
+        <PhatAmTuDong
+          q={q}
+          qIdx={qIdx}
+          speechScores={speechScores}
+          setSpeechScores={setSpeechScores}
+          spokenTexts={spokenTexts}
+          setSpokenTexts={setSpokenTexts}
+          isListeningSTT={isListeningSTT}
+          setIsListeningSTT={setIsListeningSTT}
+          submitted={submitted}
+          isOverdue={isOverdue}
+        />
       );
     }
 
     if (questionType === "speaking-topic") {
-      const url = recordedUrls[qIdx];
-      const isRec = isRecording[qIdx];
-      const secs = recordSeconds[qIdx] || 0;
-
       return (
-        <div>
-          <div className="ad-speaking-prompt-box">
-            <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <FiFileText /> Topic Prompt:
-            </p>
-            <p className="ad-speaking-prompt-text">{q.prompt}</p>
-          </div>
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-
-          {!submitted ? (
-            <div className="ad-recorder-dashed-box">
-              {isRec ? (
-                <div className="ad-recording-status">
-                  <span>🔴 Recording: {secs}s </span>
-                  <button onClick={() => stopRecording(qIdx)} className="ad-record-stop-btn">Stop</button>
-                </div>
-              ) : (
-                <button disabled={isOverdue} onClick={() => startRecording(qIdx)} className="ad-record-start-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <FiMic /> Start Recording
-                </button>
-              )}
-              {url && (
-                <div style={{ marginTop: 15 }}>
-                  <CustomAudioPlayer src={url} />
-                </div>
-              )}
-            </div>
-          ) : (
-            url && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${url}`} /></div>
-          )}
-
-          <textarea
-            className="ad-q-input"
-            disabled={submitted || isOverdue}
-            value={essayAnswers[qIdx] || ""}
-            onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-            placeholder="Prepare your speech notes here..."
-            rows={2}
-          />
-        </div>
+        <NoiTheoChuDe
+          q={q}
+          qIdx={qIdx}
+          recordedUrls={recordedUrls}
+          setRecordedUrls={setRecordedUrls}
+          recordedBlobs={recordedBlobs}
+          setRecordedBlobs={setRecordedBlobs}
+          isRecording={isRecording}
+          setIsRecording={setIsRecording}
+          recordSeconds={recordSeconds}
+          setRecordSeconds={setRecordSeconds}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          API={API}
+        />
       );
     }
 
     if (questionType === "writing-order-words") {
-      const sWords = shuffledWords[qIdx] || [];
-      const oWords = orderedWords[qIdx] || [];
-
       return (
-        <div>
-          <div className="ad-speaking-prompt-box" style={{ backgroundColor: "#fff8f5" }}>
-            <p className="ad-speaking-prompt-label" style={{ color: "#F95800", display: "flex", alignItems: "center", gap: 6 }}>
-              <FiFileText /> Translation hint:
-            </p>
-            <p className="ad-speaking-prompt-text" style={{ color: "#334155", fontSize: 15 }}>{q.text}</p>
-          </div>
-
-          <div className="ad-word-ordered-box">
-            {oWords.map((w, i) => (
-              <span key={i} onClick={() => {
-                if (submitted) return;
-                setOrderedWords(prev => ({ ...prev, [qIdx]: oWords.filter((_, idx) => idx !== i) }));
-                setShuffledWords(prev => ({ ...prev, [qIdx]: [...sWords, w] }));
-              }} className="ad-word-badge">{w} ✕</span>
-            ))}
-          </div>
-
-          {!submitted && (
-            <div className="ad-word-shuffled-box">
-              {sWords.map((w, i) => (
-                <span key={i} onClick={() => {
-                  setOrderedWords(prev => ({ ...prev, [qIdx]: [...oWords, w] }));
-                  setShuffledWords(prev => ({ ...prev, [qIdx]: sWords.filter((_, idx) => idx !== i) }));
-                }} className="ad-word-badge-inactive">{w}</span>
-              ))}
-            </div>
-          )}
-
-          {submitted && (
-            <div className="ad-explanation" style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p className="correct-ans">Correct sentence: {q.correctSentence}</p>
-            </div>
-          )}
-        </div>
+        <SapXepTu
+          q={q}
+          qIdx={qIdx}
+          shuffledWords={shuffledWords}
+          setShuffledWords={setShuffledWords}
+          orderedWords={orderedWords}
+          setOrderedWords={setOrderedWords}
+          submitted={submitted}
+        />
       );
     }
 
     if (questionType === "writing-order-sentences") {
-      const sSents = shuffledSentences[qIdx] || [];
-      const correctSentences = q.sentences || [];
-
       return (
-        <div>
-          <p style={{ fontSize: 13, color: "#666" }}>Rearrange the sentences to form a logical paragraph:</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {sSents.map((sent, idx) => {
-              const isCorrect = submitted && sent === correctSentences[idx];
-              return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
-                  <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
-                  <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
-                  {!submitted && (
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <button disabled={idx === 0 || isOverdue} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx - 1];
-                        copy[idx - 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [qIdx]: copy }));
-                      }}>▲</button>
-                      <button disabled={idx === sSents.length - 1 || isOverdue} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx + 1];
-                        copy[idx + 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [qIdx]: copy }));
-                      }}>▼</button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <SapXepCau
+          q={q}
+          qIdx={qIdx}
+          shuffledSentences={shuffledSentences}
+          setShuffledSentences={setShuffledSentences}
+          submitted={submitted}
+          isOverdue={isOverdue}
+        />
       );
     }
 
     if (questionType === "writing-essay") {
       return (
-        <div>
-          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.prompt}</p>
-          </div>
-          {submitted ? (
-            <div style={{ background: "#fafafa", padding: 12, border: "1px solid #e0d8cc", borderRadius: 8 }}>
-              <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{essayAnswers[qIdx] || ""}</p>
-            </div>
-          ) : (
-            <textarea
-              className="ad-q-input"
-              disabled={isOverdue}
-              value={essayAnswers[qIdx] || ""}
-              onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-              placeholder="Write your essay here..."
-              rows={6}
-            />
-          )}
-        </div>
+        <VietDoanVan
+          q={q}
+          qIdx={qIdx}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+        />
       );
     }
 
@@ -1262,7 +1029,18 @@ function AssignmentDetail() {
               <FiList /> Questions
             </h5>
             {q.subQuestions?.map((sub: any, subIdx: number) => (
-              renderMCQBlock(sub, subIdx, `${qIdx}`)
+              <CauHoiTracNghiem
+                key={subIdx}
+                q={sub}
+                qIdx={subIdx}
+                subIdxPrefix={`${qIdx}`}
+                mcAnswers={mcAnswers}
+                setMcAnswers={setMcAnswers}
+                submitted={submitted}
+                isOverdue={isOverdue}
+                isExam={isExam}
+                examStarted={examStarted}
+              />
             ))}
           </div>
         </div>
@@ -1290,253 +1068,107 @@ function AssignmentDetail() {
     }
 
     if (secType === "listening-image") {
-      const img = q.imageUrl || "";
-      const aud = q.audioUrl || "";
       return (
-        <div key={qIdx} className="ad-listening-image-block" style={{ marginBottom: 20 }}>
-          {aud && (
-            <div className="ad-listening-image-audio-wrapper">
-              <CustomAudioPlayer src={`${API}${aud}`} className="ad-listening-image-audio" />
-            </div>
-          )}
-          <div className="ad-listening-image-body">
-            <div className="ad-listening-image-left">
-              {img && <img src={`${API}${img}`} alt="Listening image visual" className="ad-listening-image-img" />}
-            </div>
-            <div className="ad-listening-image-right">
-              {renderMCQBlock({ question: "", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx, `${sIdx}`)}
-            </div>
-          </div>
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <NgheChonAnh
+            q={q}
+            qIdx={qIdx}
+            subIdxPrefix={`${sIdx}`}
+            exercise={exercise}
+            hideAudio={false}
+            mcAnswers={mcAnswers}
+            setMcAnswers={setMcAnswers}
+            submitted={submitted}
+            isOverdue={false}
+            isExam={true}
+            examStarted={examStarted}
+            API={API}
+          />
         </div>
       );
     }
 
     if (secType === "listening-dictation") {
-      const aud = q.audioUrl || "";
-      const studentAns = essayAnswers[key] || "";
-      const score = submitted ? calcDictationScore(studentAns, q.text || "") : 0;
-      const isPerfect = score === 10;
-
       return (
-        <div key={qIdx} className="ad-dictation-container" style={{ marginBottom: 20 }}>
-          {aud && (
-            <div className="ad-dictation-audio-wrapper">
-              <CustomAudioPlayer src={`${API}${aud}`} className="ad-dictation-audio" />
-            </div>
-          )}
-          <div className="ad-dictation-prompt">
-            <FiEdit3 className="ad-dictation-icon" style={{ verticalAlign: 'middle' }} />
-            <span>Listen and write exactly what you hear:</span>
-          </div>
-
-          {submitted ? (
-            <div className="ad-dictation-result-wrapper">
-              <div className="ad-dictation-score-row">
-                <div className={`ad-dictation-score-badge ${isPerfect ? "perfect" : "partial"}`}>
-                  {isPerfect ? "✓ Perfect Match" : `Score: ${score}/10`}
-                </div>
-              </div>
-              <div className="ad-dictation-comparison-grid">
-                <div className="ad-dictation-comparison-box student">
-                  <span className="ad-dictation-box-title">Your response:</span>
-                  <p className="ad-dictation-box-text">"{studentAns || "(Empty)"}"</p>
-                </div>
-                <div className="ad-dictation-comparison-box correct">
-                  <span className="ad-dictation-box-title">Correct answer:</span>
-                  <p className="ad-dictation-box-text">"{q.text}"</p>
-                </div>
-              </div>
-              {q.explanation && (
-                <div className="ad-dictation-explanation">
-                  <strong>Explanation:</strong> {q.explanation}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="ad-dictation-input-wrapper">
-              <textarea
-                className="ad-dictation-textarea"
-                disabled={!examStarted || examEnded}
-                value={studentAns}
-                onChange={e => setEssayAnswers(prev => ({ ...prev, [key]: e.target.value }))}
-                placeholder="Type what you hear..."
-                rows={3}
-              />
-            </div>
-          )}
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <NgheChepChinhTa
+            q={q}
+            qIdx={key}
+            exercise={exercise}
+            essayAnswers={essayAnswers}
+            setEssayAnswers={setEssayAnswers}
+            submitted={submitted}
+            isOverdue={!examStarted || examEnded}
+            isExam={true}
+            examStarted={examStarted}
+            API={API}
+          />
         </div>
       );
     }
 
     if (secType === "listening-fill-in") {
-      const parts = (q.text || "").split(/(\[\d+\])/g);
-      const correctAnswers = q.fillInAnswers || [];
-
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${q.audioUrl}`} /></div>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b", display: "flex", alignItems: "center", gap: 6 }}>
-            <FiVolume2 /> Listen and fill in the blanks:
-          </p>
-          <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
-            {parts.map((part: string, idx: number) => {
-              const match = part.match(/^\[(\d+)\]$/);
-              if (match) {
-                const blankIdx = parseInt(match[1]) - 1;
-                const stdAns = (fillInAnswers[key] || [])[blankIdx] || "";
-                const correctAns = correctAnswers[blankIdx] || "";
-                const isCorrect = submitted && stdAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
-
-                return (
-                  <span key={idx} style={{ display: "inline-block", margin: "0 4px" }}>
-                    <input
-                      type="text"
-                      disabled={submitted || !examStarted || examEnded}
-                      value={stdAns}
-                      onChange={e => {
-                        const copyAnswers = [...(fillInAnswers[key] || [])];
-                        copyAnswers[blankIdx] = e.target.value;
-                        setFillInAnswers(prev => ({ ...prev, [key]: copyAnswers }));
-                      }}
-                      style={{
-                        padding: "2px 6px", borderRadius: 4, textAlign: "center", width: 100,
-                        border: `1.5px solid ${submitted ? (isCorrect ? "#22c55e" : "#ef4444") : "#e87722"}`,
-                        background: submitted ? (isCorrect ? "#f0fdf4" : "#fef2f2") : "#fff"
-                      }}
-                    />
-                    {submitted && !isCorrect && <span style={{ fontSize: 11, color: "#16a34a", display: "block" }}>({correctAns})</span>}
-                  </span>
-                );
-              }
-              return <span key={idx}>{part}</span>;
-            })}
-          </div>
+          <NgheDienTu
+            q={q}
+            qIdx={key}
+            fillInAnswers={fillInAnswers}
+            setFillInAnswers={setFillInAnswers}
+            submitted={submitted}
+            isOverdue={!examStarted || examEnded}
+            API={API}
+          />
         </div>
       );
     }
 
     if (secType === "speaking-pronounce") {
-      const speechScore = speechScores[key];
-      const spokenText = spokenTexts[key] || "";
-      const isList = isListeningSTT[key];
-
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 10 }}>
-            <FiAward /> Level: {q.level}
-          </span>
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-              <FiVolume2 /> Read the following sentence:
-            </p>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e3a8a" }}>{q.text}</p>
-          </div>
-
-          {!submitted ? (
-            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center" }}>
-              {isList ? (
-                <div>
-                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Listening...</span>
-                  <button onClick={() => stopSpeechRecognition(key)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Stop</button>
-                </div>
-              ) : (
-                <button disabled={!examStarted || examEnded} onClick={() => startSpeechRecognition(key, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <FiMic /> Click to speak
-                </button>
-              )}
-              {spokenText && (
-                <div style={{ marginTop: 15, textAlign: "left" }}>
-                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Heard: "{spokenText}"</p>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Score: {speechScore}/10</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0 }}><strong>Your reading:</strong> "{spokenText || "—"}"</p>
-              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Auto-grading score:</strong> {speechScore}/10</p>
-            </div>
-          )}
+          <PhatAmTuDong
+            q={q}
+            qIdx={key}
+            speechScores={speechScores}
+            setSpeechScores={setSpeechScores}
+            spokenTexts={spokenTexts}
+            setSpokenTexts={setSpokenTexts}
+            isListeningSTT={isListeningSTT}
+            setIsListeningSTT={setIsListeningSTT}
+            submitted={submitted}
+            isOverdue={!examStarted || examEnded}
+          />
         </div>
       );
     }
 
     if (secType === "writing-order-words") {
-      const sWords = shuffledWords[key] || [];
-      const oWords = orderedWords[key] || [];
-
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Translation hint:</p>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
-          </div>
-
-          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
-            {oWords.map((w, i) => (
-              <span key={i} onClick={() => {
-                if (submitted) return;
-                setOrderedWords(prev => ({ ...prev, [key]: oWords.filter((_, idx) => idx !== i) }));
-                setShuffledWords(prev => ({ ...prev, [key]: [...sWords, w] }));
-              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
-            ))}
-          </div>
-
-          {!submitted && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {sWords.map((w, i) => (
-                <span key={i} onClick={() => {
-                  setOrderedWords(prev => ({ ...prev, [key]: [...oWords, w] }));
-                  setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== i) }));
-                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
-              ))}
-            </div>
-          )}
-
-          {submitted && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Correct sentence: {q.correctSentence}</p>
-            </div>
-          )}
+          <SapXepTu
+            q={q}
+            qIdx={key}
+            shuffledWords={shuffledWords}
+            setShuffledWords={setShuffledWords}
+            orderedWords={orderedWords}
+            setOrderedWords={setOrderedWords}
+            submitted={submitted}
+          />
         </div>
       );
     }
 
     if (secType === "writing-order-sentences") {
-      const sSents = shuffledSentences[key] || [];
-      const correctSentences = q.sentences || [];
-
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 13, color: "#666" }}>Rearrange the sentences to form a logical paragraph:</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {sSents.map((sent, idx) => {
-              return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
-                  <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
-                  <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
-                  {!submitted && (
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <button disabled={idx === 0 || !examStarted || examEnded} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx - 1];
-                        copy[idx - 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [key]: copy }));
-                      }}>▲</button>
-                      <button disabled={idx === sSents.length - 1 || !examStarted || examEnded} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx + 1];
-                        copy[idx + 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [key]: copy }));
-                      }}>▼</button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <SapXepCau
+            q={q}
+            qIdx={key}
+            shuffledSentences={shuffledSentences}
+            setShuffledSentences={setShuffledSentences}
+            submitted={submitted}
+            isOverdue={!examStarted || examEnded}
+          />
         </div>
       );
     }
