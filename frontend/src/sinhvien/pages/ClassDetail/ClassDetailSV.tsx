@@ -477,21 +477,6 @@ export default function ClassDetailSV() {
                                         </table>
                                       </div>
 
-                                      <div className="ld2-video-wrap">
-                                        <div className="ld2-video-player">
-                                          <div className="ld2-play-icon" onClick={() => {
-                                            if (detail.activeBaiHoc) {
-                                              navigate(`/bai-giangSV/${detail.activeBaiHoc}`, {
-                                                state: { fromStudent: true, maLopHoc: info.MaLopHoc, maBuoiHoc: lesson.MaLesson }
-                                              });
-                                            }
-                                          }}>▶</div>
-                                          <p className="ld2-video-label">{lesson.TenLesson || "Bài học"}</p>
-                                          <p className="ld2-video-sub">
-                                            {detail.activeBaiHoc ? "Bấm phát video hoặc Xem để bắt đầu học" : "Chọn bài giảng từ danh sách trên để xem"}
-                                          </p>
-                                        </div>
-                                      </div>
                                     </>
                                   ) : (
                                     <div className="ld2-empty-state">

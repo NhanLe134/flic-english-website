@@ -1374,7 +1374,7 @@ function AssignmentDetail() {
 
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
+          {q.audioUrl && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${q.audioUrl}`} /></div>}
           <p style={{ fontWeight: 600, color: "#5a3e2b", display: "flex", alignItems: "center", gap: 6 }}>
             <FiVolume2 /> Listen and fill in the blanks:
           </p>
@@ -1705,12 +1705,12 @@ function AssignmentDetail() {
                             )}
                             {recordedUrls[sIdx] && (
                               <div style={{ marginTop: 15 }}>
-                                <audio src={recordedUrls[sIdx]} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%" }} />
+                                <CustomAudioPlayer src={recordedUrls[sIdx]} />
                               </div>
                             )}
                           </div>
                         ) : (
-                          recordedUrls[sIdx] && <div style={{ marginBottom: 12 }}><audio src={`${API}${recordedUrls[sIdx]}`} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%" }} /></div>
+                          recordedUrls[sIdx] && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${recordedUrls[sIdx]}`} /></div>
                         )}
 
                         <textarea
@@ -1722,7 +1722,7 @@ function AssignmentDetail() {
                           rows={2}
                         />
                       </div>
-                    )}
+                     )}
 
                     {sec.type === "reading-split" && (
                       <div className="ad-reading-split-container">
@@ -1741,7 +1741,7 @@ function AssignmentDetail() {
                       <div>
                         {sec.audioUrl && (
                           <div style={{ marginBottom: 20 }}>
-                            <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} style={{ width: "100%" }}><source src={`${API}${sec.audioUrl}`} /></audio>
+                            <CustomAudioPlayer src={`${API}${sec.audioUrl}`} />
                           </div>
                         )}
                         {sec.questions?.map((q: any, qIdx: number) => (
@@ -1761,9 +1761,7 @@ function AssignmentDetail() {
           {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq" && (
             <div className="ad-audio-card">
               <h4>🎵 General audio file for the entire assignment:</h4>
-              <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} className="ad-audio-player">
-                <source src={`${API}${exercise.AudioUrl}`} />
-              </audio>
+              <CustomAudioPlayer src={`${API}${exercise.AudioUrl}`} className="ad-audio-player" />
             </div>
           )}
 

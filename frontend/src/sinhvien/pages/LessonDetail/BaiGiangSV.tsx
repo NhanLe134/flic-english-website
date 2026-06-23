@@ -70,6 +70,28 @@ function BaiGiangSV() {
   const isVideo = fileUrl && /\.(mp4|webm|ogg)$/i.test(fileUrl);
   const isAudio = fileUrl && /\.(mp3|wav|m4a)$/i.test(fileUrl);
 
+  const getYoutubeEmbedUrl = (url: string) => {
+    if (!url) return "";
+    let videoId = "";
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
+
+  const getGoogleDriveEmbedUrl = (url: string) => {
+    if (!url) return "";
+    if (url.includes("drive.google.com")) {
+      return url.replace(/\/view(\?.*)?$/, "/preview");
+    }
+    return url;
+  };
+
+  const isYoutube = fileUrl && (fileUrl.includes("youtube.com") || fileUrl.includes("youtu.be"));
+  const isGoogleDrive = fileUrl && fileUrl.includes("drive.google.com");
+
   return (
         <div className="ld2-content">
 
@@ -168,8 +190,34 @@ function BaiGiangSV() {
             </div>
           )}
 
+          {isYoutube && (
+            <div style={{ marginBottom: 20, position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: 12 }}>
+              <iframe
+                src={getYoutubeEmbedUrl(fileUrl)}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 12, border: "none" }}
+              />
+            </div>
+          )}
+
+          {isGoogleDrive && (
+            <div style={{ marginBottom: 20 }}>
+              <iframe
+                src={getGoogleDriveEmbedUrl(fileUrl)}
+                width="100%"
+                height="500px"
+                title="Google Drive player"
+                style={{ borderRadius: 12, border: "1px solid #e0d4c3" }}
+                allow="autoplay"
+              />
+            </div>
+          )}
+
           {/* FILE KHÁC */}
-          {fileUrl && !isImage && !isPdf && !isVideo && !isAudio && (
+          {fileUrl && !isImage && !isPdf && !isVideo && !isAudio && !isYoutube && !isGoogleDrive && (
             <div style={{ marginBottom: 20 }}>
               <a href={fileUrl} target="_blank" rel="noreferrer"
                 style={{ color: "#e87722", fontWeight: 600 }}>

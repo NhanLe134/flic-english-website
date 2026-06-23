@@ -39,6 +39,7 @@ import DoiMatKhau from "./giangvien_qtv_shared/DoiMatKhau/DoiMatKhau"
 import HocThu from "./home_pages/HocThu/HocThu"
 import TestThuPublic from "./home_pages/TestThu/TestThuPublic"
 import DraftsManagement from "./giangvien/pages/DraftsManagement/DraftsManagement"
+import QuanLyDeThiThu from "./giangvien_qtv_shared/QuanLyDeThiThu/QuanLyDeThiThu"
 
 /* ADMIN */
 import AdminLayout from "./admin/layout/AdminLayout"
@@ -111,6 +112,7 @@ function App() {
         {/* GIẢNG VIÊN - bọc trong TeacherLayout */}
         <Route element={<TeacherLayout />}>
           <Route path="/quan-ly-khoa-hoc" element={<QuanLyKhoaHoc />} />
+          <Route path="/quan-ly-de-thi" element={<QuanLyDeThiThu />} />
           <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
           <Route path="/lessonlist/:id" element={<LessonList />} />
           <Route path="/class/:id" element={<ClassDetail />} />
