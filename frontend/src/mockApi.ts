@@ -1,4 +1,4 @@
-﻿// Mock API Interceptor for FLIC English Website Frontend
+// Mock API Interceptor for FLIC English Website Frontend
 // Overrides window.fetch to support standalone frontend development
 
 const originalFetch = window.fetch;
@@ -217,6 +217,30 @@ const db = {
       Type: "multiple",
       TrangThai: "published",
       CreatedDate: "2026-03-05T11:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 14,
+      Title: "Bài tập 5: Nghe và chọn theo ảnh (Listening & Image Choice)",
+      Type: "listening-image",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T12:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 15,
+      Title: "Bài tập 6: Nghe chép chính tả (Dictation)",
+      Type: "listening-dictation",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T13:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 16,
+      Title: "Bài tập 7: Nghe điền từ vào đoạn văn (Cloze Test)",
+      Type: "listening-fill-in",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T14:00:00.000Z",
       MaBuoiHoc: 1
     }
   ]
@@ -898,6 +922,80 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
             Vocabulary: "cancel, picnic, final exam",
             TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
             ThuTu: 4
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (id === 14) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 14,
+            TenBai: "Bài tập 5: Nghe và chọn theo ảnh (Listening & Image Choice)",
+            Title: "Bài tập 5: Nghe và chọn theo ảnh (Listening & Image Choice)",
+            Type: "listening-image",
+            LoaiBaiHoc: "Trắc nghiệm nghe",
+            Content: "Nghe băng và quan sát hình ảnh để chọn phương án mô tả chính xác nhất.",
+            Questions: JSON.stringify([
+              {
+                question: "Câu hỏi 1: Quan sát hình ảnh và chọn đáp án mô tả đúng nhất:",
+                correct: "A",
+                answers: ["A", "B", "C", "D"],
+                imageUrl: "/uploads/image(5).png",
+                audioUrl: "/uploads/toeic-office.mp3",
+                explanation: "Phương án A là đáp án chính xác nhất mô tả hành động trong hình ảnh thứ nhất."
+              },
+              {
+                question: "Câu hỏi 2: Quan sát hình ảnh và chọn đáp án mô tả đúng nhất:",
+                correct: "C",
+                answers: ["A", "B", "C", "D"],
+                imageUrl: "/uploads/image(6).png",
+                audioUrl: "/uploads/toeic-office.mp3",
+                explanation: "Phương án C là đáp án chính xác nhất mô tả hành động trong hình ảnh thứ hai."
+              }
+            ]),
+            AudioUrl: "/uploads/toeic-office.mp3",
+            FileDinhKem: "/uploads/image(5).png",
+            Vocabulary: "observe, visual, description",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 5
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 15) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 15,
+            TenBai: "Bài tập 6: Nghe chép chính tả (Dictation)",
+            Title: "Bài tập 6: Nghe chép chính tả (Dictation)",
+            Type: "listening-dictation",
+            LoaiBaiHoc: "Chép chính tả",
+            Content: "The presentation will begin in the conference room in ten minutes.",
+            Questions: "",
+            AudioUrl: "/uploads/toeic-office.mp3",
+            Vocabulary: "presentation, conference room",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 6
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 16) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 16,
+            TenBai: "Bài tập 7: Nghe điền từ vào đoạn văn (Cloze Test)",
+            Title: "Bài tập 7: Nghe điền từ vào đoạn văn (Cloze Test)",
+            Type: "listening-fill-in",
+            LoaiBaiHoc: "Điền khuyết",
+            Content: "Yesterday, I went to the [1] and bought some [2] to eat. The weather was so nice, so I sat on a [3] in the [4] to enjoy my afternoon snack.",
+            Questions: "supermarket | apples | bench | park",
+            AudioUrl: "/uploads/toeic-office.mp3",
+            Vocabulary: "supermarket, bench, park, snack",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 7
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
