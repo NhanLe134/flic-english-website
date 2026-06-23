@@ -241,7 +241,7 @@ function BaiGiangSV() {
           <nav className="ld2-breadcrumb">
             {maLopHoc ? (
               <>
-                <span className="ld2-link" onClick={() => navigate(`/course-detail/${maLopHoc}`)}>
+                <span className="ld2-link" onClick={() => navigate(`/class-detail/${maLopHoc}`)}>
                   Lớp học
                 </span>
                 <span>›</span>

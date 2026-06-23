@@ -20,6 +20,16 @@ function pctColor(pct: number) {
   return "#f97316";
 }
 
+function mapTypeToSkillName(type?: string) {
+  if (!type) return "";
+  const t = type.toLowerCase().trim();
+  if (t === "listening" || t === "l" || t === "nghe") return "Listening";
+  if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
+  if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
+  if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
 function MyCourses() {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const userId = user.MaNguoiDung;
@@ -421,7 +431,7 @@ function MyCourses() {
                                                 {isTest ? "Bài kiểm tra" : "Bài tập thực hành"}
                                               </span>
                                               <p className="mc-item-title">{ex.Title}</p>
-                                              <span className="mc-item-meta">{ex.Type || "Practice"}</span>
+                                              <span className="mc-item-meta">{mapTypeToSkillName(ex.Type) || "Practice"}</span>
                                             </div>
                                           </Link>
                                         );

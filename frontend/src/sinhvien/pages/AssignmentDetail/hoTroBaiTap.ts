@@ -1,10 +1,9 @@
 /**
- * Helper functions for student assignment scoring and question parsing
+ * Các hàm trợ giúp để tính điểm bài tập của sinh viên và phân tích cú pháp câu hỏi
  */
 
 /**
- * Calculates a score from 0 to 10 for a dictation (listening-dictation) response
- * based on the percentage of matching words.
+ * Tính điểm từ 0 đến 10 cho bài nghe chép chính tả (listening-dictation) dựa trên tỷ lệ từ trùng khớp.
  */
 export const calcDictationScore = (studentText: string, correctText: string): number => {
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
@@ -27,8 +26,7 @@ export const calcDictationScore = (studentText: string, correctText: string): nu
 };
 
 /**
- * Calculates a pronunciation score from 0 to 10 for speaking exercises
- * based on whether expected keywords are present in the recognized spoken text.
+ * Tính điểm phát âm từ 0 đến 10 cho bài tập nói (speaking) dựa trên việc các từ khóa mong đợi có xuất hiện trong phần nói được nhận diện hay không.
  */
 export const calcSpeechScore = (spoken: string, expected: string): number => {
   if (!expected) return 0;
@@ -42,13 +40,13 @@ export const calcSpeechScore = (spoken: string, expected: string): number => {
 };
 
 /**
- * Parses the raw questions field from database into structured objects
+ * Phân tích trường câu hỏi thô từ cơ sở dữ liệu thành các đối tượng cấu trúc
  */
 export const parseQuestionsList = (exercise: any, isExam: boolean, parsedContent: any): any[] => {
-  if (isExam) return []; // Exams use sections, not a linear questions list
+  if (isExam) return []; // Bài thi sử dụng các phần (sections), không phải danh sách câu hỏi tuyến tính
   
   if (!exercise?.Questions) {
-    // Fallback for single question templates
+    // Phương án dự phòng cho các mẫu câu hỏi đơn lẻ
     return [{
       question: exercise?.Title || "",
       audioUrl: exercise?.AudioUrl || "",
@@ -65,10 +63,10 @@ export const parseQuestionsList = (exercise: any, isExam: boolean, parsedContent
       return JSON.parse(exercise.Questions);
     }
   } catch (e) {
-    // Continue if JSON parsing fails
+    // Tiếp tục nếu phân tích cú pháp JSON thất bại
   }
 
-  // Fallback to old custom text formatting
+  // Phương án dự phòng cho định dạng văn bản tùy chỉnh cũ
   const exType = (exercise?.Type || "").toLowerCase();
   const isMultiple = ["multiple", "quiz", "trắc nghiệm", "reading-vocab-mcq", "writing-tense-mcq"].includes(exType);
   const isListening = ["listening", "nghe", "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in"].includes(exType);
@@ -102,7 +100,7 @@ export const parseQuestionsList = (exercise: any, isExam: boolean, parsedContent
     }
   }
 
-  // Single item fallback based on type
+  // Phương án dự phòng cho một mục dựa trên loại bài tập
   if (exType === "listening-dictation") {
     return [{ audioUrl: exercise.AudioUrl, text: exercise.Content }];
   }

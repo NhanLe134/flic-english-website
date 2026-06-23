@@ -4,7 +4,7 @@ import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudi
 
 interface NgheDienTuProps {
   q: any;
-  qIdx: number;
+  qIdx: string | number;
   fillInAnswers: Record<string | number, string[]>;
   setFillInAnswers: React.Dispatch<React.SetStateAction<Record<string | number, string[]>>>;
   submitted: boolean;
