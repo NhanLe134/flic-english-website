@@ -57,7 +57,6 @@ import CourseRegister from "./sinhvien/pages/CourseRegister/CourseRegister"
 import Profile from "./sinhvien/pages/Profile/Profile"
 import ProfilePage from "./sinhvien/pages/ProfilePage/ProfilePage"
 import MyCourses from "./sinhvien/pages/MyCourses/MyCourses"
-import CourseDetailSV from "./sinhvien/pages/CourseDetail/CourseDetailSV"
 import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
 import Progress from "./sinhvien/pages/Progress/Progress"
@@ -179,7 +178,6 @@ function App() {
           <Route path="/profile-info" element={<ProfilePage />} />
           <Route path="/MyCourses" element={<MyCourses />} />
           <Route path="/class-detail/:id" element={<ClassDetailSV />} />
-          <Route path="/course-detail/:id" element={<CourseDetailSV />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           

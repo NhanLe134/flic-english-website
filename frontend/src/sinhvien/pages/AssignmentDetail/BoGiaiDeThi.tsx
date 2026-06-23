@@ -9,7 +9,7 @@ import { PhatAmTuDong } from "./PhatAmTuDong";
 import { SapXepTu } from "./SapXepTu";
 import { SapXepCau } from "./SapXepCau";
 
-interface ExamSolverProps {
+interface BoGiaiDeThiProps {
   exercise: any;
   parsedContent: any;
   submitted: boolean;
@@ -43,7 +43,7 @@ interface ExamSolverProps {
   API: string;
 }
 
-export const ExamSolver: React.FC<ExamSolverProps> = ({
+export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   exercise,
   parsedContent,
   submitted,
@@ -237,7 +237,7 @@ export const ExamSolver: React.FC<ExamSolverProps> = ({
 
   return (
     <div>
-      {/* Section Tabs */}
+      {/* Các tab phân phần thi */}
       <div className="ad-exam-tabs">
         {parsedContent.sections?.map((sec: any, sIdx: number) => (
           <button
@@ -250,7 +250,7 @@ export const ExamSolver: React.FC<ExamSolverProps> = ({
         ))}
       </div>
 
-      {/* Render Selected Section */}
+      {/* Hiển thị phần thi được chọn */}
       {parsedContent.sections?.map((sec: any, sIdx: number) => {
         if (activeSectionIdx !== sIdx) return null;
 

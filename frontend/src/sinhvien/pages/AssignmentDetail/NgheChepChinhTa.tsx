@@ -4,7 +4,7 @@ import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudi
 
 interface NgheChepChinhTaProps {
   q: any;
-  qIdx: number;
+  qIdx: string | number;
   exercise: any;
   essayAnswers: Record<string | number, string>;
   setEssayAnswers: React.Dispatch<React.SetStateAction<Record<string | number, string>>>;

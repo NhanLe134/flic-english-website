@@ -2,7 +2,7 @@ import React from "react";
 
 interface SapXepCauProps {
   q: any;
-  qIdx: number;
+  qIdx: string | number;
   shuffledSentences: Record<string | number, string[]>;
   setShuffledSentences: React.Dispatch<React.SetStateAction<Record<string | number, string[]>>>;
   submitted: boolean;
@@ -10,7 +10,7 @@ interface SapXepCauProps {
 }
 
 export const SapXepCau: React.FC<SapXepCauProps> = ({
-  q,
+  q: _q,
   qIdx,
   shuffledSentences,
   setShuffledSentences,
@@ -18,7 +18,6 @@ export const SapXepCau: React.FC<SapXepCauProps> = ({
   isOverdue,
 }) => {
   const sSents = shuffledSentences[qIdx] || [];
-  const correctSentences = q.sentences || [];
 
   return (
     <div>

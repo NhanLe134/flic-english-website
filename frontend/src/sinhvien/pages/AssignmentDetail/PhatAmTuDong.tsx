@@ -3,7 +3,7 @@ import { FiAward, FiVolume2, FiMic } from "react-icons/fi";
 
 interface PhatAmTuDongProps {
   q: any;
-  qIdx: number;
+  qIdx: string | number;
   speechScores: Record<string | number, number | null>;
   setSpeechScores: React.Dispatch<React.SetStateAction<Record<string | number, number | null>>>;
   spokenTexts: Record<string | number, string>;

@@ -31,7 +31,8 @@
 }
 
 .cd-breadcrumb a:hover {
-  color: #F95800; /* Main Orange */
+  color: #F95800;
+  /* Main Orange */
 }
 
 .cd-divider {
@@ -39,7 +40,8 @@
 }
 
 .cd-current {
-  color: #000080; /* Navy Blue */
+  color: #000080;
+  /* Navy Blue */
   font-weight: 700;
 }
 
@@ -108,13 +110,13 @@
 }
 
 .ld2-table th {
-  background-color: #faf9f6;
+  background-color: #000080;
   font-weight: 700;
-  color: #000080;
+  color: #ffffff;
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #f0e4d4;
+  border-bottom: 1px solid #000080;
 }
 
 .ld2-table tr:last-child td {
@@ -161,7 +163,8 @@
 }
 
 .ld2-video-player {
-  background: #0f172a; /* Deep dark background */
+  background: #0f172a;
+  /* Deep dark background */
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -190,7 +193,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 0 0 0 rgba(249, 88, 0, 0.4);
-  padding-left: 5px; /* Alignment fix for triangle symbol */
+  padding-left: 5px;
+  /* Alignment fix for triangle symbol */
 }
 
 .ld2-video-player:hover .ld2-play-icon {
@@ -625,26 +629,33 @@
   .ld2-content {
     padding: 20px;
   }
+
   .ld2-table th,
   .ld2-table td {
     padding: 12px 16px;
   }
+
   .ld2-video-player {
     padding: 60px 20px;
     min-height: 300px;
   }
+
   .ld2-comments-section {
     padding: 20px;
   }
+
   .ld2-comment-body {
     padding-left: 0;
   }
+
   .ld2-comment-actions {
     padding-left: 0;
   }
+
   .ld2-reply-input {
     margin-left: 0;
   }
+
   .ld2-replies {
     margin-left: 16px;
   }
@@ -684,7 +695,8 @@
 
 .ld2-tab-btn.active {
   color: #ffffff;
-  background: #F95800; /* Main Brand Orange */
+  background: #F95800;
+  /* Main Brand Orange */
   box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
 }
 
@@ -840,9 +852,9 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-

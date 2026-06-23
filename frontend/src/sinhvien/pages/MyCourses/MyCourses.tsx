@@ -1,4 +1,4 @@
-﻿import "./MyCourses.css";
+import "./MyCourses.css";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -18,6 +18,16 @@ function pctColor(pct: number) {
   if (pct >= 90) return "#22c55e";
   if (pct >= 60) return "#E8683A";
   return "#f97316";
+}
+
+function mapTypeToSkillName(type?: string) {
+  if (!type) return "";
+  const t = type.toLowerCase().trim();
+  if (t === "listening" || t === "l" || t === "nghe") return "Listening";
+  if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
+  if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
+  if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+  return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
 function MyCourses() {
@@ -427,7 +437,7 @@ function MyCourses() {
                                                 {isTest ? "Bài kiểm tra" : "Bài tập thực hành"}
                                               </span>
                                               <p className="mc-item-title">{ex.Title}</p>
-                                              <span className="mc-item-meta">{ex.Type || "Practice"}</span>
+                                              <span className="mc-item-meta">{mapTypeToSkillName(ex.Type) || "Practice"}</span>
                                             </div>
                                           </Link>
                                         );

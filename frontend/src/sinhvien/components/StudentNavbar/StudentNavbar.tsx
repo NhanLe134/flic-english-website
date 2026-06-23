@@ -50,7 +50,6 @@ export default function StudentNavbar() {
     return (
       p === "/MyCourses" ||
       p.startsWith("/class-detail/") ||
-      p.startsWith("/course-detail/") ||
       p.startsWith("/doc-detail/") ||
       p.startsWith("/lesson-detail/") ||
       p.startsWith("/bai-giangSV/") ||

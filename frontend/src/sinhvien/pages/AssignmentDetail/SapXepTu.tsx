@@ -3,7 +3,7 @@ import { FiFileText } from "react-icons/fi";
 
 interface SapXepTuProps {
   q: any;
-  qIdx: number;
+  qIdx: string | number;
   shuffledWords: Record<string | number, string[]>;
   setShuffledWords: React.Dispatch<React.SetStateAction<Record<string | number, string[]>>>;
   orderedWords: Record<string | number, string[]>;

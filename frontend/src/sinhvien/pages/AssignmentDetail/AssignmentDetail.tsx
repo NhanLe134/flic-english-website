@@ -1,3 +1,4 @@
+//quản lý toàn bộ State, giao tiếp với API, điều hướng và cấu trúc bố cục trang
 // @ts-nocheck
 import "./AssignmentDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -14,6 +15,8 @@ import { NoiTheoChuDe } from "./NoiTheoChuDe";
 import { SapXepTu } from "./SapXepTu";
 import { SapXepCau } from "./SapXepCau";
 import { VietDoanVan } from "./VietDoanVan";
+import { BoGiaiDeThi } from "./BoGiaiDeThi";
+import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
 const API = "http://localhost:5000";
 
@@ -109,83 +112,7 @@ function AssignmentDetail() {
 
   // Build/Parse Questions List
   const questionsList = useMemo(() => {
-    if (isExam) return []; // Exams use sections
-    if (!exercise?.Questions) {
-      // Fallback for single question templates
-      return [{
-        question: exercise?.Title || "",
-        audioUrl: exercise?.AudioUrl || "",
-        imageUrl: parsedContent.imageUrl || "",
-        text: parsedContent.text || exercise?.Content || "",
-        prompt: parsedContent.prompt || exercise?.Content || "",
-        level: parsedContent.level || "Đọc theo câu",
-        explanation: ""
-      }];
-    }
-    try {
-      if (exercise.Questions.trim().startsWith("[")) {
-        return JSON.parse(exercise.Questions);
-      }
-    } catch (e) { }
-
-    // Fallback to old custom text formatting
-    const exType = (exercise?.Type || "").toLowerCase();
-    const isMultiple = ["multiple", "quiz", "trắc nghiệm", "reading-vocab-mcq", "writing-tense-mcq"].includes(exType);
-    const isListening = ["listening", "nghe", "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in"].includes(exType);
-    const isReadingSplit = exType === "reading-split";
-
-    if (isMultiple || isListening || isReadingSplit) {
-      // Parse MCQs
-      const raw = exercise.Questions;
-      if (raw.includes("###") || raw.includes("||")) {
-        return raw.split("###").map(block => {
-          const parts = block.split("||");
-          const question = parts[0]?.trim() || "";
-          const rest = parts[1] || "";
-          const items = rest.split("|");
-          const options: { label: string; text: string }[] = [];
-          let correct = "A";
-          let explanation = "";
-          items.forEach(item => {
-            const trimmed = item.trim();
-            if (trimmed.startsWith("Đáp án đúng:")) {
-              correct = trimmed.replace("Đáp án đúng:", "").trim();
-            } else if (trimmed.startsWith("Giải thích:")) {
-              explanation = trimmed.replace("Giải thích:", "").trim();
-            } else {
-              const match = trimmed.match(/^([A-D])\.\s*(.+)/);
-              if (match) options.push({ label: match[1], text: match[2] });
-            }
-          });
-          return { question, answers: options.map(o => o.text), correct, explanation };
-        }).filter(q => q.question);
-      }
-    }
-
-    // Single item fallback based on type
-    if (exType === "listening-dictation") {
-      return [{ audioUrl: exercise.AudioUrl, text: exercise.Content }];
-    }
-    if (exType === "listening-fill-in") {
-      return [{ audioUrl: exercise.AudioUrl, text: exercise.Content, fillInAnswers: (exercise.Questions || "").split("|").map(s => s.trim()) }];
-    }
-    if (exType === "speaking-pronounce") {
-      return [{ text: parsedContent.text || exercise.Content, level: parsedContent.level || "Đọc theo câu", explanation: exercise.Questions || "" }];
-    }
-    if (exType === "speaking-topic") {
-      return [{ prompt: parsedContent.prompt || exercise.Content, imageUrl: parsedContent.imageUrl || "" }];
-    }
-    if (exType === "writing-order-words") {
-      return [{ text: exercise.Content, correctSentence: exercise.Questions }];
-    }
-    if (exType === "writing-order-sentences") {
-      return [{ sentences: (exercise.Questions || "").split("###").map(s => s.trim()).filter(Boolean) }];
-    }
-    if (exType === "writing-essay") {
-      return [{ prompt: exercise.Content }];
-    }
-
-    return [{ question: exercise.Title, text: exercise.Content }];
+    return parseQuestionsList(exercise, isExam, parsedContent);
   }, [exercise, isExam, parsedContent]);
 
   // Group questions into pages:
@@ -258,6 +185,8 @@ function AssignmentDetail() {
   // Load prior submission and metadata
   useEffect(() => {
     if (!id) return;
+    if (maNguoiDung && maSinhVien === null) return;
+
     Promise.all([
       fetch(`${API}/baitap/${id}`).then(r => r.json()),
       maLopHoc ? fetch(`${API}/classes/${maLopHoc}/info`).then(r => r.json()) : Promise.resolve(null),
@@ -341,7 +270,7 @@ function AssignmentDetail() {
       })
       .catch(() => { })
       .finally(() => setLoading(false));
-  }, [id, maLopHoc]);
+  }, [id, maLopHoc, maSinhVien, maNguoiDung]);
 
   // Initializing words and sentences shuffle
   useEffect(() => {
@@ -443,32 +372,7 @@ function AssignmentDetail() {
     return new Date().getTime() > new Date(deadlineStr).getTime();
   }, [parsedContent, submitted]);
 
-  // Auto-grading score calculators
-  const calcDictationScore = (studentText: string, correctText: string): number => {
-    const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
-    const std = clean(studentText);
-    const cor = clean(correctText);
-    if (!cor) return 0;
-    if (std === cor) return 10;
-    const stdWords = std.split(" ").filter(Boolean);
-    const corWords = cor.split(" ").filter(Boolean);
-    if (corWords.length === 0) return 0;
-    let correct = 0;
-    corWords.forEach((word, idx) => {
-      if (stdWords[idx] === word) correct++;
-    });
-    return Math.round((correct / corWords.length) * 10 * 10) / 10;
-  };
 
-  const calcSpeechScore = (spoken: string, expected: string): number => {
-    if (!expected) return 0;
-    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-    const spokenWords = normalize(spoken).split(/\s+/).filter(Boolean);
-    const expectedWords = normalize(expected).split(/\s+/).filter(Boolean);
-    if (expectedWords.length === 0) return 0;
-    const correct = spokenWords.filter(w => expectedWords.includes(w)).length;
-    return Math.min(Math.round((correct / expectedWords.length) * 10 * 10) / 10, 10);
-  };
 
   // RECORDING FUNCTIONS
   const startRecording = async (idx: number | string) => {
@@ -532,7 +436,11 @@ function AssignmentDetail() {
 
   // SUBMIT HANDLER
   const handleSubmit = async () => {
-    if (submitted) { navigate(-1); return; }
+    if (submitted) {
+      if (maLopHoc) navigate(`/class-detail/${maLopHoc}`);
+      else navigate("/MyCourses");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -709,7 +617,8 @@ function AssignmentDetail() {
             title: exercise?.Title,
             maLopHoc: maLopHoc,
             diem: examFinalScore,
-            loai: "Exam"
+            loai: "Exam",
+            maBaiTap: id
           }
         });
 
@@ -837,7 +746,8 @@ function AssignmentDetail() {
             title: exercise?.Title,
             maLopHoc: maLopHoc,
             diem: finalScore,
-            loai: exercise?.Type || "Bài tập"
+            loai: exercise?.Type || "Bài tập",
+            maBaiTap: id
           }
         });
       }
@@ -1050,139 +960,10 @@ function AssignmentDetail() {
     return null;
   };
 
-  const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
-    const key = `${sIdx}_${qIdx}`;
-
-    if (secType === "listening-mcq" || secType === "writing-tense-mcq" || secType === "reading-vocab-mcq") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && (
-            <div style={{ marginBottom: 12 }}>
-              <CustomAudioPlayer src={`${API}${q.audioUrl}`} />
-            </div>
-          )}
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx, `${sIdx}`)}
-        </div>
-      );
-    }
-
-    if (secType === "listening-image") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <NgheChonAnh
-            q={q}
-            qIdx={qIdx}
-            subIdxPrefix={`${sIdx}`}
-            exercise={exercise}
-            hideAudio={false}
-            mcAnswers={mcAnswers}
-            setMcAnswers={setMcAnswers}
-            submitted={submitted}
-            isOverdue={false}
-            isExam={true}
-            examStarted={examStarted}
-            API={API}
-          />
-        </div>
-      );
-    }
-
-    if (secType === "listening-dictation") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <NgheChepChinhTa
-            q={q}
-            qIdx={key}
-            exercise={exercise}
-            essayAnswers={essayAnswers}
-            setEssayAnswers={setEssayAnswers}
-            submitted={submitted}
-            isOverdue={!examStarted || examEnded}
-            isExam={true}
-            examStarted={examStarted}
-            API={API}
-          />
-        </div>
-      );
-    }
-
-    if (secType === "listening-fill-in") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <NgheDienTu
-            q={q}
-            qIdx={key}
-            fillInAnswers={fillInAnswers}
-            setFillInAnswers={setFillInAnswers}
-            submitted={submitted}
-            isOverdue={!examStarted || examEnded}
-            API={API}
-          />
-        </div>
-      );
-    }
-
-    if (secType === "speaking-pronounce") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <PhatAmTuDong
-            q={q}
-            qIdx={key}
-            speechScores={speechScores}
-            setSpeechScores={setSpeechScores}
-            spokenTexts={spokenTexts}
-            setSpokenTexts={setSpokenTexts}
-            isListeningSTT={isListeningSTT}
-            setIsListeningSTT={setIsListeningSTT}
-            submitted={submitted}
-            isOverdue={!examStarted || examEnded}
-          />
-        </div>
-      );
-    }
-
-    if (secType === "writing-order-words") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <SapXepTu
-            q={q}
-            qIdx={key}
-            shuffledWords={shuffledWords}
-            setShuffledWords={setShuffledWords}
-            orderedWords={orderedWords}
-            setOrderedWords={setOrderedWords}
-            submitted={submitted}
-          />
-        </div>
-      );
-    }
-
-    if (secType === "writing-order-sentences") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <SapXepCau
-            q={q}
-            qIdx={key}
-            shuffledSentences={shuffledSentences}
-            setShuffledSentences={setShuffledSentences}
-            submitted={submitted}
-            isOverdue={!examStarted || examEnded}
-          />
-        </div>
-      );
-    }
-
-    if (secType === "reading-split") {
-      return renderMCQBlock(q, qIdx, `${sIdx}`);
-    }
-
-    return null;
-  };
 
   return (
     <div className="ad-content">
-      <button className="ad-back" onClick={() => navigate(-1)}>← Back</button>
+      <button className="ad-back" onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}>← Quay lại</button>
 
       {/* Course Info Card */}
       {lopInfo && (
@@ -1269,122 +1050,39 @@ function AssignmentDetail() {
               <p>Submissions are now closed.</p>
             </div>
           ) : (
-            <div>
-              {/* Section Tabs */}
-              <div className="ad-exam-tabs">
-                {parsedContent.sections?.map((sec: any, sIdx: number) => (
-                  <button
-                    key={sIdx}
-                    onClick={() => setActiveSectionIdx(sIdx)}
-                    className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
-                  >
-                    {sec.title} ({sec.type.replace("-", " ")})
-                  </button>
-                ))}
-              </div>
-
-              {/* Render Selected Section */}
-              {parsedContent.sections?.map((sec: any, sIdx: number) => {
-                if (activeSectionIdx !== sIdx) return null;
-
-                return (
-                  <div key={sIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}>
-                    <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
-
-                    {sec.type === "writing-essay" && (
-                      <div>
-                        <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-                          <p style={{ margin: 0, fontWeight: 700 }}>{sec.content}</p>
-                        </div>
-                        {submitted ? (
-                          <div style={{ background: "#fafafa", padding: 12, border: "1px solid #e0d8cc", borderRadius: 8 }}>
-                            <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{essayAnswers[sIdx] || ""}</p>
-                          </div>
-                        ) : (
-                          <textarea
-                            className="ad-q-input"
-                            disabled={!examStarted || examEnded}
-                            value={essayAnswers[sIdx] || ""}
-                            onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
-                            placeholder="Write your essay answer here..."
-                            rows={8}
-                          />
-                        )}
-                      </div>
-                    )}
-
-                    {sec.type === "speaking-topic" && (
-                      <div>
-                        <div className="ad-speaking-prompt-box">
-                          <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <FiFileText /> Topic Prompt:
-                          </p>
-                          <p className="ad-speaking-prompt-text">{sec.content}</p>
-                        </div>
-                        {sec.imageUrl && <img src={`${API}${sec.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-
-                        {!submitted ? (
-                          <div className="ad-recorder-dashed-box">
-                            {isRecording[sIdx] ? (
-                              <div className="ad-recording-status">
-                                <span>🔴 Recording: {recordSeconds[sIdx] || 0}s </span>
-                                <button onClick={() => stopRecording(sIdx)} className="ad-record-stop-btn">Stop</button>
-                              </div>
-                            ) : (
-                              <button disabled={!examStarted || examEnded} onClick={() => startRecording(sIdx)} className="ad-record-start-btn" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                <FiMic /> Record your speech
-                              </button>
-                            )}
-                            {recordedUrls[sIdx] && (
-                              <div style={{ marginTop: 15 }}>
-                                <CustomAudioPlayer src={recordedUrls[sIdx]} />
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          recordedUrls[sIdx] && <div style={{ marginBottom: 12 }}><CustomAudioPlayer src={`${API}${recordedUrls[sIdx]}`} /></div>
-                        )}
-
-                        <textarea
-                          className="ad-q-input"
-                          disabled={submitted || !examStarted || examEnded}
-                          value={essayAnswers[sIdx] || ""}
-                          onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
-                          placeholder="Prepare your speech notes here..."
-                          rows={2}
-                        />
-                      </div>
-                     )}
-
-                    {sec.type === "reading-split" && (
-                      <div className="ad-reading-split-container">
-                        <div className="ad-reading-passage-panel">
-                          <p className="ad-passage-text">{sec.content}</p>
-                        </div>
-                        <div className="ad-reading-questions-panel">
-                          {sec.questions?.map((q: any, qIdx: number) => (
-                            renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {sec.type !== "writing-essay" && sec.type !== "speaking-topic" && sec.type !== "reading-split" && (
-                      <div>
-                        {sec.audioUrl && (
-                          <div style={{ marginBottom: 20 }}>
-                            <CustomAudioPlayer src={`${API}${sec.audioUrl}`} />
-                          </div>
-                        )}
-                        {sec.questions?.map((q: any, qIdx: number) => (
-                          renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <BoGiaiDeThi
+              exercise={exercise}
+              parsedContent={parsedContent}
+              submitted={submitted}
+              examStarted={examStarted}
+              examEnded={examEnded}
+              activeSectionIdx={activeSectionIdx}
+              setActiveSectionIdx={setActiveSectionIdx}
+              mcAnswers={mcAnswers}
+              setMcAnswers={setMcAnswers}
+              essayAnswers={essayAnswers}
+              setEssayAnswers={setEssayAnswers}
+              fillInAnswers={fillInAnswers}
+              setFillInAnswers={setFillInAnswers}
+              shuffledSentences={shuffledSentences}
+              setShuffledSentences={setShuffledSentences}
+              shuffledWords={shuffledWords}
+              setShuffledWords={setShuffledWords}
+              orderedWords={orderedWords}
+              setOrderedWords={setOrderedWords}
+              recordedUrls={recordedUrls}
+              isRecording={isRecording}
+              recordSeconds={recordSeconds}
+              spokenTexts={spokenTexts}
+              setSpokenTexts={setSpokenTexts}
+              speechScores={speechScores}
+              setSpeechScores={setSpeechScores}
+              isListeningSTT={isListeningSTT}
+              setIsListeningSTT={setIsListeningSTT}
+              startRecording={startRecording}
+              stopRecording={stopRecording}
+              API={API}
+            />
           )}
         </div>
       ) : (
@@ -1460,8 +1158,12 @@ function AssignmentDetail() {
       {/* SUBMIT BUTTON FOOTER */}
       <div className="ad-footer">
         {submitted ? (
-          <button className="ad-submit-btn" style={{ backgroundColor: "#64748b" }} onClick={() => navigate(-1)}>
-            ← Back to Classroom
+          <button
+            className="ad-submit-btn"
+            style={{ backgroundColor: "#64748b" }}
+            onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}
+          >
+            Quay lại lớp học
           </button>
         ) : (
           <button

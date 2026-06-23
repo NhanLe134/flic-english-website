@@ -1,4 +1,4 @@
-﻿import "./LessonDetailSV.css";
+import "./LessonDetailSV.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
@@ -109,7 +109,7 @@ function BaiGiangSV() {
           <nav className="ld2-breadcrumb">
             {maLopHoc ? (
               <>
-                <span className="ld2-link" onClick={() => navigate(`/course-detail/${maLopHoc}`)}>
+                <span className="ld2-link" onClick={() => navigate(`/class-detail/${maLopHoc}`)}>
                   Lớp học
                 </span>
                 <span>›</span>

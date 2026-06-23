@@ -1,4 +1,4 @@
-﻿import "./ClassDetailSV.css";
+import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -203,6 +203,16 @@ export default function ClassDetailSV() {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
+
+  const mapTypeToSkillName = (type?: string) => {
+    if (!type) return "";
+    const t = type.toLowerCase().trim();
+    if (t === "listening" || t === "l" || t === "nghe") return "Listening";
+    if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
+    if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
+    if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   if (loading) {
@@ -538,12 +548,11 @@ export default function ClassDetailSV() {
                                             <tr key={ex.MaBaiTap}>
                                               <td>{i + 1}</td>
                                               <td><strong>{ex.Title}</strong></td>
-                                              <td><span className="ld2-type-badge" style={{ background: '#fff7ed', color: '#ea580c' }}>{ex.Type || "Practice"}</span></td>
+                                              <td><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
                                               <td>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
                                               <td>
                                                 <button
                                                   className="ld2-open-btn"
-                                                  style={{ background: '#F95800' }}
                                                   onClick={() => {
                                                     navigate(`/baitap/${ex.MaBaiTap}`, {
                                                       state: { maLopHoc: info.MaLopHoc }
@@ -586,12 +595,11 @@ export default function ClassDetailSV() {
                                             <tr key={ex.MaBaiTap}>
                                               <td>{i + 1}</td>
                                               <td><strong>{ex.Title}</strong></td>
-                                              <td><span className="ld2-type-badge" style={{ background: '#f0fdf4', color: '#16a34a' }}>{ex.Type || "Exam"}</span></td>
+                                              <td><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
                                               <td>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
                                               <td>
                                                 <button
                                                   className="ld2-open-btn"
-                                                  style={{ background: '#16a34a' }}
                                                   onClick={() => {
                                                     navigate(`/baitap/${ex.MaBaiTap}`, {
                                                       state: { maLopHoc: info.MaLopHoc }
