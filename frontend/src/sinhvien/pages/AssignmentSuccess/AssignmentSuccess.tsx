@@ -9,12 +9,9 @@ function AssignmentSuccess() {
   const title = location.state?.title || "Bài tập"
   const maLopHoc = location.state?.maLopHoc || null
   const diem = location.state?.diem ?? null
-  const soLuong = location.state?.soLuong || "—"
-  const loai = location.state?.loai || "Bài tập"
   const maBaiTap = location.state?.maBaiTap || null
 
   const hasScore = diem !== null
-  const pct = hasScore ? Math.round(diem * 10) : null
 
   return (
     <div className="as-content">
@@ -39,32 +36,11 @@ function AssignmentSuccess() {
           </>
         ) : (
           <div className="as-pending-box">
-            <p className="as-score-label" style={{ marginBottom: 0 }}>Bài tự luận đã được ghi nhận</p>
             <p className="as-pending-text">
-              ⏳ Đang chờ giảng viên chấm điểm
+              Đã gửi đến giảng viên chấm điểm
             </p>
           </div>
         )}
-
-        <div className="as-divider" />
-
-        {/* Stats */}
-        <div className="as-stats">
-          <div className="as-stat">
-            <span className="as-stat-val">{soLuong}</span>
-            <span className="as-stat-label">Câu trả lời</span>
-          </div>
-          <div className="as-stat-sep" />
-          <div className="as-stat">
-            <span className="as-stat-val">{pct !== null ? `${pct}%` : "—"}</span>
-            <span className="as-stat-label">Độ chính xác</span>
-          </div>
-          <div className="as-stat-sep" />
-          <div className="as-stat">
-            <span className="as-stat-val" style={{ fontSize: 13 }}>{loai}</span>
-            <span className="as-stat-label">Loại bài</span>
-          </div>
-        </div>
 
         {/* Actions */}
         <div className="as-actions">
@@ -74,7 +50,7 @@ function AssignmentSuccess() {
           >
             Quay lại
           </button>
-           <button
+          <button
             className="as-btn-fill"
             onClick={() => maBaiTap ? navigate(`/baitap/${maBaiTap}`, { state: { maLopHoc } }) : navigate("/MyCourses")}
           >

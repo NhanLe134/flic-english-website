@@ -1,6 +1,7 @@
 //quản lý toàn bộ State, giao tiếp với API, điều hướng và cấu trúc bố cục trang
 // @ts-nocheck
 import "./AssignmentDetail.css";
+import "./AssignmentTypes.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { FiVolume2, FiEdit3, FiBookOpen, FiFileText, FiCheckCircle, FiXCircle, FiClock, FiMic, FiAward, FiList } from "react-icons/fi";
@@ -16,6 +17,7 @@ import { SapXepTu } from "./SapXepTu";
 import { SapXepCau } from "./SapXepCau";
 import { VietDoanVan } from "./VietDoanVan";
 import { BoGiaiDeThi } from "./BoGiaiDeThi";
+import { NoiTu } from "./NoiTu";
 import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
 const API = "http://localhost:5000";
@@ -25,6 +27,46 @@ interface MCQuestion {
   options: { label: string; text: string }[];
   correct: string;
 }
+
+const renderReadingPassage = (text: string) => {
+  if (!text) return null;
+  const blocks = text.split(/\n\s*\n/);
+  return (
+    <>
+      {blocks.map((block, idx) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+
+        const isFirstBlock = idx === 0;
+        const isInstruction = trimmed.toLowerCase().startsWith("in this section") || 
+                              trimmed.toLowerCase().startsWith("directions:") ||
+                              trimmed.toLowerCase().startsWith("direction:");
+
+        if (isFirstBlock && !isInstruction && (trimmed.length < 150 || !trimmed.endsWith("."))) {
+          return (
+            <h4 key={idx} className="flic-asgn-passage-title">
+              {trimmed}
+            </h4>
+          );
+        }
+
+        if (isInstruction) {
+          return (
+            <div key={idx} className="flic-asgn-passage-directions">
+              {trimmed}
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="flic-asgn-passage-paragraph">
+            {trimmed}
+          </p>
+        );
+      })}
+    </>
+  );
+};
 
 function AssignmentDetail() {
   const navigate = useNavigate();
@@ -221,6 +263,331 @@ function AssignmentDetail() {
   useEffect(() => {
     if (!id) return;
     if (maNguoiDung && maSinhVien === null) return;
+
+    if (id === "mock-speaking-topic-1" || id === "mock-speaking-topic-2") {
+      const isExam = id === "mock-speaking-topic-1";
+      const mockEx = {
+        MaBaiTap: id,
+        Title: isExam ? "Bài tập: Nói theo chủ đề (ghi âm nộp GV chấm)" : "Luyện tập: Giới thiệu bản thân và gia đình",
+        Type: "speaking-topic",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          prompt: isExam ? "Introduce yourself and describe your hometown. Where is it located, what is it famous for, and what do you like most about it?" : "Describe your family. How many people are there in your family? What do they do? Talk about a memorable family event.",
+          imageUrl: ""
+        }),
+        Questions: JSON.stringify([
+          {
+            prompt: isExam ? "Introduce yourself and describe your hometown. Where is it located, what is it famous for, and what do you like most about it?" : "Describe your family. How many people are there in your family? What do they do? Talk about a memorable family event.",
+            imageUrl: "",
+            explanation: "Focus on using appropriate vocabulary, clear pronunciation, and organized structure."
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-reading-split-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Đọc hiểu - The History of Extinction",
+        Type: "reading-split",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: `The History of Extinction
+
+In this section, you will read several passages. Each one is followed by several questions about it. For questions 1-40, you are to choose the one best answer A, B, C or D to each question. Answer all questions following a passage on the basis of what is stated or implied in that passage.
+
+(A) It is estimated that over 99 percent of all species that ever existed have become extinct. What causes extinction? When a species is no longer adapted to a changed environment, it may perish. The exact causes of a species' death vary from situation to situation. Rapid ecological change may render an environment hostile to a species. For example, temperatures may change and a species may not be able to adapt. Food resources may be affected by environmental changes, which will then cause problems for a species requiring these resources. Other species may become better adapted to an environment, resulting in competition and, ultimately, in the death of a species. The fossil record reveals that extinction has occurred throughout the history of Earth. Recent analyses have also revealed that on some occasions many species became extinct at the same time—a mass extinction. One of the best-known examples of mass extinction occurred 65 million years ago with the demise of dinosaurs and many other forms of life.`,
+          imageUrl: ""
+        }),
+        Questions: JSON.stringify([
+          {
+            text: `The History of Extinction
+
+In this section, you will read several passages. Each one is followed by several questions about it. For questions 1-40, you are to choose the one best answer A, B, C or D to each question. Answer all questions following a passage on the basis of what is stated or implied in that passage.
+
+(A) It is estimated that over 99 percent of all species that ever existed have become extinct. What causes extinction? When a species is no longer adapted to a changed environment, it may perish. The exact causes of a species' death vary from situation to situation. Rapid ecological change may render an environment hostile to a species. For example, temperatures may change and a species may not be able to adapt. Food resources may be affected by environmental changes, which will then cause problems for a species requiring these resources. Other species may become better adapted to an environment, resulting in competition and, ultimately, in the death of a species. The fossil record reveals that extinction has occurred throughout the history of Earth. Recent analyses have also revealed that on some occasions many species became extinct at the same time—a mass extinction. One of the best-known examples of mass extinction occurred 65 million years ago with the demise of dinosaurs and many other forms of life.`,
+            subQuestions: [
+              {
+                question: "The word 'it' in paragraph (A) refers to",
+                options: [
+                  { label: "A", text: "extinction" },
+                  { label: "B", text: "species" },
+                  { label: "C", text: "environment" },
+                  { label: "D", text: "99 percent" }
+                ],
+                correct: "B",
+                explanation: "The pronoun 'it' refers to 'a species' mentioned in the preceding clause."
+              },
+              {
+                question: "The word 'ultimately' in paragraph (A) is closest in meaning to",
+                options: [
+                  { label: "A", text: "unfortunately" },
+                  { label: "B", text: "eventually" },
+                  { label: "C", text: "exceptionally" },
+                  { label: "D", text: "dramatically" }
+                ],
+                correct: "B",
+                explanation: "'Ultimately' means in the end, which is closest in meaning to 'eventually'."
+              },
+              {
+                question: "The word 'ultimately' in paragraph (A) is closest in meaning to",
+                options: [
+                  { label: "A", text: "unfortunately" },
+                  { label: "B", text: "eventually" },
+                  { label: "C", text: "exceptionally" },
+                  { label: "D", text: "dramatically" }
+                ],
+                correct: "B",
+                explanation: "'Ultimately' means in the end, which is closest in meaning to 'eventually'."
+              },
+              {
+                question: "The word 'ultimately' in paragraph (A) is closest in meaning to",
+                options: [
+                  { label: "A", text: "unfortunately" },
+                  { label: "B", text: "eventually" },
+                  { label: "C", text: "exceptionally" },
+                  { label: "D", text: "dramatically" }
+                ],
+                correct: "B",
+                explanation: "'Ultimately' means in the end, which is closest in meaning to 'eventually'."
+              }
+            ]
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-reading-vocab-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Từ vựng - Nối từ (Match the pairs)",
+        Type: "reading-vocab-mcq",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Nối các từ tiếng Anh ở cột trái với nghĩa tiếng Việt tương ứng ở cột phải"
+        }),
+        Questions: JSON.stringify([
+          {
+            vocabPairs: [
+              { word: "postpone", meaning: "hoãn lại" },
+              { word: "supportive", meaning: "nhiệt tình hỗ trợ" },
+              { word: "attitude", meaning: "thái độ" },
+              { word: "colleague", meaning: "đồng nghiệp" },
+              { word: "accelerate", meaning: "thúc đẩy/tăng tốc" }
+            ]
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-writing-order-words-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Kéo thả sắp xếp câu",
+        Type: "writing-order-words",
+        CreatedDate: "2026-06-24",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Kéo thả hoặc click các từ bên dưới để ghép thành câu có nghĩa hoàn chỉnh"
+        }),
+        Questions: JSON.stringify([
+          {
+            text: "Chúng tôi cần thúc đẩy quá trình chuyển đổi sang năng lượng tái tạo.",
+            correctSentence: "We need to accelerate the transition to renewable energy"
+          },
+          {
+            text: "Đồng nghiệp nhiệt tình hỗ trợ đã giúp tôi hoãn cuộc họp lại.",
+            correctSentence: "The supportive colleague helped me postpone the meeting"
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-writing-essay-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Bài tập tự luận: Viết về đồng nghiệp của bạn",
+        Type: "writing-essay",
+        CreatedDate: "2026-06-24",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Hãy viết một bài luận ngắn (tối thiểu 50 từ) mô tả về một đồng nghiệp thân thiết của bạn."
+        }),
+        Questions: JSON.stringify([
+          {
+            prompt: "Write a short essay (minimum 50 words) describing one of your close colleagues, their supportive attitude, and how you work together.",
+            minWords: 50
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-writing-order-sentences-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Sắp xếp câu thành đoạn văn",
+        Type: "writing-order-sentences",
+        CreatedDate: "2026-06-24",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Sắp xếp các câu sau thành một đoạn văn hoàn chỉnh có nghĩa logic"
+        }),
+        Questions: JSON.stringify([
+          {
+            sentences: [
+              "First, select the correct words from the bank.",
+              "Then, drag them into the sentence area.",
+              "After that, you can reorder them if needed.",
+              "Finally, click the submit button to finish."
+            ]
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-speaking-pronounce-1" || id === "mock-speaking-pronounce-2" || id === "speaking-pronounce-mock" || ((maNguoiDung === 5 || maNguoiDung === 123456) && id === "1")) {
+      const mockEx = {
+        MaBaiTap: 9999,
+        Title: "Bài tập Luyện phát âm tự động (Web Speech API)",
+        Type: "speaking-pronounce",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Luyện phát âm các từ vựng và câu thông dụng về chủ đề giới thiệu bản thân.",
+          level: "Đọc theo câu"
+        }),
+        Questions: JSON.stringify([
+          {
+            text: "Hello",
+            level: "Luyện âm đơn",
+            explanation: "/həˈloʊ/ - Pronounce clearly with a silent breath on the 'h' and a rounded 'o' at the end."
+          },
+          {
+            text: "Beautiful",
+            level: "Đọc từ theo âm",
+            explanation: "/ˈbjuː.tɪ.fəl/ - Keep the stress on the first syllable."
+          },
+          {
+            text: "How is it going?",
+            level: "Đọc theo câu",
+            explanation: "/haʊ ɪz ɪt ˈɡoʊ.ɪŋ/ - Link 'is' and 'it' together seamlessly."
+          },
+          {
+            text: "I am learning English with FLIC.",
+            level: "Đọc theo câu",
+            explanation: "/aɪ æm ˈlɜː.nɪŋ ˈɪŋ.ɡlɪʃ wɪð FLIC/ - Focus on natural sentence stress and rhythm."
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
 
     Promise.all([
       fetch(`${API}/baitap/${id}`).then(r => r.json()),
@@ -639,7 +1006,7 @@ function AssignmentDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            MaExercise: parseInt(id!),
+            MaExercise: isNaN(Number(id)) ? id! : Number(id),
             MaSinhVien: maSinhVien || maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: examFinalScore,
@@ -670,7 +1037,19 @@ function AssignmentDetail() {
 
             // Grade individual question
             let qScore = 0;
-            if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
+            if (questionType === "reading-vocab-mcq") {
+              if (q.vocabPairs && q.vocabPairs.length > 0) {
+                const correctCount = mcAnswers[qIdx] ? Number(mcAnswers[qIdx]) : 0;
+                qResult.chosenAnswer = `${correctCount}/${q.vocabPairs.length}`;
+                qResult.correctAnswer = `${q.vocabPairs.length}/${q.vocabPairs.length}`;
+                qResult.score = q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
+              } else {
+                const ans = mcAnswers[qIdx] || "";
+                qResult.chosenAnswer = ans;
+                qResult.correctAnswer = q.correct;
+                qResult.score = ans === q.correct ? 10 : 0;
+              }
+            } else if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
               const ans = mcAnswers[qIdx] || "";
               qResult.chosenAnswer = ans;
               qResult.correctAnswer = q.correct;
@@ -768,7 +1147,7 @@ function AssignmentDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            MaExercise: parseInt(id!),
+            MaExercise: isNaN(Number(id)) ? id! : Number(id),
             MaSinhVien: maSinhVien || maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: finalScore,
@@ -858,7 +1237,28 @@ function AssignmentDetail() {
   const renderCurrentQuestionBlock = (q: any, qIdx: number, hideAudio: boolean = false) => {
     const questionType = (exercise?.Type || "").toLowerCase();
 
-    if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
+    if (questionType === "reading-vocab-mcq") {
+      if (q.vocabPairs && q.vocabPairs.length > 0) {
+        return (
+          <NoiTu
+            q={q}
+            qIdx={qIdx}
+            mcAnswers={mcAnswers}
+            setMcAnswers={setMcAnswers}
+            submitted={submitted}
+            onAutoSubmit={handleSubmit}
+          />
+        );
+      }
+      return (
+        <div>
+          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
+          {renderMCQBlock(q, qIdx)}
+        </div>
+      );
+    }
+
+    if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
       return (
         <div>
           {q.audioUrl && !hideAudio && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
@@ -1002,15 +1402,17 @@ function AssignmentDetail() {
 
     if (questionType === "reading-split") {
       return (
-        <div className="ad-reading-split-container">
-          <div className="ad-reading-passage-panel">
-            <h5 className="ad-panel-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div className="flic-asgn-reading-split-container">
+          <div className="flic-asgn-reading-passage-panel">
+            <h5 className="flic-asgn-panel-title">
               <FiBookOpen /> Reading Passage
             </h5>
-            <p className="ad-passage-text">{q.text}</p>
+            <div className="flic-asgn-passage-text">
+              {renderReadingPassage(q.text)}
+            </div>
           </div>
-          <div className="ad-reading-questions-panel">
-            <h5 className="ad-panel-title" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+          <div className="flic-asgn-reading-questions-panel">
+            <h5 className="flic-asgn-panel-title">
               <FiList /> Questions
             </h5>
             {q.subQuestions?.map((sub: any, subIdx: number) => (
@@ -1036,8 +1438,9 @@ function AssignmentDetail() {
   };
 
 
-  return (
-    <div className="ad-content">
+  try {
+    return (
+      <div className="ad-content">
       <button className="ad-back" onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}>← Quay lại</button>
 
       {/* Course Info Card */}
@@ -1067,26 +1470,28 @@ function AssignmentDetail() {
       {/* EXAM COUNTDOWN / OVER / RUNNING HEADER */}
       {isExam && (
         <div className="ad-banner ad-banner-exam">
-          <h3>⏱️ Assessment Exam</h3>
+          <h3 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+            <FiClock /> Assessment Exam
+          </h3>
           <p className="exam-meta">
             Duration: <strong>{parsedContent.duration} minutes</strong> · Open time: {new Date(parsedContent.startTime).toLocaleString()}
           </p>
 
           {timeToExamStart !== null && (
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#b45309" }}>
-              ⏳ The exam starts in: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <FiClock /> The exam starts in: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
             </div>
           )}
 
           {examStarted && !examEnded && (
-            <div className="exam-timer">
-              ⏳ REMAINING TIME: <span className="exam-timer-span">{formattedExamTime}</span>
+            <div className="exam-timer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <FiClock /> REMAINING TIME: <span className="exam-timer-span">{formattedExamTime}</span>
             </div>
           )}
 
           {examEnded && (
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#dc2626" }}>
-              🛑 The exam has ended.
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <FiXCircle /> The exam has ended.
             </div>
           )}
         </div>
@@ -1251,7 +1656,17 @@ function AssignmentDetail() {
         )}
       </div>
     </div>
-  )
+    );
+  } catch (err: any) {
+    return (
+      <div style={{ padding: 40, color: "red", background: "#fee2e2", margin: 20, borderRadius: 8, border: "1px solid #fca5a5" }}>
+        <h3 style={{ margin: "0 0 10px 0" }}>Render Error in AssignmentDetail:</h3>
+        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, fontFamily: "monospace", fontSize: 13 }}>
+          {err.stack || err.message || String(err)}
+        </pre>
+      </div>
+    );
+  }
 }
 
 export default AssignmentDetail;

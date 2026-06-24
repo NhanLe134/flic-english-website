@@ -2,6 +2,7 @@ import React from "react";
 import { FiFileText, FiMic } from "react-icons/fi";
 import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
 import { CauHoiTracNghiem } from "./CauHoiTracNghiem";
+import { NoiTu } from "./NoiTu";
 import { NgheChonAnh } from "./NgheChonAnh";
 import { NgheChepChinhTa } from "./NgheChepChinhTa";
 import { NgheDienTu } from "./NgheDienTu";
@@ -43,6 +44,46 @@ interface BoGiaiDeThiProps {
   API: string;
 }
 
+const renderReadingPassage = (text: string) => {
+  if (!text) return null;
+  const blocks = text.split(/\n\s*\n/);
+  return (
+    <>
+      {blocks.map((block, idx) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+
+        const isFirstBlock = idx === 0;
+        const isInstruction = trimmed.toLowerCase().startsWith("in this section") || 
+                              trimmed.toLowerCase().startsWith("directions:") ||
+                              trimmed.toLowerCase().startsWith("direction:");
+
+        if (isFirstBlock && !isInstruction && (trimmed.length < 150 || !trimmed.endsWith("."))) {
+          return (
+            <h4 key={idx} className="flic-asgn-passage-title" style={{ fontWeight: 800 }}>
+              {trimmed}
+            </h4>
+          );
+        }
+
+        if (isInstruction) {
+          return (
+            <div key={idx} className="flic-asgn-passage-directions">
+              {trimmed}
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="flic-asgn-passage-paragraph">
+            {trimmed}
+          </p>
+        );
+      })}
+    </>
+  );
+};
+
 export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   exercise,
   parsedContent,
@@ -80,7 +121,44 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
     const key = `${sIdx}_${qIdx}`;
 
-    if (secType === "listening-mcq" || secType === "writing-tense-mcq" || secType === "reading-vocab-mcq") {
+    if (secType === "reading-vocab-mcq") {
+      if (q.vocabPairs && q.vocabPairs.length > 0) {
+        return (
+          <NoiTu
+            key={qIdx}
+            q={q}
+            qIdx={key}
+            mcAnswers={mcAnswers}
+            setMcAnswers={setMcAnswers}
+            submitted={submitted}
+          />
+        );
+      }
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          {q.imageUrl && (
+            <img
+              src={`${API}${q.imageUrl}`}
+              alt="Question visual cue"
+              style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }}
+            />
+          )}
+          <CauHoiTracNghiem
+            q={q}
+            qIdx={qIdx}
+            subIdxPrefix={`${sIdx}`}
+            mcAnswers={mcAnswers}
+            setMcAnswers={setMcAnswers}
+            submitted={submitted}
+            isOverdue={false}
+            isExam={true}
+            examStarted={examStarted}
+          />
+        </div>
+      );
+    }
+
+    if (secType === "listening-mcq" || secType === "writing-tense-mcq") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           {q.audioUrl && (
@@ -304,7 +382,10 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                   <div className="ad-recorder-dashed-box">
                     {isRecording[sIdx] ? (
                       <div className="ad-recording-status">
-                        <span>🔴 Recording: {recordSeconds[sIdx] || 0}s </span>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ display: "inline-block", width: "8px", height: "8px", background: "#dc2626", borderRadius: "50%", animation: "pulse 1.5s infinite" }}></span>
+                          Recording: {recordSeconds[sIdx] || 0}s
+                        </span>
                         <button onClick={() => stopRecording(sIdx)} className="ad-record-stop-btn">
                           Stop
                         </button>
@@ -347,7 +428,9 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             {sec.type === "reading-split" && (
               <div className="ad-reading-split-container">
                 <div className="ad-reading-passage-panel">
-                  <p className="ad-passage-text">{sec.content}</p>
+                  <div className="ad-passage-text">
+                    {renderReadingPassage(sec.content)}
+                  </div>
                 </div>
                 <div className="ad-reading-questions-panel">
                   {sec.questions?.map((q: any, qIdx: number) => (

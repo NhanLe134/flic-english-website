@@ -4,7 +4,7 @@
 
 /* Main container */
 .ad-content {
-  max-width: 960px;
+  max-width: 80vw;
   margin: 40px auto;
   padding: 0 24px;
   font-family: 'Inter', sans-serif;
@@ -298,10 +298,12 @@
   padding: 20px;
   margin-bottom: 18px;
 }
+
 .ad-mcq-question-box.correct-box {
   background: #f0fdf4;
   border-color: #86efac;
 }
+
 .ad-mcq-question-box.wrong-box {
   background: #fef2f2;
   border-color: #fecaca;
@@ -681,19 +683,19 @@
 .ad-reading-split-container {
   display: flex;
   gap: 24px;
-  height: 560px;
+  height: auto;
 }
 
 .ad-reading-passage-panel {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   border-right: 1.5px solid #e2e8f0;
   padding-right: 20px;
 }
 
 .ad-reading-questions-panel {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   padding-left: 4px;
 }
 
@@ -787,7 +789,7 @@ audio {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .ad-listening-image-left,
   .ad-listening-image-right {
     flex: 1;
@@ -831,9 +833,20 @@ audio {
 
 /* Micro-animations */
 @keyframes pulseBlink {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.98); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Listening Dictation Styles */
@@ -1034,5 +1047,235 @@ audio {
   .ad-dictation-comparison-grid {
     flex-direction: column;
     gap: 12px;
+  }
+}
+
+/* ── Custom Pronunciation (Web Speech API) Styles ── */
+.pronounce-card {
+  margin-top: 15px;
+}
+
+.pronounce-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.pronounce-badge-phoneme {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.pronounce-badge-word {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.pronounce-badge-sentence {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.pronounce-interactive-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.pronounce-tts-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.pronounce-tts-btn:hover {
+  background: #000080;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.pronounce-target-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000080;
+  margin-bottom: 12px;
+}
+
+.pronounce-target-text-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.6;
+}
+
+.pronounce-word-span {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.pronounce-word-span.matched {
+  color: #16a34a;
+  background: #f0fdf4;
+  border-bottom: 2px solid #16a34a;
+}
+
+.pronounce-word-span.mismatched {
+  color: #dc2626;
+  background: #fef2f2;
+  border-bottom: 2px solid #dc2626;
+}
+
+.pronounce-word-span.unspoken {
+  color: #334155;
+  border-bottom: 2px dashed #cbd5e1;
+}
+
+.pronounce-feedback-panel {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border-left: 4px solid #cbd5e1;
+}
+
+.pronounce-waveform-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f0f7ff;
+  border: 2px dashed #bfdbfe;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.pronounce-waveform-listening {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+}
+
+.pronounce-wave-bar {
+  width: 4px;
+  height: 8px;
+  background: #000080;
+  border-radius: 2px;
+  animation: bounceWave 0.8s ease-in-out infinite alternate;
+}
+
+.pronounce-wave-bar:nth-child(2) {
+  height: 16px;
+  animation-delay: 0.15s;
+}
+
+.pronounce-wave-bar:nth-child(3) {
+  height: 28px;
+  animation-delay: 0.3s;
+}
+
+.pronounce-wave-bar:nth-child(4) {
+  height: 36px;
+  animation-delay: 0.45s;
+}
+
+.pronounce-wave-bar:nth-child(5) {
+  height: 20px;
+  animation-delay: 0.6s;
+}
+
+.pronounce-wave-bar:nth-child(6) {
+  height: 10px;
+  animation-delay: 0.75s;
+}
+
+@keyframes bounceWave {
+  0% {
+    transform: scaleY(0.4);
+  }
+
+  100% {
+    transform: scaleY(1.4);
+  }
+}
+
+.pronounce-score-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.pronounce-score-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.pronounce-score-circle.excellent {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 3px solid #16a34a;
+}
+
+.pronounce-score-circle.needs-work {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 3px solid #ea580c;
+}
+
+@keyframes wave {
+  0% {
+    transform: scaleY(0.3);
+  }
+
+  100% {
+    transform: scaleY(1.0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
   }
 }
