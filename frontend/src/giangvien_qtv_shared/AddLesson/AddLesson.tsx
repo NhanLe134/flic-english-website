@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./AddLesson.css";
 import {
@@ -24,7 +24,7 @@ const AddLesson: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [name, setName] = useState("");
-  const [type, setType] = useState("Video");
+  const type = "Video";
   const [duration, setDuration] = useState("");
   const [lessonDate, setLessonDate] = useState("");
   const [moTa, setMoTa] = useState("");
@@ -143,13 +143,6 @@ const AddLesson: React.FC = () => {
             onChange={(e) => setLessonDate(e.target.value)}
           />
 
-          <label>Loại nội dung *</label>
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option>Video</option>
-            <option>PDF</option>
-            <option>Writing</option>
-            <option>Audio</option>
-          </select>
 
           <label>Mô tả nội dung</label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, marginBottom: 16, background: "#fff" }}>

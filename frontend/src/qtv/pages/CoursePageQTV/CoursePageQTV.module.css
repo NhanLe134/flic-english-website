@@ -61,10 +61,10 @@
 
 /* ── Table ── */
 .table { width: 100%; border-collapse: collapse; }
-.table th { padding: 11px 16px; text-align: left; font-size: 12px; font-weight: 500; color: #999; border-bottom: 1px solid #f0eae0; }
-.table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f5f0e8; color: #333; vertical-align: middle; }
+.table th { padding: 11px 16px; text-align: left; font-size: 12px; font-weight: 500; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+.table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
 .table tr:last-child td { border-bottom: none; }
-.table tr:hover td { background: #fffbf5; }
+.table tr:hover td { background: #f8fafc; }
 
 .courseTitle { font-weight: 600; color: #1a1a1a; }
 .courseCat   { font-size: 11px; color: #aaa; margin-top: 2px; }
@@ -467,19 +467,19 @@
 /* ── Accordion expanded cell ── */
 .expandedCell {
   padding: 0 !important;
-  background: #faf6f0;
-  border-bottom: 2px solid #e8dfd2 !important;
+  background: #f0f7ff;
+  border-bottom: 2px solid #dbeafe !important;
 }
 .expandEmpty {
   padding: 12px 24px;
-  color: #aaa;
+  color: #94a3b8;
   font-size: 13px;
   font-style: italic;
 }
 
 /* ── Class block ── */
 .classBlock {
-  border-bottom: 1px solid #ede5d8;
+  border-bottom: 1px solid #dbeafe;
 }
 .classBlock:last-child { border-bottom: none; }
 
@@ -488,10 +488,10 @@
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
-  background: #fff8f2;
+  background: #f5f9ff;
   transition: background 0.15s;
 }
-.classBlockHeader:hover { background: #fff2e6; }
+.classBlockHeader:hover { background: #e5f0ff; }
 
 .classExpandBtn {
   background: none;

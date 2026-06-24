@@ -107,7 +107,7 @@ function BaiGiangSV() {
       .finally(() => setLoading(false));
 
     // Fetch minitest for this lecture
-    fetch(`${API}/minitest/baigiang/${id}`)
+    fetch(`${API}/minitest/baigiang/${id}?role=student`)
       .then(res => res.json())
       .then(data => {
         if (data && data.MaMinitest) {

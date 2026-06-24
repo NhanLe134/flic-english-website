@@ -33,14 +33,14 @@
 .cd-overview-card {
   background: #ffffff;
   border: 1px solid #f0e4d4;
-  border-radius: 24px;
-  padding: 30px;
+  border-radius: 12px; /* Thu nhỏ bo góc */
+  padding: 16px 20px; /* Thu nhỏ padding */
   box-shadow: 0 10px 30px rgba(0, 0, 128, 0.02);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  gap: 40px;
-  margin-bottom: 35px;
+  gap: 20px; /* Thu nhỏ khoảng cách */
+  margin-bottom: 20px;
   position: relative;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -63,19 +63,19 @@
 }
 
 .cd-right-content {
-  width: 240px;
+  width: 180px; /* Thu nhỏ chiều rộng cột bên phải */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border-left: 1px dashed #e2e8f0;
-  padding-left: 32px;
+  padding-left: 20px; /* Thu nhỏ padding-left */
   flex-shrink: 0;
-  gap: 12px;
+  gap: 8px;
 }
 
 .cd-class-title {
-  font-size: 26px;
+  font-size: 18px; /* Thu nhỏ tiêu đề buổi học */
   font-weight: 800;
   color: #000080; /* Navy Blue */
   margin: 0 0 6px 0;
@@ -83,43 +83,43 @@
 }
 
 .cd-class-desc {
-  font-size: 15px;
+  font-size: 13px; /* Thu nhỏ mô tả */
   line-height: 1.5;
   color: #475569;
-  margin: 0 0 24px 0;
+  margin: 0 0 12px 0; /* Thu nhỏ margin */
 }
 
 /* Metadata Grid */
 .cd-meta-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 40px 60px;
+  gap: 16px 24px; /* Thu nhỏ gap */
   margin-bottom: 0px;
 }
 
 .cd-meta-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px; /* Thu nhỏ gap */
 }
 
 .cd-meta-icon-wrapper {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 10px !important;
-  background-color: #fff2eb !important; /* Orange tint background */
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  background-color: #fff2eb !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   color: #F95800 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   flex-shrink: 0 !important;
   aspect-ratio: 1 / 1 !important;
 }
 
 .cd-meta-icon-wrapper svg {
-  width: 16px !important;
-  height: 16px !important;
+  width: 13px !important;
+  height: 13px !important;
 }
 
 .cd-meta-info {
@@ -128,7 +128,7 @@
 }
 
 .cd-meta-label {
-  font-size: 12px;
+  font-size: 11px; /* Thu nhỏ nhãn */
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -137,7 +137,7 @@
 }
 
 .cd-meta-value {
-  font-size: 14px;
+  font-size: 13px; /* Thu nhỏ giá trị */
   font-weight: 700;
   color: #0f172a;
 }
@@ -208,7 +208,7 @@
 /* TAB CONTENT SECTIONS */
 .lesson-tab-section h2 {
   margin: 20px 0 18px;
-  font-size: 28px;
+  font-size: 20px; /* Thu nhỏ tiêu đề trong tab */
   font-weight: 800;
   color: #0f172a;
 }
@@ -817,4 +817,61 @@
   .shared-tab-toolbar .ep-total-box {
     margin-left: 0 !important;
   }
+}
+
+/* MODAL XÓA BÀI TẬP */
+.baitap-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 18px;
+  text-align: center;
+  width: 320px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal-icon {
+  width: 60px;
+  height: 60px;
+  border: 2px solid red;
+  color: red;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justifyContent: center;
+  margin: auto;
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 10px;
+  background: #f3a2a2;
+  border: none;
+  border-radius: 6px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  width: 100%;
+  padding: 10px;
+  background: #ddd;
+  border: none;
+  border-radius: 6px;
+  margin-top: 10px;
+  cursor: pointer;
 }

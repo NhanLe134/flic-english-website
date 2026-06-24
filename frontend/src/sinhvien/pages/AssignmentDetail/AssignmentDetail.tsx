@@ -99,7 +99,7 @@ function AssignmentDetail() {
     if (exercise.MaBaiHoc) {
       const checkProgress = async () => {
         try {
-          const mtRes = await fetch(`${API}/minitest/baigiang/${exercise.MaBaiHoc}`);
+          const mtRes = await fetch(`${API}/minitest/baigiang/${exercise.MaBaiHoc}?role=student`);
           const mtData = await mtRes.json();
           const hasMinitest = mtData && mtData.MaMinitest;
 

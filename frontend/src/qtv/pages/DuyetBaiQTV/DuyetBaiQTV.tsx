@@ -160,7 +160,7 @@ export default function DuyetBaiQTV() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h1>Duyệt bài</h1>
-        <p className={styles.subtitle}>Xem và phê duyệt các bài giảng, bài tập của giảng viên gửi lên</p>
+        <p className={styles.subtitle}>Xem và phê duyệt các nội dung của giảng viên gửi lên</p>
       </div>
 
       <div className={styles.content}>

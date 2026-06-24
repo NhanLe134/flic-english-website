@@ -1,7 +1,7 @@
 import "./ExercisePage.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiCalendar } from "react-icons/fi";
+import { FiArrowLeft, FiCalendar, FiTrash2, FiEye } from "react-icons/fi";
 import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
 
 const ExercisePage = () => {
@@ -366,21 +366,65 @@ const ExercisePage = () => {
                 <FiCalendar size={14} />
                 {ex.CreatedDate && new Date(ex.CreatedDate).toLocaleDateString("vi-VN")}
               </span>
-              <div className="btn-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                 <button
-                  className="outline-btn"
                   onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
+                  style={{
+                    background: "#e0e7ff",
+                    border: "1px solid #c7d2fe",
+                    color: "#4f46e5",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                    flexShrink: 0
+                  }}
+                  title="Xem chi tiết"
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = "#c7d2fe";
+                    e.currentTarget.style.color = "#3730a3";
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = "#e0e7ff";
+                    e.currentTarget.style.color = "#4f46e5";
+                  }}
                 >
-                  Xem chi tiết
+                  <FiEye size={16} />
                 </button>
                 <button
-                  className="delete-btn"
                   onClick={() => {
                     setSelectedId(Number(ex.MaBaiTap));
                     setShowDeleteModal(true);
                   }}
+                  style={{
+                    background: "#fee2e2",
+                    border: "1px solid #fecaca",
+                    color: "#ef4444",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                    flexShrink: 0
+                  }}
+                  title="Xóa bài tập"
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = "#fca5a5";
+                    e.currentTarget.style.color = "#b91c1c";
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = "#fee2e2";
+                    e.currentTarget.style.color = "#ef4444";
+                  }}
                 >
-                  Xóa
+                  <FiTrash2 size={15} />
                 </button>
               </div>
             </div>

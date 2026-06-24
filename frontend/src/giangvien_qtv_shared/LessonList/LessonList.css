@@ -13,7 +13,7 @@
 }
 
 .lesson-wrapper .lesson-title {
-  font-size: 34px;
+  font-size: 20px; /* Thu nhỏ tiêu đề buổi học */
   font-weight: 700;
   margin: 0 0 8px;
   text-align: left !important;
@@ -93,18 +93,18 @@
 /* STATS */
 .lesson-stats {
   display: flex;
-  gap: 16px;
-  margin-bottom: 30px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .lesson-stat-card {
-  padding: 16px 20px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
   flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   background: #ffffff !important;
   border: 1px solid #eef2f6 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -117,9 +117,9 @@
 }
 
 .stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -134,14 +134,14 @@
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #4a5568;
   font-weight: 600;
   margin-bottom: 2px;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a202c;
   margin: 0 0 2px 0 !important;
@@ -149,7 +149,7 @@
 }
 
 .stat-desc {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #a0aec0;
   font-weight: 400;
 }
@@ -190,13 +190,13 @@
 /* CARD */
 .lesson-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 12px; /* Tăng nhẹ bo góc */
+  padding: 18px; /* Tăng nhẹ padding */
   border: 1px solid #eef2f6;
   transition: 0.3s;
   display: flex;
   flex-direction: column;
-  flex: 0 0 300px;
+  flex: 0 0 280px; /* Tăng nhẹ chiều rộng */
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.015);
 }
 
@@ -206,24 +206,24 @@
 }
 
 .lesson-card h3 {
-  margin: 0 0 10px 0;
-  font-size: 18px;
+  margin: 0 0 8px 0;
+  font-size: 15.5px; /* Tăng nhẹ tiêu đề buổi học */
   color: #1f1915;
   font-weight: 600;
   line-height: 1.35;
 }
 
 .lesson-desc {
-  font-size: 13px;
+  font-size: 13px; /* Tăng nhẹ font chữ */
   color: #666;
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   line-height: 1.4;
 }
 
 .lesson-dates {
-  font-size: 13px;
+  font-size: 13px; /* Tăng nhẹ font chữ */
   color: #666;
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
 }
 
 .lesson-class {
@@ -258,11 +258,11 @@
   margin-top: auto;
   background: #F95800;
   border: none;
-  padding: 10px 16px;
+  padding: 9px 14px; /* Tăng nhẹ padding */
   color: white;
-  border-radius: 8px;
+  border-radius: 8px; /* Tăng nhẹ bo góc */
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13.5px; /* Tăng nhẹ font chữ */
   font-weight: 600;
   width: 100%;
   text-align: center;

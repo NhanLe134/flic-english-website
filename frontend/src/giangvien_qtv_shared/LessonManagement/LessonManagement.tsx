@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiMessageSquare, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
 
 interface LessonManagementProps {
@@ -17,7 +17,6 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("Tất cả");
 
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [allExistingLectures, setAllExistingLectures] = useState<any[]>([]);
@@ -119,39 +118,17 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button className="search-button" type="button">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <FiSearch size={16} />
           </button>
         </form>
-        <select
-          className="filter-select"
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-        >
-          <option>Tất cả</option>
-          <option>Video</option>
-          <option>PDF</option>
-          <option>Writing</option>
-        </select>
         <button
           className="add-btn-reuse"
           onClick={openReuseModal}
         >
-          + Chọn BG có sẵn
+          <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn BG có sẵn
         </button>
         <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
-          + Thêm BG mới
+          <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm BG mới
         </button>
       </div>
 
@@ -162,7 +139,6 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <tr>
               <th>STT</th>
               <th>Tên bài giảng</th>
-              <th>Loại</th>
               <th>Thời lượng</th>
               <th>Trạng thái</th>
               <th>Hành động</th>
@@ -171,15 +147,14 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
           <tbody>
             {lessons
               .filter(l => l.TieuDe?.toLowerCase().includes(searchTerm.toLowerCase()))
-              .filter(l => filterType === "Tất cả" ? true : l.LoaiBaiHoc === filterType)
               .map((l, index) => (
                 <tr key={l.MaBaiHoc}>
                   <td>{index + 1}</td>
                   <td>{l.TieuDe}</td>
-                  <td>{l.LoaiBaiHoc}</td>
                   <td>{l.ThoiLuong}</td>
                   <td>
                     <span
+                      className="status-pill"
                       style={{
                         padding: "4px 8px",
                         borderRadius: "12px",
@@ -202,21 +177,26 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                   </td>
                   <td>
                     <div className="action-buttons">
-                      <button className="action-btn discuss-btn"
-                        onClick={() => navigate(`/lesson-discussion/${l.MaBaiHoc}`)}>
-                        Thảo luận
+                      <button className="action-icon-btn detail-icon-btn"
+                        onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}
+                        title="Xem chi tiết">
+                        <FiEye size={16} />
+                      </button>
+                      <button className="action-icon-btn discuss-icon-btn"
+                        onClick={() => navigate(`/lesson-discussion/${l.MaBaiHoc}`)}
+                        title="Thảo luận">
+                        <FiMessageSquare size={16} />
                       </button>
                       <button className="action-btn minitest-btn"
-                        onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}>
-                        + MiniTest
+                        onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
+                        title="Tạo MiniTest">
+                        <FiPlus size={14} style={{ marginRight: 4 }} />
+                        <span>MiniTest</span>
                       </button>
-                      <button className="action-btn detaill-btn"
-                        onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}>
-                        Xem chi tiết
-                      </button>
-                      <button className="action-btn deletee-btn"
-                        onClick={() => handleDeleteClick(l.MaBaiHoc)}>
-                        Xóa
+                      <button className="action-icon-btn delete-icon-btn"
+                        onClick={() => handleDeleteClick(l.MaBaiHoc)}
+                        title="Xóa bài học">
+                        <FiTrash2 size={16} />
                       </button>
                     </div>
                   </td>

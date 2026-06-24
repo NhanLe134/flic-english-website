@@ -268,7 +268,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>Báo cáo kết quả học tập</h1>
-          <p className={styles.subtitle}>Xem và xuất điểm bài tập của từng học viên theo lớp, khóa học</p>
+          <p className={styles.subtitle}>Xem và xuất điểm bài tập của từng học viên theo lớp học</p>
         </div>
         {showCsvButton && (
           <button className={styles.exportBtn} onClick={handleExportCSV}>
@@ -282,7 +282,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
         <div className={styles.stats}>
           <div className={`${styles.card} ${styles.cardUsers}`}>
             <div className={styles.cardIconContainer}>
-              <FiUsers size={22} />
+              <FiUsers size={18} />
             </div>
             <div className={styles.cardContent}>
               <span className={styles.cardLabel}>Tổng học viên</span>
@@ -293,7 +293,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
 
           <div className={`${styles.card} ${styles.cardActive}`}>
             <div className={styles.cardIconContainer}>
-              <FiUsers size={22} />
+              <FiUsers size={18} />
             </div>
             <div className={styles.cardContent}>
               <span className={styles.cardLabel}>Đang học</span>
@@ -304,7 +304,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
 
           <div className={`${styles.card} ${styles.cardCompleted}`}>
             <div className={styles.cardIconContainer}>
-              <FiCheckCircle size={22} />
+              <FiCheckCircle size={18} />
             </div>
             <div className={styles.cardContent}>
               <span className={styles.cardLabel}>Hoàn thành</span>
@@ -315,7 +315,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
 
           <div className={`${styles.card} ${styles.cardAverage}`}>
             <div className={styles.cardIconContainer}>
-              <FiAward size={22} />
+              <FiAward size={18} />
             </div>
             <div className={styles.cardContent}>
               <span className={styles.cardLabel}>Điểm TB chung</span>
