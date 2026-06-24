@@ -819,10 +819,21 @@ app.get("/baitap/buoihoc/:buoiHocId", async (req, res) => {
       .query(`
         SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                CAST(e.LaBaiKiemTra AS INT) AS IsExam,
-               e.NgayTao AS CreatedDate, e.TrangThai, e.TrangThaiDuyet
+               e.NgayTao AS CreatedDate, e.TrangThai, e.TrangThaiDuyet,
+               e.MaBaiHoc
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         WHERE bh.MaBuoiHoc = @buoiHocId
+
+        UNION ALL
+
+        SELECT k.MaBaiKiemTra AS MaBaiTap, k.TenBai AS Title, 'exam' AS Type, 
+               1 AS IsExam,
+               NULL AS CreatedDate, k.TrangThai,
+               CASE WHEN k.TrangThai = 'published' THEN N'Đã duyệt' WHEN k.TrangThai = 'rejected' THEN N'Từ chối' ELSE N'Chờ duyệt' END AS TrangThaiDuyet,
+               NULL AS MaBaiHoc
+        FROM BAIKIEMTRA k
+        WHERE k.MaBuoiHoc = @buoiHocId
       `);
     res.json(result.recordset);
   } catch (err) { res.status(500).send("Lỗi server"); }
@@ -837,11 +848,34 @@ app.get("/baitap/:id", async (req, res) => {
         SELECT MaBaiTap, TieuDe AS Title, DangBai AS Type, 
                CAST(LaBaiKiemTra AS INT) AS IsExam,
                NgayTao AS CreatedDate, NoiDung AS Content, CauHoi AS Questions,
-               TrangThai, TrangThaiDuyet, FileDinhKem, LinkAmThanh AS AudioUrl
+               TrangThai, TrangThaiDuyet, FileDinhKem, LinkAmThanh AS AudioUrl,
+               MaBaiHoc
         FROM BAITAP 
         WHERE MaBaiTap = @id
       `);
-    res.json(result.recordset[0]);
+    if (result.recordset.length > 0) {
+      return res.json(result.recordset[0]);
+    }
+
+    // Try finding in BAIKIEMTRA
+    const examResult = await pool.request()
+      .input("id", parseInt(req.params.id))
+      .query(`
+        SELECT MaBaiKiemTra AS MaBaiTap, TenBai AS Title, 'exam' AS Type, 
+               1 AS IsExam,
+               NULL AS CreatedDate, NoiDung AS Content, CauHoi AS Questions,
+               TrangThai,
+               CASE WHEN TrangThai = 'published' THEN N'Đã duyệt' WHEN TrangThai = 'rejected' THEN N'Từ chối' ELSE N'Chờ duyệt' END AS TrangThaiDuyet,
+               NULL AS FileDinhKem, NULL AS AudioUrl,
+               NULL AS MaBaiHoc
+        FROM BAIKIEMTRA 
+        WHERE MaBaiKiemTra = @id
+      `);
+    if (examResult.recordset.length > 0) {
+      return res.json(examResult.recordset[0]);
+    }
+
+    res.status(404).json({ message: "Không tìm thấy nội dung" });
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
@@ -936,12 +970,25 @@ app.delete("/baitap/:id", async (req, res) => {
       .input("id", id)
       .query(`DELETE FROM BAINOP WHERE MaBaiTap = @id`);
 
-    // Sau đó mới xóa exercise
+    // Xóa bài tập
     await pool.request()
       .input("id", id)
       .query(`DELETE FROM BAITAP WHERE MaBaiTap = @id`);
 
-    res.json({ message: "Xóa bài tập thành công" });
+    // Xóa dữ liệu thi liên quan trong BAIKIEMTRA
+    await pool.request()
+      .input("id", id)
+      .query(`DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+
+    await pool.request()
+      .input("id", id)
+      .query(`DELETE FROM CAUHOI WHERE MaBaiKiemTra = @id`);
+
+    await pool.request()
+      .input("id", id)
+      .query(`DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+
+    res.json({ message: "Xóa thành công" });
   } catch (err) {
     console.error(err);
     res.status(500).send("Lỗi server");
@@ -953,7 +1000,7 @@ app.get("/baigiang/detail/:id", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("id", req.params.id)
-      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl FROM BAIHOCKHOAHOC WHERE MaBaiHoc = @id`); // ← thêm FileUrl
+      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl, MaBuoiHoc FROM BAIHOCKHOAHOC WHERE MaBaiHoc = @id`); // ← thêm FileUrl
     res.json(result.recordset[0]);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -1767,33 +1814,6 @@ app.post("/baitap/create", async (req, res) => {
     } = req.body;
 
     const pool = await poolPromise;
-    let targetMaBaiHoc = MaBaiHoc;
-
-    if (!targetMaBaiHoc && MaBuoiHoc) {
-      // Tìm bài giảng đầu tiên của buổi học này để gán
-      const bhResult = await pool.request()
-        .input("buoiHocId", MaBuoiHoc)
-        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
-      if (bhResult.recordset.length > 0) {
-        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-      } else {
-        // Tạo bài giảng rỗng tạm thời cho buổi học
-        const insertBh = await pool.request()
-          .input("buoiHocId", MaBuoiHoc)
-          .query(`
-            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
-            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
-            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-          `);
-        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
-      }
-    }
-
-    if (!targetMaBaiHoc) {
-      return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
-    }
-
-    // Resolve MaGiangVien if not passed or null
     let resolvedMaGiangVien = MaGiangVien;
     if (!resolvedMaGiangVien && MaBuoiHoc) {
       const classTeacherResult = await pool.request()
@@ -1812,50 +1832,200 @@ app.post("/baitap/create", async (req, res) => {
     const finalTrangThaiCreate = TrangThai || "pending";
     const finalTrangThaiDuyetCreate = finalTrangThaiCreate === "published" ? 'Đã duyệt' : (finalTrangThaiCreate === "rejected" ? 'Từ chối' : 'Chờ duyệt');
 
-    await pool.request()
-      .input("TieuDe",        Title)
-      .input("DangBai",       DangBai || (Type !== "exam" ? Type : null) || null)
-      .input("NoiDung",       Content     || "")
-      .input("CauHoi",        Questions   || "")
-      .input("NgayTao",       CreatedDate || new Date().toISOString().split('T')[0])
-      .input("MaBaiHoc",      targetMaBaiHoc)
-      .input("LinkAmThanh",   AudioUrl    || "")
-      .input("HienThiDapAn",  ShowAnswer  ? 1 : 0)
-      .input("HocThuMienPhi", IsFree      ? 1 : 0)
-      .input("LaBaiKiemTra",  (Type === "exam" || IsExam) ? 1 : 0)
-      .input("TrangThai",     finalTrangThaiCreate)
-      .input("TrangThaiDuyet", finalTrangThaiDuyetCreate)
-      .input("KyNang",        KyNang      || null)
-      .input("MaGiangVien",   resolvedMaGiangVien || null)
-      .input("FileDinhKem",   FileDinhKem || null)
-      .query(`
-        INSERT INTO BAITAP
-          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem)
-        VALUES
-          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem)
-      `);
+    const isExamMode = (Type === "exam" || IsExam === 1 || IsExam === true || req.body.LaBaiKiemTra === 1 || req.body.LaBaiKiemTra === true);
 
-    res.json({ message: "Thêm bài tập thành công" });
+    if (isExamMode) {
+      // Parse timing details from Content JSON
+      let durationVal = 45;
+      let startTimeVal = null;
+      let deadlineVal = null;
+      try {
+        if (Content) {
+          const parsedContent = JSON.parse(Content);
+          durationVal = parsedContent.duration || durationVal;
+          startTimeVal = parsedContent.startTime || startTimeVal;
+          deadlineVal = parsedContent.deadline || deadlineVal;
+        }
+      } catch (err) {
+        console.error("Error parsing exam content JSON:", err);
+      }
+
+      await pool.request()
+        .input("TenBai", Title)
+        .input("ThoiGian", durationVal)
+        .input("NgayBatDau", startTimeVal)
+        .input("HanNop", deadlineVal)
+        .input("MaBuoiHoc", MaBuoiHoc)
+        .input("MaGiangVien", resolvedMaGiangVien || null)
+        .input("TongDiem", 10.0)
+        .input("ShowAnswer", ShowAnswer ? 1 : 0)
+        .input("TrangThai", finalTrangThaiDuyetCreate)
+        .input("NoiDung", Content || "")
+        .input("CauHoi", Questions || "")
+        .query(`
+          INSERT INTO BAIKIEMTRA 
+            (TenBai, ThoiGian, NgayBatDau, HanNop, MaBuoiHoc, MaGiangVien, TongDiem, ShowAnswer, TrangThai, NoiDung, CauHoi)
+          VALUES 
+            (@TenBai, @ThoiGian, @NgayBatDau, @HanNop, @MaBuoiHoc, @MaGiangVien, @TongDiem, @ShowAnswer, @TrangThai, @NoiDung, @CauHoi)
+        `);
+
+      res.json({ message: "Thêm bài kiểm tra thành công" });
+    } else {
+      let targetMaBaiHoc = MaBaiHoc;
+
+      if (!targetMaBaiHoc && MaBuoiHoc) {
+        const bhResult = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+        if (bhResult.recordset.length > 0) {
+          targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+        } else {
+          const insertBh = await pool.request()
+            .input("buoiHocId", MaBuoiHoc)
+            .query(`
+              INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
+              VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+              SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+            `);
+          targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+        }
+      }
+
+      if (!targetMaBaiHoc) {
+        return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
+      }
+
+      await pool.request()
+        .input("TieuDe",        Title)
+        .input("DangBai",       DangBai || Type || null)
+        .input("NoiDung",       Content     || "")
+        .input("CauHoi",        Questions   || "")
+        .input("NgayTao",       CreatedDate || new Date().toISOString().split('T')[0])
+        .input("MaBaiHoc",      targetMaBaiHoc)
+        .input("LinkAmThanh",   AudioUrl    || "")
+        .input("HienThiDapAn",  ShowAnswer  ? 1 : 0)
+        .input("HocThuMienPhi", IsFree      ? 1 : 0)
+        .input("LaBaiKiemTra",  0)
+        .input("TrangThai",     finalTrangThaiCreate)
+        .input("TrangThaiDuyet", finalTrangThaiDuyetCreate)
+        .input("KyNang",        KyNang      || null)
+        .input("MaGiangVien",   resolvedMaGiangVien || null)
+        .input("FileDinhKem",   FileDinhKem || null)
+        .query(`
+          INSERT INTO BAITAP
+            (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem)
+          VALUES
+            (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem)
+        `);
+
+      res.json({ message: "Thêm bài tập thành công" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send("Lỗi server");
   }
 });
 
-// Lấy toàn bộ danh sách đăng ký khóa học (cho Admin)
-app.get("/admin/dangky", async (req, res) => {
+// ── Học viên gửi yêu cầu ghi danh vào lớp ──
+app.post("/student/lophoc/request-ghidanh", async (req, res) => {
+  try {
+    const { MaLopHoc, MaSinhVien } = req.body
+    const pool = await poolPromise
+    const parsedSV = parseStudentId(MaSinhVien);
+
+    // 1. Kiểm tra lớp học có tồn tại không
+    const classCheck = await pool.request()
+      .input("MaLopHoc", MaLopHoc)
+      .query(`SELECT TenLop FROM LOPHOC WHERE MaLopHoc = @MaLopHoc`)
+    if (classCheck.recordset.length === 0) {
+      return res.status(400).json({ message: "Mã lớp học không tồn tại trên hệ thống." })
+    }
+
+    // 2. Kiểm tra học viên đã được ghi danh vào lớp này chưa
+    const checkEnrolled = await pool.request()
+      .input("MaLopHoc", MaLopHoc)
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT TrangThai FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
+    if (checkEnrolled.recordset.length > 0) {
+      const status = checkEnrolled.recordset[0].TrangThai;
+      if (status === "Đang học") {
+        return res.status(400).json({ message: "Bạn đang học lớp này rồi." })
+      } else if (status === "Chờ ghi danh") {
+        return res.status(400).json({ message: "Yêu cầu ghi danh vào lớp này đang chờ phê duyệt." })
+      } else if (status === "Hoàn thành") {
+        return res.status(400).json({ message: "Bạn đã hoàn thành lớp học này trước đó." })
+      }
+    }
+
+    // 3. Kiểm tra xem sinh viên có đang học lớp nào khác hoặc có yêu cầu chờ duyệt nào không
+    const activeClassCheck = await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        SELECT l.TenLop, sl.TrangThai 
+        FROM SINHVIEN_LOPHOC sl
+        JOIN LOPHOC l ON sl.MaLopHoc = l.MaLopHoc
+        WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai IN (N'Đang học', N'Chờ ghi danh')
+      `)
+    if (activeClassCheck.recordset.length > 0) {
+      const row = activeClassCheck.recordset[0];
+      if (row.TrangThai === "Đang học") {
+        return res.status(400).json({ 
+          message: `Bạn đang học lớp '${row.TenLop}'. Mỗi sinh viên chỉ được ghi danh và học 1 lớp tại một thời điểm.` 
+        });
+      } else if (row.TrangThai === "Chờ ghi danh") {
+        return res.status(400).json({ 
+          message: `Bạn đã gửi yêu cầu ghi danh vào lớp '${row.TenLop}' và đang chờ phê duyệt. Vui lòng đợi kết quả.` 
+        });
+      }
+    }
+
+    // 4. Nếu có bản ghi 'Từ chối' trước đó, cập nhật lại trạng thái thành 'Chờ ghi danh' và cập nhật ngày ghi danh
+    const checkRejected = await pool.request()
+      .input("MaLopHoc", MaLopHoc)
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT MaGhiDanh FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien AND TrangThai = N'Từ chối'`)
+
+    if (checkRejected.recordset.length > 0) {
+      await pool.request()
+        .input("MaLopHoc", MaLopHoc)
+        .input("MaSinhVien", parsedSV)
+        .query(`UPDATE SINHVIEN_LOPHOC SET TrangThai = N'Chờ ghi danh', NgayGhiDanh = GETDATE() WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
+    } else {
+      await pool.request()
+        .input("MaLopHoc", MaLopHoc)
+        .input("MaSinhVien", parsedSV)
+        .query(`INSERT INTO SINHVIEN_LOPHOC (MaLopHoc, MaSinhVien, NgayGhiDanh, TrangThai)
+                VALUES (@MaLopHoc, @MaSinhVien, GETDATE(), N'Chờ ghi danh')`)
+    }
+
+    res.json({ message: "Gửi yêu cầu ghi danh thành công! Vui lòng chờ Quản trị viên phê duyệt." })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// ── Lấy danh sách yêu cầu ghi danh đang chờ phê duyệt (cho QTV) ──
+app.get("/dangky/pending", async (req, res) => {
   try {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        d.MaDangKy, d.MaKhoaHoc, d.MaSinhVien, s.MSSV,
-        d.NgayDangKy, d.TrangThai,
-        n.HoTen, k.TenKhoaHoc
-      FROM DANGKYKHOAHOC d
-      JOIN SINHVIEN s ON d.MaSinhVien = s.MaSinhVien
+        sl.MaGhiDanh AS MaDangKy,
+        k.MaKhoaHoc,
+        sl.MaSinhVien,
+        s.MSSV,
+        sl.NgayGhiDanh AS NgayDangKy,
+        sl.TrangThai,
+        n.HoTen,
+        k.TenKhoaHoc,
+        lh.MaLopHoc,
+        lh.TenLop
+      FROM SINHVIEN_LOPHOC sl
+      JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
       JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
-      JOIN KHOAHOC k ON d.MaKhoaHoc = k.MaKhoaHoc
-      ORDER BY d.NgayDangKy DESC
+      JOIN LOPHOC lh ON sl.MaLopHoc = lh.MaLopHoc
+      JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+      JOIN KHOAHOC k ON khct.MaKhoaHoc = k.MaKhoaHoc
+      WHERE sl.TrangThai = N'Chờ ghi danh'
+      ORDER BY sl.NgayGhiDanh DESC
     `)
     const formatted = result.recordset.map(row => ({
       ...row,
@@ -1865,16 +2035,155 @@ app.get("/admin/dangky", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 
-// Cập nhật trạng thái đăng ký học viên (Từ chối, Duyệt,...)
+// ── Lấy danh sách học viên có yêu cầu chờ ghi danh vào một lớp học cụ thể ──
+app.get("/students/pending-enroll/:classId", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    const result = await pool.request()
+      .input("classId", req.params.classId)
+      .query(`
+        SELECT 
+          s.MaSinhVien,
+          n.HoTen,
+          n.GioiTinh,
+          s.Lop,
+          sl.NgayGhiDanh,
+          sl.TrangThai
+        FROM SINHVIEN_LOPHOC sl
+        JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
+        JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
+        WHERE sl.MaLopHoc = @classId AND sl.TrangThai = N'Chờ ghi danh'
+        ORDER BY sl.NgayGhiDanh DESC
+      `)
+    
+    const formatted = result.recordset.map(row => ({
+      ...row,
+      MaSinhVien: formatStudentId(row.MaSinhVien)
+    }));
+    res.json(formatted)
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// ── QTV phê duyệt ghi danh học viên vào lớp ──
+app.post("/qtv/lophoc/:id/ghidanh", async (req, res) => {
+  try {
+    const { MaSinhVien } = req.body
+    const pool = await poolPromise
+    const parsedSV = parseStudentId(MaSinhVien);
+    const targetClassId = req.params.id;
+
+    // 1. Kiểm tra xem học viên có đang trong một lớp học khác không
+    const activeClassCheck = await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .input("TargetClassId", targetClassId)
+      .query(`
+        SELECT l.TenLop 
+        FROM SINHVIEN_LOPHOC sl
+        JOIN LOPHOC l ON sl.MaLopHoc = l.MaLopHoc
+        WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai = N'Đang học' AND sl.MaLopHoc <> @TargetClassId
+      `)
+    if (activeClassCheck.recordset.length > 0) {
+      const currentClass = activeClassCheck.recordset[0].TenLop;
+      return res.status(400).json({ 
+        message: `Học viên đang học lớp '${currentClass}'. Không thể duyệt vào lớp mới.` 
+      });
+    }
+
+    // 2. Tìm yêu cầu ghi danh của học viên này
+    const requestCheck = await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        SELECT MaGhiDanh, MaLopHoc 
+        FROM SINHVIEN_LOPHOC 
+        WHERE MaSinhVien = @MaSinhVien AND TrangThai = N'Chờ ghi danh'
+      `)
+    
+    if (requestCheck.recordset.length > 0) {
+      const pendingRecord = requestCheck.recordset[0];
+      await pool.request()
+        .input("MaGhiDanh", pendingRecord.MaGhiDanh)
+        .input("MaLopHoc", targetClassId)
+        .query(`
+          UPDATE SINHVIEN_LOPHOC 
+          SET TrangThai = N'Đang học', MaLopHoc = @MaLopHoc, NgayGhiDanh = GETDATE()
+          WHERE MaGhiDanh = @MaGhiDanh
+        `)
+    } else {
+      const existsCheck = await pool.request()
+        .input("MaLopHoc", targetClassId)
+        .input("MaSinhVien", parsedSV)
+        .query(`SELECT TrangThai FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
+
+      if (existsCheck.recordset.length > 0) {
+        await pool.request()
+          .input("MaLopHoc", targetClassId)
+          .input("MaSinhVien", parsedSV)
+          .query(`UPDATE SINHVIEN_LOPHOC SET TrangThai = N'Đang học', NgayGhiDanh = GETDATE() WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
+      } else {
+        await pool.request()
+          .input("MaLopHoc", targetClassId)
+          .input("MaSinhVien", parsedSV)
+          .query(`INSERT INTO SINHVIEN_LOPHOC (MaLopHoc, MaSinhVien, NgayGhiDanh, TrangThai)
+                  VALUES (@MaLopHoc, @MaSinhVien, GETDATE(), N'Đang học')`)
+      }
+    }
+
+    // 3. Tự động cập nhật MaVaiTro = 3 (Học viên đã vào lớp) trong bảng NGUOIDUNG
+    await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        UPDATE NGUOIDUNG
+        SET MaVaiTro = 3
+        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
+      `)
+
+    res.json({ message: "Duyệt học viên vào lớp thành công" })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// ── QTV từ chối yêu cầu ghi danh của học viên ──
 app.put("/dangky/:id/status", async (req, res) => {
   try {
     const { TrangThai } = req.body
     const pool = await poolPromise
+    
     await pool.request()
       .input("id", req.params.id)
-      .input("TrangThai", TrangThai)
-      .query(`UPDATE DANGKYKHOAHOC SET TrangThai=@TrangThai WHERE MaDangKy=@id`)
-    res.json({ message: "Cập nhật trạng thái đăng ký thành công" })
+      .input("TrangThai", TrangThai || "Từ chối")
+      .query(`UPDATE SINHVIEN_LOPHOC SET TrangThai = @TrangThai WHERE MaGhiDanh = @id`)
+      
+    res.json({ message: "Cập nhật trạng thái yêu cầu thành công" })
+  } catch (err) { res.status(500).send(err.message) }
+})
+
+// ── QTV hủy ghi danh học viên ra khỏi lớp ──
+app.delete("/qtv/lophoc/:id/ghidanh/:maSinhVien", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    const parsedSV = parseStudentId(req.params.maSinhVien);
+    const classId = req.params.id;
+
+    await pool.request()
+      .input("MaLopHoc", classId)
+      .input("MaSinhVien", parsedSV)
+      .query(`DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
+
+    await pool.request()
+      .input("MaSinhVien", parsedSV)
+      .query(`
+        UPDATE NGUOIDUNG
+        SET MaVaiTro = CASE 
+          WHEN EXISTS (
+              SELECT 1 
+              FROM SINHVIEN_LOPHOC sl
+              WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai = N'Đang học'
+          ) THEN 3
+          ELSE 5
+        END
+        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
+      `)
+
+    res.json({ message: "Đã hủy ghi danh thành công" })
   } catch (err) { res.status(500).send(err.message) }
 })
 
@@ -1890,7 +2199,7 @@ app.get("/lophoc/:id/sinhvien", async (req, res) => {
         FROM SINHVIEN_LOPHOC sl
         JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
-        WHERE sl.MaLopHoc = @id
+        WHERE sl.MaLopHoc = @id AND sl.TrangThai <> N'Chờ ghi danh' AND sl.TrangThai <> N'Từ chối'
       `)
     const formatted = result.recordset.map(row => ({
       ...row,
@@ -1923,7 +2232,7 @@ app.get("/lophoc/:id/sinhvien/:maNguoiDung", async (req, res) => {
         FROM SINHVIEN_LOPHOC sl
         JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
-        WHERE sl.MaLopHoc = @id
+        WHERE sl.MaLopHoc = @id AND sl.TrangThai <> N'Chờ ghi danh' AND sl.TrangThai <> N'Từ chối'
       `)
     const formatted = result.recordset.map(row => ({
       ...row,
@@ -1933,115 +2242,7 @@ app.get("/lophoc/:id/sinhvien/:maNguoiDung", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 
-// ── Ghi danh sinh viên vào lớp ──
-app.post("/qtv/lophoc/:id/ghidanh", async (req, res) => {
-  try {
-    const { MaSinhVien } = req.body
-    const pool = await poolPromise
-    const parsedSV = parseStudentId(MaSinhVien);
-    // Kiểm tra đã ghi danh chưa
-    const check = await pool.request()
-      .input("MaLopHoc", req.params.id)
-      .input("MaSinhVien", parsedSV)
-      .query(`SELECT * FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
-    if (check.recordset.length > 0)
-      return res.status(400).json({ message: "Sinh viên đã ghi danh vào lớp này rồi" })
 
-    // Kiểm tra xem sinh viên có đang học lớp nào khác không (TrangThai = 'Đang học')
-    const checkActive = await pool.request()
-      .input("MaSinhVien", parsedSV)
-      .query(`
-        SELECT l.TenLop 
-        FROM SINHVIEN_LOPHOC sl
-        JOIN LOPHOC l ON sl.MaLopHoc = l.MaLopHoc
-        WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai = N'Đang học'
-      `)
-    if (checkActive.recordset.length > 0) {
-      const currentClass = checkActive.recordset[0].TenLop;
-      return res.status(400).json({ 
-        message: `Sinh viên đang học lớp '${currentClass}'. Một sinh viên chỉ được đang học tối đa 1 lớp.` 
-      });
-    }
-    await pool.request()
-      .input("MaLopHoc", req.params.id)
-      .input("MaSinhVien", parsedSV)
-      .query(`INSERT INTO SINHVIEN_LOPHOC (MaLopHoc, MaSinhVien, NgayGhiDanh, TrangThai)
-              VALUES (@MaLopHoc, @MaSinhVien, GETDATE(), N'Đang học')`)
-
-    // Tự động cập nhật trạng thái đăng ký khóa học tương ứng thành 'Đã ghi danh'
-    await pool.request()
-      .input("MaLopHoc", req.params.id)
-      .input("MaSinhVien", parsedSV)
-      .query(`
-        UPDATE DANGKYKHOAHOC
-        SET TrangThai = N'Đã ghi danh'
-        WHERE MaSinhVien = @MaSinhVien 
-          AND MaKhoaHoc IN (
-              SELECT khct.MaKhoaHoc 
-              FROM LOPHOC lh
-              JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
-              WHERE lh.MaLopHoc = @MaLopHoc
-          )
-      `)
-
-    // Tự động cập nhật MaVaiTro = 3 (Học viên đã đăng ký khóa học) trong bảng NGUOIDUNG
-    await pool.request()
-      .input("MaSinhVien", parsedSV)
-      .query(`
-        UPDATE NGUOIDUNG
-        SET MaVaiTro = 3
-        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
-      `)
-
-    res.json({ message: "Đã ghi danh thành công" })
-  } catch (err) { res.status(500).send(err.message) }
-})
-
-// ── Hủy ghi danh ──
-app.delete("/qtv/lophoc/:id/ghidanh/:maSinhVien", async (req, res) => {
-  try {
-    const pool = await poolPromise
-    const parsedSV = parseStudentId(req.params.maSinhVien);
-    await pool.request()
-      .input("MaLopHoc", req.params.id)
-      .input("MaSinhVien", parsedSV)
-      .query(`DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc=@MaLopHoc AND MaSinhVien=@MaSinhVien`)
-
-    // Tự động cập nhật lại trạng thái đăng ký khóa học tương ứng thành 'Chờ ghi danh'
-    await pool.request()
-      .input("MaLopHoc", req.params.id)
-      .input("MaSinhVien", parsedSV)
-      .query(`
-        UPDATE DANGKYKHOAHOC
-        SET TrangThai = N'Chờ ghi danh'
-        WHERE MaSinhVien = @MaSinhVien 
-          AND MaKhoaHoc IN (
-              SELECT khct.MaKhoaHoc 
-              FROM LOPHOC lh
-              JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
-              WHERE lh.MaLopHoc = @MaLopHoc
-          )
-      `)
-
-    // Tự động cập nhật lại MaVaiTro dựa trên trạng thái học tập thực tế (nếu không còn lớp nào đang học thì về 5)
-    await pool.request()
-      .input("MaSinhVien", parsedSV)
-      .query(`
-        UPDATE NGUOIDUNG
-        SET MaVaiTro = CASE 
-          WHEN EXISTS (
-              SELECT 1 
-              FROM SINHVIEN_LOPHOC sl
-              WHERE sl.MaSinhVien = @MaSinhVien AND sl.TrangThai = N'Đang học'
-          ) THEN 3
-          ELSE 5
-        END
-        WHERE MaNguoiDung = (SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @MaSinhVien)
-      `)
-
-    res.json({ message: "Đã hủy ghi danh" })
-  } catch (err) { res.status(500).send(err.message) }
-})
 // ── Đếm số học viên trong lớp ──
 app.get("/lophoc/:id/students/count", async (req, res) => {
   try {
@@ -2796,22 +2997,7 @@ app.delete("/admin/users/:id", async (req, res) => {
     res.json({ message: "Đã khóa tài khoản" })
   } catch (err) { res.status(500).send(err.message) }
 })
-// Đăng ký theo tháng trong năm hiện tại
-app.get("/admin/stats/dangky-thang", async (req, res) => {
-  try {
-    const pool = await poolPromise
-    const result = await pool.request().query(`
-      SELECT 
-        MONTH(NgayDangKy) AS Thang,
-        COUNT(*) AS SoLuong
-      FROM DANGKYKHOAHOC
-      WHERE YEAR(NgayDangKy) = YEAR(GETDATE())
-      GROUP BY MONTH(NgayDangKy)
-      ORDER BY Thang
-    `)
-    res.json(result.recordset)
-  } catch (err) { res.status(500).send(err.message) }
-})
+
 
 // Trạng thái khóa học
 app.get("/admin/stats/trangthaidangky", async (req, res) => {
@@ -3588,6 +3774,155 @@ app.post("/baigiang/:id/clone", async (req, res) => {
   }
 });
 
+
+
+// ===== MINITEST & STUDENT PROGRESS ROUTES =====
+
+// 1. Tạo hoặc Cập nhật Minitest của Bài giảng
+app.post("/minitest/create", async (req, res) => {
+  try {
+    const { MaBaiHoc, CauHoi, DiemDat } = req.body;
+    if (!MaBaiHoc) return res.status(400).json({ message: "Thiếu MaBaiHoc" });
+
+    const pool = await poolPromise;
+    // Kiểm tra đã có minitest cho bài giảng này chưa
+    const check = await pool.request()
+      .input("MaBaiHoc", MaBaiHoc)
+      .query(`SELECT MaMinitest FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc`);
+
+    if (check.recordset.length > 0) {
+      // Cập nhật
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("CauHoi", CauHoi || "")
+        .input("DiemDat", DiemDat ?? 100)
+        .query(`UPDATE MINITEST SET CauHoi = @CauHoi, DiemDat = @DiemDat WHERE MaBaiHoc = @MaBaiHoc`);
+      res.json({ message: "Cập nhật Minitest thành công" });
+    } else {
+      // Tạo mới
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("CauHoi", CauHoi || "")
+        .input("DiemDat", DiemDat ?? 100)
+        .query(`INSERT INTO MINITEST (MaBaiHoc, CauHoi, DiemDat) VALUES (@MaBaiHoc, @CauHoi, @DiemDat)`);
+      res.json({ message: "Tạo Minitest thành công" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 2. Lấy đề bài Minitest của Bài giảng
+app.get("/minitest/baigiang/:maBaiHoc", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("MaBaiHoc", parseInt(req.params.maBaiHoc))
+      .query(`SELECT MaMinitest, MaBaiHoc, CauHoi, DiemDat FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc`);
+    res.json(result.recordset[0] || null);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 3. Lấy tiến độ học tập (Video & Minitest) của sinh viên
+app.get("/student/progress/minitest/:maBaiHoc/:maSinhVien", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const parsedSV = parseStudentId(req.params.maSinhVien);
+    const result = await pool.request()
+      .input("MaBaiHoc", parseInt(req.params.maBaiHoc))
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT DaXemVideo, DaDatMinitest FROM TIENDO_MINITEST WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+
+    if (result.recordset.length > 0) {
+      const record = result.recordset[0];
+      res.json({
+        DaXemVideo: record.DaXemVideo ? 1 : 0,
+        DaDatMinitest: record.DaDatMinitest ? 1 : 0
+      });
+    } else {
+      // Trả về tiến độ mặc định (chưa bắt đầu)
+      res.json({ DaXemVideo: 0, DaDatMinitest: 0 });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 4. Đánh dấu xem hết video bài giảng
+app.post("/student/progress/video/complete", async (req, res) => {
+  try {
+    const { MaBaiHoc, MaSinhVien } = req.body;
+    if (!MaBaiHoc || !MaSinhVien) return res.status(400).json({ message: "Thiếu thông tin" });
+
+    const pool = await poolPromise;
+    const parsedSV = parseStudentId(MaSinhVien);
+
+    const check = await pool.request()
+      .input("MaBaiHoc", MaBaiHoc)
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT MaTienDo FROM TIENDO_MINITEST WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+
+    if (check.recordset.length > 0) {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .query(`UPDATE TIENDO_MINITEST SET DaXemVideo = 1, NgayCapNhat = GETDATE() WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+    } else {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .query(`INSERT INTO TIENDO_MINITEST (MaBaiHoc, MaSinhVien, DaXemVideo, DaDatMinitest, NgayCapNhat) VALUES (@MaBaiHoc, @MaSinhVien, 1, 0, GETDATE())`);
+    }
+    res.json({ message: "Đã ghi nhận hoàn thành xem video" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 5. Nộp kết quả làm Minitest
+app.post("/student/progress/minitest/submit", async (req, res) => {
+  try {
+    const { MaBaiHoc, MaSinhVien, Passed } = req.body;
+    if (!MaBaiHoc || !MaSinhVien) return res.status(400).json({ message: "Thiếu thông tin" });
+
+    const pool = await poolPromise;
+    const parsedSV = parseStudentId(MaSinhVien);
+
+    const check = await pool.request()
+      .input("MaBaiHoc", MaBaiHoc)
+      .input("MaSinhVien", parsedSV)
+      .query(`SELECT MaTienDo FROM TIENDO_MINITEST WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+
+    const finalDaXemVideo = Passed ? 1 : 0;
+    const finalDaDatMinitest = Passed ? 1 : 0;
+
+    if (check.recordset.length > 0) {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .input("DaXemVideo", finalDaXemVideo)
+        .input("DaDatMinitest", finalDaDatMinitest)
+        .query(`UPDATE TIENDO_MINITEST SET DaXemVideo = @DaXemVideo, DaDatMinitest = @DaDatMinitest, NgayCapNhat = GETDATE() WHERE MaBaiHoc = @MaBaiHoc AND MaSinhVien = @MaSinhVien`);
+    } else {
+      await pool.request()
+        .input("MaBaiHoc", MaBaiHoc)
+        .input("MaSinhVien", parsedSV)
+        .input("DaXemVideo", finalDaXemVideo)
+        .input("DaDatMinitest", finalDaDatMinitest)
+        .query(`INSERT INTO TIENDO_MINITEST (MaBaiHoc, MaSinhVien, DaXemVideo, DaDatMinitest, NgayCapNhat) VALUES (@MaBaiHoc, @MaSinhVien, @DaXemVideo, @DaDatMinitest, GETDATE())`);
+    }
+    res.json({ message: "Đã nộp kết quả Minitest", Passed: !!Passed });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
 
 
 const initDb = async () => {

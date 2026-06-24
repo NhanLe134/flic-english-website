@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiUsers, FiBook, FiClock, FiSearch, FiArrowLeft, FiDownload, FiUser, FiActivity } from "react-icons/fi";
+import { FiUsers, FiBook, FiClock, FiSearch, FiArrowLeft, FiDownload, FiUser } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "./StudentListQTV.css";
@@ -16,6 +16,7 @@ interface LopHoc {
 }
 
 interface Student {
+  studentId: string;
   MaSinhVien: string;
   MSSV: string | null;
   HoTen: string;
@@ -40,7 +41,6 @@ const StudentListQTV: React.FC = () => {
   };
 
   // State
-  const [courses, setCourses] = useState<any[]>([]);
   const [classes, setClasses] = useState<LopHoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -75,7 +75,6 @@ const StudentListQTV: React.FC = () => {
         setLoading(true);
         // 1. Fetch courses
         const coursesRes = await fetch(`${API}/admin/khoahoc`).then(r => r.json());
-        setCourses(coursesRes);
 
         // 2. Fetch classes for each course in parallel
         const classesPromises = coursesRes.map((c: any) => 

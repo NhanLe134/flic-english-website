@@ -1,4 +1,4 @@
-﻿// CoursePageQTV.tsx – Cấu trúc UI cũ + Kết nối DB + Phân công nhiều GV
+// CoursePageQTV.tsx – Cấu trúc UI cũ + Kết nối DB + Phân công nhiều GV
 import React, { useState, useEffect, useMemo } from 'react'
 import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiFileText, FiChevronDown } from 'react-icons/fi'
@@ -134,6 +134,7 @@ interface PendingReg {
   id: number; studentId: string; name: string; phone: string
   courseId: number; courseName: string; regDate: string
   status: 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối'
+  classId?: number; className?: string
 }
 
 interface ClassInForm {
@@ -500,13 +501,6 @@ export default function CoursePageQTV() {
   useEffect(() => {
     loadCourses()
     fetch(`${API}/qtv/giangvien`).then(r => r.json()).then(setGiaoViens).catch(() => {})
-    fetch(`${API}/students`)
-      .then(r => r.json())
-      .then(data => setAllStudents(data.map((s: any) => ({
-        id: s.MaSinhVien, name: s.HoTen,
-        gender: s.GioiTinh || '—', phone: s.Lop || '—'
-      }))))
-      .catch(err => console.error('Error loading students:', err))
     fetch(`${API}/dangky/pending?t=${Date.now()}`)
       .then(r => r.json())
       .then(data => {
@@ -515,12 +509,32 @@ export default function CoursePageQTV() {
             id: r.MaDangKy, studentId: r.MaSinhVien, name: r.HoTen,
             phone: '—', courseId: r.MaKhoaHoc, courseName: r.TenKhoaHoc,
             regDate: new Date(r.NgayDangKy).toLocaleDateString('vi-VN'),
-            status: (r.TrangThai === 'Đã ghi danh' ? 'Đã ghi danh' : r.TrangThai === 'Từ chối' ? 'Từ chối' : 'Chờ ghi danh') as 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối'
+            status: (r.TrangThai === 'Đã ghi danh' ? 'Đã ghi danh' : r.TrangThai === 'Từ chối' ? 'Từ chối' : 'Chờ ghi danh') as 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối',
+            classId: r.MaLopHoc,
+            className: r.TenLop
           })))
         }
       })
       .catch(() => {})
   }, [])
+
+  // Load học viên có yêu cầu chờ ghi danh vào lớp cụ thể khi mở modal ghi danh
+  useEffect(() => {
+    if (showEnroll && detailClass?.id) {
+      setAllStudents([])
+      fetch(`${API}/students/pending-enroll/${detailClass.id}`)
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setAllStudents(data.map((s: any) => ({
+              id: s.MaSinhVien, name: s.HoTen,
+              gender: s.GioiTinh || '—', phone: s.Lop || '—'
+            })))
+          }
+        })
+        .catch(err => console.error('Error loading pending students:', err))
+    }
+  }, [showEnroll, detailClass?.id])
 
   const loadClassesForCourse = (courseId: number) => {
     if (classesMap[courseId]) return
@@ -1934,7 +1948,7 @@ export default function CoursePageQTV() {
                           {r.status === 'Chờ ghi danh' && (
                             <>
                               <button className={styles.btnPrimary} style={{ fontSize:12, padding:'5px 12px' }}
-                                onClick={() => { setSelectedReg(r); setAssignClassId(''); setShowAssignClassModal(true) }}>
+                                onClick={() => { setSelectedReg(r); setAssignClassId(r.classId || ''); setShowAssignClassModal(true) }}>
                                 GD vào lớp
                               </button>
                               <button className={styles.btnDanger} style={{ fontSize:12 }} onClick={() => rejectReg(r.id)}>Từ chối</button>
@@ -1968,15 +1982,19 @@ export default function CoursePageQTV() {
               <div className={styles.assignRow}><span className={styles.assignLabel}>Mã SV</span><span className={styles.monoText}>{selectedReg.studentId}</span></div>
               <div className={styles.assignRow}><span className={styles.assignLabel}>Khóa học</span><span className={styles.boldText}>{selectedReg.courseName}</span></div>
             </div>
-            <div className={styles.formGroup} style={{ marginTop:16 }}>
-              <label>Chọn lớp học <span className={styles.req}>*</span></label>
-              <select value={assignClassId} onChange={e => setAssignClassId(Number(e.target.value))}>
-                <option value="">-- Chọn lớp --</option>
-                {(classesMap[selectedReg.courseId] || []).map(cl => (
-                  <option key={cl.id} value={cl.id}>{cl.name} — {cl.schedule} — {cl.students} học viên</option>
-                ))}
-              </select>
-            </div>
+            {selectedReg.className ? (
+              <div className={styles.assignRow} style={{ marginTop:16, borderTop:'1px solid #f1f5f9', paddingTop:16 }}><span className={styles.assignLabel}>Lớp học</span><span className={styles.boldText} style={{ color: "#d97706" }}>{selectedReg.className}</span></div>
+            ) : (
+              <div className={styles.formGroup} style={{ marginTop:16 }}>
+                <label>Chọn lớp học <span className={styles.req}>*</span></label>
+                <select value={assignClassId} onChange={e => setAssignClassId(Number(e.target.value))}>
+                  <option value="">-- Chọn lớp --</option>
+                  {(classesMap[selectedReg.courseId] || []).map(cl => (
+                    <option key={cl.id} value={cl.id}>{cl.name} — {cl.schedule} — {cl.students} học viên</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className={styles.modalFooter}>
               <button className={styles.btnOutline} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}>Hủy</button>
               <button className={styles.btnPrimary} onClick={confirmAssign} disabled={!assignClassId} style={{ opacity: assignClassId ? 1 : 0.5 }}>

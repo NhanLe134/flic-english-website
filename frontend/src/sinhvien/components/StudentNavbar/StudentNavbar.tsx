@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./StudentNavbar.css";
 import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
@@ -50,11 +50,9 @@ export default function StudentNavbar() {
     return (
       p === "/MyCourses" ||
       p.startsWith("/class-detail/") ||
-      p.startsWith("/course-detail/") ||
       p.startsWith("/doc-detail/") ||
       p.startsWith("/lesson-detail/") ||
       p.startsWith("/bai-giangSV/") ||
-      p === "/assignments" ||
       p.startsWith("/exercise/") ||
       p.startsWith("/baitap/") ||
       p === "/assignment-success" ||

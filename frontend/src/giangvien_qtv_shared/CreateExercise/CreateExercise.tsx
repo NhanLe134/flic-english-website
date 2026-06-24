@@ -4,9 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 
 interface Question {
-  question: string;
-  answers: string[];
-  correct: string;
+  question?: string;
+  answers?: string[];
+  correct?: string;
   explanation?: string;
   audioUrl?: string;
   imageUrl?: string;
@@ -118,7 +118,7 @@ const RichTextarea = ({
         display: "block",
         ...style
       }}
-      placeholder={placeholder}
+      {...{ placeholder }}
       onInput={handleInput}
     />
   );
@@ -162,7 +162,7 @@ const getQuestionSummary = (q: any, type: string) => {
   return cleanText;
 };
 
-const QuestionCard = ({ secIdx, qIdx, sec, q, onRemove, isCollapsed, onToggle, children }: any) => {
+const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children }: any) => {
   return (
     <div style={{ background: "#f8fafc", border: "1.5px solid #cbd5e1", borderRadius: 12, marginTop: 15, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
       {/* Question Header */}
@@ -2762,9 +2762,9 @@ const CreateExercise = () => {
                               placeholder={`Lựa chọn ${lbl}`}
                               className="exercise-content"
                               style={{ margin: 0 }}
-                              value={q.answers[aIdx] || ""}
+                              value={(q.answers || [])[aIdx] || ""}
                               onChange={e => {
-                                const copyAnswers = [...q.answers];
+                                const copyAnswers = [...(q.answers || [])];
                                 copyAnswers[aIdx] = e.target.value;
                                 updateQuestionInSection(secIdx, qIdx, "answers", copyAnswers);
                               }}
@@ -3537,9 +3537,9 @@ const CreateExercise = () => {
                           placeholder={`Lựa chọn ${lbl}`}
                           className="exercise-content"
                           style={{ margin: 0 }}
-                          value={q.answers[aIdx] || ""}
+                          value={(q.answers || [])[aIdx] || ""}
                           onChange={e => {
-                            const copyAnswers = [...q.answers];
+                            const copyAnswers = [...(q.answers || [])];
                             copyAnswers[aIdx] = e.target.value;
                             updateQuestionItemField(qIndex, "answers", copyAnswers);
                           }}

@@ -7,7 +7,7 @@ const originalFetch = window.fetch;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Mock database that gets reset on full page load, but supports basic in-memory mutations
-const db = {
+const db: any = {
   submissions: [
     {
       MaBaiNop: 1001,
@@ -218,6 +218,30 @@ const db = {
       TrangThai: "published",
       CreatedDate: "2026-03-05T11:00:00.000Z",
       MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 14,
+      Title: "Bài tập 5: Nghe và chọn theo ảnh (Listening & Image Choice)",
+      Type: "listening-image",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T12:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 15,
+      Title: "Bài tập 6: Nghe chép chính tả (Dictation)",
+      Type: "listening-dictation",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T13:00:00.000Z",
+      MaBuoiHoc: 1
+    },
+    {
+      MaBaiTap: 16,
+      Title: "Bài tập 7: Nghe điền từ vào đoạn văn (Cloze Test)",
+      Type: "listening-fill-in",
+      TrangThai: "published",
+      CreatedDate: "2026-03-05T14:00:00.000Z",
+      MaBuoiHoc: 1
     }
   ]
 };
@@ -344,7 +368,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 
     // 1.5 GET EXERCISES FOR CLASS
     if (urlStr.includes("/classes/") && urlStr.endsWith("/baitap") && method === "GET") {
-      const list = db.exercisesList.filter(ex => ex.MaBuoiHoc === 1);
+      const list = db.exercisesList.filter((ex: any) => ex.MaBuoiHoc === 1);
       return new Response(
         JSON.stringify(list),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -419,7 +443,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 
     // GET PENDING SUBMISSIONS COUNT
     if (urlStr.includes("/teacher/submissions/pending-count")) {
-      const count = db.submissions.filter(s => s.Diem === null).length;
+      const count = db.submissions.filter((s: any) => s.Diem === null).length;
       return new Response(
         JSON.stringify({ count }),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -525,7 +549,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/baitap/buoihoc/") && method === "GET") {
       const match = urlStr.match(/\/baitap\/buoihoc\/(\d+)/);
       const buoiHocId = match ? Number(match[1]) : 1;
-      const list = db.exercisesList.filter(ex => ex.MaBuoiHoc === buoiHocId);
+      const list = db.exercisesList.filter((ex: any) => ex.MaBuoiHoc === buoiHocId);
       return new Response(
         JSON.stringify(list),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -581,7 +605,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     // 8.1c TOGGLE OPEN STATE FOR EXAM
     if (urlStr.includes("/baitap/toggle-open") && method === "POST") {
       const { MaBaiTap } = bodyObj || {};
-      const ex = db.exercisesList.find(e => e.MaBaiTap === Number(MaBaiTap));
+      const ex = db.exercisesList.find((e: any) => e.MaBaiTap === Number(MaBaiTap));
       if (ex) {
         try {
           const content = JSON.parse(ex.Content || "{}");
@@ -590,7 +614,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
           ex.Content = JSON.stringify(content);
 
           // Also update QTV approvals content if it exists
-          const appEx = db.approvals.exercises.find(e => e.MaBaiTap === Number(MaBaiTap));
+          const appEx = db.approvals.exercises.find((e: any) => e.MaBaiTap === Number(MaBaiTap));
           if (appEx) {
             appEx.Content = ex.Content;
           }
@@ -697,11 +721,11 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       const parts = urlStr.split("/");
       const userId = parts[parts.length - 1]; // e.g. "100"
       
-      const list = db.submissions.filter(s => 
+      const list = db.submissions.filter((s: any) => 
         s.MaSinhVien === "SV_MOCK_TEST" || 
         s.MaSinhVien === "SV01" || 
         String(s.MaSinhVien) === String(userId)
-      ).map(s => ({
+      ).map((s: any) => ({
         MaBaiTap: s.MaBaiTap,
         TenBaiTap: (s as any).TenBaiTap || `Bài tập #${s.MaBaiTap}`,
         NgayNop: s.NgayNop,
@@ -736,7 +760,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         NhanXet: "",
         NgayNop: new Date().toISOString(),
         TenLop: "TOEIC-01",
-        TenBaiTap: db.exercisesList.find(ex => ex.MaBaiTap === (bodyObj?.MaExercise || bodyObj?.MaBaiTap))?.Title || "Bài tập mới nộp"
+        TenBaiTap: db.exercisesList.find((ex: any) => ex.MaBaiTap === (bodyObj?.MaExercise || bodyObj?.MaBaiTap))?.Title || "Bài tập mới nộp"
       };
       db.submissions.push(newSub);
       return new Response(
@@ -795,7 +819,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]) || 1;
 
-      const exFromDb = db.exercisesList.find(e => e.MaBaiTap === id);
+      const exFromDb = db.exercisesList.find((e: any) => e.MaBaiTap === id);
       if (exFromDb && exFromDb.Content) {
         return new Response(
           JSON.stringify({
@@ -968,6 +992,80 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
       }
+      if (id === 14) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 14,
+            TenBai: "Bài tập 5: Nghe và chọn theo ảnh (Listening & Image Choice)",
+            Title: "Bài tập 5: Nghe và chọn theo ảnh (Listening & Image Choice)",
+            Type: "listening-image",
+            LoaiBaiHoc: "Trắc nghiệm nghe",
+            Content: "Nghe băng và quan sát hình ảnh để chọn phương án mô tả chính xác nhất.",
+            Questions: JSON.stringify([
+              {
+                question: "Câu hỏi 1: Quan sát hình ảnh và chọn đáp án mô tả đúng nhất:",
+                correct: "A",
+                answers: ["A", "B", "C", "D"],
+                imageUrl: "/uploads/image(5).png",
+                audioUrl: "/uploads/toeic-office.mp3",
+                explanation: "Phương án A là đáp án chính xác nhất mô tả hành động trong hình ảnh thứ nhất."
+              },
+              {
+                question: "Câu hỏi 2: Quan sát hình ảnh và chọn đáp án mô tả đúng nhất:",
+                correct: "C",
+                answers: ["A", "B", "C", "D"],
+                imageUrl: "/uploads/image(6).png",
+                audioUrl: "/uploads/toeic-office.mp3",
+                explanation: "Phương án C là đáp án chính xác nhất mô tả hành động trong hình ảnh thứ hai."
+              }
+            ]),
+            AudioUrl: "/uploads/toeic-office.mp3",
+            FileDinhKem: "/uploads/image(5).png",
+            Vocabulary: "observe, visual, description",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 5
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 15) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 15,
+            TenBai: "Bài tập 6: Nghe chép chính tả (Dictation)",
+            Title: "Bài tập 6: Nghe chép chính tả (Dictation)",
+            Type: "listening-dictation",
+            LoaiBaiHoc: "Chép chính tả",
+            Content: "The presentation will begin in the conference room in ten minutes.",
+            Questions: "",
+            AudioUrl: "/uploads/toeic-office.mp3",
+            Vocabulary: "presentation, conference room",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 6
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (id === 16) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: 16,
+            TenBai: "Bài tập 7: Nghe điền từ vào đoạn văn (Cloze Test)",
+            Title: "Bài tập 7: Nghe điền từ vào đoạn văn (Cloze Test)",
+            Type: "listening-fill-in",
+            LoaiBaiHoc: "Điền khuyết",
+            Content: "Yesterday, I went to the [1] and bought some [2] to eat. The weather was so nice, so I sat on a [3] in the [4] to enjoy my afternoon snack.",
+            Questions: "supermarket | apples | bench | park",
+            AudioUrl: "/uploads/toeic-office.mp3",
+            Vocabulary: "supermarket, bench, park, snack",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản - Thì hiện tại",
+            ThuTu: 7
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
 
       // Default/Fallback
       return new Response(
@@ -994,7 +1092,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
       return new Response(
-        JSON.stringify(db.submissions.filter((s) => s.MaBaiTap === id || id === 1)),
+        JSON.stringify(db.submissions.filter((s: any) => s.MaBaiTap === id || id === 1)),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -1003,7 +1101,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/bainop/") && method === "GET" && !urlStr.includes("/baitap/")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
-      const sub = db.submissions.find((s) => s.MaBaiNop === id) || db.submissions[0];
+      const sub = db.submissions.find((s: any) => s.MaBaiNop === id) || db.submissions[0];
       return new Response(
         JSON.stringify(sub),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -1014,7 +1112,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/bainop/") && urlStr.endsWith("/cham") && (method === "PUT" || method === "POST")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.indexOf("bainop") + 1]);
-      const idx = db.submissions.findIndex((s) => s.MaBaiNop === id);
+      const idx = db.submissions.findIndex((s: any) => s.MaBaiNop === id);
       if (idx !== -1 && bodyObj) {
         db.submissions[idx].Diem = bodyObj.Diem;
         db.submissions[idx].NhanXet = bodyObj.NhanXet || "";
@@ -1037,7 +1135,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/tailieu/detail/")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
-      const doc = db.documents.find((d) => d.MaTaiLieu === id) || db.documents[0];
+      const doc = db.documents.find((d: any) => d.MaTaiLieu === id) || db.documents[0];
       return new Response(
         JSON.stringify(doc),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -1118,7 +1216,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 
     if (urlStr.includes("/baocao/diem-all")) {
       return new Response(
-        JSON.stringify(db.submissions.map(s => ({
+        JSON.stringify(db.submissions.map((s: any) => ({
           MaBaiNop: s.MaBaiNop,
           MaSinhVien: s.MaSinhVien,
           MaBaiTap: s.MaBaiTap,
@@ -1170,19 +1268,19 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
       const newStatus = isApprove ? "Đã duyệt" : "Từ chối";
 
       if (urlStr.includes("/baigiang/")) {
-        db.approvals.baigiang.forEach(item => item.TrangThai = newStatus);
+        db.approvals.baigiang.forEach((item: any) => item.TrangThai = newStatus);
       } else if (urlStr.includes("/baihocmo/")) {
-        db.approvals.baihocmo.forEach(item => item.TrangThai = newStatus);
+        db.approvals.baihocmo.forEach((item: any) => item.TrangThai = newStatus);
       } else if (urlStr.includes("/baitap/")) {
-        db.approvals.exercises.forEach(item => {
+        db.approvals.exercises.forEach((item: any) => {
           item.TrangThai = newStatus;
-          const ex = db.exercisesList.find(e => e.MaBaiTap === item.MaBaiTap);
+          const ex = db.exercisesList.find((e: any) => e.MaBaiTap === item.MaBaiTap);
           if (ex) {
             ex.TrangThai = isApprove ? "published" : "rejected";
           }
         });
       } else if (urlStr.includes("/tailieu/")) {
-        db.approvals.tailieu.forEach(item => item.TrangThai = newStatus);
+        db.approvals.tailieu.forEach((item: any) => item.TrangThai = newStatus);
       }
 
       return new Response(

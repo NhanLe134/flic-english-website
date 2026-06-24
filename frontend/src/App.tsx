@@ -57,12 +57,10 @@ import CourseRegister from "./sinhvien/pages/CourseRegister/CourseRegister"
 import Profile from "./sinhvien/pages/Profile/Profile"
 import ProfilePage from "./sinhvien/pages/ProfilePage/ProfilePage"
 import MyCourses from "./sinhvien/pages/MyCourses/MyCourses"
-import CourseDetailSV from "./sinhvien/pages/CourseDetail/CourseDetailSV"
 import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
 import Progress from "./sinhvien/pages/Progress/Progress"
 import Settings from "./sinhvien/pages/Settings/Settings"
-import Assignments from "./sinhvien/pages/Assignments/Assignments"
 import AssignmentDetail from "./sinhvien/pages/AssignmentDetail/AssignmentDetail"
 import AssignmentSuccess from "./sinhvien/pages/AssignmentSuccess/AssignmentSuccess"
 import QuizDetail from "./sinhvien/pages/QuizDetail/QuizDetail"
@@ -183,13 +181,11 @@ function App() {
           <Route path="/profile-info" element={<ProfilePage />} />
           <Route path="/MyCourses" element={<MyCourses />} />
           <Route path="/class-detail/:id" element={<ClassDetailSV />} />
-          <Route path="/course-detail/:id" element={<CourseDetailSV />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/assignments" element={<Assignments />} />
           <Route path="/baitap/:id" element={<AssignmentDetail />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />
