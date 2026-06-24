@@ -785,16 +785,7 @@ app.get("/classes/:id/lessons", async (req, res) => {
     res.json(result.recordset);
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
-app.get("/classes/:id/lessons", async (req, res) => {
-  // Alias endpoint for /classes/:id/buoihoc to preserve compatibility with older frontend routes
-  try {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input("classId", req.params.id)
-      .query(`SELECT * FROM BUOIHOC WHERE MaLopHoc = @classId ORDER BY ThuTu`);
-    res.json(result.recordset);
-  } catch (err) { res.status(500).send("Lỗi server"); }
-});
+
 
 app.get("/buoihoc/:id", async (req, res) => {
   try {
@@ -2228,7 +2219,7 @@ app.get("/lophoc/:id/sinhvien/:maNguoiDung", async (req, res) => {
       .input("id", req.params.id)
       .query(`
         SELECT sl.MaSinhVien, s.MSSV, n.HoTen, n.GioiTinh,
-               sl.NgayGhiDanh, sl.TrangThai
+               sl.NgayGhiDanh, sl.TrangThai, s.MaNguoiDung
         FROM SINHVIEN_LOPHOC sl
         JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -2999,6 +2990,23 @@ app.delete("/admin/users/:id", async (req, res) => {
 })
 
 
+// Đăng ký theo tháng
+app.get("/admin/stats/dangky-thang", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT MONTH(NgayDangKy) AS Thang, COUNT(*) AS SoLuong
+      FROM DANGKYKHOAHOC
+      WHERE NgayDangKy IS NOT NULL
+      GROUP BY MONTH(NgayDangKy)
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+
 // Trạng thái khóa học
 app.get("/admin/stats/trangthaidangky", async (req, res) => {
   try {
@@ -3260,8 +3268,17 @@ app.get("/classes/:id/baitap", async (req, res) => {
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         JOIN BUOIHOC l ON bh.MaBuoiHoc = l.MaBuoiHoc
-        WHERE l.MaLopHoc = @id AND (e.TrangThai = 'published' OR e.TrangThai IS NULL)
-        ORDER BY l.ThuTu
+        WHERE l.MaLopHoc = @id AND (e.TrangThai = 'published' OR e.TrangThai = 'Đã duyệt' OR e.TrangThai IS NULL)
+
+        UNION ALL
+
+        SELECT k.MaBaiKiemTra AS MaBaiTap, k.TenBai AS Title, 'exam' AS Type, 
+               1 AS IsExam,
+               k.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, k.TrangThai
+        FROM BAIKIEMTRA k
+        JOIN BUOIHOC l ON k.MaBuoiHoc = l.MaBuoiHoc
+        WHERE l.MaLopHoc = @id AND (k.TrangThai = 'published' OR k.TrangThai = 'Đã duyệt' OR k.TrangThaiDuyet = 'Đã duyệt' OR k.TrangThai IS NULL)
+        ORDER BY ThuTuBuoiHoc
       `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }

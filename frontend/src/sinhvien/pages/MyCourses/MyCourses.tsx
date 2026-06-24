@@ -116,7 +116,7 @@ function MyCourses() {
           const data = await res.json();
           return {
             lessonId: l.MaLesson,
-            lectures: Array.isArray(data) ? data : []
+            lectures: Array.isArray(data) ? data.filter((bg: any) => bg.TrangThai === "published" || bg.TrangThai === "Đã duyệt") : []
           };
         } catch (err) {
           console.error(`Error fetching lectures for lesson ${l.MaLesson}`, err);

@@ -146,7 +146,9 @@ export default function ClassDetailSV() {
         ? baigiangData.filter((b: any) => b.TrangThai === "published")
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
-      const baiTaps = Array.isArray(baitapData) ? baitapData : [];
+      const baiTaps = Array.isArray(baitapData)
+        ? baitapData.filter((ex: any) => ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt" || ex.TrangThaiDuyet === "Đã duyệt")
+        : [];
 
       const practices = baiTaps.filter((ex: any) => {
         const isTest = ex.IsExam === 1 || ex.IsExam === true || ex.Type?.toLowerCase() === "exam" || ex.Type?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");

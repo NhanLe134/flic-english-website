@@ -76,7 +76,7 @@ const LessonResultPage = () => {
         // Fetch class data
         Promise.all([
           fetch(`http://localhost:5000/classes/${id}/info`).then(r => r.json()),
-          fetch(`http://localhost:5000/lophoc/${id}/sinhvien`).then(r => r.json()),
+          fetch(`http://localhost:5000/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
           fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
           fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
           fetch(`http://localhost:5000/classes/${id}/buoihoc`).then(r => r.json()),
@@ -96,29 +96,34 @@ const LessonResultPage = () => {
               });
             setClassExercises(classExs);
 
-            // Map grades to a lookup map (MaNguoiDung -> MaBaiTap -> { Diem, MaBaiNop })
+            // Map grades to a lookup map (MaSinhVien (int) -> MaBaiTap -> { Diem, MaBaiNop })
             const gradesMap: Record<number, Record<number, { Diem: number | null, MaBaiNop: number | null }>> = {};
             if (Array.isArray(grades)) {
               grades.forEach((g: any) => {
-                const userId = Number(g.MaSinhVien); // MaSinhVien field in BAINOP stores MaNguoiDung
+                const studentId = typeof g.MaSinhVien === "string" && g.MaSinhVien.startsWith("SV")
+                  ? parseInt(g.MaSinhVien.replace("SV", ""), 10)
+                  : Number(g.MaSinhVien);
                 const exId = Number(g.MaBaiTap);
                 const score = g.Diem !== null ? Number(g.Diem) : null;
                 const submissionId = g.MaBaiNop ? Number(g.MaBaiNop) : null;
-                if (!gradesMap[userId]) {
-                  gradesMap[userId] = {};
+                if (!gradesMap[studentId]) {
+                  gradesMap[studentId] = {};
                 }
-                gradesMap[userId][exId] = { Diem: score, MaBaiNop: submissionId };
+                gradesMap[studentId][exId] = { Diem: score, MaBaiNop: submissionId };
               });
             }
 
             // Map students with their grades and average score
             const mappedStudents: Student[] = (Array.isArray(sinhVienList) ? sinhVienList : []).map((sv: any) => {
               const studentScores: Record<number, StudentScore | null> = {};
+              const studentIntId = typeof sv.MaSinhVien === "string" && sv.MaSinhVien.startsWith("SV")
+                ? parseInt(sv.MaSinhVien.replace("SV", ""), 10)
+                : Number(sv.MaSinhVien);
+
               classExs.forEach(ex => {
-                const userId = Number(sv.MaNguoiDung);
                 const exId = ex.MaBaiTap;
-                studentScores[exId] = (gradesMap[userId] && gradesMap[userId][exId] !== undefined)
-                  ? gradesMap[userId][exId]
+                studentScores[exId] = (gradesMap[studentIntId] && gradesMap[studentIntId][exId] !== undefined)
+                  ? gradesMap[studentIntId][exId]
                   : null;
               });
 
@@ -227,9 +232,12 @@ const LessonResultPage = () => {
 
     const scores = exsInBuoi
       .map(ex => s.scores[ex.MaBaiTap]?.Diem)
-      .filter((d): d is number => d !== null);
+      .filter((d): d is number => typeof d === "number");
 
-    const hasSubmission = exsInBuoi.some(ex => s.scores[ex.MaBaiTap]?.MaBaiNop !== null);
+    const hasSubmission = exsInBuoi.some(ex => {
+      const scoreObj = s.scores[ex.MaBaiTap];
+      return scoreObj !== null && scoreObj !== undefined && scoreObj.MaBaiNop !== null && scoreObj.MaBaiNop !== undefined;
+    });
 
     if (scores.length > 0) {
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length;

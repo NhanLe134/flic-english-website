@@ -1,4 +1,4 @@
-﻿import "./LessonList.css";
+import "./LessonList.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiUsers, FiTrendingUp, FiCheckSquare, FiArrowLeft, FiFileText } from "react-icons/fi";
@@ -135,14 +135,18 @@ const LessonList = () => {
       .then(data => setStudentCount(data?.SoLuongHocVien ?? 12))
       .catch(() => setStudentCount(12));
 
-    // Thiết lập tiến độ lớp học dựa trên ID lớp học mẫu
-    if (id === "101") {
-      setClassProgress(68);
-    } else if (id === "102") {
-      setClassProgress(45);
-    } else {
-      setClassProgress(57);
-    }
+    // Lấy tiến độ lớp học thực tế từ backend
+    fetch(`http://localhost:5000/lophoc/${id}/tiendo`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.TienDo === 'number') {
+          setClassProgress(data.TienDo);
+        }
+      })
+      .catch(err => {
+        console.log("Error loading class progress:", err);
+        setClassProgress(57); // fallback
+      });
 
     // Lấy số lượng bài tập cần duyệt
     fetch("http://localhost:5000/teacher/submissions/pending-count")
