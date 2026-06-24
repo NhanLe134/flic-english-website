@@ -1,7 +1,7 @@
 import "./ClassDetail.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { FiCalendar, FiArrowLeft } from "react-icons/fi";
+import { FiCalendar, FiArrowLeft, FiEye, FiTrash2 } from "react-icons/fi";
 import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
 import LessonManagement from "../LessonManagement/LessonManagement";
 import DocumentManagement from "../DocumentManagement/DocumentManagement";
@@ -20,6 +20,8 @@ const ClassDetail = () => {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
   const [exercises, setExercises] = useState<any[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -94,6 +96,26 @@ const ClassDetail = () => {
     } catch (err) {
       alert("Lỗi kết nối: " + err);
     }
+  };
+
+  const handleDelete = async () => {
+    if (selectedId === null) return;
+    try {
+      const url = `http://localhost:5000/baitap/${selectedId}`;
+      const res = await fetch(url, { method: "DELETE" });
+      const body = await res.text();
+      if (res.ok) {
+        setExercises((prev: any[]) =>
+          prev.filter((e: any) => Number(e.MaBaiTap) !== Number(selectedId))
+        );
+      } else {
+        alert("Xóa thất bại: " + body);
+      }
+    } catch (err) {
+      alert("Lỗi kết nối: " + err);
+    }
+    setShowDeleteModal(false);
+    setSelectedId(null);
   };
 
   const filteredExercises = exercises.filter((ex: any) => {
@@ -335,9 +357,65 @@ const ClassDetail = () => {
                     {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}
                   </span>
 
-                  <div className="btn-group">
-                    <button className="outline-btn" onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}>
-                      Xem chi tiết
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                    <button
+                      onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
+                      style={{
+                        background: "#e0e7ff",
+                        border: "1px solid #c7d2fe",
+                        color: "#4f46e5",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        transition: "all 0.2s",
+                        flexShrink: 0
+                      }}
+                      title="Xem chi tiết"
+                      onMouseOver={e => {
+                        e.currentTarget.style.background = "#c7d2fe";
+                        e.currentTarget.style.color = "#3730a3";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.background = "#e0e7ff";
+                        e.currentTarget.style.color = "#4f46e5";
+                      }}
+                    >
+                      <FiEye size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedId(Number(ex.MaBaiTap));
+                        setShowDeleteModal(true);
+                      }}
+                      style={{
+                        background: "#fee2e2",
+                        border: "1px solid #fecaca",
+                        color: "#ef4444",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        transition: "all 0.2s",
+                        flexShrink: 0
+                      }}
+                      title="Xóa bài tập"
+                      onMouseOver={e => {
+                        e.currentTarget.style.background = "#fca5a5";
+                        e.currentTarget.style.color = "#b91c1c";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.background = "#fee2e2";
+                        e.currentTarget.style.color = "#ef4444";
+                      }}
+                    >
+                      <FiTrash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -353,6 +431,19 @@ const ClassDetail = () => {
 
       {activeTab === "documents" && (
         <DocumentManagement buoiHocIdProp={id} isEmbedded={true} />
+      )}
+
+      {/* ===== MODAL ===== */}
+      {showDeleteModal && (
+        <div className="baitap-modal-overlay">
+          <div className="delete-modal">
+            <div className="modal-icon">!</div>
+            <h3>Xác nhận Xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa bài tập này không?</p>
+            <button className="confirm-btn" onClick={handleDelete}>Xác nhận</button>
+            <button className="cancel-btn" onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>Không</button>
+          </div>
+        </div>
       )}
     </div>
   );

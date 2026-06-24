@@ -60,7 +60,7 @@ const QuanLyKhoaHoc = () => {
         <div className="stats">
           <div className="stat-box courses-stat">
             <div className="stat-icon-wrapper">
-              <FiBookOpen size={20} />
+              <FiBookOpen size={16} />
             </div>
             <div className="stat-info">
               <span className="stat-label">Khóa học</span>
@@ -70,7 +70,7 @@ const QuanLyKhoaHoc = () => {
           </div>
           <div className="stat-box students-stat">
             <div className="stat-icon-wrapper">
-              <FiUsers size={20} />
+              <FiUsers size={16} />
             </div>
             <div className="stat-info">
               <span className="stat-label">Sinh viên</span>
@@ -80,7 +80,7 @@ const QuanLyKhoaHoc = () => {
           </div>
           <div className="stat-box pending-stat">
             <div className="stat-icon-wrapper">
-              <FiCheckSquare size={20} />
+              <FiCheckSquare size={16} />
             </div>
             <div className="stat-info">
               <span className="stat-label">Bài tập</span>

@@ -2356,24 +2356,24 @@ D. Visiting friends
 
         {/* SUBMISSIONS TABLE */}
         <div className="cd-table-container" style={{ background: "white", border: "1px solid #cbd5e1", borderRadius: "12px", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "12px" }}>
             <thead>
               <tr style={{ background: "#f8fafc", borderBottom: "1px solid #cbd5e1", color: "#475569" }}>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Học viên</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Đề thi</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Ngày nộp</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>L / R</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Writing</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Speaking</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Điểm TB</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600 }}>Trạng thái</th>
-                <th style={{ padding: "14px 18px", fontWeight: 600, textAlign: "right" }}>Thao tác</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Học viên</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Đề thi</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Ngày nộp</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>L / R</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Writing</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Speaking</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Điểm TB</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600 }}>Trạng thái</th>
+                <th style={{ padding: "10px 12px", fontWeight: 600, textAlign: "right" }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {filteredSubs.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
+                  <td colSpan={9} style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
                     Không tìm thấy bài nộp nào phù hợp.
                   </td>
                 </tr>
@@ -2388,56 +2388,56 @@ D. Visiting friends
 
                   return (
                     <tr key={sub.id} style={{ borderBottom: "1px solid #cbd5e1" }}>
-                      <td style={{ padding: "14px 18px" }}>
+                      <td style={{ padding: "10px 12px" }}>
                         <div style={{ fontWeight: 600, color: "#1e293b" }}>{sub.hoTen}</div>
-                        <div style={{ fontSize: "11px", color: "#64748b" }}>{sub.maSinhVien}</div>
+                        <div style={{ fontSize: "10.5px", color: "#64748b" }}>{sub.maSinhVien}</div>
                       </td>
-                      <td style={{ padding: "14px 18px", color: "#334155" }}>{sub.tenDeThi}</td>
-                      <td style={{ padding: "14px 18px", color: "#64748b" }}>
+                      <td style={{ padding: "10px 12px", color: "#334155" }}>{sub.tenDeThi}</td>
+                      <td style={{ padding: "10px 12px", color: "#64748b" }}>
                         {new Date(sub.ngayNop).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}
                       </td>
-                      <td style={{ padding: "14px 18px" }}>
+                      <td style={{ padding: "10px 12px" }}>
                         <span style={{ color: "#0284c7", fontWeight: 600 }}>L: {sub.diemNghe}</span>
-                        <span style={{ color: "#cbd5e1", margin: "0 4px" }}>|</span>
+                        <span style={{ color: "#cbd5e1", margin: "0 3px" }}>|</span>
                         <span style={{ color: "#0284c7", fontWeight: 600 }}>R: {sub.diemDoc}</span>
                       </td>
-                      <td style={{ padding: "14px 18px" }}>
+                      <td style={{ padding: "10px 12px" }}>
                         {sub.diemViet !== null ? (
                           <span style={{ color: "#107544", fontWeight: 600 }}>{sub.diemViet}</span>
                         ) : (
-                          <span style={{ color: "#fa541c", fontWeight: 600, background: "#fff2e8", padding: "2px 6px", borderRadius: "4px", fontSize: "11px" }}>Chờ chấm</span>
+                          <span style={{ color: "#fa541c", fontWeight: 600, background: "#fff2e8", padding: "1px 5px", borderRadius: "4px", fontSize: "10.5px" }}>Chờ chấm</span>
                         )}
                       </td>
-                      <td style={{ padding: "14px 18px" }}>
+                      <td style={{ padding: "10px 12px" }}>
                         {sub.diemNoi !== null ? (
                           <span style={{ color: "#107544", fontWeight: 600 }}>{sub.diemNoi}</span>
                         ) : (
-                          <span style={{ color: "#fa541c", fontWeight: 600, background: "#fff2e8", padding: "2px 6px", borderRadius: "4px", fontSize: "11px" }}>Chờ chấm</span>
+                          <span style={{ color: "#fa541c", fontWeight: 600, background: "#fff2e8", padding: "1px 5px", borderRadius: "4px", fontSize: "10.5px" }}>Chờ chấm</span>
                         )}
                       </td>
-                      <td style={{ padding: "14px 18px" }}>
+                      <td style={{ padding: "10px 12px" }}>
                         {sub.diemViet !== null && sub.diemNoi !== null ? (
-                          <span style={{ color: "#0f172a", fontWeight: 700, fontSize: "14px" }}>
+                          <span style={{ color: "#0f172a", fontWeight: 700, fontSize: "13px" }}>
                             {((sub.diemNghe + sub.diemDoc + sub.diemViet + sub.diemNoi) / 4).toFixed(2)}
                           </span>
                         ) : (
                           <span style={{ color: "#94a3b8" }}>-</span>
                         )}
                       </td>
-                      <td style={{ padding: "14px 18px" }}>
+                      <td style={{ padding: "10px 12px" }}>
                         <span style={{
-                          background: statusBg, color: statusColor, padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700
+                          background: statusBg, color: statusColor, padding: "3px 6px", borderRadius: "4px", fontSize: "10.5px", fontWeight: 700
                         }}>
                           {statusText}
                         </span>
                       </td>
-                      <td style={{ padding: "14px 18px", textAlign: "right" }}>
+                      <td style={{ padding: "10px 12px", textAlign: "right" }}>
                         <button
                           onClick={() => handleOpenGrading(sub)}
                           style={{
-                            padding: "6px 12px", background: isPending ? "#F95800" : "#f1f5f9",
+                            padding: "5px 10px", background: isPending ? "#F95800" : "#f1f5f9",
                             color: isPending ? "white" : "#334155", border: "none", borderRadius: "6px",
-                            fontSize: "12px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
+                            fontSize: "11.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
                           }}
                         >
                           {isPending ? "Chấm bài" : "Xem chi tiết"}
@@ -2476,7 +2476,6 @@ D. Visiting friends
       <div className="cd-header" style={{ marginBottom: "24px" }}>
         <div>
           <h1 className="cd-title">Quản lý đề thi thử</h1>
-          <p className="cd-subtitle" style={{ margin: "4px 0 0 0" }}>Quản lý và thiết kế các đề thi thử VSTEP.</p>
         </div>
       </div>
 
@@ -2555,9 +2554,9 @@ D. Visiting friends
           </div>
 
           {/* TESTS GRID */}
-          <div className="cd-test-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
+          <div className="cd-test-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
             {filteredTests.length === 0 ? (
-              <p style={{ color: "#64748b", gridColumn: "1 / -1", textAlign: "center", padding: "40px", background: "white", borderRadius: "12px", border: "1px solid #eef2f6" }}>
+              <p style={{ color: "#64748b", gridColumn: "1 / -1", textAlign: "center", padding: "30px", background: "white", borderRadius: "12px", border: "1px solid #eef2f6" }}>
                 Không tìm thấy đề thi thử nào.
               </p>
             ) : (
@@ -2568,44 +2567,44 @@ D. Visiting friends
 
                 return (
                   <div key={test.MaBaiTest} className="cd-test-card" style={{
-                    background: "white", border: "1px solid #cbd5e1", borderRadius: "16px", padding: "24px",
+                    background: "white", border: "1px solid #cbd5e1", borderRadius: "12px", padding: "16px",
                     display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 2px 8px rgba(0,0,0,0.015)"
                   }}>
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                         <span style={{
-                          background: "#fff4ec", color: "#F95800", padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700
+                          background: "#fff4ec", color: "#F95800", padding: "3px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700
                         }}>{test.LoaiBai}</span>
                         <span className={`cd-test-badge-status ${test.TrangThai}`} style={{
                           background: test.TrangThai === "published" ? "#e6f4ea" : "#f1f5f9",
                           color: test.TrangThai === "published" ? "#137333" : "#475569",
-                          padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700
+                          padding: "3px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700
                         }}>
                           {test.TrangThai === "published" ? "Hoạt động" : "Nháp"}
                         </span>
                       </div>
 
-                      <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", margin: "0 0 6px 0", lineHeight: 1.4 }}>{test.TieuDe || "(Chưa đặt tên đề thi)"}</h3>
-                      <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 16px 0", lineHeight: 1.5, height: "38px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                      <h3 style={{ fontSize: "14.5px", fontWeight: 700, color: "#1e293b", margin: "0 0 4px 0", lineHeight: 1.4 }}>{test.TieuDe || "(Chưa đặt tên đề thi)"}</h3>
+                      <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 12px 0", lineHeight: 1.5, height: "36px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {test.MoTa || ""}
                       </p>
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #f1f5f9", paddingTop: "12px", marginBottom: "16px" }}>
-                      <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #f1f5f9", paddingTop: "8px", marginBottom: "12px" }}>
+                      <span style={{ fontSize: "11.5px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
                         <FiClock /> {test.TongThoiGian} phút
                       </span>
-                      <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+                      <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 600 }}>
                         {totalQs} câu hỏi
                       </span>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                       <button
                         onClick={() => handleOpenPreview(test)}
                         style={{
-                          padding: "8px", background: "#f1f5f9", color: "#334155", border: "none", borderRadius: "8px",
-                          fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                          padding: "6px", background: "#f1f5f9", color: "#334155", border: "none", borderRadius: "6px",
+                          fontSize: "11.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px"
                         }}
                       >
                         <FiEye /> Xem trước
@@ -2613,20 +2612,20 @@ D. Visiting friends
                       <button
                         onClick={() => handleOpenEditWorkspace(test)}
                         style={{
-                          padding: "8px", background: "#fff4ec", color: "#F95800", border: "none", borderRadius: "8px",
-                          fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                          padding: "6px", background: "#fff4ec", color: "#F95800", border: "none", borderRadius: "6px",
+                          fontSize: "11.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px"
                         }}
                       >
                         <FiEdit /> Thiết kế
                       </button>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "6px" }}>
                       <button
                         onClick={() => handleCloneTest(test)}
                         style={{
-                          padding: "8px", background: "white", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "8px",
-                          fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                          padding: "6px", background: "white", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "6px",
+                          fontSize: "11.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px"
                         }}
                       >
                         <FiCopy /> Nhân bản
@@ -2634,8 +2633,8 @@ D. Visiting friends
                       <button
                         onClick={() => handleDeleteTest(test.MaBaiTest)}
                         style={{
-                          padding: "8px", background: "white", color: "#ef4444", border: "1px solid #fee2e2", borderRadius: "8px",
-                          fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
+                          padding: "6px", background: "white", color: "#ef4444", border: "1px solid #fee2e2", borderRadius: "6px",
+                          fontSize: "11.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px"
                         }}
                       >
                         <FiTrash2 /> Xóa

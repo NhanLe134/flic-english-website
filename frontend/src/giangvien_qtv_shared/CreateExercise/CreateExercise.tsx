@@ -498,6 +498,24 @@ const CreateExercise = () => {
         }
       })
       .catch(err => console.log("Lỗi tải thông tin bài giảng:", err));
+
+    if (isMiniTest) {
+      fetch(`http://localhost:5000/minitest/baigiang/${maBaiHocParam}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.CauHoi) {
+            try {
+              const parsed = JSON.parse(data.CauHoi);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setQuestions(parsed);
+              }
+            } catch (e) {
+              console.error("Lỗi parse câu hỏi MiniTest cũ:", e);
+            }
+          }
+        })
+        .catch(err => console.error("Lỗi tải MiniTest cũ:", err));
+    }
   }, [maBaiHocParam, isMiniTest]);
 
   /* ===== LOAD LESSON ===== */
@@ -1681,6 +1699,28 @@ const CreateExercise = () => {
         // Serialize the array of questions
         questionsStr = JSON.stringify(questions);
         mainAudioUrl = commonAudioUrl || questions[0]?.audioUrl || "";
+      }
+
+      if (isMiniTest) {
+        await fetch("http://localhost:5000/minitest/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            MaBaiHoc: Number(maBaiHocParam),
+            CauHoi: questionsStr,
+            DiemDat: 100,
+            TrangThai: status
+          })
+        });
+
+        setSuccessMessage(
+          status === "draft"
+            ? "Đã lưu bản nháp Minitest thành công"
+            : "Đã lưu Minitest thành công"
+        );
+        setShowSuccess(true);
+        setTimeout(() => navigate(`/bai-giang/${maBaiHocParam}`), 1500);
+        return;
       }
 
       await fetch("http://localhost:5000/baitap/create", {
@@ -4046,7 +4086,65 @@ const CreateExercise = () => {
 
         {/* ── SUBMIT ACTIONS ── */}
         <div style={{ display: "flex", gap: "12px", marginTop: "30px" }}>
-          {isPractice ? (
+          {isMiniTest ? (
+            <>
+              <button
+                type="button"
+                className="draft-btn"
+                style={{
+                  flex: 1,
+                  height: "46px",
+                  fontSize: "15px",
+                  boxSizing: "border-box",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: "#fff",
+                  border: "1.5px solid #F95800",
+                  color: "#F95800",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  margin: 0,
+                  transition: "background 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                onClick={() => handleCreate("draft")}
+                onMouseOver={(e) => (e.currentTarget.style.background = "#fff4ec")}
+                onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
+              >
+                Lưu nháp
+              </button>
+              <button
+                type="button"
+                className="save-btn"
+                style={{
+                  flex: 1,
+                  height: "46px",
+                  fontSize: "15px",
+                  boxSizing: "border-box",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: "#F95800",
+                  border: "1.5px solid #F95800",
+                  color: "#fff",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  margin: 0,
+                  boxShadow: "none",
+                  transition: "background 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
+                onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
+                onClick={() => handleCreate("published")}
+              >
+                Lưu
+              </button>
+            </>
+          ) : isPractice ? (
             <button
               type="button"
               className="save-btn"

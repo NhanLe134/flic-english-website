@@ -83,10 +83,10 @@ body {
 }
 
 .qlkh-content-card h1 {
-  font-size: 28px; /* Giảm từ 36px xuống cho gọn */
+  font-size: 20px; /* Thu nhỏ tiêu đề */
   color: #2c2520;
   margin-top: 0;
-  margin-bottom: 6px;
+  margin-bottom: 16px;
   font-weight: 700;
 }
 
@@ -99,18 +99,18 @@ body {
 /* STATS */
 .stats {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .stat-box {
-  padding: 16px 20px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
   flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   background: #ffffff !important;
   border: 1px solid #eef2f6 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -123,9 +123,9 @@ body {
 }
 
 .stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,14 +140,14 @@ body {
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #4a5568;
   font-weight: 600;
   margin-bottom: 2px;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a202c;
   margin: 0 0 2px 0 !important;
@@ -155,7 +155,7 @@ body {
 }
 
 .stat-desc {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #a0aec0;
   font-weight: 400;
 }
@@ -245,13 +245,13 @@ body {
 
 .course-card {
   background: white;
-  padding: 20px; /* Giảm từ 30px */
-  border-radius: 12px; /* Giảm từ 20px */
+  padding: 18px; /* Tăng nhẹ padding */
+  border-radius: 12px; /* Tăng nhẹ bo góc */
   border: 1px solid #eef2f6;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.015);
   display: flex;
   flex-direction: column;
-  flex: 0 0 300px;
+  flex: 0 0 280px; /* Tăng nhẹ chiều rộng */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -265,47 +265,47 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .course-index-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
   background: #fff5ed;
   color: #f95800;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 4px;
 }
 
 .course-code-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 500;
   color: #8c7e74;
   background: #f0ebe4;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 4px;
 }
 
 .course-card h3 {
-  margin: 0 0 10px 0;
-  font-size: 18px; /* Giảm từ 22px */
+  margin: 0 0 8px 0;
+  font-size: 15.5px; /* Tăng nhẹ tiêu đề khóa học */
   color: #1f1915;
   font-weight: 600;
   line-height: 1.35;
 }
 
 .course-card .schedule {
-  font-size: 13px; /* Giảm từ 14px */
+  font-size: 13px; /* Tăng nhẹ font chữ */
   color: #666;
   margin: 0 0 6px 0;
   line-height: 1.4;
 }
 
 .course-card .students-count {
-  font-size: 13px; /* Giảm từ 14px */
+  font-size: 13px; /* Tăng nhẹ font chữ */
   color: #666;
-  margin: 0 0 16px 0; /* Giảm từ 24px */
+  margin: 0 0 14px 0;
 }
 
 .course-card button.detail-button {
@@ -313,9 +313,9 @@ body {
   background: #F95800;
   border: none;
   color: white;
-  padding: 10px 16px; /* Giảm từ 12px 20px */
-  border-radius: 8px; /* Giảm từ 12px */
-  font-size: 14px; /* Giảm từ 15px */
+  padding: 9px 14px; /* Tăng nhẹ padding */
+  border-radius: 8px; /* Tăng nhẹ bo góc */
+  font-size: 13.5px; /* Tăng nhẹ font chữ */
   font-weight: 600;
   cursor: pointer;
   text-align: center;

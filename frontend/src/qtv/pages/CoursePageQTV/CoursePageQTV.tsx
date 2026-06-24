@@ -954,7 +954,7 @@ export default function CoursePageQTV() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h1>Quản lý toàn bộ khóa học</h1>
-        <p>Thêm mới, sửa, xóa khóa học · Phân công giáo viên · Ghi danh sinh viên · Lộ trình học</p>
+        <p>Thêm mới, sửa, xóa lớp học · Phân công giáo viên · Ghi danh sinh viên · Lộ trình học</p>
       </div>
 
       <div className={styles.content}>
@@ -1061,7 +1061,7 @@ export default function CoursePageQTV() {
                                       const skillId = getSkillId(skill);
                                       const assigned = classTeachersMap[cl.id]?.[skillId];
                                       return (
-                                        <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: '#f8fafc', padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                                        <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: '#ffffff', padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
                                           <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>{skill}:</span>
                                           {assigned && assigned.maGiangVien ? (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1801,20 +1801,9 @@ export default function CoursePageQTV() {
                   <label>Link tài liệu / Video URL (nếu có)</label>
                   <input value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
                 </div>
-                <div className={styles.twoCols}>
-                  <div className={styles.formGroup}>
-                    <label>Loại bài học</label>
-                    <select value={bgForm.type} onChange={e => setBgForm(p => ({...p, type: e.target.value}))}>
-                      <option value="Video">Video</option>
-                      <option value="PDF">PDF</option>
-                      <option value="Writing">Writing</option>
-                      <option value="Document">Tài liệu khác</option>
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Thời lượng</label>
-                    <input value={bgForm.duration} onChange={e => setBgForm(p => ({...p, duration: e.target.value}))} placeholder="VD: 45 phút" />
-                  </div>
+                <div className={styles.formGroup}>
+                  <label>Thời lượng</label>
+                  <input value={bgForm.duration} onChange={e => setBgForm(p => ({...p, duration: e.target.value}))} placeholder="VD: 45 phút" />
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>

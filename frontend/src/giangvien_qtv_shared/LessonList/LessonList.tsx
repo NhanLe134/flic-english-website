@@ -177,7 +177,7 @@ const LessonList = () => {
       <div className="lesson-stats">
         <div className="lesson-stat-card students-card">
           <div className="stat-icon-wrapper">
-            <FiUsers size={20} />
+            <FiUsers size={16} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Học viên</span>
@@ -187,7 +187,7 @@ const LessonList = () => {
         </div>
         <div className="lesson-stat-card progress-card">
           <div className="stat-icon-wrapper">
-            <FiTrendingUp size={20} />
+            <FiTrendingUp size={16} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Tiến độ</span>
@@ -197,7 +197,7 @@ const LessonList = () => {
         </div>
         <div className="lesson-stat-card pending-card">
           <div className="stat-icon-wrapper">
-            <FiCheckSquare size={20} />
+            <FiCheckSquare size={16} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Bài tập</span>

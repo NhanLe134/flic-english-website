@@ -3798,7 +3798,7 @@ app.post("/baigiang/:id/clone", async (req, res) => {
 // 1. Tạo hoặc Cập nhật Minitest của Bài giảng
 app.post("/minitest/create", async (req, res) => {
   try {
-    const { MaBaiHoc, CauHoi, DiemDat } = req.body;
+    const { MaBaiHoc, CauHoi, DiemDat, TrangThai } = req.body;
     if (!MaBaiHoc) return res.status(400).json({ message: "Thiếu MaBaiHoc" });
 
     const pool = await poolPromise;
@@ -3813,7 +3813,8 @@ app.post("/minitest/create", async (req, res) => {
         .input("MaBaiHoc", MaBaiHoc)
         .input("CauHoi", CauHoi || "")
         .input("DiemDat", DiemDat ?? 100)
-        .query(`UPDATE MINITEST SET CauHoi = @CauHoi, DiemDat = @DiemDat WHERE MaBaiHoc = @MaBaiHoc`);
+        .input("TrangThai", TrangThai || "published")
+        .query(`UPDATE MINITEST SET CauHoi = @CauHoi, DiemDat = @DiemDat, TrangThai = @TrangThai WHERE MaBaiHoc = @MaBaiHoc`);
       res.json({ message: "Cập nhật Minitest thành công" });
     } else {
       // Tạo mới
@@ -3821,7 +3822,8 @@ app.post("/minitest/create", async (req, res) => {
         .input("MaBaiHoc", MaBaiHoc)
         .input("CauHoi", CauHoi || "")
         .input("DiemDat", DiemDat ?? 100)
-        .query(`INSERT INTO MINITEST (MaBaiHoc, CauHoi, DiemDat) VALUES (@MaBaiHoc, @CauHoi, @DiemDat)`);
+        .input("TrangThai", TrangThai || "published")
+        .query(`INSERT INTO MINITEST (MaBaiHoc, CauHoi, DiemDat, TrangThai) VALUES (@MaBaiHoc, @CauHoi, @DiemDat, @TrangThai)`);
       res.json({ message: "Tạo Minitest thành công" });
     }
   } catch (err) {
@@ -3833,11 +3835,30 @@ app.post("/minitest/create", async (req, res) => {
 // 2. Lấy đề bài Minitest của Bài giảng
 app.get("/minitest/baigiang/:maBaiHoc", async (req, res) => {
   try {
+    const { role } = req.query;
     const pool = await poolPromise;
     const result = await pool.request()
       .input("MaBaiHoc", parseInt(req.params.maBaiHoc))
-      .query(`SELECT MaMinitest, MaBaiHoc, CauHoi, DiemDat FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc`);
-    res.json(result.recordset[0] || null);
+      .query(`SELECT MaMinitest, MaBaiHoc, CauHoi, DiemDat, TrangThai FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc`);
+    const minitest = result.recordset[0] || null;
+    if (minitest && role === "student" && minitest.TrangThai === "draft") {
+      return res.json(null);
+    }
+    res.json(minitest);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Lỗi server");
+  }
+});
+
+// 2b. Xóa Minitest của Bài giảng
+app.delete("/minitest/baigiang/:maBaiHoc", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    await pool.request()
+      .input("MaBaiHoc", parseInt(req.params.maBaiHoc))
+      .query("DELETE FROM MINITEST WHERE MaBaiHoc = @MaBaiHoc");
+    res.json({ message: "Xóa Minitest thành công" });
   } catch (err) {
     console.error(err);
     res.status(500).send("Lỗi server");
@@ -3953,8 +3974,16 @@ const initDb = async () => {
       BEGIN
           ALTER TABLE dbo.LOPHOC ADD ActiveBuoiHocId INT NULL;
       END
+
+      IF NOT EXISTS (
+          SELECT * FROM sys.columns 
+          WHERE object_id = OBJECT_ID('dbo.MINITEST') AND name = 'TrangThai'
+      )
+      BEGIN
+          ALTER TABLE dbo.MINITEST ADD TrangThai NVARCHAR(50) NULL;
+      END
     `)
-    console.log("Database initialized successfully (ActiveBuoiHocId checked/added).")
+    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai checked/added).")
   } catch (err) {
     console.error("Database initialization error:", err.message)
   }

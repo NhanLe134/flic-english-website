@@ -1,4 +1,4 @@
-﻿import "./CourseDetail.css";
+import "./CourseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -86,7 +86,7 @@ const CourseDetail = () => {
       <div className="cd-stats">
         <div className="cd-stat-card classes-card">
           <div className="stat-icon-wrapper">
-            <FiBookOpen size={20} />
+            <FiBookOpen size={16} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Lớp học</span>
@@ -97,7 +97,7 @@ const CourseDetail = () => {
 
         <div className="cd-stat-card students-card">
           <div className="stat-icon-wrapper">
-            <FiUsers size={20} />
+            <FiUsers size={16} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Học viên</span>
@@ -108,7 +108,7 @@ const CourseDetail = () => {
 
         <div className="cd-stat-card pending-card">
           <div className="stat-icon-wrapper">
-            <FiCheckSquare size={20} />
+            <FiCheckSquare size={16} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Chấm bài</span>

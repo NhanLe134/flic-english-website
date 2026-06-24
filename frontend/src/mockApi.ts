@@ -940,16 +940,13 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
             Content: "Đọc kỹ câu và chọn từ vựng thích hợp nhất.",
             Questions: JSON.stringify([
               {
-                question: "The company decided to ___ the product launch due to technical issues.",
-                answers: ["postpone", "accelerate", "promote", "celebrate"],
-                correct: "A",
-                explanation: "postpone (hoãn lại) phù hợp nghĩa ngữ cảnh 'due to technical issues' (do sự cố kỹ thuật)."
-              },
-              {
-                question: "He has a very ___ attitude towards his colleagues, always helping them.",
-                answers: ["supportive", "aggressive", "passive", "negligent"],
-                correct: "A",
-                explanation: "supportive (hỗ trợ/giúp đỡ) phù hợp nghĩa 'always helping them' (luôn giúp đỡ họ)."
+                vocabPairs: [
+                  { word: "postpone", meaning: "hoãn lại" },
+                  { word: "supportive", meaning: "nhiệt tình hỗ trợ" },
+                  { word: "attitude", meaning: "thái độ" },
+                  { word: "colleague", meaning: "đồng nghiệp" },
+                  { word: "accelerate", meaning: "thúc đẩy/tăng tốc" }
+                ]
               }
             ]),
             AudioUrl: "",
