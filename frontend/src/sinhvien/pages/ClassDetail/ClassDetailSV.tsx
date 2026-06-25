@@ -602,10 +602,12 @@ export default function ClassDetailSV() {
                                   {detail.taiLieus.length > 0 ? (
                                     <div className="ld2-docs-grid">
                                       {detail.taiLieus.map((t, idx) => (
-                                        <div
+                                        <a
                                           key={t.MaTaiLieu}
+                                          href={`/doc-detail/${t.MaTaiLieu}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
                                           className="ld2-doc-card"
-                                          onClick={() => navigate(`/doc-detail/${t.MaTaiLieu}`)}
                                         >
                                           <div className="ld2-doc-icon-wrapper">
                                             <FaFileAlt className="ld2-doc-icon" />
@@ -617,7 +619,7 @@ export default function ClassDetailSV() {
                                           <div className="ld2-doc-action">
                                             <button className="ld2-doc-btn">Xem chi tiết</button>
                                           </div>
-                                        </div>
+                                        </a>
                                       ))}
                                     </div>
                                   ) : (

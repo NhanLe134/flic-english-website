@@ -1,4 +1,4 @@
-﻿import "./DocDetail.css";
+import "./DocDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import dailyImg from "../../../assets/daily.png";

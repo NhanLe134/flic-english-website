@@ -106,7 +106,7 @@ function AssignmentDetail() {
   }, [maNguoiDung]);
 
   useEffect(() => {
-    if (!exercise || !maSinhVien || user.VaiTro !== "Sinh Viên") return;
+    if (!exercise || !maSinhVien || (user.VaiTro !== "Sinh Viên" && user.VaiTro !== "Học Viên")) return;
 
     if (maNguoiDung === 123456 || maNguoiDung === 5) {
       setIsLocked(false);

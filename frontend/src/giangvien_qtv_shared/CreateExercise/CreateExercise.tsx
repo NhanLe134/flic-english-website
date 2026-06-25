@@ -224,10 +224,10 @@ const CreateExercise = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("listening-mcq");
+  const [type, setType] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
   
-  const [kyNang, setKyNang] = useState("Nghe");
-  const [dangBai, setDangBai] = useState("Nghe audio trắc nghiệm");
+  const [kyNang, setKyNang] = useState(isMiniTest ? "Viet" : "Nghe");
+  const [dangBai, setDangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
   const [isFree, setIsFree] = useState(false);
   const [isExam, setIsExam] = useState(false);
   const [deadline, setDeadline] = useState("");
@@ -1780,12 +1780,7 @@ const CreateExercise = () => {
         <p>{lesson?.MoTa || ""}</p>
       </div>
 
-      {/* TABS */}
-      <div className="tabs">
-                <button className="tab active" onClick={() => navigate(`/bai-tap/${id}`)}>Bài tập</button>
-        <button className="tab" onClick={() => navigate(`/quan-ly-bai-giang/${id}`)}>Bài giảng</button>
-        <button className="tab" onClick={() => navigate(`/documents/${id}`)}>Tài liệu</button>
-      </div>
+
 
       {/* SUB-TABS: TẠO MỚI / CHỌN CÓ SẴN */}
       {!isMiniTest && (
@@ -2048,37 +2043,39 @@ const CreateExercise = () => {
           />
 
         {/* Global Settings Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Kỹ năng</label>
-            <select
-              className="exercise-type"
-              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-              value={kyNang}
-              disabled={isExam}
-              onChange={(e) => handleKyNangChange(e.target.value)}
-            >
-              <option value="Nghe">Nghe (Listening)</option>
-              <option value="Noi">Nói (Speaking)</option>
-              <option value="Doc">Đọc (Reading)</option>
-              <option value="Viet">Viết (Writing)</option>
-            </select>
+        {!isMiniTest && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Kỹ năng</label>
+              <select
+                className="exercise-type"
+                style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+                value={kyNang}
+                disabled={isExam}
+                onChange={(e) => handleKyNangChange(e.target.value)}
+              >
+                <option value="Nghe">Nghe (Listening)</option>
+                <option value="Noi">Nói (Speaking)</option>
+                <option value="Doc">Đọc (Reading)</option>
+                <option value="Viet">Viết (Writing)</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Dạng bài tập</label>
+              <select
+                className="exercise-type"
+                style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+                value={dangBai}
+                disabled={isExam}
+                onChange={(e) => handleDangBaiChange(e.target.value)}
+              >
+                {getDangBaiOptions(kyNang).map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Dạng bài tập</label>
-            <select
-              className="exercise-type"
-              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-              value={dangBai}
-              disabled={isExam}
-              onChange={(e) => handleDangBaiChange(e.target.value)}
-            >
-              {getDangBaiOptions(kyNang).map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        )}
 
         {!isMiniTest && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
@@ -2175,7 +2172,7 @@ const CreateExercise = () => {
               </div>
 
               <div>
-                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>📝 Cấu trúc đề mẫu</h3>
+                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>Cấu trúc đề mẫu</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <button
                     type="button"
@@ -3423,7 +3420,7 @@ const CreateExercise = () => {
         ) : (
           /* ────────────────── DYNAMIC MULTI-QUESTION BUILDERS ────────────────── */
           <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
-            <h3 style={{ color: "#000080", marginBottom: 20, fontSize: "18px", fontWeight: 700 }}>📝 Danh sách Câu Hỏi ({dangBai})</h3>
+            <h3 style={{ color: "#000080", marginBottom: 20, fontSize: "18px", fontWeight: 700 }}>Danh sách Câu Hỏi ({dangBai})</h3>
 
             {type === "listening-mcq" && (
               <div style={{
