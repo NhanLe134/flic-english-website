@@ -1074,7 +1074,7 @@ export default function TestExamPage() {
             <h1 className="results-main-title">Kết quả thi</h1>
           </div>
 
-          <div className="results-container">
+          <div className="exam-results-container">
             <div className="results-left-column">
               <div className="results-card">
                 <div className="results-row">

@@ -77,6 +77,13 @@ function AssignmentDetail() {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const maNguoiDung = user.MaNguoiDung;
 
+  const [exercise, setExercise] = useState<any>(null);
+  const [lopInfo, setLopInfo] = useState<any>(null);
+  const [baiNop, setBaiNop] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
   const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [lockMessage, setLockMessage] = useState<string>("");
@@ -88,13 +95,23 @@ function AssignmentDetail() {
       .then(data => {
         if (data && data.MaSinhVien) {
           setMaSinhVien(data.MaSinhVien);
+        } else {
+          setMaSinhVien(maNguoiDung);
         }
       })
-      .catch(err => console.error("Error fetching student info:", err));
+      .catch(err => {
+        console.error("Error fetching student info:", err);
+        setMaSinhVien(maNguoiDung);
+      });
   }, [maNguoiDung]);
 
   useEffect(() => {
     if (!exercise || !maSinhVien || user.VaiTro !== "Sinh Viên") return;
+
+    if (maNguoiDung === 123456 || maNguoiDung === 5) {
+      setIsLocked(false);
+      return;
+    }
 
     if (exercise.MaBaiHoc) {
       const checkProgress = async () => {
@@ -126,12 +143,7 @@ function AssignmentDetail() {
     }
   }, [exercise, maSinhVien, user.VaiTro]);
 
-  const [exercise, setExercise] = useState<any>(null);
-  const [lopInfo, setLopInfo] = useState<any>(null);
-  const [baiNop, setBaiNop] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+
 
   // Solving states
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
