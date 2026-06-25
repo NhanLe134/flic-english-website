@@ -4,7 +4,7 @@ import { FiSearch } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
-type ContentType = "baigiang" | "baitap";
+type ContentType = "baigiang" | "baitap" | "dethi";
 type ApprovalStatus = "Chờ duyệt" | "Đã duyệt" | "Từ chối";
 
 interface BaiGiangItem {
@@ -33,6 +33,7 @@ export default function DuyetBaiQTV() {
   
   const [baiGiangData, setBaiGiangData] = useState<BaiGiangItem[]>([]);
   const [baiTapData, setBaiTapData] = useState<any[]>([]);
+  const [dethiData, setDethiData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
 
@@ -46,10 +47,12 @@ export default function DuyetBaiQTV() {
     Promise.all([
       fetch(`${API}/qtv/baigiang`).then((r) => r.json()),
       fetch(`${API}/qtv/baitap`).then((r) => r.json()),
+      fetch(`${API}/qtv/dethi`).then((r) => r.json()),
     ])
-      .then(([bg, bt]) => {
+      .then(([bg, bt, dt]) => {
         setBaiGiangData(Array.isArray(bg) ? bg : []);
         setBaiTapData(Array.isArray(bt) ? bt : []);
+        setDethiData(Array.isArray(dt) ? dt : []);
       })
       .catch((err) => console.error("Error loading data:", err))
       .finally(() => setLoading(false));
@@ -89,6 +92,8 @@ export default function DuyetBaiQTV() {
         endpoint = `${API}/baitap/${item.MaBaiTap}/status`;
       } else if (activeTab === "tailieu") {
         endpoint = `${API}/tailieu/${item.MaTaiLieu}/status`;
+      } else if (activeTab === "dethi") {
+        endpoint = `${API}/dethi/${item.MaDeThi}/status`;
       }
 
       // Status values mapped for backend
@@ -99,10 +104,13 @@ export default function DuyetBaiQTV() {
         statusVal = "rejected";
       }
 
+      const currentUser = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+      const maNguoiDuyet = currentUser.MaNguoiDung;
+
       const res = await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ TrangThai: statusVal }),
+        body: JSON.stringify({ TrangThai: statusVal, MaNguoiDuyet: maNguoiDuyet }),
       });
 
       if (res.ok) {
@@ -122,20 +130,22 @@ export default function DuyetBaiQTV() {
   const allItems = [
     ...baiGiangData.map((d) => ({ ...d, type: "baigiang" })),
     ...baiTapData.map((d) => ({ ...d, type: "baitap" })),
+    ...dethiData.map((d) => ({ ...d, type: "dethi" })),
   ];
 
   const totalCount = allItems.length;
-  const pendingCount = allItems.filter((i) => getStatusLabel(i.TrangThai) === "Chờ duyệt").length;
-  const approvedCount = allItems.filter((i) => getStatusLabel(i.TrangThai) === "Đã duyệt").length;
-  const rejectedCount = allItems.filter((i) => getStatusLabel(i.TrangThai) === "Từ chối").length;
+  const pendingCount = allItems.filter((i) => getStatusLabel(i.TrangThaiDuyet || i.TrangThai) === "Chờ duyệt").length;
+  const approvedCount = allItems.filter((i) => getStatusLabel(i.TrangThaiDuyet || i.TrangThai) === "Đã duyệt").length;
+  const rejectedCount = allItems.filter((i) => getStatusLabel(i.TrangThaiDuyet || i.TrangThai) === "Từ chối").length;
 
   // Filter current tab data
   const currentData =
     activeTab === "baigiang" ? baiGiangData :
-    baiTapData;
+    activeTab === "baitap" ? baiTapData :
+    dethiData;
 
   const filteredData = currentData.filter((item: any) => {
-    const statusLabel = getStatusLabel(item.TrangThai);
+    const statusLabel = getStatusLabel(item.TrangThaiDuyet || item.TrangThai);
     const matchStatus = filterStatus === "Tất cả" || statusLabel === filterStatus;
     const itemTitle = item.TieuDe || item.Title || "";
     const itemAuthor = item.TenGiangVien || item.TenNguoiTao || "";
@@ -150,7 +160,7 @@ export default function DuyetBaiQTV() {
 
   const getTabPillCount = (status: string) => {
     return currentData.filter((i: any) => {
-      const label = getStatusLabel(i.TrangThai);
+      const label = getStatusLabel(i.TrangThaiDuyet || i.TrangThai);
       if (status === "Tất cả") return true;
       return label === status;
     }).length;
@@ -218,6 +228,15 @@ export default function DuyetBaiQTV() {
           >
             Bài tập / Bài kiểm tra
           </button>
+          <button
+            className={`${styles.tabBtn} ${activeTab === "dethi" ? styles.tabBtnActive : ""}`}
+            onClick={() => {
+              setActiveTab("dethi");
+              setFilterStatus("Tất cả");
+            }}
+          >
+            Đề thi thử
+          </button>
         </div>
 
         {/* Table Card */}
@@ -281,11 +300,12 @@ export default function DuyetBaiQTV() {
                       <td>
                         {activeTab === "baigiang" ? `Bài giảng (${item.LoaiBaiHoc || "Lý thuyết"})` :
                          activeTab === "baitap" ? `${item.Type}` :
+                         activeTab === "dethi" ? `Đề thi thử (${item.LoaiBai || "VSTEP"})` :
                          "Tài liệu"}
                       </td>
                       <td>
-                        <span className={`${styles.statusBadge} ${getStatusClass(item.TrangThai)}`}>
-                          {getStatusLabel(item.TrangThai)}
+                        <span className={`${styles.statusBadge} ${getStatusClass(item.TrangThaiDuyet || item.TrangThai)}`}>
+                          {getStatusLabel(item.TrangThaiDuyet || item.TrangThai)}
                         </span>
                       </td>
                       <td>{item.CapDo || "—"}</td>
@@ -335,6 +355,7 @@ export default function DuyetBaiQTV() {
                     value={
                       activeTab === "baigiang" ? "Bài giảng" :
                       activeTab === "baitap" ? "Bài tập / Bài kiểm tra" :
+                      activeTab === "dethi" ? "Đề thi thử" :
                       "Tài liệu học tập"
                     }
                   />
@@ -382,6 +403,54 @@ export default function DuyetBaiQTV() {
                     </div>
                   )}
                 </>
+              ) : activeTab === "dethi" ? (
+                <>
+                  <div className={styles.formRowThree}>
+                    <div className={styles.formGroup}>
+                      <label>Thời gian làm bài</label>
+                      <input type="text" disabled value={`${selectedItem.ThoiGian || 120} phút`} />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Cấp độ đề thi</label>
+                      <input type="text" disabled value={selectedItem.CapDo || "—"} />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Loại đề thi</label>
+                      <input type="text" disabled value={selectedItem.LoaiBai || "—"} />
+                    </div>
+                  </div>
+                  <div className={styles.formGroupFull}>
+                    <label>Mô tả đề thi</label>
+                    <textarea
+                      disabled
+                      rows={2}
+                      value={selectedItem.MoTa || "Không có mô tả đề thi."}
+                    />
+                  </div>
+                  <div className={styles.formGroupFull}>
+                    <label>Cấu hình các kỹ năng</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={(() => {
+                        try {
+                          const skills = typeof selectedItem.NoiDungDeThi === "string" 
+                            ? JSON.parse(selectedItem.NoiDungDeThi) 
+                            : selectedItem.NoiDungDeThi;
+                          if (!skills) return "Chưa thiết lập kỹ năng.";
+                          const info = [];
+                          if (skills.listening?.parts) info.push(`Nghe: ${skills.listening.parts.length} phần`);
+                          if (skills.reading?.parts) info.push(`Đọc: ${skills.reading.parts.length} phần`);
+                          if (skills.writing?.parts) info.push(`Viết: ${skills.writing.parts.length} phần`);
+                          if (skills.speaking?.parts) info.push(`Nói: ${skills.speaking.parts.length} phần`);
+                          return info.join(" - ") || "Chưa thiết lập kỹ năng.";
+                        } catch(e) {
+                          return "Không thể đọc dữ liệu cấu hình.";
+                        }
+                      })()}
+                    />
+                  </div>
+                </>
               ) : (
                 <div className={styles.formGroupFull}>
                   <label>Mô tả / Nội dung chi tiết</label>
@@ -398,8 +467,8 @@ export default function DuyetBaiQTV() {
 
               <div className={styles.formRowThree}>
                 <div className={styles.formGroup}>
-                  <label>Lớp học</label>
-                  <input type="text" disabled value={selectedItem.TenLop || "—"} />
+                  <label>{activeTab === "dethi" ? "Trạng thái duyệt" : "Lớp học"}</label>
+                  <input type="text" disabled value={activeTab === "dethi" ? (selectedItem.TrangThaiDuyet || "Chờ duyệt") : (selectedItem.TenLop || "—")} />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Ngày gửi</label>
@@ -425,11 +494,11 @@ export default function DuyetBaiQTV() {
             </div>
 
             <div className={styles.modalFooter}>
-              {getStatusLabel(selectedItem.TrangThai) === "Đã duyệt" ? (
+              {getStatusLabel(selectedItem.TrangThaiDuyet || selectedItem.TrangThai) === "Đã duyệt" ? (
                 <span className={`${styles.statusBadge} ${styles.statusApproved}`} style={{ fontSize: "14px", padding: "8px 16px" }}>
                   Đã duyệt
                 </span>
-              ) : getStatusLabel(selectedItem.TrangThai) === "Từ chối" ? (
+              ) : getStatusLabel(selectedItem.TrangThaiDuyet || selectedItem.TrangThai) === "Từ chối" ? (
                 <span className={`${styles.statusBadge} ${styles.statusRejected}`} style={{ fontSize: "14px", padding: "8px 16px" }}>
                   Từ chối
                 </span>

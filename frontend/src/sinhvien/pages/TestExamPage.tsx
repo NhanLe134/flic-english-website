@@ -1002,13 +1002,87 @@ export default function TestExamPage() {
     });
   };
 
+  const submitTestToBackend = async () => {
+    if (!testData) return;
+
+    try {
+      // 1. Tính điểm Listening
+      let correctListening = 0;
+      let totalListening = 0;
+      testData.kyNang.listening.parts.forEach(part => {
+        part.cauHois.forEach(q => {
+          totalListening++;
+          const userAns = answers.listening?.[q.id];
+          if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
+            correctListening++;
+          }
+        });
+      });
+      const listeningScore = totalListening > 0 ? parseFloat(((correctListening / totalListening) * 10).toFixed(2)) : 0;
+
+      // 2. Tính điểm Reading
+      let correctReading = 0;
+      let totalReading = 0;
+      testData.kyNang.reading.parts.forEach(part => {
+        part.cauHois.forEach(q => {
+          totalReading++;
+          const userAns = answers.reading?.[q.id];
+          if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
+            correctReading++;
+          }
+        });
+      });
+      const readingScore = totalReading > 0 ? parseFloat(((correctReading / totalReading) * 10).toFixed(2)) : 0;
+
+      // 3. Chuẩn bị câu trả lời Viết (dạng mảng các câu văn học viên đã nhập)
+      const writingArray = testData.kyNang.writing.parts.map((_, idx) => writingAnswers[idx] || "");
+
+      // 4. Chuẩn bị câu trả lời Nói (ghi nhận dummy text do là giao diện simulation)
+      const speakingArray = testData.kyNang.speaking.parts.map(() => "Bài nói của học viên đã được hệ thống ghi nhận thành công.");
+
+      const u = JSON.parse(sessionStorage.getItem("user") || "{}");
+      const maNguoiDung = u.MaNguoiDung;
+
+      const API = "http://localhost:5000";
+
+      // 5. Gửi request nộp bài lên backend
+      const res = await fetch(`${API}/dethi/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          MaDeThi: testData.MaBaiTest,
+          MaNguoiDung: maNguoiDung,
+          diemNghe: listeningScore,
+          diemDoc: readingScore,
+          baiLamViet: writingArray,
+          baiLamNoi: speakingArray,
+          yeuCauChamViet: true,
+          yeuCauChamNoi: true
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Lỗi khi lưu kết quả bài thi");
+      }
+
+      // 6. Tính điểm hiển thị kết quả local
+      calculateScores();
+      setIsSubmitted(true);
+    } catch (err: any) {
+      console.error("Lỗi khi nộp bài:", err);
+      alert("Hệ thống ghi nhận kết quả bài thi ngoại tuyến: " + err.message);
+      calculateScores();
+      setIsSubmitted(true);
+    }
+  };
+
   const handleSubmit = () => {
     setModal({
       type: "submit",
-      onConfirm: () => {
+      onConfirm: async () => {
         setModal(null);
-        calculateScores();
-        setIsSubmitted(true);
+        await submitTestToBackend();
       }
     });
   };

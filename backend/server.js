@@ -3958,9 +3958,441 @@ app.post("/student/progress/minitest/submit", async (req, res) => {
     res.json({ message: "Đã nộp kết quả Minitest", Passed: !!Passed });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Lỗi server");
   }
 });
+
+// =========================================================================
+// HỆ THỐNG APIS QUẢN LÝ ĐỀ THI THỬ (DETHI) & KIỂM DUYỆT THEO VAI TRÒ
+// =========================================================================
+
+// 1. Lấy danh sách toàn bộ đề thi thử
+app.get("/dethi", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT d.MaDeThi, d.TieuDe, d.MoTa, d.ThoiGian, d.CapDo, d.LoaiBai, d.NoiDungDeThi, d.TrangThai, d.TrangThaiDuyet, d.NgayTao, d.MaNguoiDung,
+             n.HoTen AS TenNguoiTao
+      FROM DETHI d
+      JOIN NGUOIDUNG n ON d.MaNguoiDung = n.MaNguoiDung
+      ORDER BY d.NgayTao DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Lỗi lấy danh sách đề thi:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 8. Nộp bài thi thử của sinh viên (Lưu kết quả & Bài làm cần chấm)
+app.post("/dethi/submit", async (req, res) => {
+  try {
+    const { MaDeThi, MaNguoiDung, diemNghe, diemDoc, baiLamViet, baiLamNoi, yeuCauChamViet, yeuCauChamNoi } = req.body;
+    if (!MaDeThi || !MaNguoiDung) {
+      return res.status(400).json({ message: "Thiếu thông tin đề thi hoặc sinh viên" });
+    }
+
+    const pool = await poolPromise;
+
+    // 1. Lấy MaSinhVien từ MaNguoiDung
+    const svRes = await pool.request()
+      .input("MaNguoiDung", MaNguoiDung)
+      .query("SELECT MaSinhVien FROM SINHVIEN WHERE MaNguoiDung = @MaNguoiDung");
+
+    if (svRes.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy thông tin sinh viên" });
+    }
+    const maSinhVienStr = svRes.recordset[0].MaSinhVien;
+    const maSinhVienInt = parseInt(maSinhVienStr, 10);
+
+    // 2. Tạo nội dung JSON chi tiết của bài nộp
+    const noiDungObj = {
+      diemNghe: Number(diemNghe) || 0,
+      diemDoc: Number(diemDoc) || 0,
+      diemViet: null,
+      diemNoi: null,
+      baiLamViet: baiLamViet || [],
+      baiLamNoi: baiLamNoi || [],
+      nhanXetViet: "",
+      nhanXetNoi: "",
+      yeuCauChamViet: !!yeuCauChamViet,
+      yeuCauChamNoi: !!yeuCauChamNoi
+    };
+    const noiDungStr = JSON.stringify(noiDungObj);
+
+    // 3. Tính điểm trung bình trắc nghiệm (Nghe + Đọc) để làm điểm gốc ban đầu
+    const diemTN = (noiDungObj.diemNghe + noiDungObj.diemDoc) / 2;
+    const diemTNRounded = parseFloat((Math.round(diemTN * 2) / 2).toFixed(2));
+
+    // 4. Lưu vào bảng BAINOP (Lưu chi tiết câu trả lời)
+    // MaBaiTap đại diện cho MaDeThi của phần thi thử
+    await pool.request()
+      .input("MaDeThi", MaDeThi)
+      .input("MaSinhVien", maSinhVienStr)
+      .input("NoiDung", noiDungStr)
+      .input("Diem", diemTNRounded)
+      .query(`
+        INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, NgayNop, Diem, NhanXet, TrangThai)
+        VALUES (@MaDeThi, @MaSinhVien, @NoiDung, GETDATE(), @Diem, N'', N'Chờ chấm')
+      `);
+
+    // 5. Lưu vào bảng KETQUABAIKIEMTRA (Lưu điểm tổng quan và ghi nhận lượt thi)
+    // MaBaiKiemTra đại diện cho MaDeThi. KETQUABAIKIEMTRA.MaSinhVien stores MaNguoiDung.
+    const maNguoiDungInt = parseInt(MaNguoiDung, 10);
+    if (!isNaN(maNguoiDungInt)) {
+      await pool.request()
+        .input("MaDeThi", MaDeThi)
+        .input("MaSinhVien", maNguoiDungInt)
+        .input("Diem", diemTNRounded)
+        .query(`
+          INSERT INTO KETQUABAIKIEMTRA (MaBaiKiemTra, MaSinhVien, Diem, ThoiGianLamBai)
+          VALUES (@MaDeThi, @MaSinhVien, @Diem, GETDATE())
+        `);
+    }
+
+    res.json({ message: "Nộp bài thi thử thành công!" });
+  } catch (err) {
+    console.error("Lỗi khi nộp bài thi thử:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 9. Lấy danh sách toàn bộ bài nộp thi thử (cho Giảng viên / QTV chấm)
+app.get("/dethi/submissions", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT b.MaBaiNop AS id, 
+             b.MaSinhVien AS maSinhVienRaw,
+             b.NoiDung, 
+             b.NgayNop, 
+             b.Diem AS diemTB, 
+             b.TrangThai,
+             d.TieuDe AS tenDeThi, 
+             d.MaDeThi,
+             n.HoTen AS hoTen,
+             s.MaSinhVien AS maSinhVienInt
+      FROM BAINOP b
+      JOIN DETHI d ON b.MaBaiTap = d.MaDeThi
+      JOIN SINHVIEN s ON TRY_CAST(b.MaSinhVien AS INT) = s.MaSinhVien
+      JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
+      ORDER BY b.NgayNop DESC
+    `);
+
+    const formattedSubmissions = result.recordset.map(row => {
+      let details = {};
+      try {
+        details = typeof row.NoiDung === "string" ? JSON.parse(row.NoiDung) : row.NoiDung;
+      } catch (e) {
+        console.error("Lỗi parse NoiDung bài nộp:", row.id, e);
+      }
+
+      const info = details || {};
+      return {
+        id: row.id,
+        hoTen: row.hoTen,
+        maSinhVien: formatStudentId(row.maSinhVienInt),
+        tenDeThi: row.tenDeThi,
+        ngayNop: row.NgayNop,
+        diemNghe: info.diemNghe || 0,
+        diemDoc: info.diemDoc || 0,
+        diemViet: info.diemViet !== undefined ? info.diemViet : null,
+        diemNoi: info.diemNoi !== undefined ? info.diemNoi : null,
+        nhanXetViet: info.nhanXetViet || "",
+        nhanXetNoi: info.nhanXetNoi || "",
+        yeuCauChamViet: info.yeuCauChamViet !== undefined ? info.yeuCauChamViet : true,
+        yeuCauChamNoi: info.yeuCauChamNoi !== undefined ? info.yeuCauChamNoi : true,
+        baiLamViet: info.baiLamViet || [],
+        baiLamNoi: info.baiLamNoi || []
+      };
+    });
+
+    res.json(formattedSubmissions);
+  } catch (err) {
+    console.error("Lỗi lấy danh sách bài nộp thi thử:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 10. Chấm điểm bài thi tự luận (Viết / Nói) của sinh viên
+app.put("/dethi/submissions/:maBaiNop/grade", async (req, res) => {
+  try {
+    const { diemViet, nhanXetViet, diemNoi, nhanXetNoi } = req.body;
+    const maBaiNop = req.params.maBaiNop;
+    const pool = await poolPromise;
+
+    // 1. Tìm thông tin bài nộp hiện tại
+    const subRes = await pool.request()
+      .input("maBaiNop", maBaiNop)
+      .query("SELECT MaBaiTap, MaSinhVien, NoiDung FROM BAINOP WHERE MaBaiNop = @maBaiNop");
+
+    if (subRes.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy bài nộp" });
+    }
+
+    const { MaBaiTap, MaSinhVien, NoiDung } = subRes.recordset[0];
+    
+    let info = {};
+    try {
+      info = typeof NoiDung === "string" ? JSON.parse(NoiDung) : NoiDung;
+    } catch (e) {
+      return res.status(500).json({ message: "Lỗi giải mã cấu trúc bài làm" });
+    }
+
+    // 2. Cập nhật các trường điểm và nhận xét
+    if (diemViet !== undefined) info.diemViet = diemViet;
+    if (nhanXetViet !== undefined) info.nhanXetViet = nhanXetViet;
+    if (diemNoi !== undefined) info.diemNoi = diemNoi;
+    if (nhanXetNoi !== undefined) info.nhanXetNoi = nhanXetNoi;
+
+    const newNoiDungStr = JSON.stringify(info);
+
+    // 3. Tính điểm trung bình tổng kết VSTEP (làm tròn về 0.5) nếu cả 4 kỹ năng đã chấm
+    let finalScore = null;
+    let isGraded = false;
+    if (info.diemNghe !== null && info.diemDoc !== null && info.diemViet !== null && info.diemNoi !== null) {
+      const avg = (info.diemNghe + info.diemDoc + info.diemViet + info.diemNoi) / 4;
+      finalScore = parseFloat((Math.round(avg * 2) / 2).toFixed(2));
+      isGraded = true;
+    } else {
+      const skills = [info.diemNghe, info.diemDoc, info.diemViet, info.diemNoi].filter(v => v !== null);
+      if (skills.length > 0) {
+        const avg = skills.reduce((a, b) => a + b, 0) / skills.length;
+        finalScore = parseFloat((Math.round(avg * 2) / 2).toFixed(2));
+      }
+    }
+
+    const trangThai = isGraded ? 'Đã chấm xong' : 'Chờ chấm';
+
+    // 4. Lưu cập nhật vào BAINOP
+    await pool.request()
+      .input("maBaiNop", maBaiNop)
+      .input("NoiDung", newNoiDungStr)
+      .input("Diem", finalScore)
+      .input("TrangThai", trangThai)
+      .query(`
+        UPDATE BAINOP 
+        SET NoiDung = @NoiDung, Diem = @Diem, TrangThai = @TrangThai 
+        WHERE MaBaiNop = @maBaiNop
+      `);
+
+    // 5. Cập nhật điểm trong KETQUABAIKIEMTRA cho bản ghi tương ứng gần đây nhất
+    // KETQUABAIKIEMTRA.MaSinhVien stores MaNguoiDung (user ID), so we lookup MaNguoiDung
+    const svLookup = await pool.request()
+      .input("maSinhVien", MaSinhVien)
+      .query("SELECT MaNguoiDung FROM SINHVIEN WHERE MaSinhVien = @maSinhVien");
+      
+    if (svLookup.recordset.length > 0) {
+      const maNguoiDungVal = svLookup.recordset[0].MaNguoiDung;
+      await pool.request()
+        .input("MaDeThi", MaBaiTap)
+        .input("MaNguoiDung", maNguoiDungVal)
+        .input("Diem", finalScore)
+        .query(`
+          UPDATE KETQUABAIKIEMTRA
+          SET Diem = @Diem
+          WHERE MaKetQua = (
+            SELECT TOP 1 MaKetQua 
+            FROM KETQUABAIKIEMTRA 
+            WHERE MaBaiKiemTra = @MaDeThi AND MaSinhVien = @MaNguoiDung
+            ORDER BY ThoiGianLamBai DESC
+          )
+        `);
+    }
+
+    res.json({ message: "Lưu điểm chấm thành công!", DiemTB: finalScore, TrangThai: trangThai });
+  } catch (err) {
+    console.error("Lỗi khi lưu điểm chấm thi thử:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 2. Lấy chi tiết một đề thi thử
+app.get("/dethi/:id", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("id", req.params.id)
+      .query(`
+        SELECT d.*, n.HoTen AS TenNguoiTao
+        FROM DETHI d
+        JOIN NGUOIDUNG n ON d.MaNguoiDung = n.MaNguoiDung
+        WHERE d.MaDeThi = @id
+      `);
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy đề thi" });
+    }
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error("Lỗi lấy chi tiết đề thi:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 3. Tạo mới một đề thi thử
+app.post("/dethi", async (req, res) => {
+  try {
+    const { TieuDe, MoTa, ThoiGian, CapDo, LoaiBai, NoiDungDeThi, TrangThai, MaNguoiDung } = req.body;
+    const pool = await poolPromise;
+
+    // Kiểm tra vai trò của người tạo đề thi
+    const userRoleResult = await pool.request()
+      .input("MaNguoiDung", MaNguoiDung)
+      .query("SELECT MaVaiTro FROM NGUOIDUNG WHERE MaNguoiDung = @MaNguoiDung");
+
+    if (userRoleResult.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy người tạo" });
+    }
+
+    const maVaiTro = userRoleResult.recordset[0].MaVaiTro;
+    // Nếu người tạo là Quản trị nội dung (MaVaiTro = 4), TrangThaiDuyet là "Đã duyệt"
+    // Nếu người tạo là Giảng viên (MaVaiTro = 2) hoặc vai trò khác, TrangThaiDuyet là "Chờ duyệt"
+    const trangThaiDuyet = (maVaiTro === 4) ? 'Đã duyệt' : 'Chờ duyệt';
+
+    const contentStr = typeof NoiDungDeThi === "object" ? JSON.stringify(NoiDungDeThi) : NoiDungDeThi;
+
+    const insertResult = await pool.request()
+      .input("TieuDe", TieuDe)
+      .input("MoTa", MoTa || null)
+      .input("ThoiGian", ThoiGian || 120)
+      .input("CapDo", CapDo || null)
+      .input("LoaiBai", LoaiBai || null)
+      .input("NoiDungDeThi", contentStr)
+      .input("TrangThai", TrangThai || "draft")
+      .input("TrangThaiDuyet", trangThaiDuyet)
+      .input("MaNguoiDung", MaNguoiDung)
+      .query(`
+        INSERT INTO DETHI (TieuDe, MoTa, ThoiGian, CapDo, LoaiBai, NoiDungDeThi, TrangThai, TrangThaiDuyet, MaNguoiDung, NgayTao)
+        OUTPUT INSERTED.MaDeThi
+        VALUES (@TieuDe, @MoTa, @ThoiGian, @CapDo, @LoaiBai, @NoiDungDeThi, @TrangThai, @TrangThaiDuyet, @MaNguoiDung, GETDATE())
+      `);
+
+    const newId = insertResult.recordset[0].MaDeThi;
+    res.json({
+      message: "Tạo đề thi thành công",
+      MaDeThi: newId,
+      TrangThaiDuyet: trangThaiDuyet
+    });
+  } catch (err) {
+    console.error("Lỗi tạo đề thi:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 4. Cập nhật một đề thi thử
+app.put("/dethi/:id", async (req, res) => {
+  try {
+    const { TieuDe, MoTa, ThoiGian, CapDo, LoaiBai, NoiDungDeThi, TrangThai, MaNguoiDung } = req.body;
+    const pool = await poolPromise;
+
+    // Kiểm tra vai trò của người chỉnh sửa đề thi
+    const userRoleResult = await pool.request()
+      .input("MaNguoiDung", MaNguoiDung)
+      .query("SELECT MaVaiTro FROM NGUOIDUNG WHERE MaNguoiDung = @MaNguoiDung");
+
+    if (userRoleResult.recordset.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng chỉnh sửa" });
+    }
+
+    const maVaiTro = userRoleResult.recordset[0].MaVaiTro;
+    // Tương tự, nếu Quản trị nội dung sửa thì duyệt luôn, Giảng viên sửa thì bắt đầu duyệt lại
+    const trangThaiDuyet = (maVaiTro === 4) ? 'Đã duyệt' : 'Chờ duyệt';
+
+    const contentStr = typeof NoiDungDeThi === "object" ? JSON.stringify(NoiDungDeThi) : NoiDungDeThi;
+
+    await pool.request()
+      .input("id", req.params.id)
+      .input("TieuDe", TieuDe)
+      .input("MoTa", MoTa || null)
+      .input("ThoiGian", ThoiGian || 120)
+      .input("CapDo", CapDo || null)
+      .input("LoaiBai", LoaiBai || null)
+      .input("NoiDungDeThi", contentStr)
+      .input("TrangThai", TrangThai || "draft")
+      .input("TrangThaiDuyet", trangThaiDuyet)
+      .query(`
+        UPDATE DETHI
+        SET TieuDe = @TieuDe,
+            MoTa = @MoTa,
+            ThoiGian = @ThoiGian,
+            CapDo = @CapDo,
+            LoaiBai = @LoaiBai,
+            NoiDungDeThi = @NoiDungDeThi,
+            TrangThai = @TrangThai,
+            TrangThaiDuyet = @TrangThaiDuyet
+        WHERE MaDeThi = @id
+      `);
+
+    res.json({
+      message: "Cập nhật đề thi thành công",
+      TrangThaiDuyet: trangThaiDuyet
+    });
+  } catch (err) {
+    console.error("Lỗi cập nhật đề thi:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5. Xóa đề thi thử
+app.delete("/dethi/:id", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    await pool.request()
+      .input("id", req.params.id)
+      .query("DELETE FROM DETHI WHERE MaDeThi = @id");
+    res.json({ message: "Xóa đề thi thành công" });
+  } catch (err) {
+    console.error("Lỗi xóa đề thi:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 6. Lấy danh sách đề thi phục vụ duyệt bài cho Quản trị nội dung
+app.get("/qtv/dethi", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT d.MaDeThi, d.TieuDe, d.MoTa, d.ThoiGian, d.CapDo, d.LoaiBai, d.NoiDungDeThi, d.TrangThai, d.TrangThaiDuyet, d.NgayTao, d.MaNguoiDung,
+             n.HoTen AS TenGiangVien
+      FROM DETHI d
+      LEFT JOIN NGUOIDUNG n ON d.MaNguoiDung = n.MaNguoiDung
+      ORDER BY d.NgayTao DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Lỗi lấy danh sách đề thi chờ duyệt:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 7. Cập nhật trạng thái duyệt đề thi (Duyệt / Từ chối) bởi Quản trị nội dung
+app.put("/dethi/:id/status", async (req, res) => {
+  try {
+    const { TrangThai, MaNguoiDuyet } = req.body; // TrangThai: "published" (duyệt) hoặc "rejected" (từ chối)
+    const pool = await poolPromise;
+
+    const trangThaiDuyet = (TrangThai === "published") ? 'Đã duyệt' : 'Từ chối';
+
+    await pool.request()
+      .input("id", req.params.id)
+      .input("TrangThaiDuyet", trangThaiDuyet)
+      .input("TrangThai", TrangThai === "published" ? "published" : "draft")
+      .input("MaNguoiDuyet", MaNguoiDuyet || null)
+      .query(`
+        UPDATE DETHI
+        SET TrangThaiDuyet = @TrangThaiDuyet,
+            TrangThai = @TrangThai,
+            MaNguoiDuyet = @MaNguoiDuyet,
+            NgayDuyet = GETDATE()
+        WHERE MaDeThi = @id
+      `);
+
+    res.json({ message: "Phản hồi duyệt đề thi thành công" });
+  } catch (err) {
+    console.error("Lỗi duyệt đề thi:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 
 const initDb = async () => {

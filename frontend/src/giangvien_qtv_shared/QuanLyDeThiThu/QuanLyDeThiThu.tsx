@@ -327,9 +327,20 @@ const QuanLyDeThiThu = () => {
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
   const isQTV = user?.VaiTro === "Quản Trị Nội Dung";
 
-  // Practice tests lists
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (searchTerm === "") {
+      setSearchQuery("");
+    }
+  }, [searchTerm]);
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSearchQuery(searchTerm);
+  };
 
   // Submissions & Grading Management
   const [activeTab, setActiveTab] = useState<"tests" | "submissions">("tests");
@@ -352,70 +363,7 @@ const QuanLyDeThiThu = () => {
     baiLamNoi: string[];
   }
 
-  const [submissions, setSubmissions] = useState<BaiNopHocVien[]>([
-    {
-      id: 101,
-      hoTen: "Nguyễn Văn A",
-      maSinhVien: "SV2026001",
-      tenDeThi: "VSTEP B1 - Đề thi mẫu số 1",
-      ngayNop: "2026-06-22T14:15:00.000Z",
-      diemNghe: 7.5,
-      diemDoc: 8.0,
-      diemViet: null,
-      diemNoi: null,
-      yeuCauChamViet: true,
-      yeuCauChamNoi: true,
-      baiLamViet: [
-        "Dear John,\n\nI am writing this email to tell you about my music taste. I am also a big fan of rock music. My favorite band is Queen, and their song 'Bohemian Rhapsody' is my absolute favorite. It has amazing energy and lyrics.\n\nI usually listen to music when I study or run. It helps me focus and feel motivated.\n\nWrite back soon and tell me more about your favorite bands!\n\nBest regards,\nNguyen Van A",
-        "Nowadays, technology plays an essential role in our daily lives. While some people argue that it causes stress and complicates things, I believe that technology has made our life significantly more convenient.\n\nFirstly, communication has become extremely fast. We can contact anyone across the world instantly via messaging apps. Secondly, finding information is easier than ever with search engines like Google.\n\nIn conclusion, despite some drawbacks, the benefits of technology outweigh the negatives by saving time and bringing people together."
-      ],
-      baiLamNoi: [
-        "In the morning, I usually wake up at 6 AM. I do some light exercises, eat breakfast, and then go to school at 7 AM. My hobbies are reading books and playing football because they help me relax."
-      ]
-    },
-    {
-      id: 102,
-      hoTen: "Trần Thị B",
-      maSinhVien: "SV2026002",
-      tenDeThi: "VSTEP B1 - Đề thi mẫu số 1",
-      ngayNop: "2026-06-22T10:30:00.000Z",
-      diemNghe: 5.0,
-      diemDoc: 6.5,
-      diemViet: null,
-      diemNoi: null,
-      yeuCauChamViet: false,
-      yeuCauChamNoi: false,
-      baiLamViet: [
-        "Hi! I love pop music. My favorite singer is Taylor Swift. She has beautiful songs.",
-        "Technology is good because we have phones. But some people use phones too much and do not talk to family."
-      ],
-      baiLamNoi: [
-        "I like to listen to music in the morning. I also hang out with my friends on weekends."
-      ]
-    },
-    {
-      id: 103,
-      hoTen: "Lê Hoàng C",
-      maSinhVien: "SV2026003",
-      tenDeThi: "VSTEP B2 - Đề thi mẫu số 2",
-      ngayNop: "2026-06-21T16:45:00.000Z",
-      diemNghe: 8.5,
-      diemDoc: 7.0,
-      diemViet: 7.5,
-      diemNoi: 6.0,
-      nhanXetViet: "Bài viết mạch lạc, từ vựng tốt và cấu trúc câu đa dạng.",
-      nhanXetNoi: "Phát âm rõ ràng.",
-      yeuCauChamViet: true,
-      yeuCauChamNoi: true,
-      baiLamViet: [
-        "Dear Sir/Madam,\n\nI am writing to express my interest in the English communication course advertised on your website...",
-        "Some people assert that homework is necessary for student success, whereas others argue that it causes redundant stress..."
-      ],
-      baiLamNoi: [
-        "I work as a software engineer, so my morning routine starts with checking emails and coding. I enjoy playing tennis to stay fit."
-      ]
-    }
-  ]);
+  const [submissions, setSubmissions] = useState<BaiNopHocVien[]>([]);
 
   const [selectedSubmission, setSelectedSubmission] = useState<BaiNopHocVien | null>(null);
   const [gradingSkillTab, setGradingSkillTab] = useState<"listening" | "reading" | "writing" | "speaking">("writing");
@@ -442,7 +390,7 @@ const QuanLyDeThiThu = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleSaveGrades = () => {
+  const handleSaveGrades = async () => {
     if (!selectedSubmission) return;
 
     const gV = gradeViet.trim() === "" ? null : Number(gradeViet);
@@ -457,22 +405,48 @@ const QuanLyDeThiThu = () => {
       return;
     }
 
-    const updatedSubmissions = submissions.map(s => {
-      if (s.id === selectedSubmission.id) {
-        return {
-          ...s,
+    try {
+      const res = await fetch(`http://localhost:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           diemViet: gV,
           nhanXetViet: feedbackViet,
           diemNoi: gN,
           nhanXetNoi: feedbackNoi
-        };
-      }
-      return s;
-    });
+        })
+      });
 
-    setSubmissions(updatedSubmissions);
-    setSelectedSubmission(null);
-    showToast(`Đã lưu điểm bài thi của ${selectedSubmission.hoTen} thành công!`);
+      if (res.ok) {
+        await loadSubmissions();
+        setSelectedSubmission(null);
+        showToast(`Đã lưu điểm bài thi của ${selectedSubmission.hoTen} thành công!`);
+      } else {
+        const errData = await res.json();
+        alert("Lỗi khi lưu điểm: " + errData.message);
+      }
+    } catch (err) {
+      console.error("Lỗi khi lưu điểm chấm thi thử:", err);
+      alert("Lỗi kết nối khi lưu điểm chấm.");
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("http://localhost:5000/upload", {
+      method: "POST",
+      body: formData
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    const data = await res.json();
+    return data.url || "";
+  };
+
+  const getMediaUrl = (url?: string) => {
+    if (!url) return "";
+    if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
+    return `http://localhost:5000${url}`;
   };
 
   // Modals & Active objects
@@ -540,21 +514,72 @@ const QuanLyDeThiThu = () => {
     return testChanged || questionFormDirty;
   };
 
-  const loadTests = () => {
-    let localTests = localStorage.getItem("flic_practice_tests");
-    if (!localTests) {
-      localStorage.setItem("flic_practice_tests", JSON.stringify(DEFAULT_TESTS));
-      localTests = JSON.stringify(DEFAULT_TESTS);
-    }
+  const loadTests = async () => {
     try {
-      setTests(JSON.parse(localTests));
+      const res = await fetch("http://localhost:5000/dethi");
+      if (res.ok) {
+        const data = await res.json();
+        const mappedTests = data.map((t: any) => ({
+          MaBaiTest: t.MaDeThi,
+          TieuDe: t.TieuDe,
+          MoTa: t.MoTa,
+          TongThoiGian: t.ThoiGian,
+          CapDo: t.CapDo || "B1",
+          LoaiBai: t.LoaiBai || "VSTEP",
+          NgayTao: t.NgayTao,
+          TrangThai: t.TrangThai,
+          TrangThaiDuyet: t.TrangThaiDuyet,
+          kyNang: (() => {
+            try {
+              const parsed = typeof t.NoiDungDeThi === "string" ? JSON.parse(t.NoiDungDeThi) : t.NoiDungDeThi;
+              return parsed && typeof parsed === "object" ? {
+                listening: parsed.listening || { parts: [] },
+                reading: parsed.reading || { parts: [] },
+                writing: parsed.writing || { parts: [] },
+                speaking: parsed.speaking || { parts: [] }
+              } : { listening: { parts: [] }, reading: { parts: [] }, writing: { parts: [] }, speaking: { parts: [] } };
+            } catch (err) {
+              return { listening: { parts: [] }, reading: { parts: [] }, writing: { parts: [] }, speaking: { parts: [] } };
+            }
+          })()
+        }));
+        setTests(mappedTests);
+      } else {
+        setTests([]);
+      }
     } catch (e) {
-      setTests(DEFAULT_TESTS);
+      console.error("Lỗi khi kết nối API lấy đề thi:", e);
+      let localTests = localStorage.getItem("flic_practice_tests");
+      if (!localTests) {
+        localStorage.setItem("flic_practice_tests", JSON.stringify(DEFAULT_TESTS));
+        localTests = JSON.stringify(DEFAULT_TESTS);
+      }
+      try {
+        setTests(JSON.parse(localTests));
+      } catch (err) {
+        setTests(DEFAULT_TESTS);
+      }
+    }
+  };
+
+  const loadSubmissions = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/dethi/submissions");
+      if (res.ok) {
+        const data = await res.json();
+        setSubmissions(data);
+      } else {
+        setSubmissions([]);
+      }
+    } catch (e) {
+      console.error("Lỗi khi lấy danh sách bài nộp thi thử:", e);
+      setSubmissions([]);
     }
   };
 
   useEffect(() => {
     loadTests();
+    loadSubmissions();
   }, []);
 
   // Page leave warnings for beforeunload
@@ -653,17 +678,42 @@ const QuanLyDeThiThu = () => {
     setTestTitleError("");
   };
 
-  const handleCloneTest = (testToClone: BaiTest) => {
-    const clonedTest: BaiTest = {
-      ...testToClone,
-      MaBaiTest: Date.now(),
-      TieuDe: `${testToClone.TieuDe} - Bản sao`,
-      NgayTao: new Date().toISOString(),
-      kyNang: JSON.parse(JSON.stringify(testToClone.kyNang))
+  const handleCloneTest = async (testToClone: BaiTest) => {
+    const bodyData = {
+      TieuDe: `Bản sao ${testToClone.TieuDe}`,
+      MoTa: testToClone.MoTa,
+      ThoiGian: testToClone.TongThoiGian,
+      CapDo: testToClone.CapDo,
+      LoaiBai: testToClone.LoaiBai,
+      NoiDungDeThi: JSON.stringify(testToClone.kyNang),
+      TrangThai: "draft",
+      MaNguoiDung: user.MaNguoiDung
     };
-    const updated = [clonedTest, ...tests];
-    localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
-    setTests(updated);
+
+    try {
+      const res = await fetch("http://localhost:5000/dethi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData)
+      });
+      if (res.ok) {
+        await loadTests();
+      } else {
+        alert("Lỗi sao chép đề thi.");
+      }
+    } catch (err) {
+      console.error(err);
+      const clonedTest: BaiTest = {
+        ...testToClone,
+        MaBaiTest: Date.now(),
+        TieuDe: `Bản sao ${testToClone.TieuDe}`,
+        NgayTao: new Date().toISOString(),
+        kyNang: JSON.parse(JSON.stringify(testToClone.kyNang))
+      };
+      const updated = [clonedTest, ...tests];
+      localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
+      setTests(updated);
+    }
   };
 
   const handleDeleteTest = (maBaiTest: number) => {
@@ -774,44 +824,55 @@ const QuanLyDeThiThu = () => {
     setDeletePartInfo(null);
   };
 
-  const handleListeningAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, partIdx: number) => {
+  const handleListeningAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>, partIdx: number) => {
     const file = e.target.files?.[0];
     if (!file || !editingTest) return;
-    const localUrl = URL.createObjectURL(file);
-    const updated = { ...editingTest };
-    updated.kyNang.listening.parts[partIdx].audioUrl = localUrl;
-    updated.kyNang.listening.parts[partIdx].audioName = file.name;
-    setEditingTest(updated);
-  };
-
-  const handleSpeakingAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !editingTest) return;
-    const localUrl = URL.createObjectURL(file);
-    const updated = { ...editingTest };
-    if (!updated.kyNang.speaking.parts[0]) {
-      updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
+    try {
+      const serverUrl = await uploadFile(file);
+      const updated = { ...editingTest };
+      updated.kyNang.listening.parts[partIdx].audioUrl = serverUrl;
+      updated.kyNang.listening.parts[partIdx].audioName = file.name;
+      setEditingTest(updated);
+    } catch (err) {
+      console.error("Lỗi upload file âm thanh:", err);
+      alert("Lỗi khi tải file âm thanh lên server.");
     }
-    updated.kyNang.speaking.parts[0].audioUrl = localUrl;
-    updated.kyNang.speaking.parts[0].audioName = file.name;
-    setEditingTest(updated);
   };
 
-  const handleSpeakingImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSpeakingAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editingTest) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Url = event.target?.result as string;
+    try {
+      const serverUrl = await uploadFile(file);
       const updated = { ...editingTest };
       if (!updated.kyNang.speaking.parts[0]) {
         updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
       }
-      updated.kyNang.speaking.parts[0].imageUrl = base64Url;
+      updated.kyNang.speaking.parts[0].audioUrl = serverUrl;
+      updated.kyNang.speaking.parts[0].audioName = file.name;
+      setEditingTest(updated);
+    } catch (err) {
+      console.error("Lỗi upload file âm thanh:", err);
+      alert("Lỗi khi tải file âm thanh lên server.");
+    }
+  };
+
+  const handleSpeakingImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingTest) return;
+    try {
+      const serverUrl = await uploadFile(file);
+      const updated = { ...editingTest };
+      if (!updated.kyNang.speaking.parts[0]) {
+        updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
+      }
+      updated.kyNang.speaking.parts[0].imageUrl = serverUrl;
       updated.kyNang.speaking.parts[0].imageName = file.name;
       setEditingTest(updated);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Lỗi upload file ảnh:", err);
+      alert("Lỗi khi tải file ảnh lên server.");
+    }
   };
 
   const handleAddManualQuestion = (e: React.FormEvent, skill: "listening" | "reading", partIdx: number) => {
@@ -1097,8 +1158,13 @@ D. Visiting friends
     setImportingPartIdx(null);
   };
 
-  const handleSaveWorkspaceChanges = (statusToSet: "published" | "draft") => {
+  const handleSaveWorkspaceChanges = async (statusToSet: "published" | "draft") => {
     if (!editingTest) return;
+
+    if (!user || !user.MaNguoiDung) {
+      alert("Lỗi: Không tìm thấy thông tin tài khoản đang đăng nhập. Vui lòng đăng nhập lại.");
+      return;
+    }
 
     if (!editingTest.TieuDe.trim()) {
       setTestTitleError("Vui lòng nhập đề thi.");
@@ -1106,31 +1172,75 @@ D. Visiting friends
     }
 
     setTestTitleError("");
-    const savedTest: BaiTest = {
-      ...editingTest,
-      TrangThai: statusToSet
+    
+    // Nếu ID > 1000000000000 nghĩa là ID tạm được sinh ra bởi Date.now() ở client -> POST tạo mới
+    const isNew = editingTest.MaBaiTest > 1000000000000;
+    
+    const bodyData = {
+      TieuDe: editingTest.TieuDe,
+      MoTa: editingTest.MoTa,
+      ThoiGian: editingTest.TongThoiGian,
+      CapDo: editingTest.CapDo,
+      LoaiBai: editingTest.LoaiBai,
+      NoiDungDeThi: JSON.stringify(editingTest.kyNang),
+      TrangThai: statusToSet,
+      MaNguoiDung: user.MaNguoiDung
     };
 
-    const idx = tests.findIndex(t => t.MaBaiTest === savedTest.MaBaiTest);
-    let updated: BaiTest[];
-    if (idx !== -1) {
-      updated = [...tests];
-      updated[idx] = savedTest;
-    } else {
-      updated = [savedTest, ...tests];
-    }
+    try {
+      let response;
+      if (isNew) {
+        response = await fetch("http://localhost:5000/dethi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyData)
+        });
+      } else {
+        response = await fetch(`http://localhost:5000/dethi/${editingTest.MaBaiTest}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyData)
+        });
+      }
 
-    localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
-    setTests(updated);
-    isExitingRef.current = true;
-    setEditingTest(null);
-    window.history.back();
+      if (response.ok) {
+        await loadTests();
+        isExitingRef.current = true;
+        setEditingTest(null);
+        window.history.back();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert("Lỗi khi lưu đề thi lên máy chủ: " + (errorData.message || response.statusText || "Không rõ nguyên nhân"));
+      }
+    } catch (err) {
+      console.error("Lỗi lưu đề thi qua API:", err);
+      // Fallback lưu local storage
+      const savedTest: BaiTest = {
+        ...editingTest,
+        TrangThai: statusToSet
+      };
+
+      const idx = tests.findIndex(t => t.MaBaiTest === savedTest.MaBaiTest);
+      let updated: BaiTest[];
+      if (idx !== -1) {
+        updated = [...tests];
+        updated[idx] = savedTest;
+      } else {
+        updated = [savedTest, ...tests];
+      }
+
+      localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
+      setTests(updated);
+      isExitingRef.current = true;
+      setEditingTest(null);
+      window.history.back();
+    }
   };
 
   const filteredTests = tests.filter(
     (test) =>
-      test.TieuDe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      test.LoaiBai.toLowerCase().includes(searchTerm.toLowerCase())
+      test.TieuDe.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      test.LoaiBai.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Render WORKSPACE when editingTest is active
@@ -1330,7 +1440,7 @@ D. Visiting friends
                           />
                           {editingTest.kyNang.listening.parts[activePartIdx].audioUrl && (
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px", padding: "6px 10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", width: "100%", boxSizing: "border-box" }}>
-                              <audio src={editingTest.kyNang.listening.parts[activePartIdx].audioUrl} controls style={{ height: "24px" }} />
+                              <audio src={getMediaUrl(editingTest.kyNang.listening.parts[activePartIdx].audioUrl)} controls style={{ height: "24px" }} />
                               <span style={{ fontSize: "11px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {editingTest.kyNang.listening.parts[activePartIdx].audioName || "Audio đã tải lên"}
                               </span>
@@ -1903,7 +2013,7 @@ D. Visiting friends
                     />
                     {editingTest.kyNang.speaking.parts[0]?.imageUrl && (
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px", boxSizing: "border-box" }}>
-                        <img src={editingTest.kyNang.speaking.parts[0].imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "200px", maxHeight: "150px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
+                        <img src={getMediaUrl(editingTest.kyNang.speaking.parts[0].imageUrl)} alt="Speaking Visual Prompt" style={{ maxWidth: "200px", maxHeight: "150px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
                         <span style={{ fontSize: "11px", color: "#64748b" }}>
                           {editingTest.kyNang.speaking.parts[0].imageName || "Ảnh đã tải lên"}
                         </span>
@@ -1921,7 +2031,7 @@ D. Visiting friends
                     />
                     {editingTest.kyNang.speaking.parts[0]?.audioUrl && (
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px", padding: "6px 10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", width: "100%", boxSizing: "border-box" }}>
-                        <audio src={editingTest.kyNang.speaking.parts[0].audioUrl} controls style={{ height: "24px" }} />
+                        <audio src={getMediaUrl(editingTest.kyNang.speaking.parts[0].audioUrl)} controls style={{ height: "24px" }} />
                         <span style={{ fontSize: "11px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {(editingTest.kyNang.speaking.parts[0] as any).audioName || "Audio đã tải lên"}
                         </span>
@@ -2517,14 +2627,14 @@ D. Visiting friends
       {activeTab === "tests" ? (
         <>
           <div className="cd-test-management-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
-            <form className="search-container" onSubmit={(e) => e.preventDefault()} style={{ marginBottom: 0 }}>
+            <form className="search-container" onSubmit={handleSearchSubmit} style={{ marginBottom: 0 }}>
               <input
                 className="search-input"
                 placeholder="Tìm kiếm đề thi..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button className="search-button" type="button">
+              <button className="search-button" type="submit">
                 <svg
                   width="18"
                   height="18"
@@ -2763,7 +2873,7 @@ D. Visiting friends
                     <p style={{ fontSize: "13px", color: "#1e293b", fontWeight: 600, marginBottom: "8px" }} dangerouslySetInnerHTML={{ __html: `Đề bài: ${p.noiDung || "(Chưa nhập câu hỏi)"}` }} />
                     {p.imageUrl && (
                       <div style={{ margin: "10px 0", textAlign: "left" }}>
-                        <img src={p.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "200px", maxHeight: "150px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
+                        <img src={getMediaUrl(p.imageUrl)} alt="Speaking Visual Prompt" style={{ maxWidth: "200px", maxHeight: "150px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
                       </div>
                     )}
                     {p.audioUrl && <p style={{ fontSize: "12px", color: "#F95800", margin: "0 0 10px 0" }}>Audio đã tải lên: {(p as any).audioName || "MP3/WAV File"}</p>}
@@ -2859,11 +2969,30 @@ D. Visiting friends
                 Hủy
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (testIdToDelete !== null) {
-                    const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
-                    localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
-                    setTests(updated);
+                    const isNew = testIdToDelete > 1000000000000;
+                    if (!isNew) {
+                      try {
+                        const res = await fetch(`http://localhost:5000/dethi/${testIdToDelete}`, {
+                          method: "DELETE"
+                        });
+                        if (res.ok) {
+                          await loadTests();
+                        } else {
+                          alert("Lỗi khi xóa đề thi trên máy chủ.");
+                        }
+                      } catch (err) {
+                        console.error("Lỗi xóa đề thi qua API:", err);
+                        const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
+                        localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
+                        setTests(updated);
+                      }
+                    } else {
+                      const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
+                      localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
+                      setTests(updated);
+                    }
                   }
                   setShowDeleteConfirmPopup(false);
                   setTestIdToDelete(null);

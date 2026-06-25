@@ -1446,7 +1446,17 @@ In this section, you will read several passages. Each one is followed by several
       );
     }
 
-    return null;
+    // Default fallback for general/text-only assignments (Type is null/empty or unknown)
+    return (
+      <VietDoanVan
+        q={q}
+        qIdx={qIdx}
+        essayAnswers={essayAnswers}
+        setEssayAnswers={setEssayAnswers}
+        submitted={submitted}
+        isOverdue={isOverdue}
+      />
+    );
   };
 
 

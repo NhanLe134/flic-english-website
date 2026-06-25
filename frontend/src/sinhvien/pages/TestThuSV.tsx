@@ -60,18 +60,70 @@ export default function TestThuSV() {
   useEffect(() => {
     if ((location.state as any)?.submitted) setSubmitted(true);
     
-    let localTests = localStorage.getItem("flic_student_practice_tests");
-    if (!localTests) {
-      localStorage.setItem("flic_student_practice_tests", JSON.stringify(STATIC_TESTS));
-      localTests = JSON.stringify(STATIC_TESTS);
-    }
-    
-    try {
-      setTests(JSON.parse(localTests));
-    } catch (e) {
-      setTests(STATIC_TESTS);
-    }
-    setLoading(false);
+    const API = "http://localhost:5000";
+    setLoading(true);
+
+    fetch(`${API}/dethi`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Lỗi tải đề thi");
+        return res.json();
+      })
+      .then((data) => {
+        // Chỉ lấy các đề thi có TrangThaiDuyet là "Đã duyệt"
+        const approvedData = data.filter(
+          (t: any) => t.TrangThaiDuyet === "Đã duyệt"
+        );
+
+        const mappedTests = approvedData.map((t: any) => {
+          let parsedKyNang = {};
+          try {
+            parsedKyNang = typeof t.NoiDungDeThi === "string" 
+              ? JSON.parse(t.NoiDungDeThi) 
+              : t.NoiDungDeThi;
+          } catch (e) {
+            console.error("Lỗi parse NoiDungDeThi cho đề:", t.MaDeThi, e);
+          }
+
+          // Đảm bảo có thoiGian cho từng kỹ năng để trang làm bài chạy đúng
+          const kyNang = parsedKyNang as any;
+          if (kyNang) {
+            if (kyNang.listening && !kyNang.listening.thoiGian) kyNang.listening.thoiGian = 45 * 60;
+            if (kyNang.reading && !kyNang.reading.thoiGian) kyNang.reading.thoiGian = 60 * 60;
+            if (kyNang.writing && !kyNang.writing.thoiGian) kyNang.writing.thoiGian = 60 * 60;
+            if (kyNang.speaking && !kyNang.speaking.thoiGian) kyNang.speaking.thoiGian = 12 * 60;
+          }
+
+          return {
+            MaBaiTest: t.MaDeThi,
+            TieuDe: t.TieuDe,
+            MoTa: t.MoTa || "",
+            TongThoiGian: t.ThoiGian,
+            CapDo: t.CapDo || "",
+            LoaiBai: t.LoaiBai || "",
+            NgayTao: t.NgayTao,
+            TrangThai: t.TrangThai,
+            kyNang: kyNang
+          };
+        });
+
+        setTests(mappedTests);
+        localStorage.setItem("flic_student_practice_tests", JSON.stringify(mappedTests));
+      })
+      .catch((err) => {
+        console.error("Lỗi khi fetch danh sách đề thi từ backend:", err);
+        // Fallback to localStorage
+        let localTests = localStorage.getItem("flic_student_practice_tests");
+        if (localTests) {
+          try {
+            setTests(JSON.parse(localTests));
+          } catch (e) {
+            setTests(STATIC_TESTS);
+          }
+        } else {
+          setTests(STATIC_TESTS);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [location]);
 
   const formatTime = (minutes: number) => {

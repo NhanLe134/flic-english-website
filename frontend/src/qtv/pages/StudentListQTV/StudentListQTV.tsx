@@ -175,6 +175,7 @@ const StudentListQTV: React.FC = () => {
       if (res.ok) {
         setSelectedStudentDetails((prev: any) => prev ? { ...prev, BietDanh: nicknameInput } : null);
         triggerSuccessPopup("Cập nhật biệt danh thành công");
+        setShowModal(false);
       } else {
         alert("Lỗi khi lưu biệt danh học viên!");
       }
