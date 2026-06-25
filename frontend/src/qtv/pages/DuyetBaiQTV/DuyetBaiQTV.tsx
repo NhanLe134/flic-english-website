@@ -90,8 +90,6 @@ export default function DuyetBaiQTV() {
         endpoint = `${API}/baigiang/${item.MaBaiHoc}/status`;
       } else if (activeTab === "baitap") {
         endpoint = `${API}/baitap/${item.MaBaiTap}/status`;
-      } else if (activeTab === "tailieu") {
-        endpoint = `${API}/tailieu/${item.MaTaiLieu}/status`;
       } else if (activeTab === "dethi") {
         endpoint = `${API}/dethi/${item.MaDeThi}/status`;
       }
