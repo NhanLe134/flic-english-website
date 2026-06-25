@@ -1510,51 +1510,7 @@ export default function CoursePageQTV() {
                       a.click(); URL.revokeObjectURL(url)
                       setToast(`Đã xuất ${enrolledStudents.length} học viên!`)
                     }}>⬇ Xuất danh sách</button>
-                    <label className={styles.detailImportBtn}>
-                      📂 Import file
-                      <input type="file" accept=".csv" hidden onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        if (!file || !detailClass) return
-                        const text = await file.text()
-                        const lines = text.split('\n').filter(l => l.trim())
-                        const dataLines = lines[0].toLowerCase().includes('mã') || lines[0].toLowerCase().includes('id') ? lines.slice(1) : lines
-                        const studentIds: string[] = []
-                        for (const line of dataLines) {
-                          const cols = line.split(',').map(c => c.replace(/"/g,'').trim())
-                          if (cols[0]) studentIds.push(cols[0])
-                        }
-                        if (studentIds.length === 0) { alert('Không tìm thấy mã sinh viên trong file!'); return }
-                        let success = 0
-                        const errorMessages: string[] = []
-                        for (const studentId of studentIds) {
-                          try {
-                            const res = await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh`, {
-                              method: 'POST', headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ MaSinhVien: studentId })
-                            })
-                            const data = await res.json()
-                            if (res.ok && data.message && data.message.includes("thành công")) {
-                              success++
-                            } else {
-                              errorMessages.push(`${studentId}: ${data.message || 'Lỗi khi ghi danh'}`)
-                            }
-                          } catch {
-                            errorMessages.push(`${studentId}: Lỗi kết nối`)
-                          }
-                        }
-                        const res = await fetch(`${API}/lophoc/${detailClass.id}/sinhvien`)
-                        const data = await res.json()
-                        setEnrolledStudents(data.map((s: any) => ({
-                          studentId: s.MaSinhVien, name: s.HoTen, gender: s.GioiTinh || '—',
-                          phone: s.SoDienThoai || '—', enrollDate: s.NgayGhiDanh || '—', status: s.TrangThai || 'Đang học'
-                        })))
-                        setToast(`Đã import thành công ${success}/${studentIds.length} sinh viên!`)
-                        if (errorMessages.length > 0) {
-                          alert(`Một số sinh viên không thể ghi danh:\n${errorMessages.join('\n')}`)
-                        }
-                        e.target.value = ''
-                      }} />
-                    </label>
+
                     <button className={styles.detailBtnPrimary} onClick={() => { setShowEnroll(true); setEnrollSearch(''); setSelectedIds(new Set()) }}>
                       + Ghi danh sinh viên
                     </button>
