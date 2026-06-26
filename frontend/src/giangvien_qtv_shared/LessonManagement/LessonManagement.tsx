@@ -112,7 +112,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
         <form className="search-container" onSubmit={(e) => e.preventDefault()} style={{ marginBottom: 0 }}>
           <input
             type="text"
-            placeholder="Tìm bài học..."
+            placeholder="Tìm kiếm bài giảng..."
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

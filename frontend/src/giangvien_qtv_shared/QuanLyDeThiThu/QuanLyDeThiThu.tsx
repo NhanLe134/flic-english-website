@@ -373,6 +373,7 @@ const QuanLyDeThiThu = () => {
   const [feedbackNoi, setFeedbackNoi] = useState<string>("");
   const [toastMessage, setToastMessage] = useState<string>("");
   const [subSearch, setSubSearch] = useState("");
+  const [subStatusFilter, setSubStatusFilter] = useState<"all" | "pending" | "graded">("all");
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -2390,8 +2391,16 @@ D. Visiting friends
                           s.maSinhVien.toLowerCase().includes(subSearch.toLowerCase()) ||
                           s.tenDeThi.toLowerCase().includes(subSearch.toLowerCase());
       
-      const isGraded = s.diemViet !== null && s.diemNoi !== null;
-      return matchSearch && isGraded;
+      if (isQTV) {
+        const isGraded = s.diemViet !== null && s.diemNoi !== null;
+        return matchSearch && isGraded;
+      } else {
+        const isPending = s.diemViet === null || s.diemNoi === null;
+        const isGraded = !isPending;
+        if (subStatusFilter === "pending") return matchSearch && isPending;
+        if (subStatusFilter === "graded") return matchSearch && isGraded;
+        return matchSearch;
+      }
     });
 
     return (
@@ -2421,6 +2430,44 @@ D. Visiting friends
               </svg>
             </button>
           </form>
+
+          {!isQTV && (
+            <div style={{ display: "flex", gap: "6px", background: "#f1f5f9", padding: "4px", borderRadius: "8px" }}>
+              <button
+                onClick={() => setSubStatusFilter("all")}
+                style={{
+                  padding: "6px 12px", border: "none", borderRadius: "6px", fontSize: "13px", fontWeight: 600,
+                  background: subStatusFilter === "all" ? "white" : "transparent",
+                  color: subStatusFilter === "all" ? "#1e293b" : "#64748b",
+                  cursor: "pointer", boxShadow: subStatusFilter === "all" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+                }}
+              >
+                Tất cả ({submissions.length})
+              </button>
+              <button
+                onClick={() => setSubStatusFilter("pending")}
+                style={{
+                  padding: "6px 12px", border: "none", borderRadius: "6px", fontSize: "13px", fontWeight: 600,
+                  background: subStatusFilter === "pending" ? "white" : "transparent",
+                  color: subStatusFilter === "pending" ? "#fa541c" : "#64748b",
+                  cursor: "pointer", boxShadow: subStatusFilter === "pending" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+                }}
+              >
+                Chờ chấm ({submissions.filter(s => s.diemViet === null || s.diemNoi === null).length})
+              </button>
+              <button
+                onClick={() => setSubStatusFilter("graded")}
+                style={{
+                  padding: "6px 12px", border: "none", borderRadius: "6px", fontSize: "13px", fontWeight: 600,
+                  background: subStatusFilter === "graded" ? "white" : "transparent",
+                  color: subStatusFilter === "graded" ? "#107544" : "#64748b",
+                  cursor: "pointer", boxShadow: subStatusFilter === "graded" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+                }}
+              >
+                Đã chấm ({submissions.filter(s => s.diemViet !== null && s.diemNoi !== null).length})
+              </button>
+            </div>
+          )}
         </div>
 
         {/* SUBMISSIONS TABLE */}
@@ -2574,7 +2621,12 @@ D. Visiting friends
             display: "flex", alignItems: "center", gap: "6px"
           }}
         >
-          Kết quả thi thử
+          {isQTV ? "Kết quả thi thử" : "Bài nộp & Chấm điểm"}
+          {!isQTV && submissions.filter(s => s.diemViet === null || s.diemNoi === null).length > 0 && (
+            <span style={{ background: "#ef4444", color: "white", borderRadius: "50%", padding: "2px 6px", fontSize: "10px" }}>
+              {submissions.filter(s => s.diemViet === null || s.diemNoi === null).length}
+            </span>
+          )}
         </button>
       </div>
 

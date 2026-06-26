@@ -1,8 +1,8 @@
 import "./ClassDetail.css";
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { FiCalendar, FiArrowLeft, FiEye, FiTrash2 } from "react-icons/fi";
-import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
+import { useParams, useNavigate } from "react-router-dom";
+import { FiCalendar, FiArrowLeft, FiEye, FiTrash2, FiSearch } from "react-icons/fi";
+import { FaClock, FaBook } from "react-icons/fa"; // Đã bỏ FaChalkboardTeacher và FaUsers
 import LessonManagement from "../LessonManagement/LessonManagement";
 import DocumentManagement from "../DocumentManagement/DocumentManagement";
 
@@ -11,11 +11,9 @@ type ActiveTab = "exercises" | "lectures" | "documents";
 const ClassDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const location = useLocation();
 
   const [lesson, setLesson] = useState<any>(null);
-  const [teacherName, setTeacherName] = useState<string>("Đang tải...");
-  const [studentCount, setStudentCount] = useState<number>(0);
+  // Đã bỏ hoàn toàn state teacherName và studentCount thừa kèm 2 useEffect fetch dữ liệu của chúng
   const [activeTab, setActiveTab] = useState<ActiveTab>("exercises");
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
@@ -29,27 +27,9 @@ const ClassDetail = () => {
       .then(res => res.json())
       .then(async (data) => {
         setLesson(data);
-
-        const maLopHoc = data.MaLopHoc ?? location.state?.maLopHoc;
-        if (maLopHoc) {
-          const countRes = await fetch(`http://localhost:5000/lophoc/${maLopHoc}/students/count`);
-          const countData = await countRes.json();
-          setStudentCount(countData?.SoLuongHocVien ?? 0);
-        }
       })
       .catch(err => console.log(err));
-  }, [id, location.state?.maLopHoc]);
-
-  useEffect(() => {
-    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-    const maNguoiDung = user?.MaNguoiDung;
-    if (maNguoiDung) {
-      fetch(`http://localhost:5000/giangvien/${maNguoiDung}`)
-        .then(res => res.json())
-        .then(data => setTeacherName(data?.HoTen || "Giảng viên"))
-        .catch(() => setTeacherName("Giảng viên"));
-    }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -138,25 +118,6 @@ const ClassDetail = () => {
     return matchesSearch;
   });
 
-
-
-  const renderSearchIcon = () => (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-
-
   return (
     <div className="cd2-wrapper">
       <span className="cd2-back-btn" onClick={() => navigate(-1)}>
@@ -164,22 +125,29 @@ const ClassDetail = () => {
         Quay lại
       </span>
 
-      <div className="cd-overview-card">
-        <div className="cd-left-content">
+      <div 
+        className="cd-overview-card"
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          width: "100%",
+          padding: "18px 20px",
+        }}
+      >
+        <div 
+          className="cd-left-content"
+          style={{
+            flex: "1 1 auto",
+            display: "flex",
+            flexDirection: "column",
+            marginRight: "auto",
+          }}
+        >
           <h2 className="cd-class-title">{lesson.TenBuoiHoc}</h2>
-          <p className="cd-class-desc">{lesson.MoTa}</p>
 
           <div className="cd-meta-grid">
-            <div className="cd-meta-item">
-              <div className="cd-meta-icon-wrapper">
-                <FaChalkboardTeacher />
-              </div>
-              <div className="cd-meta-info">
-                <span className="cd-meta-label">Giáo viên</span>
-                <span className="cd-meta-value">{teacherName}</span>
-              </div>
-            </div>
-
             <div className="cd-meta-item">
               <div className="cd-meta-icon-wrapper">
                 <FaClock />
@@ -192,30 +160,66 @@ const ClassDetail = () => {
 
             <div className="cd-meta-item">
               <div className="cd-meta-icon-wrapper">
-                <FaUsers />
-              </div>
-              <div className="cd-meta-info">
-                <span className="cd-meta-label">Số học viên</span>
-                <span className="cd-meta-value">{studentCount} học viên</span>
-              </div>
-            </div>
-
-            <div className="cd-meta-item">
-              <div className="cd-meta-icon-wrapper">
                 <FaBook />
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Trạng thái</span>
                 <span className="cd-meta-value">Đang học</span>
               </div>
+              <span 
+                className="cd-class-id"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  lineHeight: 1,
+                  marginTop: "17px",
+                  marginLeft: "10px",
+                }}
+              >
+                Mã lớp: B239B1
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="cd-right-content">
-          <span className="status-badge">Đang học</span>
-          <span className="cd-class-id">Mã lớp: B239B1</span>
-          <span className="cd-class-dates">
+        <div 
+          className="cd-right-content"
+          style={{
+            width: "auto",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            borderLeft: "1px dashed #e2e8f0",
+            paddingLeft: "16px",
+            paddingRight: "0px",
+            flexShrink: 0,
+            flexGrow: 0,
+            gap: "12px",
+            marginLeft: "auto",
+            marginRight: "0px",
+            alignSelf: "stretch",
+          }}
+        >
+          <span 
+            className="status-badge"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
+            }}
+          >
+            Đang học
+          </span>
+          <span 
+            className="cd-class-dates"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              lineHeight: 1,
+            }}
+          >
             <FiCalendar size={13} style={{ marginRight: 6 }} />
             {new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} - {new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
           </span>
@@ -236,7 +240,6 @@ const ClassDetail = () => {
 
       {activeTab === "exercises" && (
         <div className="lesson-tab-section">
-
           <div className="shared-tab-toolbar">
             <form className="search-container" onSubmit={(e) => e.preventDefault()}>
               <input
@@ -246,7 +249,7 @@ const ClassDetail = () => {
                 onChange={(e) => setExerciseSearch(e.target.value)}
               />
               <button className="search-button" type="button" aria-label="Tìm kiếm">
-                {renderSearchIcon()}
+                <FiSearch size={16} />
               </button>
             </form>
 
@@ -261,7 +264,7 @@ const ClassDetail = () => {
             </select>
 
             <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
-              + Tạo bài tập
+              + Tạo BT/KT
             </button>
 
             <button
@@ -301,7 +304,6 @@ const ClassDetail = () => {
 
                   <p>{ex.Type || "Bài tập"}</p>
                   
-                  {/* Lock/Unlock display for exams */}
                   {(() => {
                     let parsedContent: any = {};
                     try {
@@ -450,4 +452,3 @@ const ClassDetail = () => {
 };
 
 export default ClassDetail;
-

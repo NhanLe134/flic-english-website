@@ -73,7 +73,7 @@ const AddStudent: React.FC = () => {
 
           <div className="sidebar-menu">
             <div onClick={() => navigate("/quan-ly-khoa-hoc")} className="sidebar-item">
-              Quản lý khóa học
+              Quản lý giảng dạy
             </div>
 
             <div onClick={() => navigate("/thong-tin-ca-nhan")} className="sidebar-item">

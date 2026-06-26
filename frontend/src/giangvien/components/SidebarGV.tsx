@@ -1,11 +1,11 @@
-﻿import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut, FiFileText } from "react-icons/fi";
 import "./SidebarGV.css";
 
 const menuItems = [
-  { label: "Quản lý khóa học",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
+  { label: "Quản lý giảng dạy",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
   { label: "Quản lý đề thi thử",          path: "/quan-ly-de-thi",     icon: <FiFileText className="menu-icon" /> },
   { label: "Danh sách học viên",      path: "/danh-sach-hoc-vien",  icon: <FiUsers className="menu-icon" /> },
   { label: "Quản lý kết quả học tập", path: "/quan-ly-ket-qua",   icon: <FiAward className="menu-icon" /> },
@@ -30,6 +30,10 @@ const getActiveMenu = (pathname: string) => {
     pathname.startsWith("/lesson/") ||
     pathname.startsWith("/lesson-discussion") ||
     pathname.startsWith("/them-bai-hoc") ||
+    pathname.startsWith("/them-bai-giang") ||
+    pathname.startsWith("/bai-giang") ||
+    pathname.startsWith("/danh-sach-bai-nop") ||
+    pathname.startsWith("/cham-bai") ||
     pathname.startsWith("/documents") ||
     pathname.startsWith("/them-tai-lieu") ||
     pathname.startsWith("/quan-ly-tai-lieu")
