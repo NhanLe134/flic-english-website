@@ -238,16 +238,61 @@ const INITIAL_CLASSES: ClassProgress[] = [
 ];
 
 export default function Progress() {
-  const [classes] = useState<ClassProgress[]>(INITIAL_CLASSES);
-  const [selectedId, setSelectedId] = useState<number>(2);
-  const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({ 1: true, 2: true });
+  const [classes, setClasses] = useState<ClassProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
   const [hoTen, setHoTen] = useState("Lê Nhàn");
+  const [userId, setUserId] = useState<number | null>(null);
+  const API = "http://localhost:5000";
 
   useEffect(() => {
+    const userJson = sessionStorage.getItem("user");
+    if (!userJson) {
+      setError("Bạn cần đăng nhập để xem tiến độ học tập.");
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const u = JSON.parse(sessionStorage.getItem("user") || "{}");
+      const u = JSON.parse(userJson);
       if (u.HoTen) setHoTen(u.HoTen);
-    } catch { /* empty */ }
+      if (u.MaNguoiDung) {
+        setUserId(u.MaNguoiDung);
+        
+        fetch(`${API}/student/progress/classes/${u.MaNguoiDung}`)
+          .then((res) => {
+            if (!res.ok) throw new Error("Không thể kết nối đến máy chủ.");
+            return res.json();
+          })
+          .then((data) => {
+            if (Array.isArray(data)) {
+              setClasses(data);
+              if (data.length > 0) {
+                setSelectedId(data[0].id);
+                // Mở rộng buổi học đầu tiên mặc định
+                const expands: Record<number, boolean> = {};
+                data[0].sessions.forEach((s: any) => {
+                  expands[s.id] = true;
+                });
+                setExpandedSessions(expands);
+              }
+            }
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Lỗi khi tải tiến độ:", err);
+            setError("Lỗi tải tiến độ học tập. Vui lòng thử lại sau.");
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
+    } catch (e) {
+      setError("Thông tin người dùng không hợp lệ.");
+      setLoading(false);
+    }
   }, []);
 
   const activeClass = classes.find(c => c.id === selectedId) || classes[0];
@@ -261,32 +306,47 @@ export default function Progress() {
     let assignmentsTotal = 0;
     let assignmentsCompleted = 0;
 
+    if (!cls || !cls.sessions) {
+      return {
+        percent: 0,
+        completed: 0,
+        total: 0,
+        assignmentsCompleted: 0,
+        assignmentsTotal: 0,
+        avgScore: "—"
+      };
+    }
+
     cls.sessions.forEach(s => {
       // 1. Lecture
-      total++;
-      if (s.lecture.completed) completed++;
+      if (s.lecture && s.lecture.id !== 0) {
+        total++;
+        if (s.lecture.completed) completed++;
 
-      // Lecture Exercises
-      s.lecture.exercises.forEach(ex => {
-        assignmentsTotal++;
-        if (ex.completed) {
-          assignmentsCompleted++;
-        }
-      });
+        // Lecture Exercises
+        s.lecture.exercises.forEach(ex => {
+          assignmentsTotal++;
+          if (ex.completed) {
+            assignmentsCompleted++;
+          }
+        });
+      }
 
       // 2. Test
-      total++;
-      if (s.test.completed) {
-        completed++;
-        if (s.test.score) {
-          const parts = s.test.score.split("/");
-          scoreSum += (parseFloat(parts[0]) / parseFloat(parts[1])) * 10;
-          scoreCount++;
+      if (s.test && s.test.id !== 0) {
+        total++;
+        if (s.test.completed) {
+          completed++;
+          if (s.test.score) {
+            const parts = s.test.score.split("/");
+            scoreSum += (parseFloat(parts[0]) / parseFloat(parts[1])) * 10;
+            scoreCount++;
+          }
         }
       }
 
       // 3. Practice (if exists)
-      if (s.practice) {
+      if (s.practice && s.practice.id !== 0) {
         total++;
         if (s.practice.completed) {
           completed++;
@@ -299,8 +359,11 @@ export default function Progress() {
       }
 
       // 4. Document
-      total++;
-      if (s.document.completed) completed++;
+      if (s.document && s.document.id !== 0) {
+        total++;
+        const isDocDone = localStorage.getItem(`completed_document_${userId}_${s.document.id}`) === "true";
+        if (isDocDone) completed++;
+      }
     });
 
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -316,13 +379,61 @@ export default function Progress() {
     };
   };
 
+  if (loading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "300px", gap: "12px", color: "#64748b" }}>
+        <div style={{ width: "40px", height: "40px", border: "4px solid #f3f3f3", borderTop: "4px solid #f95800", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+        <span>Đang tải thông tin tiến độ học tập...</span>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "#ef4444" }}>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (classes.length === 0) {
+    return (
+      <div className="prog-container" style={{ padding: "40px 20px" }}>
+        <div className="prog-header">
+          <div className="prog-header-title">
+            <h1>Tiến độ học tập</h1>
+            <p>Xin chào, <strong>{hoTen}</strong>. Theo dõi tiến độ học tập chi tiết của các lớp học tại đây.</p>
+          </div>
+        </div>
+        <div style={{
+          background: "#f8fafc",
+          border: "1.5px dashed #cbd5e1",
+          padding: "50px 20px",
+          borderRadius: 16,
+          textAlign: "center",
+          color: "#64748b",
+          marginTop: "30px"
+        }}>
+          <h3 style={{ margin: "0 0 10px 0", color: "#000080" }}>Không có lớp học hoạt động</h3>
+          <p style={{ margin: 0, fontSize: "14px" }}>Bạn hiện tại chưa được đăng ký lớp học nào đang diễn ra hoặc đã kết thúc.</p>
+        </div>
+      </div>
+    );
+  }
+
   const currentStats = getProgressStats(activeClass);
 
-  // Check how many sessions are 100% completed
+  // Đếm số buổi học đã hoàn thành 100%
   const completedSessionsCount = activeClass.sessions.filter(s => {
-    const lectureDone = s.lecture.completed;
-    const testDone = s.test.completed;
-    const docDone = s.document.completed;
+    const lectureDone = s.lecture ? s.lecture.completed : true;
+    const testDone = s.test ? s.test.completed : true;
+    const docDone = s.document ? localStorage.getItem(`completed_document_${userId}_${s.document.id}`) === "true" : true;
     const practiceDone = s.practice ? s.practice.completed : true;
     return lectureDone && testDone && docDone && practiceDone;
   }).length;
@@ -463,9 +574,9 @@ export default function Progress() {
 
           <div className="prog-sessions-list">
             {activeClass.sessions.map(s => {
-              const lectureDone = s.lecture.completed;
-              const testDone = s.test.completed;
-              const docDone = s.document.completed;
+              const lectureDone = s.lecture ? s.lecture.completed : true;
+              const testDone = s.test ? s.test.completed : true;
+              const docDone = s.document ? localStorage.getItem(`completed_document_${userId}_${s.document.id}`) === "true" : true;
               const practiceDone = s.practice ? s.practice.completed : true;
 
               const sessionCompleted = lectureDone && testDone && docDone && practiceDone;
@@ -504,46 +615,50 @@ export default function Progress() {
                   {isExpanded && (
                     <div className="prog-session-content">
                       {/* 1. Bài giảng */}
-                      <div className="prog-item-row">
-                        <div className="prog-item-left">
-                          <span className="prog-item-icon">
-                            <FiPlayCircle />
-                          </span>
-                          <div className="prog-item-info">
-                            <p className="prog-item-name">{s.lecture.name}</p>
-                            <p className="prog-item-type">
-                              Bài giảng · {s.lecture.videoWatched ? "Đã xem video" : "Chưa xem video"}
-                              {` (${s.lecture.exercises.filter(ex => ex.completed).length}/${s.lecture.exercises.length} bài tập)`}
-                            </p>
+                      {s.lecture && s.lecture.id !== 0 && (
+                        <div className="prog-item-row">
+                          <div className="prog-item-left">
+                            <span className="prog-item-icon">
+                              <FiPlayCircle />
+                            </span>
+                            <div className="prog-item-info">
+                              <p className="prog-item-name">{s.lecture.name}</p>
+                              <p className="prog-item-type">
+                                Bài giảng · {s.lecture.videoWatched ? "Đã xem video" : "Chưa xem video"}
+                                {` (${s.lecture.exercises.filter(ex => ex.completed).length}/${s.lecture.exercises.length} bài tập)`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="prog-item-right">
+                            <span className={`prog-item-badge ${s.lecture.completed ? "completed" : "pending"}`}>
+                              {s.lecture.completed ? "Đã hoàn thành" : "Chưa học"}
+                            </span>
                           </div>
                         </div>
-                        <div className="prog-item-right">
-                          <span className={`prog-item-badge ${s.lecture.completed ? "completed" : "pending"}`}>
-                            {s.lecture.completed ? "Đã hoàn thành" : "Chưa học"}
-                          </span>
-                        </div>
-                      </div>
+                      )}
 
                       {/* 2. Bài kiểm tra */}
-                      <div className="prog-item-row">
-                        <div className="prog-item-left">
-                          <span className="prog-item-icon">
-                            <FiFileText />
-                          </span>
-                          <div className="prog-item-info">
-                            <p className="prog-item-name">{s.test.name}</p>
-                            <p className="prog-item-type">Bài kiểm tra bắt buộc</p>
+                      {s.test && s.test.id !== 0 && (
+                        <div className="prog-item-row">
+                          <div className="prog-item-left">
+                            <span className="prog-item-icon">
+                              <FiFileText />
+                            </span>
+                            <div className="prog-item-info">
+                              <p className="prog-item-name">{s.test.name}</p>
+                              <p className="prog-item-type">Bài kiểm tra bắt buộc</p>
+                            </div>
+                          </div>
+                          <div className="prog-item-right">
+                            <span className={`prog-item-badge ${s.test.completed ? "completed" : "pending"}`}>
+                              {s.test.completed ? `Đã nộp (${s.test.score})` : "Chưa làm"}
+                            </span>
                           </div>
                         </div>
-                        <div className="prog-item-right">
-                          <span className={`prog-item-badge ${s.test.completed ? "completed" : "pending"}`}>
-                            {s.test.completed ? `Đã nộp (${s.test.score})` : "Chưa làm"}
-                          </span>
-                        </div>
-                      </div>
+                      )}
 
                       {/* 3. Bài luyện tập thêm (nếu có) */}
-                      {s.practice && (
+                      {s.practice && s.practice.id !== 0 && (
                         <div className="prog-item-row">
                           <div className="prog-item-left">
                             <span className="prog-item-icon">
@@ -563,22 +678,27 @@ export default function Progress() {
                       )}
 
                       {/* 4. Tài liệu */}
-                      <div className="prog-item-row">
-                        <div className="prog-item-left">
-                          <span className="prog-item-icon">
-                            <FiFile />
-                          </span>
-                          <div className="prog-item-info">
-                            <p className="prog-item-name">{s.document.name}</p>
-                            <p className="prog-item-type">Tài liệu học tập đính kèm</p>
+                      {s.document && s.document.id !== 0 && (() => {
+                        const isDocDone = localStorage.getItem(`completed_document_${userId}_${s.document.id}`) === "true";
+                        return (
+                          <div className="prog-item-row">
+                            <div className="prog-item-left">
+                              <span className="prog-item-icon">
+                                <FiFile />
+                              </span>
+                              <div className="prog-item-info">
+                                <p className="prog-item-name">{s.document.name}</p>
+                                <p className="prog-item-type">Tài liệu học tập đính kèm</p>
+                              </div>
+                            </div>
+                            <div className="prog-item-right">
+                              <span className={`prog-item-badge ${isDocDone ? "completed" : "pending"}`}>
+                                {isDocDone ? "Đã xem tài liệu" : "Chưa đọc"}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="prog-item-right">
-                          <span className={`prog-item-badge ${s.document.completed ? "completed" : "pending"}`}>
-                            {s.document.completed ? "Đã xem tài liệu" : "Chưa đọc"}
-                          </span>
-                        </div>
-                      </div>
+                        );
+                      })()}
 
                     </div>
                   )}

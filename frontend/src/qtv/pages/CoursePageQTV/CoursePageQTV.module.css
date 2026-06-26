@@ -796,3 +796,268 @@
   background: #e04f00;
   color: #fff;
 }
+
+/* Styling to match ApproveAdmin modal exactly */
+.backdropBlur {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.courseFormModal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(224, 212, 195, 0.5);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeaderSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modalHeaderSection h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000080;
+}
+
+.modalCloseIconBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modalCloseIconBtn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.modalScrollableBody {
+  padding: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+}
+
+.formFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.formFieldGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.formFieldGroup input,
+.formFieldGroup select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background-color: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formFieldGroup input:focus,
+.formFieldGroup select:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.1);
+}
+
+.formFieldGroup input.hasError,
+.formFieldGroup select.hasError {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2;
+}
+
+.formFieldGroup input.hasError:focus,
+.formFieldGroup select.hasError:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.formFieldErrorText {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 2px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.requiredStar {
+  color: #ef4444;
+}
+
+.weekdaySelectionRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.weekdayBtnChoice {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.weekdayBtnChoice:hover {
+  background-color: #f8fafc;
+}
+
+.weekdayBtnChoice.selected {
+  background-color: #F95800;
+  color: #ffffff;
+  border-color: #F95800;
+  box-shadow: 0 2px 6px rgba(245, 130, 32, 0.2);
+}
+
+.modalSkillsInfo {
+  font-size: 13px;
+  color: #F95800;
+  font-weight: 600;
+  margin-top: -8px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.skillsAssignmentLabel {
+  margin-bottom: 8px;
+  display: block;
+}
+
+.skillsAssignmentContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.skillAssignmentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skillAssignmentName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  min-width: 80px;
+  text-align: left;
+}
+
+.skillAssignmentSelect {
+  flex: 1;
+  padding: 6px 28px 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
+  background-position: right 10px center;
+  background-size: 11px;
+  cursor: pointer;
+  outline: none;
+}
+
+.skillAssignmentSelect:focus {
+  border-color: #F95800;
+}
+
+.modalFooterSection {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  background-color: #ffffff;
+  border-radius: 0 0 20px 20px;
+}
+
+.footerCancelBtn {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.footerCancelBtn:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.footerSaveBtn {
+  background-color: #F95800;
+  border: 1px solid #F95800;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(249, 88, 0, 0.15);
+}
+
+.footerSaveBtn:hover {
+  background-color: #e04f00;
+  border-color: #e04f00;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
