@@ -132,7 +132,7 @@ const QuanLyKhoaHoc = () => {
                 </div>
                 <h3>{c.name}</h3>
                 <p className="schedule">{(c.schedule || '—').replace(/,?\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}/g, '')}</p>
-                <p className="students-count">Khóa: {c.courseName}</p>
+                <p className="students-count">{c.courseName}</p>
                 <button
                   className="detail-button"
                   onClick={() => navigate(`/lessonlist/${c.id}`, { state: { tenKhoaHoc: c.courseName, tenLop: c.name } })}

@@ -610,101 +610,158 @@ const CreateExercise = () => {
 
     // 1. Dạng Đọc hiểu chia đôi màn hình (reading-split)
     if (targetType === "reading-split") {
-      let passage = "";
-      let questionsText = text;
-      
-      const passageMarker = /\[(?:Bài đọc|Reading|Passage)\]\s*([\s\S]*?)(?=\[(?:Câu hỏi|Questions)\]|Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)]|$)/i;
-      const match = text.match(passageMarker);
-      if (match) {
-        passage = match[1].trim();
-        questionsText = text.replace(match[0], "");
-      } else {
-        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
-        const parts = text.split(qBoundary);
-        if (parts.length > 0) {
-          passage = parts[0].trim();
-          questionsText = parts.slice(1).join("\n\n");
-        }
-      }
+      const parsedPassages: any[] = [];
+      const rawBlocks = text.split(/\[(?:Bài đọc|Reading|Passage)\]/i).map(b => b.trim()).filter(Boolean);
 
-      const subQuestions: any[] = [];
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
-      const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
-      
-      for (const block of qBlocks) {
-        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-        if (lines.length < 2) continue;
+      if (rawBlocks.length > 0 && (text.toLowerCase().includes("[bài đọc]") || text.toLowerCase().includes("[reading]") || text.toLowerCase().includes("[passage]"))) {
+        for (const block of rawBlocks) {
+          let passage = "";
+          let questionsText = block;
 
-        let questionText = "";
-        let answers = ["", "", "", ""];
-        let correct = "A";
-
-        for (let line of lines) {
-          if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
-            answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
-          } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
-            answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
-          } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
-            answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
-          } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
-            answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
-          } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
-            correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+          const qMatch = block.match(/^([\s\S]*?)\[(?:Câu hỏi|Questions)\]\s*([\s\S]*)/i);
+          if (qMatch) {
+            passage = qMatch[1].trim();
+            questionsText = qMatch[2].trim();
           } else {
-            if (answers.every(a => !a)) {
-              if (questionText) questionText += "\n";
-              questionText += line;
+            const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+            const parts = block.split(qBoundary);
+            if (parts.length > 0) {
+              passage = parts[0].trim();
+              questionsText = parts.slice(1).join("\n\n");
             }
           }
+
+          const subQuestions: any[] = [];
+          const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+          const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
+
+          for (const qBlock of qBlocks) {
+            const lines = qBlock.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (lines.length < 2) continue;
+
+            let questionText = "";
+            let answers = ["", "", "", ""];
+            let correct = "A";
+
+            for (let line of lines) {
+              if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+                answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+              } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+                answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+              } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+                answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+              } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+                answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+              } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
+                correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+              } else {
+                if (answers.every(a => !a)) {
+                  if (questionText) questionText += "\n";
+                  questionText += line;
+                }
+              }
+            }
+
+            questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+            subQuestions.push({ question: questionText, answers, correct });
+          }
+
+          if (subQuestions.length > 0) {
+            parsedPassages.push({ passage, subQuestions });
+          }
         }
-        
-        questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
-        subQuestions.push({ question: questionText, answers, correct });
+      } else {
+        let passage = "";
+        let questionsText = text;
+
+        const qMatch = text.match(/^([\s\S]*?)\[(?:Câu hỏi|Questions)\]\s*([\s\S]*)/i);
+        if (qMatch) {
+          passage = qMatch[1].trim();
+          questionsText = qMatch[2].trim();
+        } else {
+          const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+          const parts = text.split(qBoundary);
+          if (parts.length > 0) {
+            passage = parts[0].trim();
+            questionsText = parts.slice(1).join("\n\n");
+          }
+        }
+
+        // Clean up [Bài đọc] or [Reading] or [Passage] from the beginning of passage
+        passage = passage.replace(/^\[(?:Bài đọc|Reading|Passage)\]\s*/i, "").trim();
+
+        const subQuestions: any[] = [];
+        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+        const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
+
+        for (const qBlock of qBlocks) {
+          const lines = qBlock.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length < 2) continue;
+
+          let questionText = "";
+          let answers = ["", "", "", ""];
+          let correct = "A";
+
+          for (let line of lines) {
+            if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+              answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+            } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
+              correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+            } else {
+              if (answers.every(a => !a)) {
+                if (questionText) questionText += "\n";
+                questionText += line;
+              }
+            }
+          }
+
+          questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+          subQuestions.push({ question: questionText, answers, correct });
+        }
+
+        if (subQuestions.length > 0) {
+          parsedPassages.push({ passage, subQuestions });
+        }
       }
 
-      if (secIdx !== undefined) {
-        const copy = [...examSections];
-        copy[secIdx].questions = [
-          {
-            question: "",
-            answers: ["", "", "", ""],
-            correct: "A",
-            explanation: "",
-            audioUrl: "",
-            imageUrl: "",
-            text: passage,
-            prompt: "",
-            vocabPairs: [{ word: "", meaning: "" }],
-            fillInAnswers: [],
-            sentences: [""],
-            subQuestions: subQuestions.map(sq => ({
-              question: sq.question,
-              answers: sq.answers,
-              correct: sq.correct,
-              explanation: ""
-            }))
-          }
-        ];
-        setExamSections(copy);
-        alert(`Đã quét và điền thành công phần thi Đọc hiểu (Phần ${secIdx + 1}) với ${subQuestions.length} câu hỏi!`);
+      if (parsedPassages.length > 0) {
+        const formattedQuestions = parsedPassages.map(p => ({
+          question: "",
+          answers: ["", "", "", ""],
+          correct: "A",
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: p.passage,
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""],
+          subQuestions: p.subQuestions.map((sq: any) => ({
+            question: sq.question,
+            answers: sq.answers,
+            correct: sq.correct,
+            explanation: ""
+          }))
+        }));
+
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = formattedQuestions;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công phần thi Đọc hiểu (Phần ${secIdx + 1}) với ${parsedPassages.length} bài đọc và tổng cộng ${parsedPassages.reduce((acc, p) => acc + p.subQuestions.length, 0)} câu hỏi!`);
+        } else {
+          setQuestions(formattedQuestions);
+          alert(`Đã quét thành công ${parsedPassages.length} bài đọc và tổng cộng ${parsedPassages.reduce((acc, p) => acc + p.subQuestions.length, 0)} câu hỏi!`);
+        }
       } else {
-        setQuestions([
-          {
-            question: "",
-            answers: ["", "", "", ""],
-            correct: "A",
-            explanation: "",
-            audioUrl: "",
-            imageUrl: "",
-            text: passage,
-            prompt: "",
-            vocabPairs: [{ word: "", meaning: "" }],
-            fillInAnswers: [],
-            sentences: [""],
-            subQuestions: subQuestions
-          }
-        ]);
-        alert("Đã quét thành công bài đọc và " + subQuestions.length + " câu hỏi!");
+        alert("Không tìm thấy câu hỏi hoặc bài đọc nào hợp lệ trong file.");
       }
       return;
     }
@@ -927,29 +984,56 @@ const CreateExercise = () => {
 
     // 5. Sắp xếp câu thành đoạn văn (writing-order-sentences)
     if (targetType === "writing-order-sentences") {
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      if (lines.length > 0) {
-        const parsedQuestion = {
-          question: "",
-          answers: ["", "", "", ""],
-          correct: "A",
-          explanation: "",
-          audioUrl: "",
-          imageUrl: "",
-          text: "",
-          prompt: "",
-          vocabPairs: [{ word: "", meaning: "" }],
-          fillInAnswers: [],
-          sentences: lines
-        };
+      const parsedParagraphs: any[] = [];
+      const rawBlocks = text.split(/\[(?:Đoạn văn|Paragraph|Đoạn|Passage)\]/i).map(b => b.trim()).filter(Boolean);
+
+      if (rawBlocks.length > 0 && (text.toLowerCase().includes("[đoạn văn]") || text.toLowerCase().includes("[paragraph]") || text.toLowerCase().includes("[đoạn]") || text.toLowerCase().includes("[passage]"))) {
+        for (const block of rawBlocks) {
+          const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length > 0) {
+            parsedParagraphs.push({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: "",
+              audioUrl: "",
+              imageUrl: "",
+              text: "",
+              prompt: "",
+              vocabPairs: [{ word: "", meaning: "" }],
+              fillInAnswers: [],
+              sentences: lines
+            });
+          }
+        }
+      } else {
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length > 0) {
+          parsedParagraphs.push({
+            question: "",
+            answers: ["", "", "", ""],
+            correct: "A",
+            explanation: "",
+            audioUrl: "",
+            imageUrl: "",
+            text: "",
+            prompt: "",
+            vocabPairs: [{ word: "", meaning: "" }],
+            fillInAnswers: [],
+            sentences: lines
+          });
+        }
+      }
+
+      if (parsedParagraphs.length > 0) {
         if (secIdx !== undefined) {
           const copy = [...examSections];
-          copy[secIdx].questions = [parsedQuestion];
+          copy[secIdx].questions = parsedParagraphs;
           setExamSections(copy);
-          alert(`Đã quét và điền thành công Phần ${secIdx + 1} đoạn văn gồm ${lines.length} câu!`);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsedParagraphs.length} đoạn văn sắp xếp (tổng cộng ${parsedParagraphs.reduce((acc, p) => acc + p.sentences.length, 0)} câu)!`);
         } else {
-          setQuestions([parsedQuestion]);
-          alert(`Đã quét thành công đoạn văn gồm ${lines.length} câu!`);
+          setQuestions(parsedParagraphs);
+          alert(`Đã quét thành công ${parsedParagraphs.length} đoạn văn sắp xếp (tổng cộng ${parsedParagraphs.reduce((acc, p) => acc + p.sentences.length, 0)} câu)!`);
         }
       } else {
         alert("File trống hoặc không có nội dung hợp lệ.");
@@ -1000,51 +1084,70 @@ const CreateExercise = () => {
 
     // 7. Điền từ vào đoạn văn (listening-fill-in)
     if (targetType === "listening-fill-in") {
-      let passage = "";
-      let answersText = "";
-      const ansMarker = /\[(?:Đáp án|Answers|Keys)\]\s*([\s\S]*?)$/i;
-      const match = text.match(ansMarker);
-      if (match) {
-        answersText = match[1].trim();
-        passage = text.replace(match[0], "").replace(/\[(?:Đoạn văn|Passage)\]/i, "").trim();
+      const blocks: { passage: string; answersText: string }[] = [];
+      const rawBlocks = text.split(/\[(?:Đoạn văn|Passage)\]/i).map(b => b.trim()).filter(Boolean);
+      
+      if (rawBlocks.length > 0 && (text.toLowerCase().includes("[đoạn văn]") || text.toLowerCase().includes("[passage]"))) {
+        for (const block of rawBlocks) {
+          const ansMatch = block.match(/\[(?:Đáp án|Answers|Keys)\]\s*([\s\S]*)/i);
+          if (ansMatch) {
+            const answersText = ansMatch[1].trim();
+            const passage = block.replace(ansMatch[0], "").trim();
+            blocks.push({ passage, answersText });
+          } else {
+            blocks.push({ passage: block, answersText: "" });
+          }
+        }
       } else {
-        passage = text.trim();
-      }
-
-      const fillInAnswers: string[] = [];
-      const ansLines = answersText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      for (const line of ansLines) {
-        const m = line.match(/^\d+\s*[\.\:\-]?\s*(.*)/);
-        if (m) {
-          fillInAnswers.push(m[1].trim());
+        const ansMatch = text.match(/\[(?:Đáp án|Answers|Keys)\]\s*([\s\S]*)$/i);
+        if (ansMatch) {
+          const answersText = ansMatch[1].trim();
+          const passage = text.replace(ansMatch[0], "").replace(/\[(?:Đoạn văn|Passage)\]/i, "").trim();
+          blocks.push({ passage, answersText });
         } else {
-          fillInAnswers.push(line);
+          blocks.push({ passage: text.trim(), answersText: "" });
         }
       }
 
-      const parsedQuestion = {
-        question: "",
-        answers: ["", "", "", ""],
-        correct: "A",
-        explanation: "",
-        audioUrl: "",
-        imageUrl: "",
-        text: passage,
-        prompt: "",
-        vocabPairs: [{ word: "", meaning: "" }],
-        fillInAnswers: fillInAnswers,
-        sentences: [""]
-      };
+      const parsedQuestions = blocks.map(block => {
+        const fillInAnswers: string[] = [];
+        const ansLines = block.answersText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        for (const line of ansLines) {
+          const m = line.match(/^\d+\s*[\.\:\-]?\s*(.*)/);
+          if (m) {
+            fillInAnswers.push(m[1].trim());
+          } else {
+            fillInAnswers.push(line);
+          }
+        }
+        return {
+          question: "",
+          answers: ["", "", "", ""],
+          correct: "A",
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: block.passage,
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: fillInAnswers,
+          sentences: [""]
+        };
+      });
 
-      if (secIdx !== undefined) {
-        const copy = [...examSections];
-        copy[secIdx].content = passage;
-        copy[secIdx].questions = [parsedQuestion];
-        setExamSections(copy);
-        alert(`Đã quét và điền thành công Phần ${secIdx + 1} đoạn văn điền từ!`);
+      if (parsedQuestions.length > 0) {
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].content = parsedQuestions[0].text;
+          copy[secIdx].questions = parsedQuestions;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsedQuestions.length} đoạn văn điền từ!`);
+        } else {
+          setQuestions(parsedQuestions);
+          alert(`Đã quét thành công ${parsedQuestions.length} đoạn văn và danh sách đáp án!`);
+        }
       } else {
-        setQuestions([parsedQuestion]);
-        alert("Đã quét thành công đoạn văn và danh sách đáp án!");
+        alert("Định dạng file không đúng.");
       }
       return;
     }
@@ -1800,7 +1903,6 @@ const CreateExercise = () => {
       {/* HEADER CARD */}
       <div className="ce-header-card">
         <h1>{lesson?.TenBuoiHoc || "Đang tải..."}</h1>
-        <p>{lesson?.MoTa || ""}</p>
       </div>
 
 
@@ -1986,7 +2088,7 @@ const CreateExercise = () => {
                   `dog - a common domesticated carnivorous mammal that typically has a long snout\n` +
                   `apple - a round fruit with red, green, or yellow skin and crisp white flesh`
                 ) : type === "reading-split" ? (
-                  `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều câu hỏi liên tiếp):\n` +
+                  `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều bài đọc liên tiếp bằng cách lặp lại [Bài đọc] và [Câu hỏi]):\n` +
                   `[Bài đọc]\n` +
                   `This is the reading passage text. You can write paragraphs here...\n\n` +
                   `[Câu hỏi]\n` +
@@ -2001,7 +2103,16 @@ const CreateExercise = () => {
                   `B. begin\n` +
                   `C. delay\n` +
                   `D. continue\n` +
-                  `Đáp án đúng: B`
+                  `Đáp án đúng: B\n\n` +
+                  `[Bài đọc]\n` +
+                  `This is the second reading passage text...\n\n` +
+                  `[Câu hỏi]\n` +
+                  `Câu 1: Question for passage 2?\n` +
+                  `A. Options A\n` +
+                  `B. Options B\n` +
+                  `C. Options C\n` +
+                  `D. Options D\n` +
+                  `Đáp án đúng: A`
                 ) : type === "listening-dictation" ? (
                   `Mẫu file Nghe chép chính tả (Mỗi dòng là một câu, hỗ trợ nhiều câu):\n` +
                   `Hello, welcome to our class.\n` +
@@ -2021,17 +2132,23 @@ const CreateExercise = () => {
                   `Tôi là học sinh.\n` +
                   `I am a student.`
                 ) : type === "writing-order-sentences" ? (
-                  `Mẫu file Sắp xếp câu thành đoạn văn (Mỗi dòng là một câu theo đúng thứ tự):\n` +
+                  `Mẫu file Sắp xếp câu thành đoạn văn (Mỗi dòng là một câu, hỗ trợ tạo nhiều đoạn bằng nhãn [Đoạn văn]):\n` +
+                  `[Đoạn văn]\n` +
                   `First, download the app.\n` +
                   `Second, create your account.\n` +
-                  `Finally, start practicing.`
+                  `Finally, start practicing.\n\n` +
+                  `[Đoạn văn]\n` +
+                  `The first step is parsing the text.\n` +
+                  `The second step is displaying the output.\n` +
+                  `The final step is getting user approval.`
                 ) : type === "listening-fill-in" ? (
                   `Mẫu file Điền từ vào đoạn văn (Đoạn văn chứa các ký hiệu ô trống [1], [2],...):\n` +
                   `[Đoạn văn]\n` +
                   `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
                   `[Đáp án]\n` +
                   `1. supermarket\n` +
-                  `2. apples`
+                  `2. apples\n\n` +
+                  `* Hỗ trợ tạo nhiều câu/đoạn bằng cách viết nhiều cặp [Đoạn văn] và [Đáp án] nối tiếp nhau.`
                 ) : ""}
               </div>
               
@@ -2602,7 +2719,7 @@ const CreateExercise = () => {
                         `dog - a common domesticated carnivorous mammal that typically has a long snout\n` +
                         `apple - a round fruit with red, green, or yellow skin and crisp white flesh`
                       ) : sec.type === "reading-split" ? (
-                        `Mẫu file Đọc chia đôi màn hình:\n` +
+                        `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều bài đọc liên tiếp):\n` +
                         `[Bài đọc]\n` +
                         `This is the reading passage text. You can write paragraphs here...\n\n` +
                         `[Câu hỏi]\n` +
@@ -2611,7 +2728,16 @@ const CreateExercise = () => {
                         `B. Science\n` +
                         `C. Capital cities\n` +
                         `D. Sports\n` +
-                        `Đáp án đúng: C`
+                        `Đáp án đúng: C\n\n` +
+                        `[Bài đọc]\n` +
+                        `This is the second reading passage text...\n\n` +
+                        `[Câu hỏi]\n` +
+                        `Câu 1: Question for passage 2?\n` +
+                        `A. Options A\n` +
+                        `B. Options B\n` +
+                        `C. Options C\n` +
+                        `D. Options D\n` +
+                        `Đáp án đúng: A`
                       ) : sec.type === "listening-dictation" ? (
                         `Mẫu file Nghe chép chính tả:\n` +
                         `Mỗi dòng trong file là một câu trả lời chính xác. Ví dụ:\n` +
@@ -2629,17 +2755,23 @@ const CreateExercise = () => {
                         `Thời tiết hôm nay rất đẹp.\n` +
                         `The weather is very nice today.`
                       ) : sec.type === "writing-order-sentences" ? (
-                        `Mẫu file Sắp xếp câu thành đoạn văn:\n` +
+                        `Mẫu file Sắp xếp câu thành đoạn văn (Hỗ trợ nhiều đoạn bằng nhãn [Đoạn văn]):\n` +
+                        `[Đoạn văn]\n` +
                         `First, download the app.\n` +
                         `Second, create your account.\n` +
-                        `Finally, start practicing.`
+                        `Finally, start practicing.\n\n` +
+                        `[Đoạn văn]\n` +
+                        `The first step is parsing the text.\n` +
+                        `The second step is displaying the output.\n` +
+                        `The final step is getting user approval.`
                       ) : sec.type === "listening-fill-in" ? (
                         `Mẫu file Điền từ vào đoạn văn:\n` +
                         `[Đoạn văn]\n` +
                         `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
                         `[Đáp án]\n` +
                         `1. supermarket\n` +
-                        `2. apples`
+                        `2. apples\n\n` +
+                        `* Hỗ trợ tạo nhiều câu/đoạn bằng cách viết nhiều cặp [Đoạn văn] và [Đáp án] nối tiếp nhau.`
                       ) : ""}
                     </div>
                     <input

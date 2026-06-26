@@ -1179,12 +1179,6 @@ export default function CoursePageQTV() {
                               </div>
                             ))
                           )}
-                          <div style={{ padding:'8px 0' }}>
-                            <button className={styles.btnPrimary} style={{ fontSize:12 }}
-                              onClick={() => { setAddingToCourse(c); setLForm({ name:'', schedule:'Thứ 2 & 4', maxStudents:30, maGiangVien:'', teachers:{}, copyFromClassId:'' }); setShowAddClass(true) }}>
-                              + Tạo lớp học mới
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     )}
@@ -1584,9 +1578,7 @@ export default function CoursePageQTV() {
                       setToast(`Đã xuất ${enrolledStudents.length} học viên!`)
                     }}>⬇ Xuất danh sách</button>
 
-                    <button className={styles.detailBtnPrimary} onClick={() => { setShowEnroll(true); setEnrollSearch(''); setSelectedIds(new Set()) }}>
-                      + Ghi danh sinh viên
-                    </button>
+                
                   </div>
                 </div>
                 {loadingEnrolled ? (

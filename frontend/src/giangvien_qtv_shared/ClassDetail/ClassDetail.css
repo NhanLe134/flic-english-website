@@ -28,25 +28,24 @@
   text-decoration: none;
   transform: translateX(-3px);
 }
-
-/* OVERVIEW CARD (STUDENT STYLE) */
-.cd-overview-card {
-  background: #ffffff;
-  border: 1px solid #f0e4d4;
-  border-radius: 12px; /* Thu nhỏ bo góc */
-  padding: 16px 20px; /* Thu nhỏ padding */
-  box-shadow: 0 10px 30px rgba(0, 0, 128, 0.02);
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 20px; /* Thu nhỏ khoảng cách */
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* OVERVIEW CARD (STUDENT STYLE) - NAMESPACED & ULTRA-COMPACT */
+.cd2-wrapper .cd-overview-card {
+  background: #ffffff !important;
+  border: 1px solid #f0e4d4 !important;
+  border-radius: 10px !important;
+  padding: 10px 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 128, 0.01) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 16px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  align-items: center !important;
 }
 
-.cd-overview-card::before {
+.cd2-wrapper .cd-overview-card::before {
   content: "";
   position: absolute;
   top: 0;
@@ -56,118 +55,138 @@
   background: linear-gradient(to bottom, #000080, #F95800);
 }
 
-.cd-left-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.cd2-wrapper .cd-left-content {
+  flex: 1 !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-right: auto !important;
 }
 
-.cd-right-content {
-  width: 180px; /* Thu nhỏ chiều rộng cột bên phải */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-left: 1px dashed #e2e8f0;
-  padding-left: 20px; /* Thu nhỏ padding-left */
-  flex-shrink: 0;
-  gap: 8px;
-}
-
-.cd-class-title {
-  font-size: 18px; /* Thu nhỏ tiêu đề buổi học */
+.cd2-wrapper .cd-class-title {
+  display: inline-block;
+  font-size: 14px;
   font-weight: 800;
-  color: #000080; /* Navy Blue */
-  margin: 0 0 6px 0;
-  line-height: 1.25;
+  color: #000080;
+  margin: 0 12px 0 0;
+  vertical-align: middle;
 }
 
-.cd-class-desc {
-  font-size: 13px; /* Thu nhỏ mô tả */
-  line-height: 1.5;
-  color: #475569;
-  margin: 0 0 12px 0; /* Thu nhỏ margin */
+.cd2-wrapper .cd-class-desc {
+  display: inline-block;
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  vertical-align: middle;
 }
 
-/* Metadata Grid */
-.cd-meta-grid {
+/* Metadata Grid in 1 row */
+.cd2-wrapper .cd-meta-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px 24px; /* Thu nhỏ gap */
+  grid-template-columns: repeat(4, auto);
+  justify-content: flex-start;
+  gap: 0 28px;
   margin-bottom: 0px;
 }
 
-.cd-meta-item {
+.cd2-wrapper .cd-meta-item {
   display: flex;
-  align-items: flex-start;
-  gap: 10px; /* Thu nhỏ gap */
+  align-items: center;
+  gap: 6px;
 }
 
-.cd-meta-icon-wrapper {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 6px !important;
+.cd2-wrapper .cd-meta-icon-wrapper {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 4px !important;
   background-color: #fff2eb !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   color: #F95800 !important;
-  font-size: 14px !important;
+  font-size: 10px !important;
   flex-shrink: 0 !important;
   aspect-ratio: 1 / 1 !important;
 }
 
-.cd-meta-icon-wrapper svg {
-  width: 13px !important;
-  height: 13px !important;
+.cd2-wrapper .cd-meta-icon-wrapper svg {
+  width: 10px !important;
+  height: 10px !important;
 }
 
-.cd-meta-info {
+.cd2-wrapper .cd-meta-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
 }
 
-.cd-meta-label {
-  font-size: 11px; /* Thu nhỏ nhãn */
+.cd2-wrapper .cd-meta-label {
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
-.cd-meta-value {
-  font-size: 13px; /* Thu nhỏ giá trị */
+.cd2-wrapper .cd-meta-label::after {
+  content: ":";
+}
+
+.cd2-wrapper .cd-meta-value {
+  font-size: 12px;
   font-weight: 700;
   color: #0f172a;
 }
 
-.cd-class-id {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
+.cd2-wrapper .cd-right-content {
+  width: auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  border-left: 1px dashed #e2e8f0 !important;
+  padding-left: 16px !important;
+  padding-right: 0 !important;
+  flex-shrink: 0 !important;
+  gap: 12px !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
 }
 
-.cd-class-dates {
-  font-size: 12px;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  font-weight: 500;
+.cd2-wrapper .status-badge {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
 }
 
-/* STATUS BADGE */
-.status-badge {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+.cd2-wrapper .cd-class-id {
+  font-size: 12px !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+
+.cd2-wrapper .cd-class-dates {
+  font-size: 11px !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
 }
 
 /* TABS */
