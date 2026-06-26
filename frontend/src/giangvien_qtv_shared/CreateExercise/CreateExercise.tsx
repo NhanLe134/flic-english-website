@@ -1,5 +1,5 @@
 import "./CreateExercise.css";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -209,6 +209,7 @@ const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children 
 
 const CreateExercise = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isPractice = searchParams.get("isPractice") === "true";
@@ -217,6 +218,8 @@ const CreateExercise = () => {
   const [, setLecture] = useState<any>(null);
 
   const [lesson, setLesson] = useState<any>(null);
+  const fromClassId = location.state?.fromClassId || lesson?.MaLopHoc;
+  const fromCourseId = location.state?.fromCourseId;
   const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
   const user = JSON.parse(userStr || "{}");
   const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
@@ -1758,7 +1761,15 @@ const CreateExercise = () => {
       setShowSuccess(true);
       const isQTVPath = window.location.pathname.startsWith("/QTV");
       if (isQTVPath) {
-        setTimeout(() => navigate("/QTV/khoahoc"), 1500);
+        setTimeout(() => {
+          navigate("/QTV/khoahoc", {
+            state: {
+              openClassId: fromClassId,
+              openCourseId: fromCourseId,
+              activeTab: "roadmap"
+            }
+          });
+        }, 1500);
       } else {
         setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
       }
@@ -1771,8 +1782,20 @@ const CreateExercise = () => {
   if (!lesson) return <p>Đang tải...</p>;
 
   return (
-    <div className="ce-wrapper">
-      <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
+    <div className="ce-wrapper" style={isQTV ? { padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
+      <div className="back" onClick={() => {
+        if (isQTV) {
+          navigate("/QTV/khoahoc", {
+            state: {
+              openClassId: fromClassId,
+              openCourseId: fromCourseId,
+              activeTab: "roadmap"
+            }
+          });
+        } else {
+          navigate(-1);
+        }
+      }}>← Quay lại</div>
 
       {/* HEADER CARD */}
       <div className="ce-header-card">

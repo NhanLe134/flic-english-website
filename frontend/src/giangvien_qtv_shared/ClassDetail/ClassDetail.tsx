@@ -1,7 +1,7 @@
 import "./ClassDetail.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { FiCalendar, FiArrowLeft, FiEye, FiTrash2 } from "react-icons/fi";
+import { FiCalendar, FiArrowLeft, FiEye, FiTrash2, FiSearch } from "react-icons/fi";
 import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
 import LessonManagement from "../LessonManagement/LessonManagement";
 import DocumentManagement from "../DocumentManagement/DocumentManagement";
@@ -140,23 +140,6 @@ const ClassDetail = () => {
 
 
 
-  const renderSearchIcon = () => (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-
-
   return (
     <div className="cd2-wrapper">
       <span className="cd2-back-btn" onClick={() => navigate(-1)}>
@@ -246,7 +229,7 @@ const ClassDetail = () => {
                 onChange={(e) => setExerciseSearch(e.target.value)}
               />
               <button className="search-button" type="button" aria-label="Tìm kiếm">
-                {renderSearchIcon()}
+                <FiSearch size={16} />
               </button>
             </form>
 

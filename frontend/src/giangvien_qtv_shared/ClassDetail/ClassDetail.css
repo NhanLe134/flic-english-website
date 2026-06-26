@@ -709,40 +709,53 @@
 .shared-tab-toolbar .search-container {
   display: flex !important;
   align-items: center !important;
-  max-width: 320px !important;
+  max-width: 300px !important;
   width: 100% !important;
-  height: 40px !important;
+  height: 38px !important;
   background: white !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
   overflow: hidden !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
   margin: 0 !important;
+}
+
+.shared-tab-toolbar .search-container:hover {
+  border-color: #cbd5e1 !important;
 }
 
 .shared-tab-toolbar .search-input {
   flex: 1 !important;
   border: none !important;
   outline: none !important;
-  padding: 0 16px !important;
-  font-size: 14px !important;
+  padding: 0 12px !important;
+  font-size: 13.5px !important;
   color: #333 !important;
   background: transparent !important;
   height: 100% !important;
 }
 
 .shared-tab-toolbar .search-button {
-  background: #F95800 !important;
+  background: transparent !important;
   border: none !important;
-  color: white !important;
-  padding: 0 16px !important;
+  color: #64748b !important;
+  padding: 0 12px !important;
   height: 100% !important;
-  min-width: 50px !important;
+  min-width: 40px !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  transition: background 0.2s ease !important;
+  transition: color 0.2s ease !important;
+}
+
+.shared-tab-toolbar .search-button:hover {
+  color: #000080 !important;
+}
+
+.shared-tab-toolbar .search-button svg {
+  stroke: currentColor;
 }
 
 .shared-tab-toolbar .filter-select,

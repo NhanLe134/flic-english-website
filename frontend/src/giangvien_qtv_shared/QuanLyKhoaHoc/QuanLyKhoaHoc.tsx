@@ -3,37 +3,41 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUsers, FiCheckSquare } from "react-icons/fi";
 
-interface Course {
+interface ClassItem {
+  id: number;
   name: string;
   code: string;
-  students: number;
   schedule: string;
+  courseName: string;
+  students: number;
   progress: number;
 }
 
 const QuanLyKhoaHoc = () => {
   const navigate = useNavigate();
-  const [search,setSearch] = useState("");
-  const [courses,setCourses] = useState<Course[]>([]);
+  const [search, setSearch] = useState("");
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
 
-  /* LẤY KHÓA HỌC TỪ API */
+  /* LẤY LỚP HỌC TỪ API */
   useEffect(() => {
     // Lấy thông tin GV từ localStorage (sau khi login)
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://localhost:5000/teacher/courses/${maNguoiDung}`)
+    fetch(`http://localhost:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
-        const mappedCourses = data.map((c: any) => ({
-          name: c.TenKhoaHoc,
-          code: c.MaKhoaHoc,
-          students: c.SoHocVien || 0,
-          schedule: "Thứ 2, 4, 6 ",
-          progress: Math.floor(Math.random() * 100)
+        const mappedClasses = data.map((c: any) => ({
+          id: c.MaLopHoc,
+          name: c.TenLop,
+          code: `CT-${c.MaLopHoc}`,
+          schedule: c.LichHoc || '—',
+          courseName: c.TenKhoaHoc || '',
+          students: c.SoLuongHocVien || 0,
+          progress: c.TienDo || 0
         }));
-        setCourses(mappedCourses);
+        setClasses(mappedClasses);
       })
       .catch(err => console.log(err));
 
@@ -44,17 +48,17 @@ const QuanLyKhoaHoc = () => {
       .catch(err => console.log(err));
   }, []);
 
-
   /* SEARCH */
-  const filteredCourses = courses.filter((course)=>
-    course.name.toLowerCase().includes(search.toLowerCase()) ||
-    course.code.toLowerCase().includes(search.toLowerCase())
+  const filteredClasses = classes.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase()) ||
+    item.code.toLowerCase().includes(search.toLowerCase()) ||
+    item.courseName.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="qlkh-wrapper">
       <div className="qlkh-content-card">
-        <h1 style={{ color: "#F95800" }}>Khóa học của tôi</h1>
+        <h1 style={{ color: "#F95800" }}>Lớp học của tôi</h1>
 
         {/* STATS */}
         <div className="stats">
@@ -63,9 +67,9 @@ const QuanLyKhoaHoc = () => {
               <FiBookOpen size={16} />
             </div>
             <div className="stat-info">
-              <span className="stat-label">Khóa học</span>
-              <h3 className="stat-value">{filteredCourses.length}</h3>
-              <span className="stat-desc">Tổng số khóa học</span>
+              <span className="stat-label">Lớp học</span>
+              <h3 className="stat-value">{filteredClasses.length}</h3>
+              <span className="stat-desc">Tổng số lớp học</span>
             </div>
           </div>
           <div className="stat-box students-stat">
@@ -74,7 +78,7 @@ const QuanLyKhoaHoc = () => {
             </div>
             <div className="stat-info">
               <span className="stat-label">Sinh viên</span>
-              <h3 className="stat-value">{filteredCourses.reduce((t, c) => t + c.students, 0)}</h3>
+              <h3 className="stat-value">{filteredClasses.reduce((t, c) => t + c.students, 0)}</h3>
               <span className="stat-desc">Học viên hoạt động</span>
             </div>
           </div>
@@ -94,7 +98,7 @@ const QuanLyKhoaHoc = () => {
         <form className="search-container" onSubmit={(e) => e.preventDefault()}>
           <input
             className="search-input"
-            placeholder="Tìm kiếm khóa học..."
+            placeholder="Tìm kiếm lớp học..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -115,23 +119,23 @@ const QuanLyKhoaHoc = () => {
           </button>
         </form>
 
-        {/* COURSES */}
+        {/* CLASSES */}
         <div className="courses">
-          {filteredCourses.length === 0 ? (
-            <p>Không tìm thấy khóa học</p>
+          {filteredClasses.length === 0 ? (
+            <p>Không tìm thấy lớp học</p>
           ) : (
-            filteredCourses.map((c, i) => (
+            filteredClasses.map((c, i) => (
               <div className="course-card" key={i}>
                 <div className="course-card-header">
-                  <span className="course-index-tag">Khóa {i + 1}</span>
+                  <span className="course-index-tag">Lớp {i + 1}</span>
                   <span className="course-code-tag">{c.code}</span>
                 </div>
                 <h3>{c.name}</h3>
-                <p className="schedule">{c.schedule}</p>
-                <p className="students-count">{c.students} Học viên</p>
+                <p className="schedule">{(c.schedule || '—').replace(/,?\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}/g, '')}</p>
+                <p className="students-count">Khóa: {c.courseName}</p>
                 <button
                   className="detail-button"
-                  onClick={() => navigate(`/khoa-hoc/${c.code}`, { state: { tenKhoaHoc: c.name } })}
+                  onClick={() => navigate(`/lessonlist/${c.id}`, { state: { tenKhoaHoc: c.courseName, tenLop: c.name } })}
                 >
                   Xem chi tiết
                 </button>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiFileText, FiChevronDown } from 'react-icons/fi'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const API = 'http://localhost:5000'
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
@@ -155,6 +155,7 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 
 export default function CoursePageQTV() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [courses, setCourses]     = useState<Course[]>([])
   const [giaoViens, setGiaoViens] = useState<GiaoVien[]>([])
   const [search, setSearch]       = useState('')
@@ -265,7 +266,12 @@ export default function CoursePageQTV() {
   }
 
   const openAddExercise = (lessonId: number) => {
-    navigate(`/QTV/create-exercise/${lessonId}`);
+    navigate(`/QTV/create-exercise/${lessonId}`, {
+      state: {
+        fromClassId: detailClass?.id,
+        fromCourseId: detailCourse?.id
+      }
+    });
   }
 
   const openAddDoc = (lessonId: number) => {
@@ -536,6 +542,63 @@ export default function CoursePageQTV() {
     }
   }, [showEnroll, detailClass?.id])
 
+  useEffect(() => {
+    if (location.state && location.state.openClassId && location.state.openCourseId && courses.length > 0) {
+      const { openClassId, openCourseId, activeTab } = location.state;
+      const course = courses.find((c: any) => c.id === openCourseId);
+      if (course) {
+        setExpandedCourse(openCourseId);
+        fetch(`${API}/course-detail/${openCourseId}/classes`)
+          .then(r => r.json())
+          .then(async (data) => {
+            const uniqueClasses: Record<number, LopHoc> = {};
+            data.forEach((c: any) => {
+              if (!uniqueClasses[c.MaLopHoc]) {
+                uniqueClasses[c.MaLopHoc] = {
+                  id: c.MaLopHoc,
+                  name: c.TenLop,
+                  schedule: c.LichHoc || '—',
+                  students: c.SoLuongHocVien || 0,
+                  progress: c.TienDo || 0,
+                  maGiangVien: null,
+                  tenGiangVien: '—',
+                  lessonCount: c.SoBuoiHoc || 0
+                };
+              }
+            });
+            const mapped = Object.values(uniqueClasses);
+            setClassesMap(prev => ({ ...prev, [openCourseId]: mapped }));
+
+            for (const cl of mapped) {
+              try {
+                const r = await fetch(`${API}/qtv/lophoc/${cl.id}/giangvien`);
+                const gvs = await r.json();
+                const tMap: Record<number, { maGiangVien: number; tenGiangVien: string }> = {};
+                if (Array.isArray(gvs)) {
+                  gvs.forEach((item: any) => {
+                    tMap[item.MaKyNang] = { maGiangVien: item.MaGiangVien, tenGiangVien: item.TenGiangVien };
+                  });
+                }
+                setClassTeachersMap(prev => ({ ...prev, [cl.id]: tMap }));
+              } catch (e) {
+                console.error(e);
+              }
+            }
+
+            const cls = mapped.find(c => c.id === openClassId);
+            if (cls) {
+              openDetail(course, cls);
+              if (activeTab) {
+                setDetailTab(activeTab);
+              }
+            }
+          })
+          .catch(err => console.error(err));
+      }
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, courses]);
+
   const loadClassesForCourse = (courseId: number) => {
     if (classesMap[courseId]) return
     fetch(`${API}/course-detail/${courseId}/classes`)
@@ -778,9 +841,19 @@ export default function CoursePageQTV() {
   }
 
   // ── Detail modal ──────────────────────────────────────────────────────────────
+  const closeDetail = () => {
+    setShowDetail(false)
+    sessionStorage.removeItem('lastOpenClassId')
+    sessionStorage.removeItem('lastOpenCourseId')
+    sessionStorage.removeItem('lastOpenTab')
+  }
+
   const openDetail = (course: Course, cls: LopHoc) => {
     setDetailCourse(course); setDetailClass(cls); setDetailTab('students')
     setShowDetail(true); setShowEnroll(false); setShowAddLesson(false)
+    sessionStorage.setItem('lastOpenClassId', String(cls.id));
+    sessionStorage.setItem('lastOpenCourseId', String(course.id));
+    sessionStorage.setItem('lastOpenTab', 'students');
     setLoadingEnrolled(true)
     fetch(`${API}/lophoc/${cls.id}/sinhvien`).then(r => r.json())
       .then(data => setEnrolledStudents(data.map((s: any) => ({
@@ -1473,7 +1546,7 @@ export default function CoursePageQTV() {
                 <h3>{detailClass.name}</h3>
                 <div className={styles.modalSub}>{detailCourse.title} · {detailClass.schedule}{detailClass.tenGiangVien && detailClass.tenGiangVien !== '—' ? ` · GV: ${detailClass.tenGiangVien}` : ''}</div>
               </div>
-              <button className={styles.modalClose} onClick={() => setShowDetail(false)}>×</button>
+              <button className={styles.modalClose} onClick={closeDetail}>×</button>
             </div>
 
             <div className={styles.detailStats}>
@@ -1484,10 +1557,10 @@ export default function CoursePageQTV() {
             </div>
 
             <div className={styles.tabs}>
-              <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => setDetailTab('students')}>
+              <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
                 👥 Học viên ({enrolledStudents.length})
               </button>
-              <button className={`${styles.tab} ${detailTab === 'roadmap' ? styles.tabActive : ''}`} onClick={() => setDetailTab('roadmap')}>
+              <button className={`${styles.tab} ${detailTab === 'roadmap' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('roadmap'); sessionStorage.setItem('lastOpenTab', 'roadmap'); }}>
                 📚 Lộ trình ({lessons.length})
               </button>
             </div>
@@ -1639,7 +1712,7 @@ export default function CoursePageQTV() {
             )}
 
             <div className={styles.modalFooter}>
-              <button className={styles.detailBtnOutline} onClick={() => setShowDetail(false)}>Đóng</button>
+              <button className={styles.detailBtnOutline} onClick={closeDetail}>Đóng</button>
             </div>
           </div>
         </div>

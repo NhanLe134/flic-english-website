@@ -49,7 +49,7 @@ useEffect(() => {
               onClick={() => navigate("/quan-ly-khoa-hoc")}
               className="sidebar-item"
             >
-              Quản lý khóa học
+              Quản lý giảng dạy
             </div>
 
             <div
