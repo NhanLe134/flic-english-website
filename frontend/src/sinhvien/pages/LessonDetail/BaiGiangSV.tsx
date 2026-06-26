@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiSettings, FiMaximize, FiMinimize } from "react-icons/fi";
+import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiSettings, FiMaximize, FiMinimize, FiCheckCircle, FiLock, FiXCircle } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
@@ -31,9 +31,11 @@ const formatTime = (timeInSeconds: number) => {
 
 function BaiGiangSV() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id, classId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
   const location = useLocation();
-  const { maLopHoc } = location.state || {};
+  const stateData = location.state || {};
+  const maLopHoc = classId || stateData.maLopHoc;
+  const maBuoiHoc = lessonId || stateData.maBuoiHoc;
 
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const maNguoiDung = user.MaNguoiDung;
@@ -46,12 +48,16 @@ function BaiGiangSV() {
   const [progress, setProgress] = useState<{ DaXemVideo: number; DaDatMinitest: number }>({ DaXemVideo: 0, DaDatMinitest: 0 });
   const [minitest, setMinitest] = useState<any>(null);
   const [minitestQuestions, setMinitestQuestions] = useState<any[]>([]);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
-  const [assignments, setAssignments] = useState<any[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [currentAnswer, setCurrentAnswer] = useState<string>("");
+  const [showQuizAlert, setShowQuizAlert] = useState<boolean>(false);
+  const [quizAlertStatus, setQuizAlertStatus] = useState<'success' | 'error' | null>(null);
+  const [quizAlertMessage, setQuizAlertMessage] = useState<string>("");
 
   // Video Ref & Control states
   const videoRef = useRef<HTMLVideoElement>(null);
   const prevTimeRef = useRef<number>(0);
+  const maxTimeWatchedRef = useRef<number>(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -124,6 +130,9 @@ function BaiGiangSV() {
       .then(res => res.json())
       .then(data => {
         setProgress(data);
+        if (data && data.DaXemVideo === 1) {
+          maxTimeWatchedRef.current = 999999;
+        }
       })
       .catch(err => console.error("Error fetching progress:", err));
   };
@@ -144,19 +153,7 @@ function BaiGiangSV() {
       .then(res => res.json())
       .then(data => {
         setBaiGiang(data);
-        if (data && data.MaBuoiHoc) {
-          // Fetch assignments for this lesson
-          fetch(`${API}/baitap/buoihoc/${data.MaBuoiHoc}`)
-            .then(res => res.json())
-            .then(btData => {
-              if (Array.isArray(btData)) {
-                // Filter assignments for this specific lecture
-                const list = btData.filter((ex: any) => ex.MaBaiHoc === Number(id));
-                setAssignments(list);
-              }
-            })
-            .catch(err => console.error("Error fetching assignments:", err));
-        }
+
         try {
           const userId = user.MaNguoiDung;
           if (userId) {
@@ -238,7 +235,7 @@ function BaiGiangSV() {
     const targetTime = parseFloat(e.target.value);
     
     if (progress.DaXemVideo === 0) {
-      if (targetTime < prevTimeRef.current) {
+      if (targetTime > maxTimeWatchedRef.current + 0.1) {
         return;
       }
     }
@@ -316,13 +313,29 @@ function BaiGiangSV() {
     const video = e.target;
     const currTime = video.currentTime;
     
-    // Only block backward seek if video is not completed yet
     if (progress.DaXemVideo === 0) {
-      // Allow a small margin of 1.5 seconds to handle normal playback fluctuations
-      if (currTime < prevTimeRef.current - 1.5) {
-        video.currentTime = prevTimeRef.current;
-        setCurrentTime(prevTimeRef.current);
+      if (video.seeking) {
+        if (currTime > maxTimeWatchedRef.current + 0.1) {
+          video.currentTime = maxTimeWatchedRef.current;
+          setCurrentTime(maxTimeWatchedRef.current);
+          return;
+        }
+      }
+
+      if (currTime > maxTimeWatchedRef.current + 1.0) {
+        video.currentTime = maxTimeWatchedRef.current;
+        setCurrentTime(maxTimeWatchedRef.current);
         return;
+      }
+      
+      if (!video.seeking && currTime > maxTimeWatchedRef.current) {
+        if (currTime - maxTimeWatchedRef.current <= 1.0) {
+          maxTimeWatchedRef.current = currTime;
+        } else {
+          video.currentTime = maxTimeWatchedRef.current;
+          setCurrentTime(maxTimeWatchedRef.current);
+          return;
+        }
       }
     }
     setCurrentTime(currTime);
@@ -332,8 +345,8 @@ function BaiGiangSV() {
   const handleSeeking = (e: any) => {
     const video = e.target;
     if (progress.DaXemVideo === 0) {
-      if (video.currentTime < prevTimeRef.current - 1.5) {
-        video.currentTime = prevTimeRef.current;
+      if (video.currentTime > maxTimeWatchedRef.current + 0.1) {
+        video.currentTime = maxTimeWatchedRef.current;
       }
     }
   };
@@ -354,51 +367,89 @@ function BaiGiangSV() {
     }
   };
 
-  const handleQuizSubmit = async () => {
-    if (minitestQuestions.length === 0) return;
-    
-    const unanswered = minitestQuestions.some((_, idx) => !selectedAnswers[idx]);
-    if (unanswered) {
-      alert("Vui lòng trả lời đầy đủ các câu hỏi của bài Minitest.");
-      return;
-    }
-
-    const correctCount = minitestQuestions.reduce((acc, q, idx) => {
-      const isCorrect = selectedAnswers[idx] === q.correct;
-      return acc + (isCorrect ? 1 : 0);
-    }, 0);
-
-    const passed = correctCount === minitestQuestions.length;
-
-    // Optimistically handle student feedback and mock environment
-    if (passed) {
-      alert("Chúc mừng! Bạn đã vượt qua bài Minitest.");
-      setProgress(prev => ({ ...prev, DaDatMinitest: 1 }));
-    } else {
-      alert("Bạn chưa đạt yêu cầu của Minitest! Hệ thống sẽ khóa lại bài giảng và bạn cần xem lại video để làm lại.");
-      setSelectedAnswers({});
+  const handleCloseAlert = () => {
+    setShowQuizAlert(false);
+    if (quizAlertStatus === "error") {
+      setCurrentAnswer("");
+      setCurrentQuestionIndex(0);
       setProgress({ DaXemVideo: 0, DaDatMinitest: 0 });
-      // Reset video playback position to 0
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
       }
       prevTimeRef.current = 0;
+      maxTimeWatchedRef.current = 0;
+    } else if (quizAlertStatus === "success") {
+      setProgress(prev => ({ ...prev, DaDatMinitest: 1 }));
+      setCurrentAnswer("");
+      setCurrentQuestionIndex(0);
+      if (maLopHoc && maBuoiHoc) {
+        navigate(`/MyCourses/${maLopHoc}/${maBuoiHoc}/lt`);
+      } else {
+        navigate(-1);
+      }
+    }
+  };
+
+  const handleQuizSubmit = async () => {
+    if (minitestQuestions.length === 0) return;
+    
+    if (!currentAnswer) {
+      alert("Vui lòng chọn một đáp án.");
+      return;
     }
 
-    if (!id || !maSinhVien) return;
-    try {
-      await fetch(`${API}/student/progress/minitest/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          MaBaiHoc: Number(id),
-          MaSinhVien: maSinhVien,
-          Passed: passed
-        })
-      });
-      fetchProgress();
-    } catch (err) {
-      console.error("Lỗi khi nộp bài Minitest:", err);
+    const currentQ = minitestQuestions[currentQuestionIndex];
+    const isCorrect = currentAnswer === currentQ.correct;
+
+    if (!isCorrect) {
+      setQuizAlertStatus("error");
+      setQuizAlertMessage("Bạn đã trả lời sai! Bạn cần xem lại video từ đầu để làm lại bài trắc nghiệm.");
+      setShowQuizAlert(true);
+
+      if (!id || !maSinhVien) return;
+      try {
+        await fetch(`${API}/student/progress/minitest/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            MaBaiHoc: Number(id),
+            MaSinhVien: maSinhVien,
+            Passed: false
+          })
+        });
+        fetchProgress();
+      } catch (err) {
+        console.error("Lỗi khi nộp bài Minitest:", err);
+      }
+      return;
+    }
+
+    const isLastQuestion = currentQuestionIndex === minitestQuestions.length - 1;
+
+    if (isLastQuestion) {
+      if (id && maSinhVien) {
+        try {
+          await fetch(`${API}/student/progress/minitest/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              MaBaiHoc: Number(id),
+              MaSinhVien: maSinhVien,
+              Passed: true
+            })
+          });
+          fetchProgress();
+        } catch (err) {
+          console.error("Lỗi khi nộp bài Minitest:", err);
+        }
+      }
+
+      setQuizAlertStatus("success");
+      setQuizAlertMessage("Chúc mừng! Các bài tập thực hành của buổi học đã được mở khóa dành cho bạn.");
+      setShowQuizAlert(true);
+    } else {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentAnswer("");
     }
   };
 
@@ -418,55 +469,52 @@ function BaiGiangSV() {
   const fileUrl = rawFileUrl ? (rawFileUrl.startsWith("http") ? rawFileUrl : `${API}${rawFileUrl}`) : null;
   const noiDung = baiGiang.NoiDung || "";
 
-
-
   return (
-        <div className="ld2-content">
+    <div className="ld2-content anim-fade-in" style={{ backgroundColor: "#f8fafc" }}>
+      {/* Nút Quay lại */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
+        <span
+          className="ld2-link"
+          style={{
+            cursor: "pointer",
+            color: "#F95800",
+            fontWeight: 800,
+            fontSize: "14px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.2s"
+          }}
+          onClick={() => {
+            if (location.pathname.includes("/hoc-thu-sv/")) {
+              navigate(`/hoc-thu-sv/${classId}/${lessonId}/bg`);
+            } else if (classId && lessonId) {
+              navigate(`/MyCourses/${classId}/${lessonId}/bg`);
+            } else {
+              navigate(-1);
+            }
+          }}
+        >
+          ← Quay lại danh sách bài học
+        </span>
+      </div>
 
-          {/* Quay lại — trên đầu */}
-          <span
-            className="ld2-link"
-            style={{ display: "inline-block", marginBottom: 20, cursor: "pointer", color: "#F95800", fontWeight: 700, fontSize: "14px" }}
-            onClick={() => navigate(-1)}
-          >
-            ← Quay lại
-          </span>
-
-          {/* Tiêu đề (Không có khung chứa và không có icon) */}
-          <div style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: "24px", fontWeight: 800, color: "#000080", margin: "0 0 6px 0" }}>
-              {baiGiang.TieuDe}
-            </h2>
-            <p style={{ fontSize: "14px", color: "#64748b", margin: 0, fontWeight: 600 }}>
-              {baiGiang.LoaiBaiHoc} • {baiGiang.ThoiLuong}
-            </p>
-          </div>
-
-          {/* NỘI DUNG MARKDOWN (Không dùng khung chứa) */}
-          {noiDung && (
-            <div style={{ marginBottom: 24, lineHeight: 1.8, color: "#334155" }}>
-              {noiDung.trimStart().startsWith("<") ? (
-                <div dangerouslySetInnerHTML={{ __html: noiDung }} />
-              ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {unescapeMarkdown(noiDung)}
-                </ReactMarkdown>
-              )}
-            </div>
-          )}
-
-          {/* VIDEO PLAYER SECTION (Always shown with mock fallback) */}
+      {/* Grid Layout 2 Cột */}
+      <div className="ld2-layout-grid">
+        {/* Cột chính bên trái: Video + Giáo trình lý thuyết + Bài tập tự luyện */}
+        <div className="ld2-main-col">
+          {/* Khung chứa Video Player */}
           {(() => {
-            // Determine if the actual file is a video, otherwise use the high quality mock video
             const finalFileUrl = (fileUrl && /\.(mp4|webm|ogg)$/i.test(fileUrl) && !fileUrl.includes("drive.google.com"))
               ? fileUrl
-              : "https://www.w3schools.com/html/mov_bbb.mp4"; // Premium sample video for mock purposes
+              : "https://www.w3schools.com/html/mov_bbb.mp4";
 
             return (
               <div
                 className="custom-video-wrapper"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={() => isPlaying && setShowControls(false)}
+                style={{ width: "100%", maxWidth: "100%", margin: 0, position: "relative" }}
               >
                 <video
                   key={finalFileUrl}
@@ -477,9 +525,15 @@ function BaiGiangSV() {
                     width: "100%",
                     height: "100%",
                     objectFit: "contain",
-                    background: "#000"
+                    background: "#000",
+                    filter: (progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0) ? "blur(8px) brightness(0.5)" : "none",
+                    transition: "filter 0.3s ease"
                   }}
-                  onClick={togglePlay}
+                  onClick={() => {
+                    if (!(progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0)) {
+                      togglePlay();
+                    }
+                  }}
                   onPlay={handlePlay}
                   onPause={() => setIsPlaying(false)}
                   onTimeUpdate={handleTimeUpdate}
@@ -491,8 +545,8 @@ function BaiGiangSV() {
                   Trình duyệt không hỗ trợ xem video trực tiếp.
                 </video>
 
-                {/* Big Play Overlay Button (only show when paused) */}
-                {!isPlaying && (
+                {/* Big Play Overlay Button (hidden when quiz overlay is shown) */}
+                {!isPlaying && !(progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0) && (
                   <div
                     onClick={togglePlay}
                     style={{
@@ -514,14 +568,14 @@ function BaiGiangSV() {
                         width: "72px",
                         height: "72px",
                         borderRadius: "50%",
-                        background: "rgba(249, 88, 0, 0.9)",
+                        background: "rgba(249, 88, 0, 0.95)",
                         color: "#ffffff",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "28px",
                         transition: "all 0.3s ease",
-                        boxShadow: "0 0 0 0 rgba(249, 88, 0, 0.4)",
+                        boxShadow: "0 4px 15px rgba(249, 88, 0, 0.3)",
                         paddingLeft: "5px"
                       }}
                     >
@@ -530,72 +584,120 @@ function BaiGiangSV() {
                   </div>
                 )}
 
-                {/* Custom Control Bar Overlay */}
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background: "linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%)",
-                    padding: "16px 20px 12px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    transition: "opacity 0.3s ease, transform 0.3s ease",
-                    opacity: showControls || showSettings ? 1 : 0,
-                    transform: showControls || showSettings ? "translateY(0)" : "translateY(10px)",
-                    pointerEvents: showControls || showSettings ? "auto" : "none",
-                    zIndex: 10
-                  }}
-                >
-                  {/* Scrubber / Progress timeline */}
-                  <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                    <input
-                      type="range"
-                      min={0}
-                      max={duration || 100}
-                      step={0.1}
-                      value={currentTime}
-                      onChange={handleScrub}
-                      className="ld2-video-scrubber"
-                      style={{
-                        background: `linear-gradient(to right, #F95800 0%, #F95800 ${(currentTime / (duration || 1)) * 100}%, rgba(255, 255, 255, 0.3) ${(currentTime / (duration || 1)) * 100}%, rgba(255, 255, 255, 0.3) 100%)`
-                      }}
-                    />
+                {/* Interactive Minitest Question Overlay inside Video Player */}
+                {progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0 && (
+                  <div className="video-quiz-overlay">
+                    <div className="video-quiz-card anim-fade-in">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "10px" }}>
+                        <h4 style={{ margin: 0, color: "#000080", fontSize: "15px", fontWeight: 800 }}>
+                          {minitest?.TieuDe || "Câu hỏi tương tác"} ({currentQuestionIndex + 1}/{minitestQuestions.length})
+                        </h4>
+                      </div>
+
+                      {(() => {
+                        const currentQ = minitestQuestions[currentQuestionIndex];
+                        if (!currentQ) return null;
+                        return (
+                          <div>
+                            <p style={{ fontWeight: 700, color: "#1e293b", fontSize: "14px", margin: "0 0 16px 0", lineHeight: 1.5 }}>
+                              {currentQ.question}
+                            </p>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+                              {currentQ.answers?.map((text: string, aIdx: number) => {
+                                const label = ["A", "B", "C", "D"][aIdx];
+                                const isSelected = currentAnswer === label;
+                                return (
+                                  <button
+                                    key={label}
+                                    onClick={() => setCurrentAnswer(label)}
+                                    style={{
+                                      textAlign: "left",
+                                      padding: "12px 14px",
+                                      borderRadius: "10px",
+                                      border: `1.5px solid ${isSelected ? "#F95800" : "#e2e8f0"}`,
+                                      background: isSelected ? "#fff7ed" : "#fff",
+                                      color: isSelected ? "#F95800" : "#334155",
+                                      fontSize: "13px",
+                                      fontWeight: isSelected ? 700 : 500,
+                                      cursor: "pointer",
+                                      transition: "all 0.15s ease",
+                                      lineHeight: 1.4
+                                    }}
+                                  >
+                                    <span style={{ fontWeight: 800, marginRight: "8px", color: isSelected ? "#F95800" : "#64748b" }}>{label}.</span>
+                                    {text}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            <div style={{ textAlign: "right" }}>
+                              <button
+                                onClick={handleQuizSubmit}
+                                style={{
+                                  background: "linear-gradient(135deg, #F95800, #ff7e40)",
+                                  color: "#fff",
+                                  border: "none",
+                                  padding: "10px 24px",
+                                  borderRadius: "30px",
+                                  fontSize: "13px",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  boxShadow: "0 4px 12px rgba(249, 88, 0, 0.2)"
+                                }}
+                              >
+                                {currentQuestionIndex === minitestQuestions.length - 1 ? "Nộp bài hoàn thành" : "Nộp câu trả lời"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
+                )}
 
-                  {/* Buttons row */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    {/* Left controls: Play/Pause and Time */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                      <button
-                        onClick={togglePlay}
+                {/* Custom Control Bar Overlay (hidden when quiz overlay is active) */}
+                {!(progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0) && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%)",
+                      padding: "16px 20px 12px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      transition: "opacity 0.3s ease, transform 0.3s ease",
+                      opacity: showControls || showSettings ? 1 : 0,
+                      transform: showControls || showSettings ? "translateY(0)" : "translateY(10px)",
+                      pointerEvents: showControls || showSettings ? "auto" : "none",
+                      zIndex: 10
+                    }}
+                  >
+                    {/* Scrubber / Progress timeline */}
+                    <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                      <input
+                        type="range"
+                        min={0}
+                        max={duration || 100}
+                        step={0.1}
+                        value={currentTime}
+                        onChange={handleScrub}
+                        className="ld2-video-scrubber"
                         style={{
-                          background: "none",
-                          border: "none",
-                          color: "#fff",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          fontSize: "20px",
-                          padding: 0
+                          background: `linear-gradient(to right, #F95800 0%, #F95800 ${(currentTime / (duration || 1)) * 100}%, rgba(255, 255, 255, 0.3) ${(currentTime / (duration || 1)) * 100}%, rgba(255, 255, 255, 0.3) 100%)`
                         }}
-                      >
-                        {isPlaying ? <FiPause /> : <FiPlay />}
-                      </button>
-
-                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 500, fontFamily: "monospace" }}>
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </span>
+                      />
                     </div>
 
-                    {/* Right controls: Mute, Settings Gear, and Fullscreen */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                      {/* Speaker / Mute Button */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {/* Buttons row */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      {/* Left controls */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                         <button
-                          onClick={toggleMute}
+                          onClick={togglePlay}
                           style={{
                             background: "none",
                             border: "none",
@@ -606,303 +708,238 @@ function BaiGiangSV() {
                             fontSize: "20px",
                             padding: 0
                           }}
-                          title={isMuted ? "Unmute" : "Mute"}
                         >
-                          {isMuted || volume === 0 ? <FiVolumeX /> : <FiVolume2 />}
+                          {isPlaying ? <FiPause /> : <FiPlay />}
                         </button>
-                        
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.05}
-                          value={isMuted ? 0 : volume}
-                          onChange={handleVolumeChange}
-                          className="ld2-volume-slider"
-                          style={{
-                            background: `linear-gradient(to right, #F95800 0%, #F95800 ${(isMuted ? 0 : volume) * 100}%, rgba(255, 255, 255, 0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255, 255, 255, 0.3) 100%)`
-                          }}
-                        />
+                        <span style={{ color: "#fff", fontSize: "13px", fontWeight: 500, fontFamily: "monospace" }}>
+                          {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
                       </div>
 
-                      {/* Playback speed Gear Button */}
-                      <div className="video-settings-container" style={{ position: "relative" }}>
+                      {/* Right controls */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <button
+                            onClick={toggleMute}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#fff",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              fontSize: "20px",
+                              padding: 0
+                            }}
+                          >
+                            {isMuted || volume === 0 ? <FiVolumeX /> : <FiVolume2 />}
+                          </button>
+                          <input
+                            type="range"
+                            min={0}
+                            max={1}
+                            step={0.05}
+                            value={isMuted ? 0 : volume}
+                            onChange={handleVolumeChange}
+                            className="ld2-volume-slider"
+                            style={{
+                              background: `linear-gradient(to right, #F95800 0%, #F95800 ${(isMuted ? 0 : volume) * 100}%, rgba(255, 255, 255, 0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255, 255, 255, 0.3) 100%)`
+                            }}
+                          />
+                        </div>
+
+                        <div className="video-settings-container" style={{ position: "relative" }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowSettings(!showSettings);
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: showSettings ? "#F95800" : "#fff",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              fontSize: "20px",
+                              padding: 0
+                            }}
+                          >
+                            <FiSettings />
+                          </button>
+
+                          {showSettings && (
+                            <div className="ld2-translucent-dropdown">
+                              <div style={{ fontSize: "11px", fontWeight: 800, color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.05em" }}>Tốc độ phát</div>
+                              {[1, 1.25, 1.5, 1.75, 2].map((rate) => {
+                                const isSelected = playbackRate === rate;
+                                return (
+                                  <button
+                                    key={rate}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPlaybackRate(rate);
+                                      setShowSettings(false);
+                                    }}
+                                    style={{
+                                      background: isSelected ? "#F95800" : "transparent",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      padding: "6px 10px",
+                                      borderRadius: "6px",
+                                      fontSize: "13px",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      textAlign: "left",
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center"
+                                    }}
+                                  >
+                                    <span>{rate}x</span>
+                                    {isSelected && <span>✓</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowSettings(!showSettings);
-                          }}
+                          onClick={toggleFullscreen}
                           style={{
                             background: "none",
                             border: "none",
-                            color: showSettings ? "#F95800" : "#fff",
+                            color: "#fff",
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
                             fontSize: "20px",
-                            padding: 0,
-                            transition: "color 0.2s"
+                            padding: 0
                           }}
-                          title="Tốc độ phát"
                         >
-                          <FiSettings />
+                          {isFullscreen ? <FiMinimize /> : <FiMaximize />}
                         </button>
-
-                        {/* Translucent / Glassmorphism Settings Dropdown */}
-                        {showSettings && (
-                          <div className="ld2-translucent-dropdown">
-                            <div style={{ fontSize: "11px", fontWeight: 800, color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.05em" }}>Tốc độ phát</div>
-                            {[1, 1.25, 1.5, 1.75, 2].map((rate) => {
-                              const isSelected = playbackRate === rate;
-                              return (
-                                <button
-                                  key={rate}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPlaybackRate(rate);
-                                    setShowSettings(false);
-                                  }}
-                                  style={{
-                                    background: isSelected ? "#F95800" : "transparent",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    padding: "6px 10px",
-                                    borderRadius: "6px",
-                                    fontSize: "13px",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    textAlign: "left",
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    transition: "all 0.15s ease"
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!isSelected) {
-                                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!isSelected) {
-                                      e.currentTarget.style.background = "transparent";
-                                    }
-                                  }}
-                                >
-                                  <span>{rate}x</span>
-                                  {isSelected && <span style={{ fontSize: "11px" }}>✓</span>}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
                       </div>
-
-                      {/* Fullscreen Button */}
-                      <button
-                        onClick={toggleFullscreen}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#fff",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          fontSize: "20px",
-                          padding: 0
-                        }}
-                        title="Toàn màn hình"
-                      >
-                        {isFullscreen ? <FiMinimize /> : <FiMaximize />}
-                      </button>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })()}
 
-          {/* ────────────────── MINITEST & BÀI TẬP (CHỈ HIỂN THỊ VỚI SINH VIÊN) ────────────────── */}
-          {(user.VaiTro === "Sinh Viên" || user.VaiTro === "Học Viên") && (
-            <div style={{ marginTop: 40, borderTop: "2px solid #e2e8f0", paddingTop: 30 }}>
-              
-              {progress.DaXemVideo === 0 ? (
-                /* Locked placeholder when video is not finished */
-                <div style={{
-                  background: "#f8fafc",
-                  border: "1.5px dashed #cbd5e1",
-                  padding: "40px 20px",
-                  borderRadius: 16,
-                  textAlign: "center",
-                  color: "#64748b",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.01)"
-                }}>
-                  <h4 style={{ margin: "0 0 8px 0", color: "#000080", fontWeight: 700, fontSize: 16 }}>Nội dung bài kiểm tra Minitest</h4>
-                  <p style={{ fontSize: 13, color: "#64748b", maxWidth: "500px", margin: "0 auto" }}>
-                    Bài trắc nghiệm nhanh (Minitest) sẽ tự động hiển thị tại đây ngay sau khi bạn xem hết video bài giảng ở trên.
-                  </p>
-                </div>
-              ) : (
-                /* Unlocked Minitest & Practice block when video is finished */
-                <>
-                  {minitest && minitestQuestions.length > 0 && (
-                    <div style={{
-                      background: "#ffffff",
-                      borderRadius: 16,
-                      padding: 30,
-                      boxShadow: "0 10px 30px rgba(0, 0, 80, 0.04)",
-                      border: "1px solid #e2e8f0",
-                      marginBottom: 30
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 15, marginBottom: 20 }}>
-                        <div>
-                          <h4 style={{ color: "#000080", margin: 0, fontSize: "18px", fontWeight: 800 }}>Bài trắc nghiệm nhanh (Minitest)</h4>
-                          <p style={{ color: "#64748b", fontSize: "13px", margin: "4px 0 0 0" }}>
-                            Trả lời đúng 100% câu hỏi để hoàn thành và mở khóa các bài tập tự luyện.
-                          </p>
-                        </div>
-                        {progress.DaDatMinitest === 1 && (
-                          <span style={{
-                            background: "#ecfdf5",
-                            color: "#059669",
-                            padding: "6px 14px",
-                            borderRadius: "30px",
-                            fontSize: "13px",
-                            fontWeight: 700,
-                            border: "1px solid #a7f3d0"
-                          }}>
-                            Đã Đạt Yêu Cầu
-                          </span>
-                        )}
-                      </div>
-
-                      {progress.DaDatMinitest === 1 ? (
-                        <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", padding: "16px 20px", borderRadius: 12 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600 }}>Chúc mừng! Bạn đã vượt qua bài Minitest thành công. Hãy ôn tập qua các bài tập tự luyện dưới đây.</span>
-                        </div>
-                      ) : (
-                        <div>
-                          {minitestQuestions.map((q, qIdx) => (
-                            <div key={qIdx} style={{ marginBottom: 25, borderBottom: qIdx < minitestQuestions.length - 1 ? "1px dashed #e2e8f0" : "none", paddingBottom: 25 }}>
-                              <p style={{ fontWeight: 700, color: "#000080", fontSize: 15, margin: "0 0 16px 0" }}>
-                                Câu {qIdx + 1}: {q.question}
-                              </p>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                                {q.answers?.map((text: string, aIdx: number) => {
-                                  const label = ["A", "B", "C", "D"][aIdx];
-                                  const isSelected = selectedAnswers[qIdx] === label;
-                                  return (
-                                    <button
-                                      key={label}
-                                      onClick={() => setSelectedAnswers(prev => ({ ...prev, [qIdx]: label }))}
-                                      style={{
-                                        textAlign: "left",
-                                        padding: "14px 18px",
-                                        borderRadius: 10,
-                                        border: `1.5px solid ${isSelected ? "#F95800" : "#e2e8f0"}`,
-                                        background: isSelected ? "#fff7ed" : "#fff",
-                                        color: isSelected ? "#F95800" : "#334155",
-                                        fontSize: 14,
-                                        fontWeight: isSelected ? 700 : 500,
-                                        cursor: "pointer",
-                                        transition: "all 0.15s ease",
-                                        boxShadow: isSelected ? "0 4px 12px rgba(249, 88, 0, 0.05)" : "none"
-                                      }}
-                                    >
-                                      <span style={{ fontWeight: 800, marginRight: 8, color: isSelected ? "#F95800" : "#64748b" }}>{label}.</span>
-                                      {text}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))}
-
-                          <div style={{ textAlign: "right", marginTop: 20 }}>
-                            <button
-                              onClick={handleQuizSubmit}
-                              style={{
-                                background: "linear-gradient(135deg, #F95800, #ff7e40)",
-                                color: "#fff",
-                                border: "none",
-                                padding: "12px 32px",
-                                borderRadius: "30px",
-                                fontSize: "15px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                boxShadow: "0 4px 15px rgba(249, 88, 0, 0.25)",
-                                transition: "all 0.2s ease"
-                              }}
-                            >
-                              Nộp bài Minitest
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ASSIGNMENTS / HOMEWORK LIST SECTION */}
-                  <div style={{ background: "#fff", borderRadius: 16, padding: 30, boxShadow: "0 10px 30px rgba(0, 0, 80, 0.04)", border: "1px solid #e2e8f0", marginBottom: 30 }}>
-                    <h4 style={{ color: "#000080", margin: "0 0 15px 0", fontSize: "18px", fontWeight: 800 }}>Bài Tập Tự Luyện</h4>
-                    
-                    {assignments.length === 0 ? (
-                      <p style={{ color: "#64748b", margin: 0, fontSize: 14 }}>Không có bài tập tự luyện nào cho bài giảng này.</p>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
-                        {assignments.map((ex) => (
-                          <div key={ex.MaBaiTap} style={{
-                            border: "1px solid #e2e8f0",
-                            borderRadius: 12,
-                            padding: "16px 20px",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            background: "#fff",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-                            transition: "all 0.2s",
-                            cursor: "pointer"
-                          }}
-                          onClick={() => navigate(`/baitap/${ex.MaBaiTap}`, { state: { maLopHoc } })}
-                          >
-                            <div>
-                              <span style={{
-                                display: "inline-block",
-                                background: "#eff6ff",
-                                color: "#1d4ed8",
-                                padding: "3px 8px",
-                                borderRadius: 6,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                textTransform: "uppercase",
-                                marginBottom: 8
-                              }}>
-                                {ex.Type === "listening-mcq" ? "Listening" : 
-                                 ex.Type === "reading-split" ? "Reading" : 
-                                 ex.Type === "writing-essay" ? "Writing" : "Practice"}
-                              </span>
-                              <h5 style={{ margin: 0, fontSize: 16, color: "#000080", fontWeight: 700 }}>{ex.Title}</h5>
-                            </div>
-                            <span style={{
-                              color: "#F95800",
-                              fontWeight: 600,
-                              fontSize: 14,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 5
-                            }}>
-                              Làm bài tập
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+          {/* Giáo trình lý thuyết */}
+          {noiDung && (
+            <div className="ld2-premium-card" style={{ marginTop: "10px" }}>
+              <h4 style={{ color: "#000080", margin: "0 0 16px 0", fontSize: "16px", fontWeight: 800 }}>
+                Lý thuyết & Giáo trình
+              </h4>
+              <div style={{ lineHeight: 1.8, color: "#334155" }}>
+                {noiDung.trimStart().startsWith("<") ? (
+                  <div dangerouslySetInnerHTML={{ __html: noiDung }} />
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {unescapeMarkdown(noiDung)}
+                  </ReactMarkdown>
+                )}
+              </div>
             </div>
           )}
 
         </div>
+
+        {/* Cột bên phải: Tiêu đề + Minitest */}
+        <div className="ld2-sidebar-col">
+          {/* Hộp Tiêu đề Bài giảng */}
+          <div className="ld2-premium-card" style={{ padding: "20px" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#000080", margin: "0 0 8px 0" }}>
+              {baiGiang.TieuDe}
+            </h2>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <span style={{
+                background: "#FFF2EB",
+                color: "#F95800",
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "4px 8px",
+                borderRadius: "6px"
+              }}>
+                {baiGiang.LoaiBaiHoc}
+              </span>
+              <span style={{
+                background: "#f1f5f9",
+                color: "#475569",
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "4px 8px",
+                borderRadius: "6px"
+              }}>
+                ⏱ {baiGiang.ThoiLuong || "N/A"}
+              </span>
+            </div>
+          </div>
+
+          {/* Lộ trình học tập (3 Steps timeline progress) */}
+          <div className="ld2-journey-box">
+            <h4 className="ld2-journey-title">
+              Lộ trình bài học
+            </h4>
+            <div className="ld2-timeline">
+              {/* Bước 1: Xem Video */}
+              <div className={`ld2-timeline-item ${progress.DaXemVideo === 1 ? "completed" : "active"}`}>
+                <div className="ld2-timeline-bullet">
+                  {progress.DaXemVideo === 1 ? <FiCheckCircle /> : "1"}
+                </div>
+                <div className="ld2-timeline-content">
+                  <span className="ld2-timeline-label">Xem video bài giảng</span>
+                  <span className="ld2-timeline-desc">
+                    {progress.DaXemVideo === 1 ? "Đã hoàn thành" : "Đang thực hiện"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bước 2: Minitest */}
+              <div className={`ld2-timeline-item ${
+                progress.DaXemVideo === 0 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
+              }`}>
+                <div className="ld2-timeline-bullet">
+                  {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo === 0 ? <FiLock /> : "2"}
+                </div>
+                <div className="ld2-timeline-content">
+                  <span className="ld2-timeline-label">Hoàn thành Minitest</span>
+                  <span className="ld2-timeline-desc">
+                    {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo === 0 ? "Đang khóa" : "Chờ thực hiện"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Popup Modal Alert for Minitest feedback */}
+      {showQuizAlert && (
+        <div className="ld2-popup-overlay">
+          <div className="ld2-popup-card">
+            <div className={`ld2-popup-icon-box ${quizAlertStatus}`}>
+              {quizAlertStatus === "success" ? <FiCheckCircle /> : <FiXCircle />}
+            </div>
+            <h3 className="ld2-popup-title">
+              {quizAlertStatus === "success" ? "Chúc mừng!" : "Không đạt yêu cầu"}
+            </h3>
+            <p className="ld2-popup-message">
+              {quizAlertMessage}
+            </p>
+            <button
+              className={`ld2-popup-btn ${quizAlertStatus}`}
+              onClick={handleCloseAlert}
+            >
+              {quizAlertStatus === "success" ? "Đi đến bài tập" : "Xem lại video"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

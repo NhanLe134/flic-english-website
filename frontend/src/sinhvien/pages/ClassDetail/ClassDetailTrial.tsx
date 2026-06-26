@@ -1,14 +1,9 @@
 import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   FaCalendarAlt,
-  FaUsers,
-  FaChalkboardTeacher,
-  FaClock,
-  FaBook,
-  FaCheck,
   FaChevronRight,
   FaListUl,
   FaPlayCircle,
@@ -48,10 +43,14 @@ interface Lesson {
   TrangThaiDuyet: string;
 }
 
-export default function ClassDetailSV() {
+export default function ClassDetailTrial() {
   const { id, lessonId, tab, itemId } = useParams<{ id: string; lessonId?: string; tab?: string; itemId?: string }>();
   const classId = Number(id);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isLoggedIn = !!sessionStorage.getItem("user");
+  const isStudentRoute = location.pathname.includes("/hoc-thu-sv");
 
   const [info, setInfo] = useState<ClassInfo | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -174,15 +173,17 @@ export default function ClassDetailSV() {
 
   // Toggle accordion and fetch data for the lesson
   const handleToggleLesson = async (lessonId: number, defaultTab: string = "lectures") => {
+    const detailBasePath = isStudentRoute ? `/hoc-thu-sv/${classId}` : `/hoc-thu/${classId}`;
+
     if (expandedLessonId === lessonId && defaultTab === "lectures") {
       setExpandedLessonId(null);
-      navigate(`/MyCourses/${classId}`, { replace: true });
+      navigate(detailBasePath, { replace: true });
       return;
     }
 
     setExpandedLessonId(lessonId);
     const shortTab = urlTabMapping[defaultTab] || "bg";
-    navigate(`/MyCourses/${classId}/${lessonId}/${shortTab}`, { replace: true });
+    navigate(`${detailBasePath}/${lessonId}/${shortTab}`, { replace: true });
 
     if (lessonDetails[lessonId]) {
       setLessonDetails(prev => ({
@@ -308,7 +309,6 @@ export default function ClassDetailSV() {
       
       const baiTaps = baitapData;
 
-
       const practices = baiTaps.filter((ex: any) => {
         const isTest = ex.IsExam === 1 || ex.IsExam === true || ex.Type?.toLowerCase() === "exam" || ex.Type?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
         return !isTest;
@@ -357,10 +357,10 @@ export default function ClassDetailSV() {
       };
     });
     const shortTab = urlTabMapping[tabName] || "bg";
-    navigate(`/MyCourses/${classId}/${lessonId}/${shortTab}`, { replace: true });
+    const detailBasePath = isStudentRoute ? `/hoc-thu-sv/${classId}` : `/hoc-thu/${classId}`;
+    navigate(`${detailBasePath}/${lessonId}/${shortTab}`, { replace: true });
   };
 
-  // Helper date formatter
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
@@ -378,6 +378,15 @@ export default function ClassDetailSV() {
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
+  const handleActionClick = (targetUrl: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggedIn) {
+      navigate(targetUrl);
+    } else {
+      alert("Vui lòng đăng nhập bằng tài khoản Học Viên để học thử nội dung này!");
+    }
+  };
+
   if (loading) {
     return (
       <div className="cd-loading-container">
@@ -392,109 +401,30 @@ export default function ClassDetailSV() {
       <div className="cd-error-container">
         <h3>Đã xảy ra lỗi</h3>
         <p>{error || "Không tìm thấy dữ liệu lớp học."}</p>
-        <Link to="/MyCourses" className="cd-error-btn">
-          Quay lại danh sách lớp học
+        <Link to={isStudentRoute ? "/hoc-thu-sv" : "/hoc-thu"} className="cd-error-btn">
+          Quay lại danh sách lớp học thử
         </Link>
       </div>
     );
   }
 
-  // Calculate session completions based on progress percentage
-  const totalLessons = lessons.length;
-  const progressPercent = info.TienDo || 0;
-  const completedCount = Math.round((progressPercent / 100) * totalLessons);
-
-  // SVG Circular progress configurations
-  const radius = 45;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
-
-
-
   return (
-    <div className="cd-container">
+    <div className="cd-container" style={{ padding: "30px 40px 60px 40px" }}>
       {/* Breadcrumb */}
-      <div className="cd-breadcrumb">
-        <Link to="/MyCourses">Lớp học của tôi</Link>
-        <span className="cd-divider"> &gt; </span>
-        <span className="cd-current">{info.TenLop}</span>
-      </div>
+      <nav className="courses-breadcrumb" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", marginTop: "0px", marginBottom: "24px" }}>
+        <Link to={isLoggedIn ? "/profile" : "/"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Trang chủ</Link>
+        <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>
+        <Link to={isStudentRoute ? "/hoc-thu-sv" : "/hoc-thu"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Học & thi thử</Link>
+        <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>
+        <span style={{ color: "#F95800", fontWeight: 600 }}>{info.TenLop}</span>
+      </nav>
 
-      {/* Main Class Overview Card */}
-      <div className="cd-overview-card">
-        <div className="cd-left-content">
-          <h2 className="cd-class-title">{info.TenLop}</h2>
-          <p className="cd-class-desc">
-            {info.MoTa || "Khóa học chất lượng cao của hệ thống Anh ngữ FLIC."}
-          </p>
-
-          <div className="cd-meta-grid">
-            {/* Column 1 */}
-            <div className="cd-meta-item">
-              <div className="cd-meta-icon-wrapper">
-                <FaChalkboardTeacher />
-              </div>
-              <div className="cd-meta-info">
-                <span className="cd-meta-label">Giáo viên</span>
-                <span className="cd-meta-value">{info.TenGiangVien}</span>
-              </div>
-            </div>
-
-            <div className="cd-meta-item">
-              <div className="cd-meta-icon-wrapper">
-                <FaClock />
-              </div>
-              <div className="cd-meta-info">
-                <span className="cd-meta-label">Lịch học</span>
-                <span className="cd-meta-value">{info.LichHoc || "Chưa cập nhật"}</span>
-              </div>
-            </div>
-
-            <div className="cd-meta-item">
-              <div className="cd-meta-icon-wrapper">
-                <FaUsers />
-              </div>
-              <div className="cd-meta-info">
-                <span className="cd-meta-label">Sĩ số</span>
-                <span className="cd-meta-value">{info.SoLuongHocVien || 0} học viên</span>
-              </div>
-            </div>
-
-            <div className="cd-meta-item">
-              <div className="cd-meta-icon-wrapper">
-                <FaBook />
-              </div>
-              <div className="cd-meta-info">
-                <span className="cd-meta-label">Khóa học</span>
-                <span className="cd-meta-value">{info.TenKhoaHoc}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="cd-right-content">
-          <div className="cd-progress-circle-wrap">
-            <svg width="120" height="120" className="cd-circle-svg">
-              <circle cx="60" cy="60" r={radius} className="cd-circle-bg" />
-              <circle
-                cx="60"
-                cy="60"
-                r={radius}
-                className="cd-circle-bar"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-              />
-            </svg>
-            <div className="cd-progress-text-overlay">
-              <span className="cd-progress-percent">{progressPercent}%</span>
-              <span className="cd-progress-label-small">Tiến độ</span>
-            </div>
-          </div>
-          <div className="cd-circle-stats">
-            <span className="cd-circle-stats-number">{completedCount}/{totalLessons}</span>
-            <span className="cd-circle-stats-text">Buổi đã học</span>
-          </div>
-        </div>
+      {/* Main Class Overview Card - ONLY title and description */}
+      <div className="cd-overview-card" style={{ padding: "30px", background: "#ffffff", border: "1px solid #e2e8f0", display: "block", borderRadius: "16px", marginBottom: "30px" }}>
+        <h2 className="cd-class-title" style={{ color: "#000080", fontSize: "26px", fontWeight: 800, margin: "0 0 12px 0" }}>{info.TenLop}</h2>
+        <p className="cd-class-desc" style={{ color: "#64748b", fontSize: "15px", margin: 0, lineHeight: "1.6" }}>
+          {info.MoTa || "Lớp học thử nghiệm chất lượng cao của hệ thống Anh ngữ FLIC."}
+        </p>
       </div>
 
       {/* Detailed Learning Schedule Timeline */}
@@ -511,27 +441,17 @@ export default function ClassDetailSV() {
           <div className="cd-timeline-list">
             {[...lessons].reverse().map((lesson, indexInReversed) => {
               const idx = (lessons.length - 1) - indexInReversed;
-              const isCompleted = idx < completedCount;
-              const isCurrent = idx === completedCount;
               const isExpanded = expandedLessonId === lesson.MaLesson;
 
-              let markerClass = "cd-timeline-marker cd-marker-upcoming";
+              let markerClass = "cd-timeline-marker cd-marker-current";
               let markerContent: React.ReactNode = idx + 1;
-
-              if (isCompleted) {
-                markerClass = "cd-timeline-marker cd-marker-completed";
-                markerContent = <FaCheck size={12} />;
-              } else if (isCurrent) {
-                markerClass = "cd-timeline-marker cd-marker-current";
-                markerContent = idx + 1;
-              }
 
               const detail = lessonDetails[lesson.MaLesson];
 
               return (
                 <div
                   key={lesson.MaLesson}
-                  className={`cd-timeline-item ${isCurrent ? "current-item" : ""}`}
+                  className={`cd-timeline-item ${isExpanded ? "current-item" : ""}`}
                 >
                   {/* Timeline node marker */}
                   <div className={markerClass}>{markerContent}</div>
@@ -613,42 +533,37 @@ export default function ClassDetailSV() {
                               {detail.activeTab === 'lectures' && (
                                 <div className="ld2-tab-content anim-fade-in">
                                   {detail.baiGiangs.length > 0 ? (
-                                    <>
-                                      <div className="ld2-table-wrap">
-                                        <table className="ld2-table">
-                                          <thead>
-                                            <tr>
-                                              <th style={{ textAlign: "center" }}>#</th>
-                                              <th>Tên bài giảng</th>
-                                              <th style={{ textAlign: "center" }}>Loại</th>
-                                              <th style={{ textAlign: "center" }}>Thời lượng</th>
-                                              <th style={{ textAlign: "center" }}>Hành động</th>
+                                    <div className="ld2-table-wrap">
+                                      <table className="ld2-table">
+                                        <thead>
+                                          <tr>
+                                            <th style={{ textAlign: "center" }}>#</th>
+                                            <th>Tên bài giảng</th>
+                                            <th style={{ textAlign: "center" }}>Loại</th>
+                                            <th style={{ textAlign: "center" }}>Thời lượng</th>
+                                            <th style={{ textAlign: "center" }}>Hành động</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {detail.baiGiangs.map((b, i) => (
+                                            <tr key={b.MaBaiHoc}>
+                                              <td style={{ textAlign: "center" }}>{i + 1}</td>
+                                              <td><strong>{b.TieuDe}</strong></td>
+                                              <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
+                                              <td style={{ textAlign: "center" }}>{b.ThoiLuong || "—"}</td>
+                                              <td style={{ textAlign: "center" }}>
+                                                <button
+                                                  className="ld2-open-btn"
+                                                  onClick={(e) => handleActionClick(`/hoc-thu-sv/${info.MaLopHoc}/${lesson.MaLesson}/bg/${b.MaBaiHoc}`, e)}
+                                                >
+                                                  Xem
+                                                </button>
+                                              </td>
                                             </tr>
-                                          </thead>
-                                          <tbody>
-                                            {detail.baiGiangs.map((b, i) => (
-                                              <tr key={b.MaBaiHoc}>
-                                                <td style={{ textAlign: "center" }}>{i + 1}</td>
-                                                <td><strong>{b.TieuDe}</strong></td>
-                                                <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
-                                                <td style={{ textAlign: "center" }}>{b.ThoiLuong || "—"}</td>
-                                                <td style={{ textAlign: "center" }}>
-                                                  <button
-                                                    className="ld2-open-btn"
-                                                    onClick={() => {
-                                                      navigate(`/MyCourses/${info.MaLopHoc}/${lesson.MaLesson}/bg/${b.MaBaiHoc}`);
-                                                    }}
-                                                  >
-                                                    Xem
-                                                  </button>
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-
-                                    </>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
                                   ) : (
                                     <div className="ld2-empty-state">
                                       <div className="ld2-empty-icon"><FaInfoCircle /></div>
@@ -662,26 +577,38 @@ export default function ClassDetailSV() {
                                 <div className="ld2-tab-content anim-fade-in">
                                   {detail.taiLieus.length > 0 ? (
                                     <div className="ld2-docs-grid">
-                                      {detail.taiLieus.map((t, idx) => (
-                                        <a
-                                          key={t.MaTaiLieu}
-                                          href={t.FileUrl ? (t.FileUrl.startsWith('http') ? t.FileUrl : `${API}${t.FileUrl}`) : `${import.meta.env.BASE_URL}doc-detail/${t.MaTaiLieu}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="ld2-doc-card"
-                                        >
-                                          <div className="ld2-doc-icon-wrapper">
-                                            <FaFileAlt className="ld2-doc-icon" />
+                                      {detail.taiLieus.map((t, idx) => {
+                                        const docUrl = t.FileUrl ? (t.FileUrl.startsWith('http') ? t.FileUrl : `${API}${t.FileUrl}`) : `${import.meta.env.BASE_URL}doc-detail/${t.MaTaiLieu}`;
+                                        return (
+                                          <div
+                                            key={t.MaTaiLieu}
+                                            className="ld2-doc-card"
+                                            onClick={() => {
+                                              if (isLoggedIn) {
+                                                if (t.FileUrl) {
+                                                  window.open(docUrl, "_blank");
+                                                } else {
+                                                  navigate(`/doc-detail/${t.MaTaiLieu}`);
+                                                }
+                                              } else {
+                                                alert("Vui lòng đăng nhập bằng tài khoản Học Viên để học thử nội dung này!");
+                                              }
+                                            }}
+                                            style={{ cursor: "pointer" }}
+                                          >
+                                            <div className="ld2-doc-icon-wrapper">
+                                              <FaFileAlt className="ld2-doc-icon" />
+                                            </div>
+                                            <div className="ld2-doc-info">
+                                              <h4 className="ld2-doc-title">{t.TieuDe || `Tài liệu số ${idx + 1}`}</h4>
+                                              <p className="ld2-doc-desc">{t.MoTa || "Tài liệu học tập đính kèm buổi học"}</p>
+                                            </div>
+                                            <div className="ld2-doc-action">
+                                              <button className="ld2-doc-btn">Xem chi tiết</button>
+                                            </div>
                                           </div>
-                                          <div className="ld2-doc-info">
-                                            <h4 className="ld2-doc-title">{t.TieuDe || `Tài liệu số ${idx + 1}`}</h4>
-                                            <p className="ld2-doc-desc">{t.MoTa || "Tài liệu học tập đính kèm buổi học"}</p>
-                                          </div>
-                                          <div className="ld2-doc-action">
-                                            <button className="ld2-doc-btn">Xem chi tiết</button>
-                                          </div>
-                                        </a>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   ) : (
                                     <div className="ld2-empty-state">
@@ -725,9 +652,7 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>
                                                   <button
                                                     className="ld2-open-btn"
-                                                    onClick={() => {
-                                                      navigate(`/MyCourses/${info?.MaLopHoc}/${lesson.MaLesson}/${detail.activeTab === 'practices' ? 'lt' : 'bt'}/${ex.MaBaiTap}`);
-                                                    }}
+                                                    onClick={(e) => handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${lesson.MaLesson}/lt/${ex.MaBaiTap}`, e)}
                                                   >
                                                     Làm bài
                                                   </button>
@@ -780,9 +705,7 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>
                                                   <button
                                                     className="ld2-open-btn"
-                                                    onClick={() => {
-                                                      navigate(`/MyCourses/${info?.MaLopHoc}/${lesson.MaLesson}/${detail.activeTab === 'practices' ? 'lt' : 'bt'}/${ex.MaBaiTap}`);
-                                                    }}
+                                                    onClick={(e) => handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${lesson.MaLesson}/bt/${ex.MaBaiTap}`, e)}
                                                   >
                                                     Làm bài
                                                   </button>
@@ -816,4 +739,3 @@ export default function ClassDetailSV() {
     </div>
   );
 }
-

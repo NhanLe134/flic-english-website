@@ -302,7 +302,7 @@ function MyCourses() {
 
                 return (
                   <div className="mc-card" key={c.MaLopHoc} style={{ animationDelay: `${i * 60}ms` }}>
-                    <Link to={`/class-detail/${c.MaLopHoc}`} className="mc-card-main-info">
+                    <Link to={`/MyCourses/${c.MaLopHoc}`} className="mc-card-main-info">
                       <div className="mc-card-header">
                         <div>
                           <h3 className="mc-card-name">{c.TenLop}</h3>

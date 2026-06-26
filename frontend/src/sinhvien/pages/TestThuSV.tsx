@@ -135,7 +135,7 @@ export default function TestThuSV() {
   return (
     <div className="test-thu-container">
       {/* Breadcrumb */}
-      <nav className="courses-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', marginTop: '24px', marginBottom: '24px', fontFamily: 'Inter, sans-serif' }}>
+      <nav className="courses-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', marginTop: '0px', marginBottom: '24px', fontFamily: 'Inter, sans-serif' }}>
         <Link to={homePath} style={{ color: '#777777', textDecoration: 'none', fontWeight: 500 }}>Trang chủ</Link>
         <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>
         <span style={{ color: '#777777', fontWeight: 500 }}>Học & thi thử</span>

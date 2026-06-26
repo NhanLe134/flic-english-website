@@ -71,8 +71,31 @@ const renderReadingPassage = (text: string) => {
 function AssignmentDetail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
-  const maLopHoc = location.state?.maLopHoc;
+  const { id, classId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
+  const maLopHoc = classId ? Number(classId) : location.state?.maLopHoc;
+
+  const handleBackNavigation = () => {
+    if (location.pathname.includes('/hoc-thu-sv/')) {
+      if (classId && lessonId) {
+        const isExamTab = location.pathname.includes('/bt/');
+        const tabKey = isExamTab ? 'bt' : 'lt';
+        navigate(`/hoc-thu-sv/${classId}/${lessonId}/${tabKey}/${id}`);
+      } else {
+        navigate(-1);
+      }
+      return;
+    }
+
+    if (classId && lessonId) {
+      const isExamTab = location.pathname.includes('/bt/');
+      const tabKey = isExamTab ? 'bt' : 'lt';
+      navigate(`/MyCourses/${classId}/${lessonId}/${tabKey}/${id}`);
+    } else if (maLopHoc) {
+      navigate(`/MyCourses/${maLopHoc}`);
+    } else {
+      navigate("/MyCourses");
+    }
+  };
 
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const maNguoiDung = user.MaNguoiDung;
@@ -531,6 +554,14 @@ In this section, you will read several passages. Each one is followed by several
               "After that, you can reorder them if needed.",
               "Finally, click the submit button to finish."
             ]
+          },
+          {
+            sentences: [
+              "Learning English requires daily practice and patience.",
+              "To start, you should focus on building basic vocabulary.",
+              "Next, practice listening to simple conversations and songs.",
+              "Gradually, try speaking with others to gain confidence."
+            ]
           }
         ]),
         AudioUrl: "",
@@ -851,8 +882,7 @@ In this section, you will read several passages. Each one is followed by several
   // SUBMIT HANDLER
   const handleSubmit = async () => {
     if (submitted) {
-      if (maLopHoc) navigate(`/class-detail/${maLopHoc}`);
-      else navigate("/MyCourses");
+      handleBackNavigation();
       return;
     }
 
@@ -1032,7 +1062,9 @@ In this section, you will read several passages. Each one is followed by several
             maLopHoc: maLopHoc,
             diem: examFinalScore,
             loai: "Exam",
-            maBaiTap: id
+            maBaiTap: id,
+            lessonId: lessonId,
+            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt'
           }
         });
 
@@ -1173,7 +1205,9 @@ In this section, you will read several passages. Each one is followed by several
             maLopHoc: maLopHoc,
             diem: finalScore,
             loai: exercise?.Type || "Bài tập",
-            maBaiTap: id
+            maBaiTap: id,
+            lessonId: lessonId,
+            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt'
           }
         });
       }
@@ -1463,7 +1497,7 @@ In this section, you will read several passages. Each one is followed by several
   try {
     return (
       <div className="ad-content">
-      <button className="ad-back" onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}>← Quay lại</button>
+      <button className="ad-back" onClick={handleBackNavigation}>← Quay lại</button>
 
       {/* Course Info Card */}
       {lopInfo && (
@@ -1592,7 +1626,7 @@ In this section, you will read several passages. Each one is followed by several
         <div>
           {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq" && (
             <div className="ad-audio-card">
-              <h4>🎵 General audio file for the entire assignment:</h4>
+              <h4><FiVolume2 style={{ color: "#f95800", fontSize: "1.2rem" }} /> General audio file for the entire assignment:</h4>
               <CustomAudioPlayer src={`${API}${exercise.AudioUrl}`} className="ad-audio-player" />
             </div>
           )}
@@ -1663,7 +1697,7 @@ In this section, you will read several passages. Each one is followed by several
           <button
             className="ad-submit-btn"
             style={{ backgroundColor: "#64748b" }}
-            onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}
+            onClick={handleBackNavigation}
           >
             Quay lại lớp học
           </button>

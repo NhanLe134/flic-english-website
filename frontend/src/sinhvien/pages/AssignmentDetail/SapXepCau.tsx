@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiFileText, FiMenu, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import { FiFileText, FiArrowUp, FiArrowDown } from "react-icons/fi";
 
 interface SapXepCauProps {
   q: any;
@@ -123,12 +123,7 @@ export const SapXepCau: React.FC<SapXepCauProps> = ({
                 borderBottomWidth: isNextOver ? 4 : undefined,
               }}
             >
-              {/* Drag Handle Icon */}
-              {!submitted && !isOverdue && (
-                <div className="flic-sentence-drag-handle" title="Kéo để di chuyển">
-                  <FiMenu />
-                </div>
-              )}
+
 
               {/* Index Number */}
               <div className="flic-sentence-number">

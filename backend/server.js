@@ -1204,7 +1204,7 @@ app.get("/tailieu/:buoiHocId", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("buoiHocId", req.params.buoiHocId)
-      .query(`SELECT MaTaiLieu, TieuDe, MoTa, NgayCapNhat FROM TAILIEU WHERE MaBuoiHoc = @buoiHocId ORDER BY NgayCapNhat DESC`);
+      .query(`SELECT MaTaiLieu, TieuDe, MoTa, FileUrl, NgayCapNhat FROM TAILIEU WHERE MaBuoiHoc = @buoiHocId ORDER BY NgayCapNhat DESC`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -3240,6 +3240,37 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
   } catch (err) { res.status(500).send(err.message) }
 })
 
+app.get("/student/trial-classes", async (req, res) => {
+  try {
+    const pool = await poolPromise
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          l.MaLopHoc, l.TenLop, l.LichHoc, l.SoLuongHocVien,
+          COALESCE(
+            (
+              SELECT TOP 1 
+                CASE 
+                  WHEN (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) = 0 THEN 0
+                  ELSE ROUND(CAST(active_bh.ThuTu AS FLOAT) / (SELECT COUNT(*) FROM BUOIHOC WHERE MaLopHoc = l.MaLopHoc) * 100, 0)
+                END
+              FROM BUOIHOC active_bh 
+              WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
+            ),
+            l.TienDo,
+            0
+          ) AS TienDo,
+          k.TenKhoaHoc
+        FROM LOPHOC l
+        LEFT JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
+        LEFT JOIN KHOAHOC k ON kc.MaKhoaHoc = k.MaKhoaHoc
+        WHERE l.ChoPhepHocThu = 1
+        ORDER BY l.MaLopHoc DESC
+      `)
+    res.json(result.recordset)
+  } catch (err) { res.status(500).send(err.message) }
+})
+
 // Lấy bài học và bài tập học thử (free)
 app.get("/student/free-content", async (req, res) => {
   try {
@@ -4421,6 +4452,35 @@ const initDb = async () => {
   }
 }
 
+let server;
 initDb().then(() => {
-  app.listen(5000, () => console.log("Server running on port 5000"))
+  server = app.listen(5000, () => console.log("Server running on port 5000"))
 })
+
+const gracefulShutdown = async (signal) => {
+  console.log(`Received ${signal}. Shutting down gracefully...`);
+  if (server) {
+    server.close(() => {
+      console.log("HTTP server closed.");
+    });
+  }
+  try {
+    const pool = await poolPromise;
+    if (pool) {
+      await pool.close();
+      console.log("Database connection pool closed.");
+    }
+  } catch (err) {
+    console.error("Error closing database connection pool:", err);
+  } finally {
+    if (signal === "SIGUSR2") {
+      process.kill(process.pid, "SIGUSR2");
+    } else {
+      process.exit(0);
+    }
+  }
+};
+
+process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.once("SIGUSR2", () => gracefulShutdown("SIGUSR2"));

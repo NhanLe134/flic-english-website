@@ -502,6 +502,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
+  font-family: 'Inter', sans-serif;
 }
 
 .cd-spinner {
@@ -527,6 +528,7 @@
   border-radius: 20px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  font-family: 'Inter', sans-serif;
 }
 
 .cd-error-btn {

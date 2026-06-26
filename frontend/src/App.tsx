@@ -74,6 +74,24 @@ import StudentLayout from "./sinhvien/layout/StudentLayout"
 import HocThuSV from "./sinhvien/pages/HocThuSV"
 import TestThuSV from "./sinhvien/pages/TestThuSV"
 import TestExamPage from "./sinhvien/pages/TestExamPage"
+import ClassDetailTrial from "./sinhvien/pages/ClassDetail/ClassDetailTrial"
+import NavbarAuto from "./components/NavbarAuto"
+import Footer from "./components/Footer"
+
+const ClassDetailTrialPublic = () => {
+  return (
+    <>
+      <NavbarAuto />
+      <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <ClassDetailTrial />
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
 
 function App() {
   useEffect(() => {
@@ -99,6 +117,7 @@ function App() {
         <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
         <Route path="/register-success" element={<RegisterSuccess />} />
         <Route path="/hoc-thu" element={<HocThu />} />
+        <Route path="/hoc-thu/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailTrialPublic />} />
         <Route path="/test-thu" element={<TestThuPublic />} />
         <Route path="/test-exam/:testId" element={<TestExamPage />} />
 
@@ -175,12 +194,19 @@ function App() {
         <Route element={<StudentLayout />}>
           <Route path="/course-register" element={<CourseRegister />} />
           <Route path="/hoc-thu-sv" element={<HocThuSV />} />
+          <Route path="/hoc-thu-sv/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailTrial />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />
           <Route path="/MyCourses" element={<MyCourses />} />
-          <Route path="/class-detail/:id" element={<ClassDetailSV />} />
+          <Route path="/MyCourses/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailSV />} />
+          <Route path="/MyCourses/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
+          <Route path="/MyCourses/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
+          <Route path="/MyCourses/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           

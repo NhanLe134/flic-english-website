@@ -11,6 +11,9 @@ function AssignmentSuccess() {
   const diem = location.state?.diem ?? null
   const maBaiTap = location.state?.maBaiTap || null
 
+  const lessonId = location.state?.lessonId || null
+  const tabKey = location.state?.tabKey || "lt"
+
   const hasScore = diem !== null
 
   return (
@@ -46,7 +49,18 @@ function AssignmentSuccess() {
         <div className="as-actions">
           <button
             className="as-btn-outline"
-            onClick={() => maLopHoc ? navigate(`/class-detail/${maLopHoc}`) : navigate("/MyCourses")}
+            onClick={() => {
+              if (maLopHoc && lessonId) {
+                const targetUrl = maBaiTap
+                  ? `/MyCourses/${maLopHoc}/${lessonId}/${tabKey}/${maBaiTap}`
+                  : `/MyCourses/${maLopHoc}/${lessonId}/${tabKey}`;
+                navigate(targetUrl);
+              } else if (maLopHoc) {
+                navigate(`/MyCourses/${maLopHoc}`);
+              } else {
+                navigate("/MyCourses");
+              }
+            }}
           >
             Quay lại
           </button>

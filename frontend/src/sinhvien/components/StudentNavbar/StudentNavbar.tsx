@@ -49,7 +49,7 @@ export default function StudentNavbar() {
     const p = location.pathname;
     return (
       p === "/MyCourses" ||
-      p.startsWith("/class-detail/") ||
+      p.startsWith("/MyCourses/") ||
       p.startsWith("/doc-detail/") ||
       p.startsWith("/lesson-detail/") ||
       p.startsWith("/bai-giangSV/") ||
