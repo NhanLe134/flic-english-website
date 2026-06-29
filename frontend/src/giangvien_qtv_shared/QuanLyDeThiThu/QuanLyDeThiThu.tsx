@@ -2392,8 +2392,7 @@ D. Visiting friends
                           s.tenDeThi.toLowerCase().includes(subSearch.toLowerCase());
       
       if (isQTV) {
-        const isGraded = s.diemViet !== null && s.diemNoi !== null;
-        return matchSearch && isGraded;
+        return matchSearch;
       } else {
         const isPending = s.diemViet === null || s.diemNoi === null;
         const isGraded = !isPending;

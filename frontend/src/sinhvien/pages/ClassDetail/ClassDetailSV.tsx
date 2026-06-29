@@ -87,13 +87,24 @@ export default function ClassDetailSV() {
         const userId = user.MaNguoiDung;
 
         // Fetch class info, lessons, and student submissions in parallel
-        const [infoRes, lessonsRes, submissionsRes] = await Promise.all([
+        const [infoRes, lessonsRes, submissionsRes, myClassesRes] = await Promise.all([
           fetch(`${API}/classes/${classId}/info`).then((r) => r.json()),
           fetch(`${API}/classes/${classId}/lessons`).then((r) => r.json()),
           userId
             ? fetch(`${API}/student/bainop/${userId}`).then((r) => r.json()).catch(() => [])
+            : Promise.resolve([]),
+          userId
+            ? fetch(`${API}/student/my-classes/${userId}`).then((r) => r.json()).catch(() => [])
             : Promise.resolve([])
         ]);
+
+        const myClasses = Array.isArray(myClassesRes) ? myClassesRes : [];
+        const enrolledClass = myClasses.find((c: any) => c.MaLopHoc === Number(classId));
+
+        if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành')) {
+          setError("Bạn không có quyền truy cập lớp học này hoặc yêu cầu ghi danh của bạn đang chờ duyệt.");
+          return;
+        }
 
         if (infoRes && infoRes.MaLopHoc) {
           setInfo(infoRes);

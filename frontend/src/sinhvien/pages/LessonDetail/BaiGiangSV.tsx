@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiSettings, FiMaximize, FiMinimize, FiCheckCircle, FiLock, FiXCircle } from "react-icons/fi";
+import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiSettings, FiMaximize, FiMinimize, FiCheckCircle, FiLock, FiXCircle, FiFileText } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
@@ -505,9 +505,108 @@ function BaiGiangSV() {
         <div className="ld2-main-col">
           {/* Khung chứa Video Player */}
           {(() => {
-            const finalFileUrl = (fileUrl && /\.(mp4|webm|ogg)$/i.test(fileUrl) && !fileUrl.includes("drive.google.com"))
-              ? fileUrl
-              : "https://www.w3schools.com/html/mov_bbb.mp4";
+            const getMediaType = (url: string | null): "youtube" | "drive" | "video" | "document" | "none" => {
+              if (!url) return "none";
+              const u = url.toLowerCase().trim();
+              if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
+              if (u.includes("drive.google.com")) return "drive";
+              if (/\.(mp4|webm|ogg)$/i.test(u)) return "video";
+              return "document";
+            };
+
+            const getYouTubeEmbedUrl = (url: string): string => {
+              let videoId = "";
+              if (url.includes("youtu.be/")) {
+                videoId = url.split("youtu.be/")[1]?.split(/[?#]/)[0] || "";
+              } else if (url.includes("youtube.com/watch")) {
+                const searchParams = new URLSearchParams(url.split("?")[1] || "");
+                videoId = searchParams.get("v") || "";
+              } else if (url.includes("youtube.com/embed/")) {
+                videoId = url.split("youtube.com/embed/")[1]?.split(/[?#]/)[0] || "";
+              }
+              return `https://www.youtube.com/embed/${videoId}`;
+            };
+
+            const getGoogleDrivePreviewUrl = (url: string): string => {
+              if (url.includes("/view")) {
+                return url.replace("/view", "/preview");
+              }
+              if (!url.endsWith("/preview") && url.includes("/file/d/")) {
+                const parts = url.split("/file/d/");
+                const fileId = parts[1]?.split("/")[0] || "";
+                return `https://drive.google.com/file/d/${fileId}/preview`;
+              }
+              return url;
+            };
+
+            const mediaType = getMediaType(fileUrl);
+
+            if (mediaType === "youtube") {
+              const embedUrl = getYouTubeEmbedUrl(fileUrl!);
+              return (
+                <div style={{ position: "relative", width: "100%", paddingTop: "56.25%", background: "#000", borderRadius: "12px", overflow: "hidden", marginBottom: "20px" }}>
+                  <iframe
+                    src={embedUrl}
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Lecture Video"
+                  />
+                </div>
+              );
+            }
+
+            if (mediaType === "drive") {
+              const previewUrl = getGoogleDrivePreviewUrl(fileUrl!);
+              return (
+                <div style={{ position: "relative", width: "100%", paddingTop: "56.25%", background: "#000", borderRadius: "12px", overflow: "hidden", marginBottom: "20px" }}>
+                  <iframe
+                    src={previewUrl}
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                    allow="autoplay"
+                    allowFullScreen
+                    title="Google Drive Video"
+                  />
+                </div>
+              );
+            }
+
+            if (mediaType === "document") {
+              return (
+                <div className="ld2-premium-card" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", textAlign: "center", background: "#fff", border: "1.5px dashed #cbd5e1", borderRadius: "12px", marginBottom: "20px" }}>
+                  <FiFileText size={48} style={{ color: "#3b82f6", marginBottom: "16px" }} />
+                  <h3 style={{ fontSize: "18px", fontWeight: 800, color: "#000080", margin: "0 0 8px 0" }}>Tài liệu đính kèm bài giảng</h3>
+                  <p style={{ color: "#64748b", maxWidth: "450px", margin: "0 0 24px 0", fontSize: "14px", lineHeight: "1.6" }}>
+                    Bài giảng này sử dụng tài liệu học tập đính kèm (PDF, Word hoặc tài liệu nén). Bạn có thể xem trực tuyến hoặc tải về để phục vụ học tập.
+                  </p>
+                  <a
+                    href={fileUrl!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: "#F95800",
+                      color: "#fff",
+                      padding: "12px 24px",
+                      borderRadius: "8px",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      boxShadow: "0 4px 6px -1px rgba(249, 88, 0, 0.2)",
+                      transition: "all 0.2s",
+                      cursor: "pointer"
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
+                  >
+                    Xem / Tải tài liệu bài học
+                  </a>
+                </div>
+              );
+            }
+
+            const finalFileUrl = fileUrl || "https://www.w3schools.com/html/mov_bbb.mp4";
 
             return (
               <div
