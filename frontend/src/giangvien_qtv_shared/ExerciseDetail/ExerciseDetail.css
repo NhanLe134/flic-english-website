@@ -337,6 +337,19 @@
   color: white;             
 }
 
+/* EXERCISE DETAIL SPECIFIC CARD */
+.exercise-detail-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  margin-top: 20px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+
 @keyframes scaleIn {
   from { transform: scale(0.7); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }

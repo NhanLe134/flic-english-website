@@ -174,7 +174,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 
       {showReuseModal && (
         <div className="confirm-overlay" style={{ zIndex: 1000 }}>
-          <div className="confirm-modal" style={{ maxWidth: "600px", padding: "20px" }}>
+          <div className="confirm-modal" style={{ maxWidth: "800px", width: "90%", padding: "20px" }}>
             <h3 style={{ marginBottom: "15px" }}>Chọn tài liệu có sẵn</h3>
             
             <input
@@ -192,7 +192,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
               }}
             />
 
-            <div style={{ maxHeight: "300px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
+            <div style={{ maxHeight: "450px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
               {allExistingDocs.filter(doc => doc.TieuDe?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
                 <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy tài liệu nào.</div>
               ) : (

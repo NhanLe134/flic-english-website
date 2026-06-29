@@ -1,10 +1,28 @@
-﻿import "./ExerciseDetail.css";
+import "./ExerciseDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 interface Pair { left: string; right: string; }
-interface MCQuestion { question: string; options: { label: string; text: string }[]; correct: string; audioUrl?: string; }
-interface Question { question: string; answers: string[]; correct: string; audioUrl?: string; }
+interface MCQuestion { question: string; options: { label: string; text: string }[]; correct: string; audioUrl?: string; imageUrl?: string; }
+interface Question { question: string; answers: string[]; correct: string; audioUrl?: string; imageUrl?: string; }
+
+const mapDangBaiToType = (db: string): string => {
+  if (!db) return "multiple";
+  const dbClean = db.trim();
+  if (dbClean === "Nghe audio trắc nghiệm") return "listening-mcq";
+  if (dbClean === "Hình ảnh chọn đáp án") return "listening-image";
+  if (dbClean === "Nghe chép chính tả") return "listening-dictation";
+  if (dbClean === "Điền từ vào đoạn văn") return "listening-fill-in";
+  if (dbClean === "Luyện phát âm (check phát âm tự động)") return "speaking-pronounce";
+  if (dbClean === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking-topic";
+  if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
+  if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "reading-vocab-mcq";
+  if (dbClean === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "writing-tense-mcq";
+  if (dbClean === "Viết đoạn văn ngắn") return "writing-essay";
+  if (dbClean === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
+  return dbClean;
+};
 
 const ExerciseDetail = () => {
   const navigate = useNavigate();
@@ -19,17 +37,21 @@ const ExerciseDetail = () => {
   const [editVocab,       setEditVocab]       = useState<{ word: string; meaning: string }[]>([]);
   const [editExtraQs,     setEditExtraQs]     = useState<string[]>([]);
   const [editSpeakingAns, setEditSpeakingAns] = useState("");
+  const [editReadingSplit, setEditReadingSplit] = useState<any[]>([]);
+  const [editFillIn,       setEditFillIn]       = useState<any[]>([]);
 
   /* ===== NORMALIZE TYPE ===== */
   const exType = (exercise?.Type || "").toLowerCase();
   const normalizedType: string =
-    ["writing", "reading", "essay"].includes(exType)     ? "essay"      :
-    ["multiple", "quiz", "trắc nghiệm"].includes(exType) ? "multiple"   :
-    ["listening", "nghe", "listening-mcq"].includes(exType) ? "listening" :
+    ["writing", "reading", "essay", "writing-essay", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences"].includes(exType) ? "essay" :
+    ["multiple", "quiz", "trắc nghiệm", "writing-tense-mcq", "reading-vocab-mcq"].includes(exType) ? "multiple" :
+    ["listening", "nghe", "listening-mcq", "listening-image"].includes(exType) ? "listening" :
     ["matching", "ghép"].includes(exType)                ? "matching"   :
     ["connect", "nối"].includes(exType)                  ? "connect"    :
     ["ordering", "sắp xếp"].includes(exType)             ? "ordering"   :
-    ["speaking", "nói"].includes(exType)                 ? "speaking"   :
+    ["speaking", "nói", "speaking-topic"].includes(exType) ? "speaking" :
+    ["reading-split"].includes(exType)                    ? "reading-split" :
+    ["listening-fill-in"].includes(exType)                ? "listening-fill-in" :
     ["vocabulary", "từ vựng", "vocab"].includes(exType)  ? "vocabulary" :
     exType;
 
@@ -49,7 +71,8 @@ const ExerciseDetail = () => {
               text: text || ""
             })),
             correct: q.correct || "A",
-            audioUrl: q.audioUrl || ""
+            audioUrl: q.audioUrl || "",
+            imageUrl: q.imageUrl || ""
           }));
         }
       } catch (e) {
@@ -77,7 +100,15 @@ const ExerciseDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/baitap/${id}`).then(r => r.json()).then(setExercise).catch(console.log);
+    fetch(`http://localhost:5000/baitap/${id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.Type) {
+          data.Type = mapDangBaiToType(data.Type);
+        }
+        setExercise(data);
+      })
+      .catch(console.log);
   }, [id]);
 
   useEffect(() => {
@@ -89,7 +120,24 @@ const ExerciseDetail = () => {
       : [];
     const mainContent = contentParts[0] || "";
     setEditContent(mainContent);
-    setEditSpeakingAns(normalizedType === "speaking" ? (exercise.Questions || "") : "");
+
+    // Speaking topic
+    let speakingAns = "";
+    if (normalizedType === "speaking") {
+      if (exercise.Questions) {
+        if (exercise.Questions.trim().startsWith("[")) {
+          try {
+            const parsed = JSON.parse(exercise.Questions);
+            if (Array.isArray(parsed)) {
+              speakingAns = parsed.map(q => q.prompt || q.question || "").join("\n");
+            }
+          } catch (e) {}
+        } else {
+          speakingAns = exercise.Questions;
+        }
+      }
+    }
+    setEditSpeakingAns(speakingAns);
 
     // MC questions
     if (isMC && exercise.Questions) {
@@ -99,6 +147,7 @@ const ExerciseDetail = () => {
         answers: ["A","B","C","D"].map(l => q.options.find(o => o.label === l)?.text || ""),
         correct: q.correct,
         audioUrl: q.audioUrl || "",
+        imageUrl: q.imageUrl || "",
       })));
     } else {
       setEditQuestions([]);
@@ -124,15 +173,59 @@ const ExerciseDetail = () => {
       : [];
     setEditVocab(vocabList);
 
-    // Extra questions (essay)
+    // Extra questions (essay/dictation/pronounce/order words/sentences)
     if (normalizedType === "essay") {
       const essayFromContent = contentParts.slice(1);
-      const essayFromQuestions: string[] = exercise.Questions
-        ? exercise.Questions.split("|").map((q: string) => q.trim()).filter(Boolean)
-        : [];
+      let essayFromQuestions: string[] = [];
+      if (exercise.Questions) {
+        if (exercise.Questions.trim().startsWith("[")) {
+          try {
+            const parsed = JSON.parse(exercise.Questions);
+            if (Array.isArray(parsed)) {
+              if (exercise.Type === "listening-dictation" || exercise.Type === "speaking-pronounce") {
+                essayFromQuestions = parsed.map(q => q.text || q.question || "");
+              } else if (exercise.Type === "writing-order-words") {
+                essayFromQuestions = parsed.map(q => q.correctSentence || q.question || "");
+              } else if (exercise.Type === "writing-order-sentences") {
+                essayFromQuestions = parsed.map(q => (q.sentences || []).filter(Boolean).join(" / "));
+              } else {
+                essayFromQuestions = parsed.map(q => q.question || "");
+              }
+            }
+          } catch (e) {}
+        } else {
+          essayFromQuestions = exercise.Questions.split("|").map((q: string) => q.trim()).filter(Boolean);
+        }
+      }
       if (essayFromContent.length > 0) setEditExtraQs(essayFromContent);
       else if (essayFromQuestions.length > 0) setEditExtraQs(essayFromQuestions);
       else setEditExtraQs([]);
+    }
+
+    // Reading split
+    if (normalizedType === "reading-split" && exercise.Questions) {
+      try {
+        const parsed = JSON.parse(exercise.Questions);
+        if (Array.isArray(parsed)) setEditReadingSplit(parsed);
+        else setEditReadingSplit([]);
+      } catch (e) {
+        setEditReadingSplit([]);
+      }
+    } else {
+      setEditReadingSplit([]);
+    }
+
+    // Listening fill in
+    if (normalizedType === "listening-fill-in" && exercise.Questions) {
+      try {
+        const parsed = JSON.parse(exercise.Questions);
+        if (Array.isArray(parsed)) setEditFillIn(parsed);
+        else setEditFillIn([]);
+      } catch (e) {
+        setEditFillIn([]);
+      }
+    } else {
+      setEditFillIn([]);
     }
   }, [exercise, normalizedType]);
 
@@ -153,160 +246,258 @@ const ExerciseDetail = () => {
       </div>
 
       {/* RENDER THE FORM DIRECTLY */}
-      <div className="card" style={{ marginTop: 16 }}>
-        <h3>📝 Chi tiết bài tập ({exercise.Type})</h3>
-
-        {/* Title */}
-        <div style={{ marginBottom: 14 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>Tiêu đề</label>
-          <input className="edit-textarea" value={editTitle} readOnly style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #e0d8cc", fontSize: 14, background: "#f9f9f9" }} />
+      <div className="exercise-detail-card">
+        <div style={{ paddingBottom: "16px", borderBottom: "1px solid #e2e8f0" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#000080", margin: 0 }}>
+            📝 Chi tiết bài tập ({exercise.DangBai || exercise.Type})
+          </h3>
+          <p style={{ margin: "6px 0 0 0", color: "#64748b", fontSize: "14px" }}>
+            Tiêu đề: <strong style={{ color: "#0f172a" }}>{editTitle}</strong>
+          </p>
         </div>
+
+        {/* Section Audio Player */}
+        {exercise.AudioUrl && (
+          <div style={{ padding: "12px", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd" }}>
+            <label style={{ fontWeight: 600, fontSize: "13px", color: "#0369a1", display: "block", marginBottom: "6px" }}>🎵 File nghe chung cho phần này</label>
+            <audio src={exercise.AudioUrl.startsWith("http") || exercise.AudioUrl.startsWith("/uploads") ? (exercise.AudioUrl.startsWith("http") ? exercise.AudioUrl : `http://localhost:5000${exercise.AudioUrl}`) : `http://localhost:5000/uploads/${exercise.AudioUrl}`} controls style={{ width: "100%", height: "35px" }} />
+          </div>
+        )}
+
+        {/* Passage / Content / Instructions */}
+        {editContent && (
+          <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+            <label style={{ fontWeight: 600, fontSize: "13px", color: "#475569", display: "block", marginBottom: "6px" }}>📖 Nội dung / đoạn văn / đề bài</label>
+            <div style={{ fontSize: "13.5px", color: "#1e293b", whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
+              {editContent}
+            </div>
+          </div>
+        )}
 
         {/* MC / Listening questions */}
         {(normalizedType === "multiple" || normalizedType === "listening") && (
-          <>
-            {normalizedType === "listening" && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>📖 Nội dung / đoạn văn</label>
-                <textarea className="edit-textarea" value={editContent || "(Không có nội dung)"} readOnly rows={3} style={{ width: "100%", background: "#f9f9f9" }} />
-              </div>
-            )}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {editQuestions.length === 0 ? (
-              <p style={{ color: "#999", fontStyle: "italic", fontSize: "13px", padding: "10px 0" }}>
+              <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
                 (Không có câu hỏi trắc nghiệm nào trong bài tập này)
               </p>
             ) : (
               editQuestions.map((q, qi) => (
-                <div key={qi} className="question-block" style={{ marginBottom: 16, padding: 14, background: "#fafafa", borderRadius: 10, border: "1px solid #f0e8dc" }}>
-                  <div style={{ marginBottom: 8 }}>
-                    <b style={{ color: "#5a3e2b" }}>Câu {qi + 1}</b>
+                <div key={qi} style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                  <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b", marginBottom: "8px" }}>
+                    Câu {qi + 1}: {q.question || "(Chưa nhập câu hỏi)"}
                   </div>
-                  <textarea className="edit-textarea" placeholder="Câu hỏi" value={q.question} readOnly
-                    rows={2} style={{ width: "100%", marginBottom: 8, background: "#f9f9f9" }} />
-                  {["A","B","C","D"].map((label, ai) => (
-                    <input key={label} className="exercise-content" placeholder={`Đáp án ${label}`} value={q.answers[ai]} readOnly
-                      style={{ width: "100%", marginBottom: 6, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
-                  ))}
-                  <select value={q.correct} disabled
-                    style={{ padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, marginTop: 4, background: "#f9f9f9", color: "#333" }}>
-                    {["A","B","C","D"].map(l => <option key={l} value={l}>Đáp án đúng: {l}</option>)}
-                  </select>
+                  {q.audioUrl && (
+                    <div style={{ marginBottom: "8px" }}>
+                      <audio src={q.audioUrl.startsWith("http") || q.audioUrl.startsWith("/uploads") ? (q.audioUrl.startsWith("http") ? q.audioUrl : `http://localhost:5000${q.audioUrl}`) : `http://localhost:5000/uploads/${q.audioUrl}`} controls style={{ width: "100%", height: "32px" }} />
+                    </div>
+                  )}
+                  {q.imageUrl && (
+                    <div style={{ marginBottom: "8px" }}>
+                      <img src={q.imageUrl.startsWith("http") || q.imageUrl.startsWith("/uploads") ? (q.imageUrl.startsWith("http") ? q.imageUrl : `http://localhost:5000${q.imageUrl}`) : `http://localhost:5000/uploads/${q.imageUrl}`} alt="Question visual" style={{ maxHeight: "150px", borderRadius: "6px", border: "1px solid #e2e8f0" }} />
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "6px" }}>
+                    {["A","B","C","D"].map((label, ai) => {
+                      const isCorrect = q.correct === label;
+                      return (
+                        <div key={label} style={{ fontSize: "12.5px", color: isCorrect ? "#107544" : "#475569", fontWeight: isCorrect ? 600 : 400, display: "flex", gap: "4px" }}>
+                          <span style={{ color: isCorrect ? "#107544" : "#94a3b8" }}>{label}.</span>
+                          <span>{q.answers[ai] || "(Trống)"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))
             )}
-          </>
+          </div>
         )}
 
         {/* Essay */}
         {normalizedType === "essay" && (
-          <>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>📖 Đoạn văn / Đề bài</label>
-              <textarea className="edit-textarea" value={editContent || "(Không có đoạn văn)"} readOnly rows={4} style={{ width: "100%", background: "#f9f9f9" }} />
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>📚 Từ vựng</label>
-              {editVocab.length === 0 ? (
-                <p style={{ color: "#999", fontStyle: "italic", fontSize: "13px", padding: "5px 0" }}>
-                  (Không có từ vựng)
-                </p>
-              ) : (
-                editVocab.map((v, i) => (
-                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <input placeholder="Từ vựng" value={v.word} readOnly
-                      style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
-                    <input placeholder="Nghĩa" value={v.meaning} readOnly
-                      style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
-                  </div>
-                ))
-              )}
-            </div>
-            <div>
-              <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>❓ Câu hỏi</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {editVocab.length > 0 && (
+              <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#000080", marginBottom: "8px" }}>📚 Từ vựng</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {editVocab.map((v, i) => (
+                    <div key={i} style={{ display: "flex", gap: "12px", borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                      <span style={{ flex: 1, fontSize: "13px", fontWeight: 600 }}>{v.word}</span>
+                      <span style={{ flex: 2, fontSize: "13px", color: "#475569" }}>{v.meaning}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {editExtraQs.length === 0 ? (
-                <p style={{ color: "#999", fontStyle: "italic", fontSize: "13px", padding: "5px 0" }}>
+                <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
                   (Không có câu hỏi tự luận nào)
                 </p>
               ) : (
                 editExtraQs.map((q, i) => (
-                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                    <textarea placeholder={`Câu hỏi ${i + 1}`} value={q} readOnly
-                      rows={2} style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, resize: "vertical", background: "#f9f9f9" }} />
+                  <div key={i} style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                    <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b" }}>
+                      Câu {i + 1}: {q || "(Trống)"}
+                    </div>
                   </div>
                 ))
               )}
             </div>
-          </>
+          </div>
         )}
 
         {/* Speaking */}
         {normalizedType === "speaking" && (
-          <>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>🎤 Chủ đề / Câu hỏi</label>
-              <textarea className="edit-textarea" value={editContent || "(Không có chủ đề)"} readOnly rows={3} style={{ width: "100%", background: "#f9f9f9" }} />
-            </div>
-            <div>
-              <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>🎯 Đáp án mẫu (máy chấm)</label>
-              <textarea className="edit-textarea" value={editSpeakingAns || "(Không có đáp án mẫu)"} readOnly rows={3} style={{ width: "100%", background: "#f9f9f9" }} />
-            </div>
-          </>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {editSpeakingAns && (
+              <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#107544", marginBottom: "6px" }}>
+                  🎯 Đáp án mẫu / Gợi ý
+                </div>
+                <div style={{ fontSize: "13px", color: "#334155", whiteSpace: "pre-wrap" }}>
+                  {editSpeakingAns}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Connect / Matching */}
         {isPairs && (
-          <>
-            <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 8 }}>
-              {normalizedType === "matching" ? "🧩 Cặp ghép từ" : "🔗 Cặp nối từ"}
-            </label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {editPairs.length === 0 ? (
-              <p style={{ color: "#999", fontStyle: "italic", fontSize: "13px", padding: "10px 0" }}>
+              <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
                 (Không có cặp nối từ nào)
               </p>
             ) : (
               editPairs.map((p, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                  <input placeholder="Từ / cụm từ" value={p.left} readOnly
-                    style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
-                  <input placeholder="Nghĩa / định nghĩa" value={p.right} readOnly
-                    style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
+                <div key={i} style={{ display: "flex", gap: "12px", padding: "12px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                  <div style={{ flex: 1, fontSize: "13px", color: "#1e293b" }}>
+                    <strong>Từ / Cụm từ:</strong> {p.left}
+                  </div>
+                  <div style={{ flex: 1, fontSize: "13px", color: "#107544", fontWeight: 500 }}>
+                    <strong>Nghĩa / Định nghĩa:</strong> {p.right}
+                  </div>
                 </div>
               ))
             )}
-          </>
+          </div>
         )}
 
         {/* Ordering */}
         {normalizedType === "ordering" && (
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>🔤 Các từ (cách nhau bằng dấu phẩy)</label>
-            <textarea className="edit-textarea" value={editContent || "(Không có từ)"} readOnly rows={3} style={{ width: "100%", background: "#f9f9f9" }} />
+          <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+            <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b" }}>
+              🔤 Các từ cần sắp xếp
+            </div>
+            <div style={{ fontSize: "13.5px", color: "#475569", marginTop: "8px" }}>
+              {editContent || "(Không có từ)"}
+            </div>
           </div>
         )}
 
         {/* Vocabulary type */}
         {normalizedType === "vocabulary" && (
-          <>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 6 }}>📝 Nội dung đề bài</label>
-              <textarea className="edit-textarea" value={editContent || "(Không có nội dung)"} readOnly rows={2} style={{ width: "100%", background: "#f9f9f9" }} />
-            </div>
-            <label style={{ fontWeight: 600, fontSize: 13, color: "#5a3e2b", display: "block", marginBottom: 8 }}>📚 Từ vựng</label>
-            {editVocab.length === 0 ? (
-              <p style={{ color: "#999", fontStyle: "italic", fontSize: "13px", padding: "10px 0" }}>
-                (Không có từ vựng)
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {editVocab.length > 0 && (
+              <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#107544", marginBottom: "8px" }}>
+                  📚 Danh sách từ vựng
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {editVocab.map((v, i) => (
+                    <div key={i} style={{ display: "flex", gap: "12px", borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                      <span style={{ flex: 1, fontSize: "13px", fontWeight: 600 }}>{v.word}</span>
+                      <span style={{ flex: 2, fontSize: "13px", color: "#475569" }}>{v.meaning}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reading Split */}
+        {normalizedType === "reading-split" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {editReadingSplit.length === 0 ? (
+              <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
+                (Không có câu hỏi đọc hiểu nào)
               </p>
             ) : (
-              editVocab.map((v, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                  <input placeholder="Từ vựng" value={v.word} readOnly
-                    style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
-                  <input placeholder="Nghĩa" value={v.meaning} readOnly
-                    style={{ flex: 1, padding: "7px 10px", borderRadius: 7, border: "1px solid #e0d8cc", fontSize: 13, background: "#f9f9f9" }} />
+              editReadingSplit.map((group, gi) => (
+                <div key={gi} style={{ padding: "16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
+                  <div style={{ marginBottom: "14px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "10px" }}>
+                    <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 8px 0" }}>📖 Nhóm bài đọc {gi + 1}</h4>
+                    {group.imageUrl && (
+                      <div style={{ marginBottom: "10px" }}>
+                        <img src={group.imageUrl.startsWith("http") || group.imageUrl.startsWith("/uploads") ? (group.imageUrl.startsWith("http") ? group.imageUrl : `http://localhost:5000${group.imageUrl}`) : `http://localhost:5000/uploads/${group.imageUrl}`} alt="Passage visual" style={{ maxHeight: "200px", borderRadius: "8px" }} />
+                      </div>
+                    )}
+                    <div style={{ fontSize: "13px", color: "#334155", lineHeight: "1.6", whiteSpace: "pre-wrap", background: "#ffffff", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                      {group.text || "(Không có bài đọc)"}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {(group.subQuestions || []).map((sub: any, si: number) => (
+                      <div key={si} style={{ background: "#ffffff", padding: "12px", border: "1px solid #e2e8f0", borderLeft: "4px solid #000080", borderRadius: "8px" }}>
+                        <div style={{ fontWeight: 600, fontSize: "13px", color: "#000080", marginBottom: "6px" }}>
+                          Câu {si + 1}: {sub.question}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "4px" }}>
+                          {["A", "B", "C", "D"].map((lbl) => {
+                            const isCorrect = sub.correct === lbl;
+                            const choiceIndex = ["A", "B", "C", "D"].indexOf(lbl);
+                            return (
+                              <div key={lbl} style={{ fontSize: "12px", color: isCorrect ? "#107544" : "#475569", fontWeight: isCorrect ? 600 : 400 }}>
+                                <strong>{lbl}.</strong> {sub.answers?.[choiceIndex] || ""}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {sub.explanation && (
+                          <div style={{ fontSize: "11.5px", color: "#64748b", fontStyle: "italic", marginTop: "6px", background: "#f8fafc", padding: "6px 8px", borderRadius: "4px" }}>
+                            Giải thích: {sub.explanation}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))
             )}
-          </>
+          </div>
+        )}
+
+        {/* Listening Fill In */}
+        {normalizedType === "listening-fill-in" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {editFillIn.length === 0 ? (
+              <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
+                (Không có câu hỏi điền từ nào)
+              </p>
+            ) : (
+              editFillIn.map((group, gi) => (
+                <div key={gi} style={{ padding: "16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
+                  <div style={{ marginBottom: "12px" }}>
+                    <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 6px 0" }}>📝 Nhóm điền từ {gi + 1}</h4>
+                    <div style={{ padding: "12px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "13px", lineHeight: "1.6" }}>
+                      {group.text || "(Không có nội dung)"}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {(group.fillInAnswers || []).map((ans: string, ai: number) => (
+                      <div key={ai} style={{ background: "#f0f9ff", border: "1px solid #bae6fd", padding: "6px 12px", borderRadius: "6px", fontSize: "12.5px", color: "#0369a1", fontWeight: 500 }}>
+                        Ô trống {ai + 1}: <strong>{ans}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         )}
 
       </div>
