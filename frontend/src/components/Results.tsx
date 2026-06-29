@@ -32,11 +32,19 @@ export default function Results() {
           minh chứng rõ ràng cho chất lượng giảng dạy của chúng tôi.
         </p>
 
+        {/* 
+          Class "results-grid" chua toan bo hinh anh, style css responsive se dieu khien 
+          an cac hinh anh tu index >= 4 tro di tren thiet bi di dong (< 768px).
+        */}
         <div className="results-grid">
           {images.map((img, index) => {
             const fullUrl = `${import.meta.env.BASE_URL}${img.substring(1)}`;
             return (
-              <div key={index} className="result-card" onClick={() => setSelectedImage(fullUrl)}>
+              <div 
+                key={index} 
+                className={`result-card ${index >= 4 ? "hide-on-mobile" : ""}`}
+                onClick={() => setSelectedImage(fullUrl)}
+              >
                 <img src={fullUrl} alt={`Kết quả ${index + 1}`} />
               </div>
             );

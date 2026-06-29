@@ -1,4 +1,5 @@
-import "./AboutPage.css";
+import "./VeChuongToi.css";
+import "./VeChuongToi_TuongThich.css"; // Import file css tuong thich rieng
 import Footer from "../../components/Footer";
 import NavbarAuto from "../../components/NavbarAuto";
 import { FiEye, FiTarget, FiAward, FiCheckCircle, FiThumbsUp } from "react-icons/fi";
@@ -52,11 +53,12 @@ const cards = [
   },
 ];
 
-const AboutPage = () => {
+const VeChuongToi = () => {
   return (
     <>
       <NavbarAuto />
 
+      {/* Hero Banner duoc thiet ke tu dong thay doi va fix vua van khung hinh */}
       <div className="about-hero">
         <img src={`${import.meta.env.BASE_URL}image(16).png`} alt="FLIC Banner" />
       </div>
@@ -79,4 +81,4 @@ const AboutPage = () => {
   );
 };
 
-export default AboutPage;
+export default VeChuongToi;

@@ -203,10 +203,104 @@
   font-weight: bold;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE & MOBILE SLIDER */
+.desktop-only-flex {
+  display: flex;
+}
+
+.mobile-only-block {
+  display: none;
+}
+
 @media (max-width: 992px) {
-  .teachers-container {
-    flex-wrap: wrap;
-    gap: 24px;
+  .desktop-only-flex {
+    display: none; /* An grid tren mobile/tablet */
+  }
+
+  .mobile-only-block {
+    display: block; /* Hien thi slider tren mobile/tablet */
+  }
+
+  /* Kieu bao bọc slider */
+  .teachers-slider-wrapper {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .teachers-slider-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    position: relative;
+    max-width: 450px;
+    margin: 0 auto;
+  }
+
+  /* Style cho card dang hien active */
+  .teacher-card.active-slide {
+    width: 100%;
+    max-width: 320px;
+    margin: 0;
+    animation: slideFadeIn 0.4s ease;
+  }
+
+  /* Mũi tên điều hướng slider */
+  .slider-arrow {
+    background: #FFF2EB;
+    border: 1px solid #fbd0b9;
+    color: #F95800;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .slider-arrow:hover {
+    background: #F95800;
+    color: white;
+  }
+
+  /* Dấu chấm tròn bên dưới slider */
+  .slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .slider-dots .dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .slider-dots .dot.active {
+    background-color: #F95800;
+    width: 18px;
+    border-radius: 4px;
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0.5;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

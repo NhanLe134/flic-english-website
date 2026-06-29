@@ -415,7 +415,7 @@ export default function CoursePageQTV() {
 
   // Modal tạo lớp học
   const [showAddClass, setShowAddClass]       = useState(false)
-  const [addingToCourse, setAddingToCourse]   = useState<Course | null>(null)
+  const [addingToCourse]   = useState<Course | null>(null)
   const [lForm, setLForm] = useState({
     name: '',
     schedule: 'Thứ 2 & 4',
@@ -446,14 +446,14 @@ export default function CoursePageQTV() {
   }
 
   // ── Helpers lớp trong form ──────────────────────────────────────────────────
-  const addClassToForm = () => {
-    setClassesInForm(prev => [...prev, {
-      name: '', schedule: 'Thứ 2 & 4', maxStudents: 30,
-      maGiangVien: '',
-      teachers: {},
-      lessons: []
-    }])
-  }
+  // const addClassToForm = () => {
+  //   setClassesInForm(prev => [...prev, {
+  //     name: '', schedule: 'Thứ 2 & 4', maxStudents: 30,
+  //     maGiangVien: '',
+  //     teachers: {},
+  //     lessons: []
+  //   }])
+  // }
 
   const removeClassFromForm = (idx: number) => {
     setClassesInForm(prev => prev.filter((_, i) => i !== idx))
@@ -1097,16 +1097,7 @@ export default function CoursePageQTV() {
                       <td>{c.created}</td>
                       <td>
                         <div className={styles.actionBtns}>
-                          <button 
-                            className={styles.btnPrimary} 
-                            onClick={() => { 
-                              setAddingToCourse(c); 
-                              setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' }); 
-                              setShowAddClass(true); 
-                            }}
-                          >
-                            Thêm lớp học
-                          </button>
+                          {/* Button Thêm lớp học đã bị xóa theo yêu cầu */}
                         </div>
                       </td>
                     </tr>
@@ -1426,10 +1417,7 @@ export default function CoursePageQTV() {
                   </div>
                 ))}
 
-                <button className={styles.btnOutline} style={{ width: '100%', marginBottom: 16 }}
-                  onClick={addClassToForm}>
-                  + Thêm lớp học
-                </button>
+                {/* Button "+ Thêm lớp học" đã bị xóa theo yêu cầu */}
               </>
             )}
 

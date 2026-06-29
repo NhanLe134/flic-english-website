@@ -1,4 +1,4 @@
-﻿import "./Register.css";
+import "./Register.css";
 import Navbar from "../../components/Navbar";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
@@ -147,7 +147,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
 
   const cardContent = (
     <div className="register-card">
-      <h2 className="register-title">Đăng ký tài khoản</h2>
+      {!isModal && <h2 className="register-title">Đăng ký tài khoản</h2>}
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}

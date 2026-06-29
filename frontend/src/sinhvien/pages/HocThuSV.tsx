@@ -37,7 +37,7 @@ export default function HocThuSV() {
   };
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "30px 20px 0 20px", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "12px 20px 0 20px", fontFamily: "Inter, sans-serif" }}>
       {/* Breadcrumb */}
       <nav className="courses-breadcrumb" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", marginTop: "0px", marginBottom: "24px" }}>
         <Link to={homePath} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Trang chủ</Link>

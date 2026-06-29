@@ -1,11 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiChevronDown, FiBookOpen, FiEdit3 } from "react-icons/fi";
+import { FiBookOpen, FiEdit3 } from "react-icons/fi";
 import "./navbar.css";
+import "./Navbar_TuongThich.css"; // Import file css tuong thich mobile/tablet
 
 function Navbar() {
-  const [showTrialDropdown, setShowTrialDropdown] = useState(false);
+  const [showTrialDropdown, setShowTrialDropdown] = useState(false); // Them lai state de tracking click tren mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State bat/tat menu mobile
   const location = useLocation();
+
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setShowTrialDropdown(false);
+    };
+    document.addEventListener("click", handleDocumentClick);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick);
+    };
+  }, []);
+
   const authMode = new URLSearchParams(location.search).get("auth");
 
   const isActive = (path: string) => location.pathname === path;
@@ -18,49 +31,68 @@ function Navbar() {
     location.pathname.startsWith("/coursehome");
   const isTrialActive = location.pathname === "/hoc-thu" || location.pathname === "/test-thu";
 
+  // Ham toggle menu mobile
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+
+
   return (
     <header className="navbar">
       <div className="nav-wrapper">
-        <Link to="/" className="logo">
+        <Link to="/" className="logo" onClick={() => setIsMobileMenuOpen(false)}>
           <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} alt="FLIC" className="logo-img" />
         </Link>
 
-        <ul className="navv-menu">
+        {/* Nut Hamburger Trigger cho thiet bi di dong */}
+        <button 
+          className={`nav-toggle-btn ${isMobileMenuOpen ? "active" : ""}`} 
+          onClick={toggleMobileMenu}
+          aria-label="Toggle navigation menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        {/* Them responsive-active class khi menu duoc bat */}
+        <ul className={`navv-menu ${isMobileMenuOpen ? "responsive-active" : ""}`}>
           <li>
-            <Link to="/" className={isHome ? "active" : ""}>Trang chủ</Link>
+            <Link to="/" className={isHome ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Trang chủ</Link>
           </li>
           <li>
-            <Link to="/about" className={isAbout ? "active" : ""}>Về Chúng Tôi</Link>
+            <Link to="/about" className={isAbout ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Về Chúng Tôi</Link>
           </li>
           <li>
-            <Link to="/courses" className={isCourses ? "active" : ""}>Các Khóa Học</Link>
+            <Link to="/courses" className={isCourses ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Các Khóa Học</Link>
           </li>
 
-          {/* Học thử Dropdown */}
-          <li
-            className="nav-dropdown-wrap"
-            onMouseEnter={() => setShowTrialDropdown(true)}
-            onMouseLeave={() => setShowTrialDropdown(false)}
-          >
-            <span className={`nav-dropdown-trigger ${isTrialActive ? "active" : ""}`}>
-              Học & thi thử <FiChevronDown className={`nav-chevron ${showTrialDropdown ? "open" : ""}`} />
+          <li className="nav-dropdown-wrap">
+            <span 
+              className={`nav-dropdown-trigger ${isTrialActive ? "active" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowTrialDropdown(!showTrialDropdown);
+              }}
+            >
+              Học & thi thử <span className="nav-chevron-space" style={{ width: "12px", display: "inline-block" }}></span>
             </span>
-            {showTrialDropdown && (
-              <div className="nav-dropdown">
-                <div className="nav-dropdown-inner">
-                  <Link to="/hoc-thu" onClick={() => setShowTrialDropdown(false)} className={isActive("/hoc-thu") ? "active" : ""}>
-                    <FiBookOpen size={16} /> Học thử
-                  </Link>
-                  <Link to="/test-thu" onClick={() => setShowTrialDropdown(false)} className={isActive("/test-thu") ? "active" : ""}>
-                    <FiEdit3 size={16} /> Làm bài test
-                  </Link>
-                </div>
+            <div className={`nav-dropdown ${showTrialDropdown ? "mobile-show" : ""}`}>
+              <div className="nav-dropdown-inner">
+                <Link to="/hoc-thu" onClick={() => { setIsMobileMenuOpen(false); setShowTrialDropdown(false); }} className={isActive("/hoc-thu") ? "active" : ""}>
+                  <FiBookOpen size={16} className="anicon" /> Học thử
+                </Link>
+                <Link to="/test-thu" onClick={() => { setIsMobileMenuOpen(false); setShowTrialDropdown(false); }} className={isActive("/test-thu") ? "active" : ""}>
+                  <FiEdit3 size={16} className="anicon" /> Làm bài test
+                </Link>
               </div>
-            )}
+            </div>
           </li>
 
-          <li><Link to="?auth=register" className={authMode === "register" ? "active" : ""}>Đăng ký</Link></li>
-          <li><Link to="?auth=login" className={authMode === "login" ? "active" : ""}>Đăng nhập</Link></li>
+          <li><Link to="?auth=register" className={authMode === "register" ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Đăng ký</Link></li>
+          <li><Link to="?auth=login" className={authMode === "login" ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Đăng nhập</Link></li>
         </ul>
       </div>
     </header>

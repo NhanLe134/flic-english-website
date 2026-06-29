@@ -1,0 +1,16 @@
+{
+  "watch": [
+    "server.js",
+    "config/**/*.js",
+    "controllers/**/*.js",
+    "models/**/*.js",
+    "routes/**/*.js"
+  ],
+  "ignore": [
+    "node_modules",
+    "uploads",
+    "test_insert.js",
+    "check_student_submission.js"
+  ],
+  "delay": "1000"
+}

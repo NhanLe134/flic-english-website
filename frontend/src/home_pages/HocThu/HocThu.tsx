@@ -21,7 +21,7 @@ const HocThu = () => {
   return (
     <>
       <NavbarAuto />
-      <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
+      <div style={{ padding: "0", minHeight: "80vh", background: "#f8fafc" }}>
         <HocThuSV />
       </div>
       <Footer />

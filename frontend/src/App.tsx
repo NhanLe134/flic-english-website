@@ -1,9 +1,9 @@
 import { useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import TeacherLayout from "./giangvien/layout/TeacherLayout"
-import Home from "./home_pages/Home/Home"
-import AboutPage from "./home_pages/AboutPage/AboutPage"
-import CoursesPageHome from "./home_pages/CoursesPageHome/CoursesPageHome"
+import TrangChu from "./home_pages/TrangChu/TrangChu"
+import VeChuongToi from "./home_pages/VeChuongToi/VeChuongToi"
+import CoursesPageHome from "./home_pages/DSKhoaHoc/DSKhoaHoc"
 import CoursesCategoryPage from "./home_pages/CoursesCategoryPage/CoursesCategoryPage"
 import CourseDetailHome from "./home_pages/CourseDetailHome/CourseDetailHome"
 import RegisterSuccess from "./home_pages/RegisterSuccess/RegisterSuccess"
@@ -82,7 +82,7 @@ const ClassDetailTrialPublic = () => {
   return (
     <>
       <NavbarAuto />
-      <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
+      <div style={{ padding: "0", minHeight: "80vh", background: "#f8fafc" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <ClassDetailTrial />
         </div>
@@ -109,8 +109,8 @@ function App() {
     <BrowserRouter basename="/flic-english-website">
       <Routes>
         {/* PUBLIC */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<AboutPage />} />
+        <Route path="/" element={<TrangChu />} />
+        <Route path="/about" element={<VeChuongToi />} />
         <Route path="/courses" element={<CoursesPageHome />} />
         <Route path="/courses-category/:categoryKey" element={<CoursesCategoryPage />} />
         <Route path="/coursehome/:id" element={<CourseDetailHome />} />

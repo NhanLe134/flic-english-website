@@ -1,4 +1,4 @@
-﻿import NavbarAuto from "../../components/NavbarAuto";
+import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
 import "./CoursesCategoryPage.css";
 import { useState, useEffect } from "react";
@@ -176,7 +176,7 @@ const CoursesCategoryPage = () => {
             <div className="cat-grid-layout">
               {filteredCourses.map((c) => (
                 <div className="cat-course-card" key={c.MaKhoaHoc}>
-                  <img src={meta.image} alt={c.TenKhoaHoc} />
+                  <img src={`${import.meta.env.BASE_URL}${meta.image.substring(1)}`} alt={c.TenKhoaHoc} />
 
                   <div className="cat-card-content">
                     <h2>{c.TenKhoaHoc}</h2>

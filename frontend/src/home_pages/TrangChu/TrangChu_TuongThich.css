@@ -1,0 +1,223 @@
+/* 
+  Style tuong thich cho TrangChu tren thiet bi di dong (Mobile) va may tinh bang (Tablet).
+  Mobile: < 768px
+  Tablet: 768px - 1024px
+*/
+
+/* ==========================================================================
+   1. TABLET LAYOUT (768px - 1024px)
+   ========================================================================== */
+@media screen and (max-width: 1024px) {
+  /* Tinh chinh container chung cho cac component trang chu */
+  .hero-container,
+  .about-inner-container,
+  .results-container,
+  .teachers-container,
+  .footer-container {
+    padding: 0 24px;
+    gap: 30px;
+  }
+
+  /* --- Hero Section --- */
+  .hero-left h1 {
+    font-size: 38px;
+  }
+  .hero-left p {
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  .hero-stats {
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .hero-stats h3 {
+    font-size: 26px;
+  }
+  .hero-right img {
+    width: 320px;
+  }
+
+  /* --- About Section --- */
+  .about-inner-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 40px;
+  }
+  .about-left, .about-right {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .about-left-card {
+    aspect-ratio: 1.8;
+  }
+  .about-title-underline {
+    margin: 0 auto 24px;
+  }
+
+  /* --- Results Section --- */
+  .results-title {
+    font-size: 32px;
+  }
+  .results-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  /* --- Teachers Section --- */
+  .teachers h2 {
+    font-size: 30px;
+  }
+  .teachers-container {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+  }
+  .teacher-card {
+    width: calc(50% - 12px);
+    max-width: 340px;
+  }
+
+  /* --- CTA Section --- */
+  .cta-section h2 {
+    font-size: 24px;
+  }
+}
+
+/* ==========================================================================
+   2. MOBILE LAYOUT (< 768px)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+  /* Tinh chinh padding container cho thiet bi di dong */
+  .hero-container,
+  .about-inner-container,
+  .results-container,
+  .teachers-container,
+  .footer-container {
+    padding: 0 16px;
+  }
+
+  /* --- Hero Section --- */
+  .hero {
+    padding: 30px 0 60px;
+  }
+  .hero-container {
+    flex-direction: column-reverse;
+    text-align: center;
+    gap: 30px;
+  }
+  .hero-left, .hero-right {
+    width: 100%;
+  }
+  .hero-right {
+    justify-content: center;
+  }
+  .hero-right img {
+    width: 100%;
+    max-width: 180px; /* Giam kich thuoc logo cho phu hop voi man hinh dien thoai */
+  }
+  .hero-left h1 {
+    font-size: 28px;
+    margin: 12px 0 16px;
+    line-height: 1.3;
+  }
+  .hero-left p {
+    font-size: 14px;
+    margin: 0 auto 24px;
+    max-width: 100%;
+  }
+  .hero-stats {
+    justify-content: space-around;
+    gap: 12px;
+  }
+  .hero-stats h3 {
+    font-size: 22px;
+  }
+  .hero-stats span {
+    font-size: 12px;
+  }
+  .hero-buttons {
+    justify-content: center;
+    gap: 12px;
+  }
+  .btn-login, .btn-register {
+    font-size: 15px;
+    padding: 10px 24px;
+    width: 100%;
+    max-width: 150px;
+  }
+
+  /* --- About Section --- */
+  .about {
+    padding: 60px 0;
+  }
+  .about-right h2 {
+    font-size: 32px;
+  }
+  .about-right p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .about-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .about-stat-item {
+    padding: 16px;
+  }
+
+  /* --- Results Section --- */
+  .results-section {
+    padding: 40px 0 60px;
+  }
+  .results-title {
+    font-size: 24px;
+  }
+  .results-subtitle {
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .result-card {
+    border-radius: 12px;
+  }
+  .result-card img {
+    border-radius: 12px;
+  }
+
+  /* --- Teachers Section --- */
+  .teachers {
+    padding: 60px 0;
+  }
+  .teachers h2 {
+    font-size: 24px;
+  }
+  .teachers-subtitle {
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+  .teachers-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .teacher-card {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* --- CTA Section --- */
+  .cta-section {
+    padding: 30px 16px;
+  }
+  .cta-section h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  .cta-desc {
+    font-size: 13px;
+  }
+}

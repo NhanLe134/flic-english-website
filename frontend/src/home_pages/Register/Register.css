@@ -23,6 +23,17 @@
   border: 1px solid #e0d4c3;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
+  height: 100%; /* Cho phep keo gian vua khop wrapper */
+  max-height: inherit;
+}
+
+/* Khi nam trong modal, loai bo border va padding lon */
+.auth-modal-card-wrapper .register-card {
+  border: none;
+  box-shadow: none;
+  width: 100%;
+  padding: 0;
+  border-radius: 0;
 }
 
 .register-logo {
@@ -61,11 +72,11 @@
 .form-wrapper input {
   width: 100%;
   box-sizing: border-box;
-  padding: 13px 16px;
+  padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid #e0d4c3;
   background: #fdf8f3;
-  font-size: 16px;
+  font-size: 15px;
   outline: none;
   transition: 0.2s;
 }

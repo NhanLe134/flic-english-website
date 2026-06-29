@@ -1,7 +1,7 @@
 import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
-import "./CoursesPageHome.css";
-import { Link } from "react-router-dom";
+import "./DSKhoaHoc.css";
+import "./DSKhoaHoc_TuongThich.css"; // Import file css tuong thich rieng
 
 const staticCategories = [
   {
@@ -30,19 +30,14 @@ const staticCategories = [
   }
 ];
 
-const CoursesPageHome = () => {
+const DSKhoaHoc = () => {
   return (
     <>
       <NavbarAuto />
 
       <div className="courses-page-wrapper">
         <div className="courses-container">
-          {/* Breadcrumb */}
-          <nav className="courses-breadcrumb">
-            <Link to="/">Trang chủ</Link>
-            <span className="sep">›</span>
-            <span className="active">Các khóa học</span>
-          </nav>
+          {/* Breadcrumb da duoc loai bo theo yeu cau cua ban */}
 
           <h1 className="courses-title">CÁC KHÓA HỌC</h1>
 
@@ -50,7 +45,7 @@ const CoursesPageHome = () => {
             {staticCategories.map((cat) => (
               <div className="course-item-container" key={cat.key}>
                 <div className="course-item">
-                  <img src={cat.image} alt={cat.title} />
+                  <img src={`${import.meta.env.BASE_URL}${cat.image.substring(1)}`} alt={cat.title} />
 
                   <div className="course-content">
                     <h2>{cat.title}</h2>
@@ -74,4 +69,4 @@ const CoursesPageHome = () => {
   );
 };
 
-export default CoursesPageHome;
+export default DSKhoaHoc;

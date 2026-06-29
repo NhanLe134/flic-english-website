@@ -1,16 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FiChevronDown, FiBookOpen, FiEdit3 } from "react-icons/fi";
+import { FiBookOpen, FiEdit3 } from "react-icons/fi";
 import "./NavbarLogin.css";
+import "./NavbarLogin_TuongThich.css"; // Import file css tuong thich mobile/tablet
+
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
-const user = import.meta.env.BASE_URL + "user.png";
+const userImg = import.meta.env.BASE_URL + "user.png";
 
 function NavbarLogin() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showTrialDropdown, setShowTrialDropdown] = useState(false);
+  const [showTrialDropdown, setShowTrialDropdown] = useState(false); // Them lai state de tracking click mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State bat/tat menu mobile
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setShowTrialDropdown(false);
+    };
+    document.addEventListener("click", handleDocumentClick);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick);
+    };
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
   const isTrialActive = location.pathname === "/hoc-thu" || location.pathname === "/test-thu";
@@ -19,7 +32,7 @@ function NavbarLogin() {
   try {
     currentUser = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
   } catch (e) {
-    console.error("Error parsing user from sessionStorage", e);
+    console.error("Lỗi parse thông tin user từ sessionStorage", e);
   }
   const hoTen = currentUser?.HoTen || "Học Viên";
   const tenNgan = hoTen.split(" ").pop() || hoTen;
@@ -30,46 +43,65 @@ function NavbarLogin() {
     navigate("/login");
   };
 
+  // Ham toggle menu mobile
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+
+
   return (
     <nav className="navbar-login">
 
-      <div className="nav-logo">
+      <div className="nav-logo" onClick={() => setIsMobileMenuOpen(false)}>
         <Link to="/"><img src={logo} alt="FLIC logo" /></Link>
       </div>
 
-      <ul className="nav-menu">
-        <li><Link to="/" className={isActive("/") ? "active" : ""}>Trang chủ</Link></li>
-        <li><Link to="/about" className={isActive("/about") ? "active" : ""}>Về Chúng Tôi</Link></li>
-        <li><Link to="/courses" className={isActive("/courses") || location.pathname.startsWith("/courses-category/") ? "active" : ""}>Các Khóa Học</Link></li>
+      {/* Nut Hamburger Trigger cho thiet bi di dong */}
+      <button 
+        className={`nav-toggle-btn ${isMobileMenuOpen ? "active" : ""}`} 
+        onClick={toggleMobileMenu}
+        aria-label="Toggle navigation menu"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
-        {/* Học thử Dropdown */}
-        <li
-          className="nav-dropdown-wrap"
-          onMouseEnter={() => setShowTrialDropdown(true)}
-          onMouseLeave={() => setShowTrialDropdown(false)}
-        >
-          <span className={`nav-dropdown-trigger ${isTrialActive ? "active" : ""}`}>
-            Học & thi thử <FiChevronDown className={`nav-chevron ${showTrialDropdown ? "open" : ""}`} />
+      {/* Them responsive-active class khi menu mobile duoc bat */}
+      <ul className={`nav-menu ${isMobileMenuOpen ? "responsive-active" : ""}`}>
+        <li><Link to="/" className={isActive("/") ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Trang chủ</Link></li>
+        <li><Link to="/about" className={isActive("/about") ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Về Chúng Tôi</Link></li>
+        <li><Link to="/courses" className={isActive("/courses") || location.pathname.startsWith("/courses-category/") ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Các Khóa Học</Link></li>
+
+        <li className="nav-dropdown-wrap">
+          <span 
+            className={`nav-dropdown-trigger ${isTrialActive ? "active" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowTrialDropdown(!showTrialDropdown);
+            }}
+          >
+            Học & thi thử <span className="nav-chevron-space" style={{ width: "12px", display: "inline-block" }}></span>
           </span>
-          {showTrialDropdown && (
-            <div className="nav-dropdown">
-              <div className="nav-dropdown-inner">
-                <Link to="/hoc-thu" onClick={() => setShowTrialDropdown(false)} className={isActive("/hoc-thu") ? "active" : ""}>
-                  <FiBookOpen size={16} /> Học thử
-                </Link>
-                <Link to="/test-thu" onClick={() => setShowTrialDropdown(false)} className={isActive("/test-thu") ? "active" : ""}>
-                  <FiEdit3 size={16} /> Làm bài test
-                </Link>
-              </div>
+          <div className={`nav-dropdown ${showTrialDropdown ? "mobile-show" : ""}`}>
+            <div className="nav-dropdown-inner">
+              <Link to="/hoc-thu" onClick={() => { setIsMobileMenuOpen(false); setShowTrialDropdown(false); }} className={isActive("/hoc-thu") ? "active" : ""}>
+                <FiBookOpen size={16} className="anicon" /> Học thử
+              </Link>
+              <Link to="/test-thu" onClick={() => { setIsMobileMenuOpen(false); setShowTrialDropdown(false); }} className={isActive("/test-thu") ? "active" : ""}>
+                <FiEdit3 size={16} className="anicon" /> Làm bài test
+              </Link>
             </div>
-          )}
+          </div>
         </li>
       </ul>
 
       {/* User box với dropdown */}
       <div className="user-box" onClick={() => setShowUserMenu(!showUserMenu)}
         style={{ position: "relative", cursor: "pointer" }}>
-        <img src={user} alt="user avatar" />
+        <img src={userImg} alt="user avatar" />
         <span>{tenNgan}</span>
 
         {showUserMenu && (
@@ -80,7 +112,7 @@ function NavbarLogin() {
           }}>
             <Link to="/profile"
               style={{ display: "block", padding: "10px 16px", fontSize: 14, color: "#333", textDecoration: "none" }}
-              onClick={() => setShowUserMenu(false)}
+              onClick={() => { setShowUserMenu(false); setIsMobileMenuOpen(false); }}
             >
               👤 Thông tin cá nhân
             </Link>
@@ -88,6 +120,7 @@ function NavbarLogin() {
               onClick={(e) => {
                 e.stopPropagation();
                 setShowUserMenu(false);
+                setIsMobileMenuOpen(false);
                 setShowLogoutModal(true); // ← mở modal thay vì logout thẳng
               }}
               style={{

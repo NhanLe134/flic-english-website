@@ -1,4 +1,4 @@
-﻿import "./ForgotPassword.css";
+import "./ForgotPassword.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -72,8 +72,8 @@ const ForgotPassword = ({ isModal = false }: ForgotPasswordProps) => {
   const cardContent = (
     <div className="forgot-card">
 
-      <h2 className="forgot-title">QUÊN MẬT KHẨU</h2>
-      <p className="forgot-text">Nhập email của bạn để nhận mật khẩu mới</p>
+      {!isModal && <h2 className="forgot-title">QUÊN MẬT KHẨU</h2>}
+      {!isModal && <p className="forgot-text">Nhập email của bạn để nhận mật khẩu mới</p>}
 
       {/* Success */}
       {success && (

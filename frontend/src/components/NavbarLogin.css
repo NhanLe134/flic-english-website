@@ -34,13 +34,19 @@
   transition: color 0.2s;
 }
 
-.nav-menu a:hover {
-  color: #642002;
-}
-
 .nav-menu a.active,
 .nav-dropdown-trigger.active {
   color: #000080 !important;
+}
+
+@media (hover: hover) {
+  .nav-menu a:hover {
+    color: #000080;
+  }
+
+  .nav-dropdown-trigger:hover {
+    color: #000080;
+  }
 }
 
 .user-box {
@@ -80,14 +86,7 @@
   color: #000080;
 }
 
-.nav-chevron {
-  font-size: 11px;
-  transition: transform 0.2s;
-}
 
-.nav-dropdown-wrap:hover .nav-chevron {
-  transform: rotate(180deg);
-}
 
 .nav-dropdown {
   position: absolute;
@@ -98,7 +97,12 @@
   background: transparent;
   min-width: 180px;
   z-index: 1000;
-  animation: navDropIn 0.15s ease;
+  display: none; /* Mac dinh an */
+}
+
+/* Kich hoat khi co class mobile-show duoc them tu react click */
+.nav-dropdown-wrap .nav-dropdown.mobile-show {
+  display: block !important;
 }
 
 .nav-dropdown-inner {
@@ -146,7 +150,4 @@
   background: #FFF2EB;
   color: #F95800 !important;
 }
-
-.nav-chevron.open {
-  transform: rotate(180deg);
-}
+

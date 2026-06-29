@@ -33,24 +33,39 @@ const AuthModal = () => {
 
   return (
     <div className="auth-modal-backdrop" onClick={handleClose}>
-      <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
-        <button 
-          className="auth-modal-close-btn" 
-          onClick={handleClose} 
-          aria-label="Đóng"
-          type="button"
-        >
-          &times;
-        </button>
-        {authType === "login" && (
-          <Login isModal={true} onClose={handleClose} />
-        )}
-        {authType === "register" && (
-          <Register isModal={true} onClose={handleClose} />
-        )}
-        {authType === "forgot" && (
-          <ForgotPassword isModal={true} onClose={handleClose} />
-        )}
+      {/* Wrapper card co relative de nut close dinh dung goc card */}
+      <div className="auth-modal-card-wrapper" onClick={(e) => e.stopPropagation()}>
+        
+        {/* Khoi Header co dinh chua ca tieu de va nut close X - can giua chieu doc va thang hang ngang */}
+        <div className="auth-modal-header">
+          <h2 className="auth-modal-header-title">
+            {authType === "login" && "Đăng nhập"}
+            {authType === "register" && "Đăng ký tài khoản"}
+            {authType === "forgot" && "Quên mật khẩu"}
+          </h2>
+          <button 
+            className="auth-modal-close-btn-new" 
+            onClick={handleClose} 
+            aria-label="Đóng"
+            type="button"
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* Khoi Body co cuon scroll tu dong ben duoi */}
+        <div className="auth-modal-body">
+          {authType === "login" && (
+            <Login isModal={true} onClose={handleClose} />
+          )}
+          {authType === "register" && (
+            <Register isModal={true} onClose={handleClose} />
+          )}
+          {authType === "forgot" && (
+            <ForgotPassword isModal={true} onClose={handleClose} />
+          )}
+        </div>
+
       </div>
     </div>
   );

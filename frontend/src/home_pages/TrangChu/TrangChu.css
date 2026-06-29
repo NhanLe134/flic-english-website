@@ -1,0 +1,5 @@
+/* Style mac dinh cho trang chu (Desktop/Laptop) */
+.trang-chu {
+  width: 100%;
+  overflow-x: hidden;
+}

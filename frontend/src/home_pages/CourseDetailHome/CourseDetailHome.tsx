@@ -1,4 +1,4 @@
-﻿import "./CourseDetailHome.css";
+import "./CourseDetailHome.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import NavbarAuto from "../../components/NavbarAuto";
@@ -12,7 +12,10 @@ const courseImages: Record<string, string> = {
   VSTEP:   "/image(19).png",
   General: "/image(20).png",
 }
-const getImage = (trinhDo: string) => courseImages[trinhDo] || "/image(17).png"
+const getImage = (trinhDo: string) => {
+  const path = courseImages[trinhDo] || "/image(17).png";
+  return `${import.meta.env.BASE_URL}${path.substring(1)}`;
+}
 
 function CourseDetail() {
   const navigate  = useNavigate()

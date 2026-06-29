@@ -42,6 +42,17 @@
   gap: 30px;
 }
 
+@media screen and (max-width: 768px) {
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .result-card.hide-on-mobile {
+    display: none;
+  }
+}
+
 .result-card {
   border-radius: 20px;
   overflow: hidden;
