@@ -1267,6 +1267,185 @@ app.post("/tailieu", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
+// Lấy danh sách bản nháp của giảng viên
+app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
+  try {
+    const { maNguoiDung } = req.params;
+    const pool = await poolPromise;
+
+    // 1. Ánh xạ MaNguoiDung sang MaGiangVien
+    const gvResult = await pool.request()
+      .input("maNguoiDung", maNguoiDung)
+      .query(`SELECT MaGiangVien FROM GIANGVIEN WHERE MaNguoiDung = @maNguoiDung`);
+    
+    if (gvResult.recordset.length === 0) {
+      return res.json({ lessons: [], exercises: [], exams: [] });
+    }
+    const maGiangVien = gvResult.recordset[0].MaGiangVien;
+
+    // 2. Lấy danh sách bài giảng bản nháp (lessons)
+    const lessonsResult = await pool.request()
+      .input("maGiangVien", maGiangVien)
+      .query(`
+        SELECT 
+          b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai,
+          bh.TenBuoiHoc, lh.TenLop, COALESCE(kh.TenKhoaHoc, kh2.TenKhoaHoc) AS TenKhoaHoc
+        FROM BAIHOCKHOAHOC b
+        LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
+        LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
+        LEFT JOIN KHOAHOC kh ON b.MaKhoaHoc = kh.MaKhoaHoc
+        LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+        LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
+        WHERE b.MaGiangVien = @maGiangVien AND (b.TrangThai = 'draft' OR b.TrangThai = N'Nháp')
+        ORDER BY b.MaBaiHoc DESC
+      `);
+
+    // 3. Lấy danh sách bài tập bản nháp (exercises)
+    const exercisesResult = await pool.request()
+      .input("maGiangVien", maGiangVien)
+      .query(`
+        SELECT 
+          bt.MaBaiTap, bt.TieuDe AS Title, bt.DangBai AS Type, 
+          CONVERT(varchar, bt.NgayTao, 103) AS CreatedDate, bt.TrangThai,
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc
+        FROM BAITAP bt
+        LEFT JOIN BAIHOCKHOAHOC b ON bt.MaBaiHoc = b.MaBaiHoc
+        LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
+        LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
+        LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+        LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
+        WHERE bt.MaGiangVien = @maGiangVien AND (bt.TrangThai = 'draft' OR bt.TrangThai = N'Nháp')
+        ORDER BY bt.MaBaiTap DESC
+      `);
+
+    // 4. Lấy danh sách bài kiểm tra bản nháp (exams)
+    const examsResult = await pool.request()
+      .input("maGiangVien", maGiangVien)
+      .query(`
+        SELECT 
+          bk.MaBaiKiemTra AS MaBaiTap, bk.TenBai AS Title, 'Exam' AS Type, 
+          CONVERT(varchar, bk.NgayBatDau, 103) AS CreatedDate, bk.TrangThai,
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc
+        FROM BAIKIEMTRA bk
+        LEFT JOIN BUOIHOC bh ON bk.MaBuoiHoc = bh.MaBuoiHoc
+        LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
+        LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+        LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
+        WHERE bk.MaGiangVien = @maGiangVien AND (bk.TrangThai = 'draft' OR bk.TrangThai = N'Nháp' OR bk.TrangThaiDuyet = N'Nháp')
+        ORDER BY bk.MaBaiKiemTra DESC
+      `);
+
+    res.json({
+      lessons: lessonsResult.recordset,
+      exercises: exercisesResult.recordset,
+      exams: examsResult.recordset
+    });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Cập nhật trạng thái bài tập / bài kiểm tra
+app.put("/baitap/:id/status", async (req, res) => {
+  try {
+    const { TrangThai } = req.body;
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    const finalTrangThaiDuyet = TrangThai === "published" ? 'Đã duyệt' : (TrangThai === "rejected" ? 'Từ chối' : 'Chờ duyệt');
+
+    let targetId = id;
+    let isExam = false;
+    let identified = false;
+
+    if (typeof id === "string") {
+      if (id.startsWith("exam-")) {
+        targetId = parseInt(id.replace("exam-", ""), 10);
+        isExam = true;
+        identified = true;
+      } else if (id.startsWith("baitap-")) {
+        targetId = parseInt(id.replace("baitap-", ""), 10);
+        isExam = false;
+        identified = true;
+      }
+    }
+
+    if (!identified) {
+      const examCheck = await pool.request()
+        .input("id", targetId)
+        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+      if (examCheck.recordset.length > 0) {
+        isExam = true;
+      }
+    }
+
+    if (isExam) {
+      await pool.request()
+        .input("id", targetId)
+        .input("TrangThai", TrangThai)
+        .input("TrangThaiDuyet", finalTrangThaiDuyet)
+        .query(`UPDATE BAIKIEMTRA SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiKiemTra = @id`);
+    } else {
+      await pool.request()
+        .input("id", targetId)
+        .input("TrangThai", TrangThai)
+        .input("TrangThaiDuyet", finalTrangThaiDuyet)
+        .query(`UPDATE BAITAP SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiTap = @id`);
+    }
+
+    res.json({ message: "Cập nhật thành công" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Xóa bài tập / bài kiểm tra
+app.delete("/baitap/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    let targetId = id;
+    let isExam = false;
+    let identified = false;
+
+    if (typeof id === "string") {
+      if (id.startsWith("exam-")) {
+        targetId = parseInt(id.replace("exam-", ""), 10);
+        isExam = true;
+        identified = true;
+      } else if (id.startsWith("baitap-")) {
+        targetId = parseInt(id.replace("baitap-", ""), 10);
+        isExam = false;
+        identified = true;
+      }
+    }
+
+    if (!identified) {
+      const examCheck = await pool.request()
+        .input("id", targetId)
+        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+      if (examCheck.recordset.length > 0) {
+        isExam = true;
+      }
+    }
+
+    if (isExam) {
+      await pool.request()
+        .input("id", targetId)
+        .query("DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id");
+    } else {
+      await pool.request()
+        .input("id", targetId)
+        .query("DELETE FROM BAITAP WHERE MaBaiTap = @id");
+    }
+
+    res.json({ message: "Xóa thành công" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 /* ===== GIẢNG VIÊN ===== */
 app.get("/giangvien/:maNguoiDung", async (req, res) => {
   try {
@@ -1961,7 +2140,10 @@ app.post("/baitap/create", async (req, res) => {
     }
 
     const finalTrangThaiCreate = TrangThai || "pending";
-    const finalTrangThaiDuyetCreate = finalTrangThaiCreate === "published" ? 'Đã duyệt' : (finalTrangThaiCreate === "rejected" ? 'Từ chối' : 'Chờ duyệt');
+    const finalTrangThaiDuyetCreate = 
+      finalTrangThaiCreate === "published" ? 'Đã duyệt' : 
+      (finalTrangThaiCreate === "rejected" ? 'Từ chối' : 
+      (finalTrangThaiCreate === "draft" ? 'Nháp' : 'Chờ duyệt'));
 
     const isExamMode = (Type === "exam" || IsExam === 1 || IsExam === true || req.body.LaBaiKiemTra === 1 || req.body.LaBaiKiemTra === true);
 

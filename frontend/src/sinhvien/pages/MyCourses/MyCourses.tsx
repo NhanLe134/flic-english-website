@@ -422,14 +422,10 @@ function MyCourses() {
                               documents,
                               hasContent: lectures.length > 0 || exercises.length > 0 || documents.length > 0
                             };
-                          }).filter((l: any) => l.hasContent);
+                          });
 
                           if (totalLessons === 0) {
                             return <div className="mc-details-empty">Lớp học chưa cập nhật buổi học.</div>;
-                          }
-
-                          if (uncompletedLessons.length === 0) {
-                            return <div className="mc-details-empty">Bạn đã hoàn thành tất cả các nội dung trong lớp học này.</div>;
                           }
 
                           return (
@@ -443,6 +439,11 @@ function MyCourses() {
                                     </div>
 
                                     <div className="mc-lesson-content-grid">
+                                      {l.lectures.length === 0 && l.exercises.length === 0 && l.documents.length === 0 && (
+                                        <div style={{ color: "#94a3b8", fontSize: "13px", padding: "8px 0", gridColumn: "1 / -1" }}>
+                                          Buổi học chưa có nội dung cần hoàn thành.
+                                        </div>
+                                      )}
                                       {/* Lectures */}
                                       {l.lectures.map((lec: any) => (
                                         <Link

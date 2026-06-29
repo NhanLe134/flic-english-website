@@ -716,7 +716,7 @@ export default function CoursePageQTV() {
           if (newCls && cls.lessons.length > 0) {
             for (const lesson of cls.lessons) {
               if (!lesson.title.trim()) continue
-              await fetch(`${API}/qtv/lesson`, {
+              await fetch(`${API}/qtv/buoihoc`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   TenBuoiHoc: lesson.title, MaLopHoc: newCls.MaLopHoc,
@@ -931,7 +931,7 @@ export default function CoursePageQTV() {
     if (!lessonForm.title.trim()) { alert('Vui lòng nhập tên buổi học!'); return }
     if (!detailClass) return
     try {
-      await fetch(`${API}/qtv/lesson`, {
+      await fetch(`${API}/qtv/buoihoc`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           TenBuoiHoc: lessonForm.title, MaLopHoc: detailClass.id, MoTa: lessonForm.desc,
