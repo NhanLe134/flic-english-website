@@ -23,7 +23,7 @@ interface QuizQuestion {
 }
 
 interface MockExercise {
-  id: string;
+  id: string | number;
   name: string;
   completed: boolean;
   score?: string;
@@ -31,7 +31,7 @@ interface MockExercise {
 }
 
 interface LectureData {
-  id: string;
+  id: string | number;
   name: string;
   videoWatched: boolean;
   exercises: MockExercise[];
@@ -39,14 +39,14 @@ interface LectureData {
 }
 
 interface DocumentData {
-  id: string;
+  id: string | number;
   name: string;
   content: string;
   completed: boolean;
 }
 
 interface GenericQuiz {
-  id: string;
+  id: string | number;
   name: string;
   questions: QuizQuestion[];
   completed: boolean;
@@ -73,169 +73,7 @@ interface ClassProgress {
   sessions: SessionData[];
 }
 
-const INITIAL_CLASSES: ClassProgress[] = [
-  {
-    id: 2,
-    className: "Lớp 2 - TOEIC Foundation",
-    courseName: "Khóa học Luyện thi TOEIC",
-    schedule: "Thứ 3,5,7 - 9:00-10:30",
-    totalStudents: 45,
-    teacherName: "Nguyễn Đình Khoa",
-    sessions: [
-      {
-        id: 1,
-        title: "Buổi 1: Kiến thức nền tảng - Lớp 2 - TOEIC Foundation",
-        date: "01/03/2026",
-        lecture: {
-          id: "c2-s1-lec",
-          name: "Bài giảng: Nền tảng phát âm và từ vựng cơ bản",
-          videoWatched: true,
-          completed: true,
-          exercises: [
-            {
-              id: "c2-s1-lec-ex1",
-              name: "Luyện tập ngữ pháp Danh từ, Động từ",
-              completed: true,
-              score: "2/2",
-              questions: []
-            }
-          ]
-        },
-        test: {
-          id: "c2-s1-test",
-          name: "Bài kiểm tra từ vựng Buổi 1",
-          completed: true,
-          score: "3/3",
-          questions: []
-        },
-        practice: {
-          id: "c2-s1-prac",
-          name: "Bài luyện tập thêm: Phát âm nâng cao",
-          completed: true,
-          score: "2/3",
-          questions: []
-        },
-        document: {
-          id: "c2-s1-doc",
-          name: "Tài liệu ôn tập Buổi 1 (Slide bài giảng)",
-          content: "Tài liệu học tập.",
-          completed: true
-        }
-      },
-      {
-        id: 2,
-        title: "Buổi 2: Luyện tập chuyên sâu - Lớp 2 - TOEIC Foundation",
-        date: "05/03/2026",
-        lecture: {
-          id: "c2-s2-lec",
-          name: "Bài giảng: Kỹ thuật nghe TOEIC Part 1 & 2",
-          videoWatched: true,
-          completed: true,
-          exercises: [
-            {
-              id: "c2-s2-lec-ex1",
-              name: "Luyện tập nghe tranh tả người",
-              completed: true,
-              score: "2/2",
-              questions: []
-            }
-          ]
-        },
-        test: {
-          id: "c2-s2-test",
-          name: "Bài kiểm tra nghe TOEIC Buổi 2",
-          completed: true,
-          score: "2/3",
-          questions: []
-        },
-        document: {
-          id: "c2-s2-doc",
-          name: "Tài liệu: Mẹo tránh bẫy nghe Part 1 & 2",
-          content: "Mẹo tránh bẫy.",
-          completed: true
-        }
-      }
-    ]
-  },
-  {
-    id: 1,
-    className: "Lớp 1 - TOEIC Foundation",
-    courseName: "Khóa học Luyện thi TOEIC",
-    schedule: "Thứ 2,4,6 - 9:00-10:30",
-    totalStudents: 50,
-    teacherName: "Nguyễn Đình Khoa",
-    sessions: [
-      {
-        id: 1,
-        title: "Buổi 1: Kiến thức nền tảng - Lớp 1 - TOEIC Foundation",
-        date: "01/03/2026",
-        lecture: {
-          id: "c1-s1-lec",
-          name: "Bài giảng: Nền tảng phát âm và từ vựng cơ bản",
-          videoWatched: false,
-          completed: false,
-          exercises: [
-            {
-              id: "c1-s1-lec-ex1",
-              name: "Luyện tập ngữ pháp Danh từ, Động từ",
-              completed: false,
-              questions: []
-            }
-          ]
-        },
-        test: {
-          id: "c1-s1-test",
-          name: "Bài kiểm tra từ vựng Buổi 1",
-          completed: false,
-          questions: []
-        },
-        practice: {
-          id: "c1-s1-prac",
-          name: "Bài luyện tập thêm: Phát âm cơ bản",
-          completed: false,
-          questions: []
-        },
-        document: {
-          id: "c1-s1-doc",
-          name: "Tài liệu ôn tập Buổi 1 (Slide bài giảng)",
-          content: "Tài liệu học tập.",
-          completed: false
-        }
-      },
-      {
-        id: 2,
-        title: "Buổi 2: Luyện tập chuyên sâu - Lớp 1 - TOEIC Foundation",
-        date: "05/03/2026",
-        lecture: {
-          id: "c1-s2-lec",
-          name: "Bài giảng: Kỹ thuật nghe TOEIC Part 1 & 2",
-          videoWatched: false,
-          completed: false,
-          exercises: [
-            {
-              id: "c1-s2-lec-ex1",
-              name: "Luyện tập nghe tranh tả người",
-              completed: false,
-              questions: []
-            }
-          ]
-        },
-        test: {
-          id: "c1-s2-test",
-          name: "Bài kiểm tra nghe TOEIC Buổi 2",
-          completed: false,
-          questions: []
-        },
-        document: {
-          id: "c1-s2-doc",
-          name: "Tài liệu: Mẹo tránh bẫy nghe Part 1 & 2",
-          content: "Mẹo tránh bẫy.",
-          completed: false
-        }
-      }
-    ]
-  }
-];
+
 
 export default function Progress() {
   const [classes, setClasses] = useState<ClassProgress[]>([]);
@@ -319,7 +157,7 @@ export default function Progress() {
 
     cls.sessions.forEach(s => {
       // 1. Lecture
-      if (s.lecture && s.lecture.id !== 0) {
+      if (s.lecture && s.lecture.id !== 0 && s.lecture.id !== "0") {
         total++;
         if (s.lecture.completed) completed++;
 
@@ -333,7 +171,7 @@ export default function Progress() {
       }
 
       // 2. Test
-      if (s.test && s.test.id !== 0) {
+      if (s.test && s.test.id !== 0 && s.test.id !== "0") {
         total++;
         if (s.test.completed) {
           completed++;
@@ -346,7 +184,7 @@ export default function Progress() {
       }
 
       // 3. Practice (if exists)
-      if (s.practice && s.practice.id !== 0) {
+      if (s.practice && s.practice.id !== 0 && s.practice.id !== "0") {
         total++;
         if (s.practice.completed) {
           completed++;
@@ -359,7 +197,7 @@ export default function Progress() {
       }
 
       // 4. Document
-      if (s.document && s.document.id !== 0) {
+      if (s.document && s.document.id !== 0 && s.document.id !== "0") {
         total++;
         const isDocDone = localStorage.getItem(`completed_document_${userId}_${s.document.id}`) === "true";
         if (isDocDone) completed++;
@@ -615,7 +453,7 @@ export default function Progress() {
                   {isExpanded && (
                     <div className="prog-session-content">
                       {/* 1. Bài giảng */}
-                      {s.lecture && s.lecture.id !== 0 && (
+                      {s.lecture && s.lecture.id !== 0 && s.lecture.id !== "0" && (
                         <div className="prog-item-row">
                           <div className="prog-item-left">
                             <span className="prog-item-icon">
@@ -638,7 +476,7 @@ export default function Progress() {
                       )}
 
                       {/* 2. Bài kiểm tra */}
-                      {s.test && s.test.id !== 0 && (
+                      {s.test && s.test.id !== 0 && s.test.id !== "0" && (
                         <div className="prog-item-row">
                           <div className="prog-item-left">
                             <span className="prog-item-icon">
@@ -658,7 +496,7 @@ export default function Progress() {
                       )}
 
                       {/* 3. Bài luyện tập thêm (nếu có) */}
-                      {s.practice && s.practice.id !== 0 && (
+                      {s.practice && s.practice.id !== 0 && s.practice.id !== "0" && (
                         <div className="prog-item-row">
                           <div className="prog-item-left">
                             <span className="prog-item-icon">
@@ -678,7 +516,7 @@ export default function Progress() {
                       )}
 
                       {/* 4. Tài liệu */}
-                      {s.document && s.document.id !== 0 && (() => {
+                      {s.document && s.document.id !== 0 && s.document.id !== "0" && (() => {
                         const isDocDone = localStorage.getItem(`completed_document_${userId}_${s.document.id}`) === "true";
                         return (
                           <div className="prog-item-row">

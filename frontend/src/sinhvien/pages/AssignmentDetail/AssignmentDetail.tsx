@@ -68,6 +68,24 @@ const renderReadingPassage = (text: string) => {
   );
 };
 
+const mapDangBaiToType = (db: string): string => {
+  if (!db) return "multiple";
+  const dbClean = db.trim();
+  if (dbClean === "Nghe audio trắc nghiệm") return "listening-mcq";
+  if (dbClean === "Hình ảnh chọn đáp án") return "listening-image";
+  if (dbClean === "Nghe chép chính tả") return "listening-dictation";
+  if (dbClean === "Điền từ vào đoạn văn") return "listening-fill-in";
+  if (dbClean === "Luyện phát âm (check phát âm tự động)") return "speaking-pronounce";
+  if (dbClean === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking-topic";
+  if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
+  if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "reading-vocab-mcq";
+  if (dbClean === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "writing-tense-mcq";
+  if (dbClean === "Viết đoạn văn ngắn") return "writing-essay";
+  if (dbClean === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
+  return dbClean;
+};
+
 function AssignmentDetail() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -638,7 +656,7 @@ In this section, you will read several passages. Each one is followed by several
       fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()),
     ])
       .then(([exData, lopData, nopData]) => {
-        setExercise(exData);
+        setExercise({ ...exData, Type: mapDangBaiToType(exData.Type) });
         setLopInfo(lopData);
         const myNop = Array.isArray(nopData)
           ? nopData.find((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung)

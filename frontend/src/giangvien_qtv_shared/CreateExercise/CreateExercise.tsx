@@ -223,6 +223,7 @@ const CreateExercise = () => {
   const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
   const user = JSON.parse(userStr || "{}");
   const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
+  const isTeacher = vaiTroLower === "giảng viên";
   const isQTV = vaiTroLower === "quản trị nội dung" || vaiTroLower === "quản trị viên" || vaiTroLower === "admin" || window.location.pathname.toLowerCase().includes("/qtv");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
@@ -1808,7 +1809,7 @@ const CreateExercise = () => {
       }
 
       if (isMiniTest) {
-        await fetch("http://localhost:5000/minitest/create", {
+        const res = await fetch("http://localhost:5000/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1818,6 +1819,10 @@ const CreateExercise = () => {
             TrangThai: status
           })
         });
+
+        if (!res.ok) {
+          throw new Error("Không thể tạo Minitest trên máy chủ");
+        }
 
         setSuccessMessage(
           status === "draft"
@@ -1829,7 +1834,7 @@ const CreateExercise = () => {
         return;
       }
 
-      await fetch("http://localhost:5000/baitap/create", {
+      const res = await fetch("http://localhost:5000/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1851,6 +1856,10 @@ const CreateExercise = () => {
           MaGiangVien: user.MaNguoiDung || null
         })
       });
+
+      if (!res.ok) {
+        throw new Error("Không thể tạo bài tập trên máy chủ");
+      }
 
       setSuccessMessage(
         status === "draft"
@@ -4395,7 +4404,7 @@ const CreateExercise = () => {
                 }}
                 onMouseOver={(e) => (e.currentTarget.style.background = "#e36d12")}
                 onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
-                onClick={() => handleCreate(lesson?.TrangThaiDuyet === "Giảng Viên" ? "pending" : "published")}
+                onClick={() => handleCreate(isTeacher ? "pending" : "published")}
               >
                 Gửi duyệt
               </button>
