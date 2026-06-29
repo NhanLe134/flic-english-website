@@ -1354,20 +1354,40 @@ app.put("/baitap/:id/status", async (req, res) => {
 
     const finalTrangThaiDuyet = TrangThai === "published" ? 'Đã duyệt' : (TrangThai === "rejected" ? 'Từ chối' : 'Chờ duyệt');
 
-    // Kiểm tra xem ID thuộc bảng BAIKIEMTRA hay BAITAP
-    const examCheck = await pool.request()
-      .input("id", id)
-      .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+    let targetId = id;
+    let isExam = false;
+    let identified = false;
 
-    if (examCheck.recordset.length > 0) {
+    if (typeof id === "string") {
+      if (id.startsWith("exam-")) {
+        targetId = parseInt(id.replace("exam-", ""), 10);
+        isExam = true;
+        identified = true;
+      } else if (id.startsWith("baitap-")) {
+        targetId = parseInt(id.replace("baitap-", ""), 10);
+        isExam = false;
+        identified = true;
+      }
+    }
+
+    if (!identified) {
+      const examCheck = await pool.request()
+        .input("id", targetId)
+        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+      if (examCheck.recordset.length > 0) {
+        isExam = true;
+      }
+    }
+
+    if (isExam) {
       await pool.request()
-        .input("id", id)
+        .input("id", targetId)
         .input("TrangThai", TrangThai)
         .input("TrangThaiDuyet", finalTrangThaiDuyet)
         .query(`UPDATE BAIKIEMTRA SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiKiemTra = @id`);
     } else {
       await pool.request()
-        .input("id", id)
+        .input("id", targetId)
         .input("TrangThai", TrangThai)
         .input("TrangThaiDuyet", finalTrangThaiDuyet)
         .query(`UPDATE BAITAP SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiTap = @id`);
@@ -1385,18 +1405,38 @@ app.delete("/baitap/:id", async (req, res) => {
     const { id } = req.params;
     const pool = await poolPromise;
 
-    // Kiểm tra xem ID thuộc bảng BAIKIEMTRA hay BAITAP
-    const examCheck = await pool.request()
-      .input("id", id)
-      .query("SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id");
+    let targetId = id;
+    let isExam = false;
+    let identified = false;
 
-    if (examCheck.recordset.length > 0) {
+    if (typeof id === "string") {
+      if (id.startsWith("exam-")) {
+        targetId = parseInt(id.replace("exam-", ""), 10);
+        isExam = true;
+        identified = true;
+      } else if (id.startsWith("baitap-")) {
+        targetId = parseInt(id.replace("baitap-", ""), 10);
+        isExam = false;
+        identified = true;
+      }
+    }
+
+    if (!identified) {
+      const examCheck = await pool.request()
+        .input("id", targetId)
+        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+      if (examCheck.recordset.length > 0) {
+        isExam = true;
+      }
+    }
+
+    if (isExam) {
       await pool.request()
-        .input("id", id)
+        .input("id", targetId)
         .query("DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id");
     } else {
       await pool.request()
-        .input("id", id)
+        .input("id", targetId)
         .query("DELETE FROM BAITAP WHERE MaBaiTap = @id");
     }
 
