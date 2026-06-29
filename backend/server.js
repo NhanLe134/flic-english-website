@@ -1289,11 +1289,13 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
       .query(`
         SELECT 
           b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai,
-          bh.TenBuoiHoc, lh.TenLop, kh.TenKhoaHoc
+          bh.TenBuoiHoc, lh.TenLop, COALESCE(kh.TenKhoaHoc, kh2.TenKhoaHoc) AS TenKhoaHoc
         FROM BAIHOCKHOAHOC b
         LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
         LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
         LEFT JOIN KHOAHOC kh ON b.MaKhoaHoc = kh.MaKhoaHoc
+        LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+        LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
         WHERE b.MaGiangVien = @maGiangVien AND (b.TrangThai = 'draft' OR b.TrangThai = N'Nháp')
         ORDER BY b.MaBaiHoc DESC
       `);
@@ -1303,13 +1305,15 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
       .input("maGiangVien", maGiangVien)
       .query(`
         SELECT 
-          bt.MaBaiTap, bt.Title, bt.Type, CONVERT(varchar, bt.CreatedDate, 103) AS CreatedDate, bt.TrangThai,
-          bh.TenBuoiHoc, lh.TenLop, kh.TenKhoaHoc
+          bt.MaBaiTap, bt.TieuDe AS Title, bt.DangBai AS Type, 
+          CONVERT(varchar, bt.NgayTao, 103) AS CreatedDate, bt.TrangThai,
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc
         FROM BAITAP bt
-        LEFT JOIN BUOIHOC bh ON bt.MaBuoiHoc = bh.MaBuoiHoc
-        LEFT JOIN LOPHOC lh ON bt.MaLopHoc = lh.MaLopHoc
         LEFT JOIN BAIHOCKHOAHOC b ON bt.MaBaiHoc = b.MaBaiHoc
-        LEFT JOIN KHOAHOC kh ON b.MaKhoaHoc = kh.MaKhoaHoc
+        LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
+        LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
+        LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+        LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
         WHERE bt.MaGiangVien = @maGiangVien AND (bt.TrangThai = 'draft' OR bt.TrangThai = N'Nháp')
         ORDER BY bt.MaBaiTap DESC
       `);
@@ -1319,12 +1323,14 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
       .input("maGiangVien", maGiangVien)
       .query(`
         SELECT 
-          bk.MaBaiKiemTra AS MaBaiTap, bk.TenBai AS Title, 'Exam' AS Type, CONVERT(varchar, bk.NgayBatDau, 103) AS CreatedDate, bk.TrangThai,
-          bh.TenBuoiHoc, lh.TenLop, kh.TenKhoaHoc
+          bk.MaBaiKiemTra AS MaBaiTap, bk.TenBai AS Title, 'Exam' AS Type, 
+          CONVERT(varchar, bk.NgayBatDau, 103) AS CreatedDate, bk.TrangThai,
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc
         FROM BAIKIEMTRA bk
         LEFT JOIN BUOIHOC bh ON bk.MaBuoiHoc = bh.MaBuoiHoc
-        LEFT JOIN LOPHOC lh ON bk.MaLopHoc = lh.MaLopHoc
-        LEFT JOIN KHOAHOC kh ON lh.MaKhoaHoc = kh.MaKhoaHoc
+        LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
+        LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
+        LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
         WHERE bk.MaGiangVien = @maGiangVien AND (bk.TrangThai = 'draft' OR bk.TrangThai = N'Nháp' OR bk.TrangThaiDuyet = N'Nháp')
         ORDER BY bk.MaBaiKiemTra DESC
       `);
