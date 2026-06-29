@@ -1014,6 +1014,32 @@ app.post("/baigiang", async (req, res) => {
   try {
     const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc } = req.body;
     const pool = await poolPromise;
+
+    let resolvedMaGiangVien = null;
+    if (MaGiangVien) {
+      // Map MaNguoiDung from frontend to MaGiangVien in database
+      const gvResult = await pool.request()
+        .input("maNguoiDung", MaGiangVien)
+        .query(`SELECT MaGiangVien FROM GIANGVIEN WHERE MaNguoiDung = @maNguoiDung`);
+      if (gvResult.recordset.length > 0) {
+        resolvedMaGiangVien = gvResult.recordset[0].MaGiangVien;
+      }
+    }
+
+    if (!resolvedMaGiangVien && MaBuoiHoc) {
+      const classTeacherResult = await pool.request()
+        .input("buoiHocId", MaBuoiHoc)
+        .query(`
+          SELECT TOP 1 l.MaGiangVien 
+          FROM BUOIHOC b
+          JOIN LOPHOC l ON b.MaLopHoc = l.MaLopHoc
+          WHERE b.MaBuoiHoc = @buoiHocId
+        `);
+      if (classTeacherResult.recordset.length > 0) {
+        resolvedMaGiangVien = classTeacherResult.recordset[0].MaGiangVien;
+      }
+    }
+
     await pool.request()
       .input("TieuDe", TieuDe)
       .input("NoiDung", NoiDung || "")
@@ -1023,7 +1049,7 @@ app.post("/baigiang", async (req, res) => {
       .input("TrangThai", TrangThai || "draft")
       .input("ThuTu", ThuTu || 1)
       .input("MaKhoaHoc", MaKhoaHoc)
-      .input("MaGiangVien", MaGiangVien)
+      .input("MaGiangVien", resolvedMaGiangVien || 1)
       .input("MaBuoiHoc", MaBuoiHoc)
       .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc) 
               VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc)`);
@@ -1042,11 +1068,14 @@ app.delete("/baigiang/:id", async (req, res) => {
 });
 app.put("/baigiang/:id/status", async (req, res) => {
   try {
+    const { TrangThai } = req.body;
     const pool = await poolPromise;
+    const finalTrangThaiDuyet = TrangThai === "published" ? 'Đã duyệt' : (TrangThai === "rejected" ? 'Từ chối' : 'Chờ duyệt');
     await pool.request()
       .input("id", req.params.id)
-      .input("TrangThai", req.body.TrangThai)
-      .query(`UPDATE BAIHOCKHOAHOC SET TrangThai = @TrangThai WHERE MaBaiHoc = @id`);
+      .input("TrangThai", TrangThai)
+      .input("TrangThaiDuyet", finalTrangThaiDuyet)
+      .query(`UPDATE BAIHOCKHOAHOC SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiHoc = @id`);
     res.json({ message: "Cập nhật thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -1906,7 +1935,17 @@ app.post("/baitap/create", async (req, res) => {
     } = req.body;
 
     const pool = await poolPromise;
-    let resolvedMaGiangVien = MaGiangVien;
+    let resolvedMaGiangVien = null;
+    if (MaGiangVien) {
+      // Map MaNguoiDung from frontend to MaGiangVien in database
+      const gvResult = await pool.request()
+        .input("maNguoiDung", MaGiangVien)
+        .query(`SELECT MaGiangVien FROM GIANGVIEN WHERE MaNguoiDung = @maNguoiDung`);
+      if (gvResult.recordset.length > 0) {
+        resolvedMaGiangVien = gvResult.recordset[0].MaGiangVien;
+      }
+    }
+
     if (!resolvedMaGiangVien && MaBuoiHoc) {
       const classTeacherResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
@@ -2885,10 +2924,12 @@ app.put("/baitap/:id/status", async (req, res) => {
       res.json({ message: "Đã cập nhật trạng thái bài kiểm tra" });
     } else {
       const dbId = parseInt(id.replace("baitap-", ""));
+      const finalTrangThaiDuyet = TrangThai === "published" ? 'Đã duyệt' : (TrangThai === "rejected" ? 'Từ chối' : 'Chờ duyệt');
       await pool.request()
         .input("id", dbId)
         .input("TrangThai", TrangThai)
-        .query(`UPDATE BAITAP SET TrangThai = @TrangThai WHERE MaBaiTap = @id`);
+        .input("TrangThaiDuyet", finalTrangThaiDuyet)
+        .query(`UPDATE BAITAP SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiTap = @id`);
       res.json({ message: "Đã cập nhật trạng thái bài tập" });
     }
   } catch (err) { res.status(500).send(err.message); }

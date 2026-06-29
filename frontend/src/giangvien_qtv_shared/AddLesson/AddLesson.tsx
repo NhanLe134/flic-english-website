@@ -79,7 +79,8 @@ const AddLesson: React.FC = () => {
       if (link && !fileUrl) fileUrl = link;
 
       const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
-      const isTeacher = user.VaiTro === "Giảng Viên";
+      const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
+      const isTeacher = vaiTroLower === "giảng viên";
 
       const newLesson = {
         TieuDe: name,
@@ -252,7 +253,7 @@ const AddLesson: React.FC = () => {
 
           <div className="right-card">
             <h3>Hành động</h3>
-            {JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}").VaiTro === "Giảng Viên" ? (
+            {(JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}").VaiTro || "").toLowerCase().trim() === "giảng viên" ? (
               <>
                 <button
                   className="draft-btn"
