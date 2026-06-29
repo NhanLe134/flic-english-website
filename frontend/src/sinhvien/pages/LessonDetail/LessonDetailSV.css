@@ -4,7 +4,7 @@
 .ld2-content {
   font-family: 'Inter', sans-serif;
   padding: 30px;
-  background-color: #faf8f5;
+  background-color: #ffffff;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -31,7 +31,8 @@
 }
 
 .cd-breadcrumb a:hover {
-  color: #F95800; /* Main Orange */
+  color: #F95800;
+  /* Main Orange */
 }
 
 .cd-divider {
@@ -39,7 +40,8 @@
 }
 
 .cd-current {
-  color: #000080; /* Navy Blue */
+  color: #000080;
+  /* Navy Blue */
   font-weight: 700;
 }
 
@@ -108,13 +110,13 @@
 }
 
 .ld2-table th {
-  background-color: #faf9f6;
+  background-color: #000080;
   font-weight: 700;
-  color: #000080;
+  color: #ffffff;
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #f0e4d4;
+  border-bottom: 1px solid #000080;
 }
 
 .ld2-table tr:last-child td {
@@ -122,7 +124,7 @@
 }
 
 .ld2-table tr:hover td {
-  background-color: #fcfbfa;
+  background-color: #f0f7ff !important;
 }
 
 .ld2-type-badge {
@@ -161,7 +163,8 @@
 }
 
 .ld2-video-player {
-  background: #0f172a; /* Deep dark background */
+  background: #0f172a;
+  /* Deep dark background */
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -190,7 +193,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 0 0 0 rgba(249, 88, 0, 0.4);
-  padding-left: 5px; /* Alignment fix for triangle symbol */
+  padding-left: 5px;
+  /* Alignment fix for triangle symbol */
 }
 
 .ld2-video-player:hover .ld2-play-icon {
@@ -625,26 +629,33 @@
   .ld2-content {
     padding: 20px;
   }
+
   .ld2-table th,
   .ld2-table td {
     padding: 12px 16px;
   }
+
   .ld2-video-player {
     padding: 60px 20px;
     min-height: 300px;
   }
+
   .ld2-comments-section {
     padding: 20px;
   }
+
   .ld2-comment-body {
     padding-left: 0;
   }
+
   .ld2-comment-actions {
     padding-left: 0;
   }
+
   .ld2-reply-input {
     margin-left: 0;
   }
+
   .ld2-replies {
     margin-left: 16px;
   }
@@ -684,7 +695,8 @@
 
 .ld2-tab-btn.active {
   color: #ffffff;
-  background: #F95800; /* Main Brand Orange */
+  background: #F95800;
+  /* Main Brand Orange */
   box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
 }
 
@@ -760,6 +772,8 @@
   transition: all 0.25s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 128, 0.02);
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .ld2-doc-card:hover {
@@ -840,9 +854,513 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
+/* ── Custom Video Player Controls ── */
+.custom-video-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 30px auto;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 80, 0.08);
+  background: #000;
+}
+
+.custom-video-wrapper video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+/* Scrubber Range Slider */
+.ld2-video-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  transition: height 0.1s ease;
+}
+
+.ld2-video-scrubber:hover {
+  height: 8px;
+}
+
+.ld2-video-scrubber::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.ld2-video-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #F95800;
+  cursor: pointer;
+  margin-top: -3px; /* Center the thumb vertically */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.1s ease;
+}
+
+.ld2-video-scrubber:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+}
+
+.ld2-video-scrubber::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: #F95800;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.1s ease;
+}
+
+.ld2-video-scrubber:hover::-moz-range-thumb {
+  transform: scale(1.3);
+}
+
+/* Volume Slider */
+.ld2-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60px;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ld2-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #F95800;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.ld2-volume-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 50%;
+  background: #F95800;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Translucent Glassmorphism Dropdown */
+.ld2-translucent-dropdown {
+  position: absolute;
+  bottom: 35px;
+  right: 0;
+  background: rgba(15, 23, 42, 0.75) !important; /* Glassmorphism background */
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 20;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 140px;
+}
+
+/* ── Premium Two-Column Layout ── */
+.ld2-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 15px;
+}
+
+@media (min-width: 1025px) {
+  .ld2-layout-grid {
+    grid-template-columns: 66% 34%;
+    gap: 30px;
+  }
+}
+
+.ld2-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ld2-sidebar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 20px;
+}
+
+/* ── Glassmorphism & Card styling ── */
+.ld2-premium-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 128, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ld2-premium-card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 128, 0.06);
+}
+
+/* ── Learning Journey Progress Timeline ── */
+.ld2-journey-box {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 80, 0.02);
+}
+
+.ld2-journey-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #000080;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 12px;
+}
+
+.ld2-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+}
+
+.ld2-timeline::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 15px;
+  bottom: 15px;
+  width: 2px;
+  background: #e2e8f0;
+  z-index: 1;
+}
+
+.ld2-timeline-item {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.ld2-timeline-bullet {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.ld2-timeline-item.active .ld2-timeline-bullet {
+  background: #FFF2EB;
+  border-color: #F95800;
+  color: #F95800;
+  box-shadow: 0 0 0 4px rgba(249, 88, 0, 0.15);
+  transform: scale(1.05);
+}
+
+.ld2-timeline-item.completed .ld2-timeline-bullet {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #059669;
+}
+
+.ld2-timeline-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ld2-timeline-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  margin: 0;
+}
+
+.ld2-timeline-item.active .ld2-timeline-label {
+  color: #000080;
+}
+
+.ld2-timeline-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+/* ── Premium Practice Cards ── */
+.ld2-practice-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border-left: 4px solid #cbd5e1;
+}
+
+.ld2-practice-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 80, 0.05);
+  border-color: #94a3b8;
+}
+
+.ld2-practice-card.unlocked:hover {
+  border-left-color: #F95800;
+}
+
+.ld2-practice-card.completed {
+  border-left-color: #059669;
+  background: #fbfdfb;
+}
+
+.ld2-practice-card.locked {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.ld2-practice-btn {
+  background: transparent;
+  border: 1.5px solid #cbd5e1;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.ld2-practice-card.unlocked:hover .ld2-practice-btn {
+  background: linear-gradient(135deg, #F95800, #ff7e40);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
+}
+
+/* ── Clean Tabs Bar ── */
+.ld2-tab-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #f1f5f9;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+}
+
+.ld2-tab-item {
+  padding: 10px 18px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.ld2-tab-item:hover {
+  color: #000080;
+}
+
+.ld2-tab-item.active {
+  color: #F95800;
+}
+
+.ld2-tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #F95800;
+  border-radius: 2px;
+}
+
+/* ── Video Quiz Overlay ── */
+.video-quiz-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  padding: 24px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.video-quiz-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #1e293b;
+}
+
+.video-blur {
+  filter: blur(8px) brightness(0.6);
+  transition: filter 0.3s ease;
+}
+
+/* ── Premium Custom Quiz Popups ── */
+.ld2-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.ld2-popup-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 420px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 80, 0.25);
+  border: 1px solid #e2e8f0;
+  animation: slideUpModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUpModal {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ld2-popup-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 20px auto;
+}
+
+.ld2-popup-icon-box.success {
+  background: #f0fdf4;
+  color: #10b981;
+  border: 2px solid #a7f3d0;
+}
+
+.ld2-popup-icon-box.error {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 2px solid #fee2e2;
+}
+
+.ld2-popup-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #000080;
+  margin: 0 0 12px 0;
+}
+
+.ld2-popup-message {
+  font-size: 14.5px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.ld2-popup-btn {
+  width: 100%;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ld2-popup-btn.success {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #ffffff;
+}
+
+.ld2-popup-btn.success:hover {
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.ld2-popup-btn.error {
+  background: linear-gradient(135deg, #F95800, #ff7e40);
+  color: #ffffff;
+}
+
+.ld2-popup-btn.error:hover {
+  box-shadow: 0 6px 18px rgba(249, 88, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+

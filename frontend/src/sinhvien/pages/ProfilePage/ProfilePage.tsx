@@ -1,16 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import "./ProfilePage.css";
 import { 
   FiMail, 
   FiCalendar, 
-  FiBookOpen, 
   FiUser, 
   FiHome, 
   FiCamera, 
   FiEdit3, 
   FiX, 
   FiAward,
-  FiActivity,
   FiHash
 } from "react-icons/fi";
 
@@ -27,6 +25,7 @@ interface StudentProfile {
   MSSV: string | null;
   TenKhoaHoc: string | null;
   NgayDangKy: string | null;
+  AnhDaiDien?: string | null;
 }
 
 export default function ProfilePage() {
@@ -95,7 +94,8 @@ export default function ProfilePage() {
           Lop: detailData.Lop || "",
           MSSV: detailData.MSSV || "",
           TenKhoaHoc: detailData.TenKhoaHoc || null,
-          NgayDangKy: NgayDangKy
+          NgayDangKy: NgayDangKy,
+          AnhDaiDien: detailData.AnhDaiDien || currentUser.AnhDaiDien || null
         };
 
         setProfile(fullProfile);
@@ -108,10 +108,10 @@ export default function ProfilePage() {
           MSSV: fullProfile.MSSV || ""
         });
 
-        // Load avatar từ localStorage
-        const savedAvatar = localStorage.getItem(`user_avatar_${currentUser.MaNguoiDung}`);
+        // Load avatar từ database/sessionStorage
+        const savedAvatar = fullProfile.AnhDaiDien;
         if (savedAvatar) {
-          setAvatar(savedAvatar);
+          setAvatar(savedAvatar.startsWith("http") ? savedAvatar : `${API}${savedAvatar}`);
         }
       }
     } catch (err) {
@@ -131,18 +131,48 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setAvatar(base64String);
-        localStorage.setItem(`user_avatar_${currentUser.MaNguoiDung}`, base64String);
-        // Kích hoạt event custom để StudentNavbar cập nhật ngay lập tức
-        window.dispatchEvent(new Event("avatarChanged"));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      // 1. Upload file vật lý lên server backend
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch(`${API}/upload`, {
+        method: "POST",
+        body: formData
+      });
+      if (!uploadRes.ok) throw new Error("Upload thất bại");
+
+      const uploadData = await uploadRes.json();
+      const relativeUrl = uploadData.url; // e.g. /uploads/filename.png
+      const absoluteUrl = `${API}${relativeUrl}`;
+
+      // 2. Cập nhật state avatar
+      setAvatar(absoluteUrl);
+
+      // 3. Cập nhật sessionStorage user
+      const userStr = sessionStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        user.AnhDaiDien = relativeUrl;
+        sessionStorage.setItem("user", JSON.stringify(user));
+      }
+
+      // 4. Lưu link relative URL vào database cột AnhDaiDien
+      await fetch(`${API}/users/${currentUser.MaNguoiDung}/anh-dai-dien`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ AnhDaiDien: relativeUrl })
+      });
+
+      // Kích hoạt event custom để StudentNavbar cập nhật ngay lập tức
+      window.dispatchEvent(new Event("avatarChanged"));
+    } catch (err) {
+      console.error("Lỗi cập nhật ảnh đại diện:", err);
+      alert("Lỗi khi tải ảnh đại diện lên máy chủ");
     }
   };
 
@@ -376,39 +406,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Card 2: Thông tin khóa học FLIC */}
-          <div className="info-group-card highlight-card">
-            <div className="card-subheader">
-              <FiBookOpen size={18} />
-              <h3>Khóa học & Tiến độ học tập</h3>
-            </div>
-            
-            <div className="fields-grid-layout">
-              {/* Khóa học đã đăng ký */}
-              <div className="form-field-wrapper span-2">
-                <span className="field-meta-label">Khóa học hiện tại</span>
-                <span className="field-display-value course-highlight-text">
-                  {profile.TenKhoaHoc || "Chưa đăng ký khóa học nào"}
-                </span>
-              </div>
-
-              {/* Ngày đăng ký */}
-              <div className="form-field-wrapper">
-                <span className="field-meta-label">Ngày đăng ký học</span>
-                <span className="field-display-value">
-                  <FiCalendar className="inline-icon" /> {formatDate(profile.NgayDangKy)}
-                </span>
-              </div>
-
-              {/* Trạng thái học */}
-              <div className="form-field-wrapper">
-                <span className="field-meta-label">Trạng thái học tập</span>
-                <span className="field-display-value status-pill-badge text-active">
-                  <FiActivity className="inline-icon" /> Đang theo học
-                </span>
-              </div>
-            </div>
-          </div>
 
         </div>
 
@@ -571,3 +568,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

@@ -1,7 +1,8 @@
 import "./ExercisePage.css";
-import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiMonitor, FiClock, FiUsers, FiBook, FiArrowLeft, FiCalendar } from "react-icons/fi";
+import { useNavigate, useParams } from "react-router-dom";
+import { FiArrowLeft, FiCalendar, FiTrash2, FiEye } from "react-icons/fi";
+import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
 
 const ExercisePage = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const ExercisePage = () => {
   const [soHocVien, setSoHocVien] = useState(0);
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
-  const [filterType, setFilterType] = useState<"all" | "homework" | "exam">("all");
+  const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
 
 
 
@@ -58,6 +59,40 @@ const ExercisePage = () => {
       .catch(err => console.log(err));
   }, [id]);
 
+  /* ===== TOGGLE OPEN/CLOSE EXAM ===== */
+  const handleToggleOpen = async (maBaiTap: number) => {
+    try {
+      const res = await fetch("http://localhost:5000/baitap/toggle-open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ MaBaiTap: maBaiTap })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setExercises((prev: any[]) =>
+          prev.map((ex: any) => {
+            if (Number(ex.MaBaiTap) === Number(maBaiTap)) {
+              let parsed: any = {};
+              try {
+                if (ex.Content) parsed = JSON.parse(ex.Content);
+              } catch (e) {}
+              const updatedContent = JSON.stringify({
+                ...parsed,
+                isOpened: data.isOpened
+              });
+              return { ...ex, Content: updatedContent };
+            }
+            return ex;
+          })
+        );
+      } else {
+        alert("Lỗi: " + (data.message || "Không thể cập nhật trạng thái đóng/mở"));
+      }
+    } catch (err) {
+      alert("Lỗi kết nối: " + err);
+    }
+  };
+
   /* ===== DELETE ===== */
   const handleDelete = async () => {
     if (selectedId === null) return;
@@ -66,8 +101,8 @@ const ExercisePage = () => {
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
-        setExercises(prev =>
-          prev.filter(e => Number(e.MaBaiTap) !== Number(selectedId))
+        setExercises((prev: any[]) =>
+          prev.filter((e: any) => Number(e.MaBaiTap) !== Number(selectedId))
         );
       } else {
         alert("Xóa thất bại: " + body);
@@ -79,15 +114,22 @@ const ExercisePage = () => {
     setSelectedId(null);
   };
 
-  const filteredExercises = exercises.filter((ex) => {
+  const filteredExercises = exercises.filter((ex: any) => {
     const matchesSearch = ex.Title?.toLowerCase().includes(search.toLowerCase());
-    const isExam = ex.IsExam === 1 || ex.Type === "exam";
+    let parsedContent: any = {};
+    try {
+      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+    } catch (e) {}
+    const isExam = ex.IsExam === 1 || ex.Type === "exam" || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
 
     if (filterType === "homework") {
-      return matchesSearch && !isExam;
+      return matchesSearch && !isExam && ex.TrangThai !== "practice";
     }
     if (filterType === "exam") {
-      return matchesSearch && isExam;
+      return matchesSearch && isExam && ex.TrangThai !== "practice";
+    }
+    if (filterType === "practice") {
+      return matchesSearch && ex.TrangThai === "practice";
     }
     return matchesSearch;
   });
@@ -102,49 +144,49 @@ const ExercisePage = () => {
       </span>
 
       {/* ===== HEADER ===== */}
-      <div className="header-card">
+      <div className="cd-overview-card">
         <div className="cd-left-content">
-          <h1>{lesson?.TenBuoiHoc}</h1>
+          <h2 className="cd-class-title">{lesson?.TenBuoiHoc}</h2>
           <p className="cd-class-desc">{lesson?.MoTa}</p>
           
-          <div className="info-row">
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper teacher-icon">
-                <FiMonitor size={18} />
+          <div className="cd-meta-grid">
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaChalkboardTeacher />
               </div>
-              <div className="info-item-content">
-                <p className="label">Giáo viên</p>
-                <b>{giangVien}</b>
-              </div>
-            </div>
-
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper calendar-icon">
-                <FiClock size={18} />
-              </div>
-              <div className="info-item-content">
-                <p className="label">Lịch học</p>
-                <b>{lichHoc}</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Giáo viên</span>
+                <span className="cd-meta-value">{giangVien}</span>
               </div>
             </div>
 
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper students-icon">
-                <FiUsers size={18} />
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaClock />
               </div>
-              <div className="info-item-content">
-                <p className="label">Số học viên</p>
-                <b>{soHocVien} học viên</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Lịch học</span>
+                <span className="cd-meta-value">{lichHoc}</span>
               </div>
             </div>
 
-            <div className="info-item">
-              <div className="cd-meta-icon-wrapper status-icon">
-                <FiBook size={18} />
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaUsers />
               </div>
-              <div className="info-item-content">
-                <p className="label">Trạng thái</p>
-                <b>Đang học</b>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Số học viên</span>
+                <span className="cd-meta-value">{soHocVien} học viên</span>
+              </div>
+            </div>
+
+            <div className="cd-meta-item">
+              <div className="cd-meta-icon-wrapper">
+                <FaBook />
+              </div>
+              <div className="cd-meta-info">
+                <span className="cd-meta-label">Trạng thái</span>
+                <span className="cd-meta-value">Đang học</span>
               </div>
             </div>
           </div>
@@ -217,6 +259,7 @@ const ExercisePage = () => {
               <option value="all">Tất cả bài</option>
               <option value="homework">Bài tập</option>
               <option value="exam">Bài kiểm tra</option>
+              <option value="practice">Bài LTT</option>
             </select>
 
             <button
@@ -246,7 +289,7 @@ const ExercisePage = () => {
         </div>
 
         <div className="exercise-grid">
-          {filteredExercises.map((ex) => (
+          {filteredExercises.map((ex: any) => (
             <div key={ex.MaBaiTap} className="exercise-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1a202c', wordBreak: 'break-word', flex: 1 }}>{ex.Title}</h4>
@@ -266,25 +309,122 @@ const ExercisePage = () => {
                 )}
               </div>
               <p>{ex.Type}</p>
+              
+              {/* Lock/Unlock display for exams */}
+              {(() => {
+                let parsedContent: any = {};
+                try {
+                  if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                } catch (e) {}
+                const isExam = ex.Type === "exam" || ex.IsExam === 1 || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+                if (!isExam) return null;
+
+                const isManual = parsedContent.openingMode === "manual";
+                const isOpened = !!parsedContent.isOpened;
+                const isApproved = ex.TrangThai === "published";
+
+                return (
+                  <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <span style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: !isApproved ? "#F95800" : isManual ? (isOpened ? "#16a34a" : "#64748b") : "#b45309",
+                      background: !isApproved ? "#fff3e0" : isManual ? (isOpened ? "#dcfce7" : "#f1f5f9") : "#fef3c7",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      width: "fit-content"
+                    }}>
+                      {!isApproved ? "⏳ Đang chờ duyệt" : isManual ? (isOpened ? "🔓 Đang mở đề (Thủ công)" : "🔒 Đang đóng đề (Thủ công)") : "🕒 Tự động mở theo lịch"}
+                    </span>
+                    {isApproved && isManual && (
+                      <button
+                        onClick={() => handleToggleOpen(ex.MaBaiTap)}
+                        style={{
+                          background: isOpened ? "#fff" : "#F95800",
+                          color: isOpened ? "#64748b" : "#fff",
+                          border: isOpened ? "1.5px solid #cbd5e1" : "none",
+                          padding: "5px 10px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          width: "fit-content"
+                        }}
+                      >
+                        {isOpened ? "Khóa đề" : "Mở đề"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#666', marginBottom: '12px' }}>
                 <FiCalendar size={14} />
                 {ex.CreatedDate && new Date(ex.CreatedDate).toLocaleDateString("vi-VN")}
               </span>
-              <div className="btn-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                 <button
-                  className="outline-btn"
                   onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
+                  style={{
+                    background: "#e0e7ff",
+                    border: "1px solid #c7d2fe",
+                    color: "#4f46e5",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                    flexShrink: 0
+                  }}
+                  title="Xem chi tiết"
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = "#c7d2fe";
+                    e.currentTarget.style.color = "#3730a3";
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = "#e0e7ff";
+                    e.currentTarget.style.color = "#4f46e5";
+                  }}
                 >
-                  Xem chi tiết
+                  <FiEye size={16} />
                 </button>
                 <button
-                  className="delete-btn"
                   onClick={() => {
                     setSelectedId(Number(ex.MaBaiTap));
                     setShowDeleteModal(true);
                   }}
+                  style={{
+                    background: "#fee2e2",
+                    border: "1px solid #fecaca",
+                    color: "#ef4444",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                    flexShrink: 0
+                  }}
+                  title="Xóa bài tập"
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = "#fca5a5";
+                    e.currentTarget.style.color = "#b91c1c";
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = "#fee2e2";
+                    e.currentTarget.style.color = "#ef4444";
+                  }}
                 >
-                  Xóa
+                  <FiTrash2 size={15} />
                 </button>
               </div>
             </div>
@@ -312,3 +452,4 @@ const ExercisePage = () => {
 };
 
 export default ExercisePage;
+

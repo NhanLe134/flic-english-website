@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FiPlay } from "react-icons/fi";
 import "./TestExamPage.css";
 
@@ -8,8 +8,8 @@ const BASE = import.meta.env.BASE_URL;
 interface CauHoi { id: number; noiDung: string; luaChon: string[]; dapAn: string; }
 interface ListeningPart { soPhan: number; tieuDe: string; huongDan: string; audioUrl: string; cauHois: CauHoi[]; }
 interface ReadingPart { soPhan: number; tieuDe: string; huongDan: string; doanVan: string; cauHois: CauHoi[]; }
-interface WritingPart { soPhan: number; tieuDe: string; huongDan: string; noiDung: string; yeuCau: string; soTuToiThieu: number; }
-interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; }
+interface WritingPart { soPhan: number; tieuDe: string; huongDan: string; noiDung: string; yeuCau: string; soTuToiThieu: number; loaiBai?: string; goiY?: string; }
+interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; imageUrl?: string; imageName?: string; }
 interface TestData {
   MaBaiTest: number; TieuDe: string; CapDo: string;
   kyNang: {
@@ -139,9 +139,7 @@ function ListeningSection({ part, answers, onAnswer, reviewMode }: {
 }) {
   return (
     <div className="listening-section">
-      <div className="part-direction-box">
-        {part.huongDan}
-      </div>
+      <div className="part-direction-box" dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} />
       <div className="part-title-label">PART {part.soPhan}</div>
       <div className="part-subtitle-desc">{part.tieuDe}</div>
       
@@ -196,8 +194,8 @@ function ReadingSection({ part, answers, onAnswer, reviewMode }: {
   return (
     <div className="reading-layout">
       <div className="reading-passage">
-        <div className="passage-header">Directions: {part.huongDan}</div>
-        <div className="passage-content">{part.doanVan}</div>
+        <div className="passage-header">Directions: <span dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} /></div>
+        <div className="passage-content" dangerouslySetInnerHTML={{ __html: part.doanVan || "" }} />
       </div>
       <div className="reading-questions">
         {part.cauHois.map((q) => (
@@ -242,19 +240,22 @@ function ReadingSection({ part, answers, onAnswer, reviewMode }: {
 function WritingSection({ part, value, onChange, reviewMode }: {
   part: WritingPart; value: string; onChange: (v: string) => void; reviewMode: boolean;
 }) {
-  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
-  const ok = wordCount >= part.soTuToiThieu;
   return (
     <div className="writing-section">
       <div className="writing-prompt-box">
-        <div className="writing-prompt-header">{part.huongDan}</div>
-        <div className="writing-letter-quote">{part.noiDung}</div>
+        <div className="writing-prompt-header" dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} />
+        {part.goiY && (
+          <div className="writing-suggested-hints" style={{ marginTop: 12, marginBottom: 12, padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px" }}>
+            <strong style={{ color: "#F95800" }}>Gợi ý làm bài:</strong>
+            <div style={{ marginTop: 6, lineHeight: "1.5" }} dangerouslySetInnerHTML={{ __html: part.goiY }} />
+          </div>
+        )}
+        <div className="writing-letter-quote" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
         <div className="writing-instruction">{part.yeuCau}</div>
       </div>
       <div className="writing-answer-box">
         <div className="writing-answer-header">
           <span className="writing-answer-label">Your answer:</span>
-          <span className="word-count-display">Word count: <strong className={ok ? "ok" : ""}>{wordCount}</strong></span>
         </div>
         <textarea
           className="writing-textarea"
@@ -292,6 +293,17 @@ function SpeakingSection({
   const activeIdx = reviewMode ? reviewPartIdx : speakingPartIdx;
   const part = parts[activeIdx] || parts[0];
 
+  useEffect(() => {
+    if (audioRef.current && !reviewMode) {
+      if (speakingPhase === "audio_playing") {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => { /* autoplay block */ });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [speakingPhase, activeIdx, reviewMode]);
+
   // Speaking Review Mode Render
   if (reviewMode) {
     return (
@@ -314,7 +326,12 @@ function SpeakingSection({
           <div className="speaking-left-pane">
             <div className="speaking-question-box">
               <div className="speaking-q-title">{part.moTa}</div>
-              <div className="speaking-q-content">{part.noiDung}</div>
+              <div className="speaking-q-content" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
+              {part.imageUrl && (
+                <div style={{ marginTop: 12, textAlign: "center" }}>
+                  <img src={part.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+                </div>
+              )}
             </div>
           </div>
           <div className="speaking-right-pane">
@@ -384,16 +401,34 @@ function SpeakingSection({
               >
                 <FiPlay style={{ marginLeft: 2 }} />
               </button>
-              <span className="audio-time-current">--:--</span>
-              <div className="audio-progress-bar"><div className="audio-progress-fill" style={{ width: "0%" }} /></div>
-              <span className="audio-time-duration">--:--</span>
+              <span className="audio-time-current">
+                {speakingPhase === "audio_playing" ? fmt(30 - speakingCountdown) : "--:--"}
+              </span>
+              <div className="audio-progress-bar">
+                <div
+                  className="audio-progress-fill"
+                  style={{
+                    width: speakingPhase === "audio_playing"
+                      ? `${((30 - speakingCountdown) / 30) * 100}%`
+                      : "0%"
+                  }}
+                />
+              </div>
+              <span className="audio-time-duration">
+                {speakingPhase === "audio_playing" ? "00:30" : "--:--"}
+              </span>
             </div>
             <p className="speaking-audio-warning">
               *Hệ thống tự động phát phát câu hỏi. Nếu không tự chạy, vui lòng bấm nút Play để nghe.
             </p>
           </div>
 
-          <div className="speaking-q-content">{part.noiDung}</div>
+          <div className="speaking-q-content" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
+          {part.imageUrl && (
+            <div style={{ marginTop: 12, textAlign: "center" }}>
+              <img src={part.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -402,6 +437,7 @@ function SpeakingSection({
           {speakingPhase === "audio_playing" && (
             <div className="speaking-status-inner">
               <div className="speaking-status-label">Đang phát câu hỏi...</div>
+              <div className="speaking-countdown-big">{speakingCountdown} GIÂY</div>
             </div>
           )}
           {speakingPhase === "pre_record" && (
@@ -425,8 +461,16 @@ function SpeakingSection({
           )}
           {speakingPhase === "saved" && (
             <div className="speaking-status-inner">
-              <div className="speaking-status-label green-text">ĐÃ LƯU BÀI NÓI SỐ {speakingPartIdx + 1} VÀO HỆ THỐNG</div>
-              <div className="speaking-saved-sub">Câu hỏi tiếp theo sẽ bắt đầu sau...</div>
+              <div className="speaking-status-label green-text">
+                {speakingPartIdx === parts.length - 1
+                  ? "ĐÃ LƯU BÀI THI NÓI THÀNH CÔNG!"
+                  : "ĐÃ LƯU ĐOẠN THU ÂM THÀNH CÔNG!"}
+              </div>
+              <div className="speaking-saved-sub">
+                {speakingPartIdx === parts.length - 1
+                  ? "Đang chuẩn bị nộp bài và chấm điểm..."
+                  : "Đang tự động chuyển sang câu tiếp theo..."}
+              </div>
             </div>
           )}
         </div>
@@ -608,6 +652,8 @@ const STATIC_QUESTIONS = {
 export default function TestExamPage() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
+  const isLoggedIn = !!sessionStorage.getItem("user");
 
   const [testData, setTestData] = useState<TestData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -638,7 +684,7 @@ export default function TestExamPage() {
 
   const skillList: Skill[] = ["listening", "reading", "writing", "speaking"];
   const skillLabels: Record<Skill, string> = {
-    listening: "Listening - 47",
+    listening: "Listening - 45",
     reading: "Reading - 60",
     writing: "Writing - 60",
     speaking: "Speaking - 12"
@@ -650,18 +696,54 @@ export default function TestExamPage() {
       setHoTen(u.HoTen || "Sinh Viên");
     } catch { /* empty */ }
 
-    // Frontend-only simulation of tests detail response
     const testIdNum = parseInt(testId || "1");
-    const testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
-    const testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
+    let testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
+    let testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
+    let customQuestions = STATIC_QUESTIONS;
+
+    const localTestsStr = localStorage.getItem("flic_student_practice_tests");
+    if (localTestsStr) {
+      try {
+        const localTests = JSON.parse(localTestsStr);
+        const currentTest = localTests.find((t: any) => t.MaBaiTest === testIdNum);
+        if (currentTest) {
+          testTitle = currentTest.TieuDe;
+          testLevel = currentTest.CapDo;
+          if (currentTest.kyNang) {
+            customQuestions = currentTest.kyNang;
+          } else if (currentTest.questions && currentTest.questions.length > 0) {
+            const cloned = JSON.parse(JSON.stringify(STATIC_QUESTIONS));
+            cloned.reading.parts = [
+              {
+                soPhan: 1,
+                tieuDe: "Phần 1: Câu hỏi do Giảng viên tạo",
+                huongDan: "Đọc kỹ câu hỏi và chọn đáp án chính xác.",
+                doanVan: currentTest.MoTa || "Vui lòng chọn đáp án đúng cho từng câu hỏi bên dưới.",
+                cauHois: currentTest.questions.map((q: any, index: number) => ({
+                  id: q.id || index + 1,
+                  noiDung: q.noiDung,
+                  luaChon: q.luaChon || [],
+                  dapAn: q.dapAn
+                }))
+              }
+            ];
+            cloned.reading.parts = [cloned.reading.parts[0]];
+            cloned.reading.thoiGian = (currentTest.TongThoiGian || 120) * 60;
+            customQuestions = cloned;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
 
     setTestData({
       MaBaiTest: testIdNum,
       TieuDe: testTitle,
       CapDo: testLevel,
-      kyNang: STATIC_QUESTIONS
+      kyNang: customQuestions
     });
-    setTimeLeft(STATIC_QUESTIONS.listening.thoiGian);
+    setTimeLeft(customQuestions.listening.thoiGian);
     setLoading(false);
   }, [testId]);
 
@@ -678,17 +760,22 @@ export default function TestExamPage() {
 
   // Speaking Audio Ended Callback
   const handleSpeakingAudioEnded = useCallback(() => {
-    setSpeakingPhase("pre_record");
-    setSpeakingCountdown(60); // 60s prep before recording
+    // Left empty: transitions are controlled strictly by speakingCountdown timer
   }, []);
 
   // Timer Effect supporting refined Speaking logic
   useEffect(() => {
     if (!testData || loading || isSubmitted || reviewMode) return;
 
-    if (skill !== "speaking") {
-      // Standard skills ticking down
-      if (timeLeft <= 0) {
+    if (timeLeft <= 0) {
+      if (skill === "speaking") {
+        if (speakingPhase !== "saved") {
+          calculateScores();
+          setIsSubmitted(true);
+          setModal(null);
+          return;
+        }
+      } else {
         doSave();
         const idx = skillList.indexOf(skill);
         if (idx < skillList.length - 1) {
@@ -706,26 +793,43 @@ export default function TestExamPage() {
         }
         return;
       }
+    }
+
+    if (skill !== "speaking") {
       const t = setInterval(() => setTimeLeft(p => p - 1), 1000);
       return () => clearInterval(t);
     } else {
-      // Speaking ticking (Timer ONLY ticks down when recording)
-      if (timeLeft <= 0 || speakingPhase === "all_done") {
-        setSpeakingPhase("all_done");
-        return;
-      }
-
       const t = setInterval(() => {
-        if (speakingPhase === "initial_prep" || speakingPhase === "pre_record") {
+        if (speakingPhase === "recording") {
+          setTimeLeft(p => p - 1);
+        }
+
+        if (speakingPhase === "initial_prep" || speakingPhase === "pre_record" || speakingPhase === "audio_playing" || speakingPhase === "saved") {
           setSpeakingCountdown(c => {
             if (c <= 1) {
               if (speakingPhase === "initial_prep") {
                 setSpeakingPhase("audio_playing");
-              } else {
+                return 30; // 30s audio playing countdown
+              } else if (speakingPhase === "audio_playing") {
+                setSpeakingPhase("pre_record");
+                return 60; // 60s prep countdown
+              } else if (speakingPhase === "pre_record") {
                 setSpeakingPhase("recording");
                 // Q1: 3 min (180s), Q2: 4 min (240s), Q3: 5 min (300s)
                 const recordTimes = [180, 240, 300];
                 return recordTimes[speakingPartIdx] || 180;
+              } else if (speakingPhase === "saved") {
+                const nextIdx = speakingPartIdx + 1;
+                if (nextIdx < testData.kyNang.speaking.parts.length) {
+                  setSpeakingPartIdx(nextIdx);
+                  setSpeakingPhase("audio_playing");
+                  return 30; // 30s audio playing for next part
+                } else {
+                  calculateScores();
+                  setIsSubmitted(true);
+                  setModal(null);
+                  return 0;
+                }
               }
               return 0;
             }
@@ -736,21 +840,6 @@ export default function TestExamPage() {
             if (c <= 1) {
               setSpeakingPhase("saved");
               return 3; // 3 seconds display of saved status
-            }
-            return c - 1;
-          });
-          setTimeLeft(tl => tl - 1);
-        } else if (speakingPhase === "saved") {
-          setSpeakingCountdown(c => {
-            if (c <= 1) {
-              const nextIdx = speakingPartIdx + 1;
-              if (nextIdx < testData.kyNang.speaking.parts.length) {
-                setSpeakingPartIdx(nextIdx);
-                setSpeakingPhase("audio_playing");
-              } else {
-                setSpeakingPhase("all_done");
-              }
-              return 0;
             }
             return c - 1;
           });
@@ -800,6 +889,9 @@ export default function TestExamPage() {
   const countTotal = () => {
     const sd = getSkillData();
     if (!sd || !(sd as any).parts) return 1;
+    if (!isLoggedIn) {
+      return testData?.kyNang.listening.parts[0]?.cauHois?.length || 8;
+    }
     if (skill === "writing" || skill === "speaking") {
       return (sd as any).parts.length;
     }
@@ -840,6 +932,16 @@ export default function TestExamPage() {
   };
 
   const handleContinue = () => {
+    if (!isLoggedIn) {
+      setModal({
+        type: "register_required",
+        onConfirm: () => {
+          setModal(null);
+          setSearchParams({ auth: "register" }, { replace: true });
+        }
+      });
+      return;
+    }
     const sd = getSkillData() as { parts: { cauHois?: CauHoi[] }[] } | null;
     if (!sd?.parts) return;
     const partCauHois = sd.parts[partIdx]?.cauHois || [];
@@ -900,13 +1002,87 @@ export default function TestExamPage() {
     });
   };
 
+  const submitTestToBackend = async () => {
+    if (!testData) return;
+
+    try {
+      // 1. Tính điểm Listening
+      let correctListening = 0;
+      let totalListening = 0;
+      testData.kyNang.listening.parts.forEach(part => {
+        part.cauHois.forEach(q => {
+          totalListening++;
+          const userAns = answers.listening?.[q.id];
+          if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
+            correctListening++;
+          }
+        });
+      });
+      const listeningScore = totalListening > 0 ? parseFloat(((correctListening / totalListening) * 10).toFixed(2)) : 0;
+
+      // 2. Tính điểm Reading
+      let correctReading = 0;
+      let totalReading = 0;
+      testData.kyNang.reading.parts.forEach(part => {
+        part.cauHois.forEach(q => {
+          totalReading++;
+          const userAns = answers.reading?.[q.id];
+          if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
+            correctReading++;
+          }
+        });
+      });
+      const readingScore = totalReading > 0 ? parseFloat(((correctReading / totalReading) * 10).toFixed(2)) : 0;
+
+      // 3. Chuẩn bị câu trả lời Viết (dạng mảng các câu văn học viên đã nhập)
+      const writingArray = testData.kyNang.writing.parts.map((_, idx) => writingAnswers[idx] || "");
+
+      // 4. Chuẩn bị câu trả lời Nói (ghi nhận dummy text do là giao diện simulation)
+      const speakingArray = testData.kyNang.speaking.parts.map(() => "Bài nói của học viên đã được hệ thống ghi nhận thành công.");
+
+      const u = JSON.parse(sessionStorage.getItem("user") || "{}");
+      const maNguoiDung = u.MaNguoiDung;
+
+      const API = "http://localhost:5000";
+
+      // 5. Gửi request nộp bài lên backend
+      const res = await fetch(`${API}/dethi/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          MaDeThi: testData.MaBaiTest,
+          MaNguoiDung: maNguoiDung,
+          diemNghe: listeningScore,
+          diemDoc: readingScore,
+          baiLamViet: writingArray,
+          baiLamNoi: speakingArray,
+          yeuCauChamViet: true,
+          yeuCauChamNoi: true
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Lỗi khi lưu kết quả bài thi");
+      }
+
+      // 6. Tính điểm hiển thị kết quả local
+      calculateScores();
+      setIsSubmitted(true);
+    } catch (err: any) {
+      console.error("Lỗi khi nộp bài:", err);
+      alert("Hệ thống ghi nhận kết quả bài thi ngoại tuyến: " + err.message);
+      calculateScores();
+      setIsSubmitted(true);
+    }
+  };
+
   const handleSubmit = () => {
     setModal({
       type: "submit",
-      onConfirm: () => {
+      onConfirm: async () => {
         setModal(null);
-        calculateScores();
-        setIsSubmitted(true);
+        await submitTestToBackend();
       }
     });
   };
@@ -954,11 +1130,15 @@ export default function TestExamPage() {
         {toast && <div className="exam-toast">{toast}</div>}
         <header className="exam-header">
           <div className="exam-header-left">
-            <div className="exam-student-avatar-badge">{initials}</div>
-            <span className="exam-student-name">{hoTen}</span>
+            {isLoggedIn && (
+              <>
+                <div className="exam-student-avatar-badge">{initials}</div>
+                <span className="exam-student-name">{hoTen}</span>
+              </>
+            )}
           </div>
           <div className="exam-header-right">
-            <button className="exam-submit-btn" onClick={() => navigate("/test-thu-sv")}>Quay lại danh sách</button>
+            <button className="exam-submit-btn" onClick={() => navigate(sessionStorage.getItem("user") ? "/test-thu-sv" : "/test-thu")}>Quay lại danh sách</button>
           </div>
         </header>
 
@@ -968,7 +1148,7 @@ export default function TestExamPage() {
             <h1 className="results-main-title">Kết quả thi</h1>
           </div>
 
-          <div className="results-container">
+          <div className="exam-results-container">
             <div className="results-left-column">
               <div className="results-card">
                 <div className="results-row">
@@ -1065,8 +1245,12 @@ export default function TestExamPage() {
 
       <header className={`exam-header ${reviewMode ? "review-header" : ""}`}>
         <div className="exam-header-left">
-          <div className="exam-student-avatar-badge">{initials}</div>
-          <span className="exam-student-name">{hoTen}</span>
+          {isLoggedIn && (
+            <>
+              <div className="exam-student-avatar-badge">{initials}</div>
+              <span className="exam-student-name">{hoTen}</span>
+            </>
+          )}
         </div>
         
         {reviewMode ? (
@@ -1079,7 +1263,7 @@ export default function TestExamPage() {
           {!reviewMode && (
             <>
               <span className="exam-answered-count">Đã trả lời: {answered}/{total}</span>
-              <button className="exam-submit-btn" onClick={handleSubmit}>Nộp bài</button>
+              {isLoggedIn && <button className="exam-submit-btn" onClick={handleSubmit}>Nộp bài</button>}
             </>
           )}
         </div>
@@ -1123,7 +1307,7 @@ export default function TestExamPage() {
       </main>
 
       <nav className="exam-bottom-bar">
-        <div className="bottom-bar-flex-container">
+        <div className={`bottom-bar-flex-container ${(reviewMode || skill === "speaking") ? "center-justify" : ""}`}>
           <div className="bottom-skills-navigation">
             {skillList.map(sk => (
               <div key={sk} className="bottom-skill-group">
@@ -1132,7 +1316,7 @@ export default function TestExamPage() {
                     const isDone = doneParts[`${sk}_${i}`] || doneSkills[sk];
                     const isActive = sk === skill && i === partIdx;
                     
-                    const isDisabled = reviewMode ? false : (!!doneSkills[sk] || sk !== skill);
+                    const isDisabled = reviewMode ? false : (!!doneSkills[sk] || sk !== skill || (!isLoggedIn && (sk !== "listening" || i !== 0)));
                     return (
                       <button
                         key={i}
@@ -1162,7 +1346,7 @@ export default function TestExamPage() {
           {!reviewMode && skill !== "speaking" && (
             <div className="bottom-actions-container">
               <button className="btn-continue" onClick={handleContinue}>Tiếp tục</button>
-              <button className="btn-save" onClick={doSave}>Lưu bài</button>
+              {isLoggedIn && <button className="btn-save" onClick={doSave}>Lưu bài</button>}
             </div>
           )}
         </div>
@@ -1188,6 +1372,13 @@ export default function TestExamPage() {
           title="Nộp bài thi"
           body="Bạn đã hoàn thành bài thi và muốn nộp bài. Hãy chắc chắn rằng bạn thực sự đã hoàn tất bài thi."
           onConfirm={modal.onConfirm} onCancel={() => setModal(null)} confirmLabel="Đồng ý"
+        />
+      )}
+      {modal?.type === "register_required" && (
+        <Modal
+          title="Đăng ký tài khoản"
+          body="Bạn đã hoàn thành phần thi thử trải nghiệm (Part 1 của Listening). Vui lòng đăng ký hoặc đăng nhập tài khoản thành viên để được làm đầy đủ bài thi 4 kỹ năng."
+          onConfirm={modal.onConfirm} onCancel={() => setModal(null)} confirmLabel="Đăng ký ngay"
         />
       )}
     </div>

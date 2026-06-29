@@ -1,4 +1,4 @@
-import "./Register.css";
+﻿import "./Register.css";
 import Navbar from "../../components/Navbar";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
@@ -14,8 +14,9 @@ const Register = ({ isModal = false }: RegisterProps) => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    username: "",
+    email: "",
     name: "",
+    username: "",
     password: "",
     confirmPassword: "",
   });
@@ -26,8 +27,9 @@ const Register = ({ isModal = false }: RegisterProps) => {
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const [errors, setErrors] = useState<{
-    username?: string;
+    email?: string;
     name?: string;
+    username?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
@@ -42,26 +44,24 @@ const Register = ({ isModal = false }: RegisterProps) => {
     const { name, value } = e.target;
     const val = value.trim();
 
-    if (name === "username") {
+    if (name === "email") {
       if (!val) {
-        setErrors(prev => ({ ...prev, username: "Vui lòng điền email hoặc số điện thoại!" }));
+        setErrors(prev => ({ ...prev, email: "Vui lòng điền email!" }));
       } else {
-        const isEmailAttempt = val.includes("@");
-        if (isEmailAttempt) {
-          const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-          if (!emailRegex.test(val)) {
-            setErrors(prev => ({ ...prev, username: "Vui lòng điền đúng định dạng email hoặc số điện thoại!" }));
-          } else {
-            setErrors(prev => ({ ...prev, username: undefined }));
-          }
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(val)) {
+          setErrors(prev => ({ ...prev, email: "Vui lòng điền đúng định dạng email!" }));
         } else {
-          const phoneRegex = /^0\d{9}$/;
-          if (!phoneRegex.test(val)) {
-            setErrors(prev => ({ ...prev, username: "Vui lòng điền đúng định dạng email hoặc số điện thoại!" }));
-          } else {
-            setErrors(prev => ({ ...prev, username: undefined }));
-          }
+          setErrors(prev => ({ ...prev, email: undefined }));
         }
+      }
+    } else if (name === "username") {
+      if (!val) {
+        setErrors(prev => ({ ...prev, username: "Vui lòng điền tên đăng nhập!" }));
+      } else if (val.length < 3) {
+        setErrors(prev => ({ ...prev, username: "Tên đăng nhập phải có ít nhất 3 ký tự!" }));
+      } else {
+        setErrors(prev => ({ ...prev, username: undefined }));
       }
     }
   };
@@ -72,34 +72,37 @@ const Register = ({ isModal = false }: RegisterProps) => {
     const newErrors: typeof errors = {};
     let hasError = false;
 
-    const usernameVal = form.username.trim();
-    if (!usernameVal) {
-      newErrors.username = "Vui lòng điền email hoặc số điện thoại!";
+    const emailVal = form.email.trim();
+    if (!emailVal) {
+      newErrors.email = "Vui lòng điền email!";
       hasError = true;
     } else {
-      const isEmailAttempt = usernameVal.includes("@");
-      if (isEmailAttempt) {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-        if (!emailRegex.test(usernameVal)) {
-          newErrors.username = "Vui lòng điền đúng định dạng email hoặc số điện thoại!";
-          hasError = true;
-        }
-      } else {
-        const phoneRegex = /^0\d{9}$/;
-        if (!phoneRegex.test(usernameVal)) {
-          newErrors.username = "Vui lòng điền đúng định dạng email hoặc số điện thoại!";
-          hasError = true;
-        }
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(emailVal)) {
+        newErrors.email = "Vui lòng điền đúng định dạng email!";
+        hasError = true;
       }
     }
+
     if (!form.name.trim()) {
       newErrors.name = "Vui lòng điền họ và tên!";
       hasError = true;
     }
+
+    const usernameVal = form.username.trim();
+    if (!usernameVal) {
+      newErrors.username = "Vui lòng điền tên đăng nhập!";
+      hasError = true;
+    } else if (usernameVal.length < 3) {
+      newErrors.username = "Tên đăng nhập phải có ít nhất 3 ký tự!";
+      hasError = true;
+    }
+
     if (!form.password.trim()) {
       newErrors.password = "Vui lòng điền mật khẩu!";
       hasError = true;
     }
+
     if (!form.confirmPassword.trim()) {
       newErrors.confirmPassword = "Vui lòng điền lại mật khẩu!";
       hasError = true;
@@ -123,7 +126,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
           username: form.username,
           password: form.password,
           name: form.name,
-          email: form.username, // dùng email/sdt làm username
+          email: form.email,
         }),
       });
 
@@ -134,7 +137,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
       }
 
       setSuccess("Đăng ký thành công! Đang chuyển sang trang đăng nhập...");
-      setTimeout(() => navigate(isModal ? "?auth=login" : "/login"), 2000);
+      setTimeout(() => navigate(isModal ? "?auth=login" : "/login", isModal ? { replace: true } : undefined), 2000);
     } catch (err) {
       setError("Không thể kết nối đến server!");
     } finally {
@@ -150,19 +153,19 @@ const Register = ({ isModal = false }: RegisterProps) => {
       {success && <div className="alert alert-success">{success}</div>}
 
       <form onSubmit={handleSubmit} className="form-wrapper" noValidate>
-        <label>Email hoặc Số điện thoại <span>*</span></label>
+        <label>Email <span>*</span></label>
         <input
-          type="text"
-          name="username"
-          placeholder="Nhập email hoặc số điện thoại"
-          value={form.username}
+          type="email"
+          name="email"
+          placeholder="Nhập địa chỉ email"
+          value={form.email}
           onChange={handleChange}
           onBlur={handleBlur}
-          style={{ borderColor: errors.username ? "#ef4444" : undefined }}
+          style={{ borderColor: errors.email ? "#ef4444" : undefined }}
         />
-        {errors.username && (
+        {errors.email && (
           <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
-            {errors.username}
+            {errors.email}
           </span>
         )}
 
@@ -178,6 +181,22 @@ const Register = ({ isModal = false }: RegisterProps) => {
         {errors.name && (
           <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
             {errors.name}
+          </span>
+        )}
+
+        <label>Tên đăng nhập <span>*</span></label>
+        <input
+          type="text"
+          name="username"
+          placeholder="Nhập tên đăng nhập"
+          value={form.username}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          style={{ borderColor: errors.username ? "#ef4444" : undefined }}
+        />
+        {errors.username && (
+          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
+            {errors.username}
           </span>
         )}
 
@@ -295,7 +314,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
 
         <p style={{ textAlign: "center", marginTop: 16, fontSize: 14, color: "#666" }}>
           Đã có tài khoản?{" "}
-          <Link to={isModal ? "?auth=login" : "/login"} style={{ color: "#000080", fontWeight: 600, textDecoration: "none" }}>
+          <Link replace to={isModal ? "?auth=login" : "/login"} style={{ color: "#000080", fontWeight: 600, textDecoration: "none" }}>
             Đăng nhập ngay
           </Link>
         </p>
@@ -318,3 +337,4 @@ const Register = ({ isModal = false }: RegisterProps) => {
 };
 
 export default Register;
+

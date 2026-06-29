@@ -1,4 +1,4 @@
-import NavbarAuto from "../../components/NavbarAuto";
+﻿import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
 import "./CoursesCategoryPage.css";
 import { useState, useEffect } from "react";
@@ -231,3 +231,4 @@ const CoursesCategoryPage = () => {
 };
 
 export default CoursesCategoryPage;
+

@@ -1,0 +1,981 @@
+/* Common CSS for assignment type components to prevent styling collision */
+
+/* Nói theo chủ đề - speaking-topic styling */
+.flic-asgn-speaking-topic-container {
+  padding: 8px 0;
+}
+
+.flic-asgn-speaking-topic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(249, 88, 0, 0.1);
+  color: #F95800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.flic-asgn-speaking-prompt-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.flic-asgn-speaking-prompt-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.flic-asgn-speaking-prompt-title h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.flic-asgn-speaking-prompt-text {
+  margin: 0;
+  font-size: 16px;
+  color: #334155;
+  line-height: 1.6;
+  font-weight: 500;
+  white-space: pre-line;
+}
+
+.flic-asgn-speaking-image-wrap {
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+  display: inline-block;
+}
+
+.flic-asgn-speaking-image {
+  max-height: 240px;
+  object-fit: contain;
+  display: block;
+}
+
+.flic-asgn-speaking-hint {
+  margin-top: 16px;
+  background: #f8fafc;
+  border-left: 4px solid #64748b;
+  padding: 12px 16px;
+  border-radius: 4px 8px 8px 4px;
+  font-size: 14px;
+  color: #475569;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.flic-asgn-speaking-hint-icon {
+  margin-top: 3px;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.flic-asgn-speaking-notes-section {
+  margin-bottom: 24px;
+}
+
+.flic-asgn-speaking-notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.flic-asgn-speaking-notes-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flic-asgn-speaking-notes-counter {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.flic-asgn-speaking-notes-textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.flic-asgn-speaking-recording-station {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 30px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  position: relative;
+}
+
+.flic-asgn-speaking-active-rec-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 6px 16px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 14px;
+  animation: pulse 1.5s infinite;
+}
+
+.flic-asgn-speaking-active-rec-dot {
+  width: 8px;
+  height: 8px;
+  background: #dc2626;
+  border-radius: 50%;
+}
+
+.flic-asgn-speaking-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 40px;
+  margin: 10px 0;
+}
+
+.flic-asgn-speaking-waveform-bar {
+  width: 4px;
+  height: 100%;
+  background: #dc2626;
+  border-radius: 2px;
+  animation: wave 1.2s infinite ease-in-out alternate;
+}
+
+.flic-asgn-speaking-stop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  transition: background-color 0.2s;
+}
+
+.flic-asgn-speaking-start-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #F95800;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(249, 88, 0, 0.3);
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.flic-asgn-speaking-start-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  background: #dd4e00;
+}
+
+.flic-asgn-speaking-status-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.flic-asgn-speaking-player-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.flic-asgn-speaking-player-play-btn {
+  background: #F95800;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(249, 88, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.flic-asgn-speaking-player-play-btn:hover {
+  background: #dd4e00;
+}
+
+.flic-asgn-speaking-player-info {
+  flex: 1;
+  text-align: left;
+}
+
+.flic-asgn-speaking-player-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.flic-asgn-speaking-player-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.flic-asgn-speaking-player-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Reading Split Screen View - Premium Styling */
+.flic-asgn-reading-split-container {
+  display: flex;
+  gap: 32px;
+  min-height: 60vh;
+  max-height: 80vh;
+  height: auto;
+  background: #ffffff;
+}
+
+.flic-asgn-reading-passage-panel {
+  flex: 1.1;
+  max-height: 80vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 24px;
+  border-right: 1px solid #f1f5f9;
+}
+
+/* Thin modern scrollbars */
+.flic-asgn-reading-passage-panel::-webkit-scrollbar,
+.flic-asgn-reading-questions-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.flic-asgn-reading-passage-panel::-webkit-scrollbar-thumb,
+.flic-asgn-reading-questions-panel::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 99px;
+}
+
+.flic-asgn-reading-questions-panel {
+  flex: 0.9;
+  max-height: 80vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+}
+
+.flic-asgn-panel-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flic-asgn-passage-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.flic-asgn-passage-directions {
+  font-style: italic;
+  color: #475569;
+  font-size: 14.5px;
+  margin-bottom: 16px;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 3px solid #cbd5e1;
+  line-height: 1.6;
+}
+
+.flic-asgn-passage-paragraph {
+  margin-bottom: 14px;
+  line-height: 1.8;
+  font-size: 15.5px;
+  color: #334155;
+  text-align: justify;
+}
+
+/* MCQ Box within split reading panel overrides (remove borders & simplify hierarchy) */
+.flic-asgn-reading-questions-panel .ad-mcq-question-box {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 16px 0 !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  margin-bottom: 16px !important;
+  background: transparent !important;
+}
+
+.flic-asgn-reading-questions-panel .ad-mcq-question-box:last-child {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+}
+
+.flic-asgn-reading-questions-panel .ad-mcq-option {
+  border: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+}
+
+.flic-asgn-reading-questions-panel .ad-mcq-option:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.flic-asgn-reading-questions-panel .ad-mcq-option.chosen {
+  background: #fff8f5 !important;
+  border-color: #F95800 !important;
+}
+
+/* Vocabulary Matching Game (Duolingo Style) - Premium CSS */
+.flic-vocab-matching-container {
+  background: transparent;
+  padding: 0;
+  border-radius: 16px;
+  border: none;
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+.flic-vocab-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.flic-vocab-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.flic-vocab-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.flic-vocab-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.flic-vocab-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flic-vocab-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-bottom: 4px solid #e2e8f0; /* Duolingo 3D effect button */
+  border-radius: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+  min-height: 56px;
+  text-align: left;
+  width: 100%;
+}
+
+.flic-vocab-card:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  border-bottom-color: #cbd5e1;
+}
+
+.flic-vocab-card:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.flic-vocab-card .vocab-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.2s ease;
+}
+
+/* Selected state - premium blue (highest priority over hover) */
+.flic-vocab-card.selected,
+.flic-vocab-card.selected:hover {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  border-bottom-color: #2563eb !important;
+}
+.flic-vocab-card.selected .vocab-text,
+.flic-vocab-card.selected:hover .vocab-text {
+  color: #1d4ed8 !important;
+}
+
+/* Correct/Success state - green */
+.flic-vocab-card.success,
+.flic-vocab-card.success:hover {
+  background: #f0fdf4 !important;
+  border-color: #22c55e !important;
+  border-bottom-color: #16a34a !important;
+  animation: popSuccess 0.4s ease;
+}
+.flic-vocab-card.success .vocab-text,
+.flic-vocab-card.success:hover .vocab-text {
+  color: #15803d !important;
+}
+
+/* Incorrect/Error state - red with shake */
+.flic-vocab-card.error,
+.flic-vocab-card.error:hover {
+  background: #fef2f2 !important;
+  border-color: #ef4444 !important;
+  border-bottom-color: #dc2626 !important;
+  animation: shakeError 0.5s ease;
+}
+.flic-vocab-card.error .vocab-text,
+.flic-vocab-card.error:hover .vocab-text {
+  color: #b91c1c !important;
+}
+
+/* Matched/Disabled state - smoothly hidden and collapsed */
+.flic-vocab-card.matched {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  min-height: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flic-vocab-card.matched .vocab-text {
+  color: #94a3b8;
+}
+
+.vocab-icon {
+  font-size: 18px;
+}
+.vocab-icon.status-matched {
+  color: #10b981;
+}
+
+.flic-vocab-result {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #166534;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Keyframes animations */
+@keyframes shakeError {
+  0%, 100% { transform: translate(0, 0); }
+  20%, 60% { transform: translate(-6px, 0); }
+  40%, 80% { transform: translate(6px, 0); }
+}
+
+@keyframes popSuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* Premium Word Arranger / Sentence Sorting (Duolingo style) */
+.flic-word-ordered-area {
+  min-height: 76px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #fafafa;
+  margin-top: 16px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+  position: relative;
+}
+
+.flic-word-ordered-area.drag-over {
+  border-color: #F95800;
+  background: rgba(249, 88, 0, 0.03);
+}
+
+.flic-word-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-bottom: 4px solid #cbd5e1; /* 3D effect */
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  cursor: grab;
+  user-select: none;
+  transition: background-color 0.2s, opacity 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.flic-word-card:hover:not(.dragging) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.flic-word-card:active {
+  cursor: grabbing;
+}
+
+.flic-word-card.dragging {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.flic-word-placeholder {
+  display: inline-flex;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 2px dashed #cbd5e1;
+  color: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  user-select: none;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.flic-word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0;
+  margin-top: 20px;
+  justify-content: center;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Premium Writing Essay Styles */
+.flic-essay-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.flic-essay-prompt {
+  background: #fdf8f6;
+  border-left: 4px solid #F95800;
+  border-radius: 4px 12px 12px 4px;
+  padding: 16px;
+  margin-bottom: 4px;
+}
+
+.flic-essay-prompt-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #F95800;
+  font-weight: 700;
+  font-size: 13.5px;
+  margin: 0 0 6px 0;
+}
+
+.flic-essay-prompt-text {
+  color: #334155;
+  font-size: 15.5px;
+  font-weight: 500;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.flic-essay-textarea-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.flic-essay-textarea {
+  width: 100%;
+  min-height: 200px;
+  border: 2px solid #e2e8f0;
+  border-bottom: 4px solid #cbd5e1; /* 3D outline */
+  border-radius: 16px;
+  padding: 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #334155;
+  outline: none;
+  resize: vertical;
+  background: #ffffff;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.flic-essay-textarea:focus:not(:disabled) {
+  border-color: #F95800;
+  border-bottom-color: #dd4e00;
+  background: #fffcfb;
+}
+
+.flic-essay-textarea:disabled {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.flic-essay-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.flic-essay-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.flic-essay-progress-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.flic-essay-progress-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.flic-essay-progress-fill.under-target {
+  background: #3b82f6;
+}
+
+.flic-essay-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.flic-essay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-bottom: 3px solid #cbd5e1;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.flic-essay-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.flic-essay-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+}
+
+/* Premium Lined Paper style for submitted essays */
+.flic-paper-ruled {
+  background: #fffdf9;
+  border: 1px solid #f1eae0;
+  border-bottom: 4px solid #e4dacb;
+  border-radius: 16px;
+  padding: 24px 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+}
+
+.flic-paper-ruled::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 45px;
+  width: 2px;
+  height: 100%;
+  background: rgba(239, 68, 68, 0.2); /* Notebook red margin line */
+}
+
+.flic-paper-ruled-content {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 2.2em; /* notebook line heights */
+  color: #334155;
+  white-space: pre-wrap;
+  margin: 0;
+  padding-left: 30px; /* offset for red line margin */
+  background-image: linear-gradient(rgba(226, 232, 240, 0.6) 1px, transparent 1px);
+  background-size: 100% 2.2em;
+  background-attachment: local;
+}
+
+/* Metadata tag below lined paper */
+.flic-paper-meta {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.flic-paper-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* Teacher feedback styles */
+.flic-feedback-panel {
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 20px;
+  box-sizing: border-box;
+}
+
+.flic-feedback-awaiting {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-bottom: 4px solid #fcd34d;
+  color: #b45309;
+  animation: pulseSoft 2.5s infinite ease-in-out;
+}
+
+.flic-feedback-graded {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-bottom: 4px solid #86efac;
+  color: #166534;
+}
+
+.flic-feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.flic-feedback-text {
+  font-size: 14.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Premium Vertical Sentence Arranger (writing-order-sentences) */
+.flic-sentence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.flic-sentence-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-bottom: 4px solid #cbd5e1; /* 3D effect */
+  border-radius: 16px;
+  cursor: grab;
+  user-select: none;
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
+  box-sizing: border-box;
+}
+
+.flic-sentence-card:hover:not(.dragging) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.flic-sentence-card:active {
+  cursor: grabbing;
+}
+
+.flic-sentence-card.dragging {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.flic-sentence-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.flic-sentence-text {
+  margin: 0;
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: #334155;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.flic-sentence-drag-handle {
+  color: #94a3b8;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  padding: 0 4px;
+}
+
+.flic-sentence-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.flic-sentence-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-bottom: 3px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.flic-sentence-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.flic-sentence-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+}
+
+.flic-sentence-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-bottom-width: 1px;
+  transform: none;
+}
+
+
+

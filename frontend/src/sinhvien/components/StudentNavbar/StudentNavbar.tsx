@@ -6,6 +6,8 @@ import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
 const userIcon = import.meta.env.BASE_URL + "user.png";
 
+const API = "http://localhost:5000";
+
 export default function StudentNavbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -20,8 +22,8 @@ export default function StudentNavbar() {
     try {
       const user = JSON.parse(sessionStorage.getItem("user") || "{}") || {};
       setHoTen(user.HoTen || "Sinh Viên");
-      const savedAvatar = localStorage.getItem(`user_avatar_${user.MaNguoiDung}`);
-      setAvatarUrl(savedAvatar || userIcon);
+      const avatar = user.AnhDaiDien;
+      setAvatarUrl(avatar ? (avatar.startsWith("http") ? avatar : `${API}${avatar}`) : userIcon);
     } catch (e) {
       console.error("Error syncing user info in navbar", e);
     }
@@ -47,12 +49,10 @@ export default function StudentNavbar() {
     const p = location.pathname;
     return (
       p === "/MyCourses" ||
-      p.startsWith("/class-detail/") ||
-      p.startsWith("/course-detail/") ||
+      p.startsWith("/MyCourses/") ||
       p.startsWith("/doc-detail/") ||
       p.startsWith("/lesson-detail/") ||
       p.startsWith("/bai-giangSV/") ||
-      p === "/assignments" ||
       p.startsWith("/exercise/") ||
       p.startsWith("/baitap/") ||
       p === "/assignment-success" ||
@@ -198,3 +198,4 @@ export default function StudentNavbar() {
     </header>
   );
 }
+

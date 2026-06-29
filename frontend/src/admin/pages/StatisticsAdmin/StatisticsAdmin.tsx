@@ -1,4 +1,4 @@
-import "./StatisticsAdmin.css";
+﻿import "./StatisticsAdmin.css";
 import { useState, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,

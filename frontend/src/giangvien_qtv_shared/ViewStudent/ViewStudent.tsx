@@ -1,4 +1,4 @@
-import "./ViewStudent.css";
+﻿import "./ViewStudent.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FiArrowLeft } from "react-icons/fi";
@@ -54,6 +54,7 @@ const ViewStudent = () => {
           GioiTinh: student.GioiTinh,
           NgaySinh: student.NgaySinh,
           Lop: student.Lop,
+          MSSV: student.MSSV,
           MaKhoaHoc: student.MaKhoaHoc
         })
       });
@@ -96,8 +97,17 @@ const ViewStudent = () => {
 
         <div className="form-grid">
           <div className="form-group">
-            <label>Mã sinh viên</label>
+            <label>Mã học viên (Hệ thống)</label>
             <input value={student.MaSinhVien || ""} disabled className="input-disabled" />
+          </div>
+
+          <div className="form-group">
+            <label>Mã số sinh viên (Trường)</label>
+            <input
+              value={student.MSSV || ""}
+              onChange={(e) => handleChange("MSSV", e.target.value)}
+              placeholder="Nhập mã số sinh viên (MSSV)"
+            />
           </div>
 
           <div className="form-group">
@@ -183,3 +193,4 @@ const ViewStudent = () => {
 };
 
 export default ViewStudent;
+

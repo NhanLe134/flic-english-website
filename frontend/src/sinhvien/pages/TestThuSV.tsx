@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FiClock, FiAlertTriangle } from "react-icons/fi";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { FiClock } from "react-icons/fi";
 import "./TestThuSV.css";
 
 interface BaiTest {
@@ -54,10 +54,76 @@ export default function TestThuSV() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isLoggedIn = !!sessionStorage.getItem("user");
+  const homePath = isLoggedIn ? "/profile" : "/";
+
   useEffect(() => {
     if ((location.state as any)?.submitted) setSubmitted(true);
-    setTests(STATIC_TESTS);
-    setLoading(false);
+    
+    const API = "http://localhost:5000";
+    setLoading(true);
+
+    fetch(`${API}/dethi`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Lỗi tải đề thi");
+        return res.json();
+      })
+      .then((data) => {
+        // Chỉ lấy các đề thi có TrangThaiDuyet là "Đã duyệt"
+        const approvedData = data.filter(
+          (t: any) => t.TrangThaiDuyet === "Đã duyệt"
+        );
+
+        const mappedTests = approvedData.map((t: any) => {
+          let parsedKyNang = {};
+          try {
+            parsedKyNang = typeof t.NoiDungDeThi === "string" 
+              ? JSON.parse(t.NoiDungDeThi) 
+              : t.NoiDungDeThi;
+          } catch (e) {
+            console.error("Lỗi parse NoiDungDeThi cho đề:", t.MaDeThi, e);
+          }
+
+          // Đảm bảo có thoiGian cho từng kỹ năng để trang làm bài chạy đúng
+          const kyNang = parsedKyNang as any;
+          if (kyNang) {
+            if (kyNang.listening && !kyNang.listening.thoiGian) kyNang.listening.thoiGian = 45 * 60;
+            if (kyNang.reading && !kyNang.reading.thoiGian) kyNang.reading.thoiGian = 60 * 60;
+            if (kyNang.writing && !kyNang.writing.thoiGian) kyNang.writing.thoiGian = 60 * 60;
+            if (kyNang.speaking && !kyNang.speaking.thoiGian) kyNang.speaking.thoiGian = 12 * 60;
+          }
+
+          return {
+            MaBaiTest: t.MaDeThi,
+            TieuDe: t.TieuDe,
+            MoTa: t.MoTa || "",
+            TongThoiGian: t.ThoiGian,
+            CapDo: t.CapDo || "",
+            LoaiBai: t.LoaiBai || "",
+            NgayTao: t.NgayTao,
+            TrangThai: t.TrangThai,
+            kyNang: kyNang
+          };
+        });
+
+        setTests(mappedTests);
+        localStorage.setItem("flic_student_practice_tests", JSON.stringify(mappedTests));
+      })
+      .catch((err) => {
+        console.error("Lỗi khi fetch danh sách đề thi từ backend:", err);
+        // Fallback to localStorage
+        let localTests = localStorage.getItem("flic_student_practice_tests");
+        if (localTests) {
+          try {
+            setTests(JSON.parse(localTests));
+          } catch (e) {
+            setTests(STATIC_TESTS);
+          }
+        } else {
+          setTests(STATIC_TESTS);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [location]);
 
   const formatTime = (minutes: number) => {
@@ -68,6 +134,15 @@ export default function TestThuSV() {
 
   return (
     <div className="test-thu-container">
+      {/* Breadcrumb */}
+      <nav className="courses-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', marginTop: '0px', marginBottom: '24px', fontFamily: 'Inter, sans-serif' }}>
+        <Link to={homePath} style={{ color: '#777777', textDecoration: 'none', fontWeight: 500 }}>Trang chủ</Link>
+        <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>
+        <span style={{ color: '#777777', fontWeight: 500 }}>Học & thi thử</span>
+        <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>
+        <span style={{ color: '#F95800', fontWeight: 600 }}>Làm bài test</span>
+      </nav>
+
       {/* Submitted success banner (No checkmark emoji, clean green color style) */}
       {submitted && (
         <div className="submit-success-banner">
@@ -86,18 +161,7 @@ export default function TestThuSV() {
         </div>
       </div>
 
-      {/* Info banner */}
-      <div className="test-info-banner">
-        <div className="info-banner-title">
-          <FiAlertTriangle style={{ marginRight: 6 }} /> LƯU Ý QUAN TRỌNG
-        </div>
-        <ul className="info-banner-list">
-          <li>Hết thời gian từng phần sẽ tự động chuyển sang phần tiếp theo.</li>
-          <li>Không được quay lại các kỹ năng đã hoàn thành.</li>
-          <li>Sau khi hoàn thành mỗi phần phải nhấn "LƯU BÀI" để lưu thủ công.</li>
-          <li>Phần Listening & Reading: cấm dùng bàn phím và click ngoài vùng thi.</li>
-        </ul>
-      </div>
+
 
       {/* Test list */}
       {loading ? (

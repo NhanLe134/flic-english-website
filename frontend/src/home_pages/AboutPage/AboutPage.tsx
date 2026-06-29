@@ -1,6 +1,6 @@
 import "./AboutPage.css";
 import Footer from "../../components/Footer";
-import Navbar from "../../components/Navbar";
+import NavbarAuto from "../../components/NavbarAuto";
 import { FiEye, FiTarget, FiAward, FiCheckCircle, FiThumbsUp } from "react-icons/fi";
 
 const cards = [
@@ -55,7 +55,7 @@ const cards = [
 const AboutPage = () => {
   return (
     <>
-      <Navbar />
+      <NavbarAuto />
 
       <div className="about-hero">
         <img src={`${import.meta.env.BASE_URL}image(16).png`} alt="FLIC Banner" />

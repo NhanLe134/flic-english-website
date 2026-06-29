@@ -1,4 +1,4 @@
-import "./DanhSachBaiNop.css";
+﻿import "./DanhSachBaiNop.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -29,7 +29,8 @@ const DanhSachBaiNop = () => {
 
   const filtered = danhSach.filter((b: any) =>
     b.HoTen?.toLowerCase().includes(search.toLowerCase()) ||
-    b.MaSinhVien?.toString().includes(search)
+    b.MaSinhVien?.toString().toLowerCase().includes(search.toLowerCase()) ||
+    b.MSSV?.toString().toLowerCase().includes(search.toLowerCase())
   );
 
   const daCham = danhSach.filter(b => b.TrangThai === "Đã chấm").length;
@@ -78,7 +79,8 @@ const DanhSachBaiNop = () => {
         <table>
           <thead>
             <tr>
-              <th>Mã sinh viên</th>
+              <th>Mã học viên</th>
+              <th>MSSV (Trường)</th>
               <th>Tên sinh viên</th>
               <th>Ngày nộp</th>
               <th>Điểm</th>
@@ -89,7 +91,7 @@ const DanhSachBaiNop = () => {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: "20px", color: "#999" }}>
+                <td colSpan={7} style={{ textAlign: "center", padding: "20px", color: "#999" }}>
                   Chưa có bài nộp nào
                 </td>
               </tr>
@@ -97,6 +99,7 @@ const DanhSachBaiNop = () => {
               filtered.map((b: any) => (
                 <tr key={b.MaBaiNop}>
                   <td>{b.MaSinhVien}</td>
+                  <td>{b.MSSV || "—"}</td>
                   <td>{b.HoTen}</td>
                   <td>
                     {b.NgayNop
@@ -135,3 +138,4 @@ const DanhSachBaiNop = () => {
 };
 
 export default DanhSachBaiNop;
+

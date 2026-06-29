@@ -1,7 +1,24 @@
+//quản lý toàn bộ State, giao tiếp với API, điều hướng và cấu trúc bố cục trang
 // @ts-nocheck
 import "./AssignmentDetail.css";
+import "./AssignmentTypes.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
+import { FiVolume2, FiEdit3, FiBookOpen, FiFileText, FiCheckCircle, FiXCircle, FiClock, FiMic, FiAward, FiList } from "react-icons/fi";
+import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
+
+import { CauHoiTracNghiem } from "./CauHoiTracNghiem";
+import { NgheChonAnh } from "./NgheChonAnh";
+import { NgheChepChinhTa } from "./NgheChepChinhTa";
+import { NgheDienTu } from "./NgheDienTu";
+import { PhatAmTuDong } from "./PhatAmTuDong";
+import { NoiTheoChuDe } from "./NoiTheoChuDe";
+import { SapXepTu } from "./SapXepTu";
+import { SapXepCau } from "./SapXepCau";
+import { VietDoanVan } from "./VietDoanVan";
+import { BoGiaiDeThi } from "./BoGiaiDeThi";
+import { NoiTu } from "./NoiTu";
+import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
 const API = "http://localhost:5000";
 
@@ -11,11 +28,92 @@ interface MCQuestion {
   correct: string;
 }
 
+const renderReadingPassage = (text: string) => {
+  if (!text) return null;
+  const blocks = text.split(/\n\s*\n/);
+  return (
+    <>
+      {blocks.map((block, idx) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+
+        const isFirstBlock = idx === 0;
+        const isInstruction = trimmed.toLowerCase().startsWith("in this section") || 
+                              trimmed.toLowerCase().startsWith("directions:") ||
+                              trimmed.toLowerCase().startsWith("direction:");
+
+        if (isFirstBlock && !isInstruction && (trimmed.length < 150 || !trimmed.endsWith("."))) {
+          return (
+            <h4 key={idx} className="flic-asgn-passage-title">
+              {trimmed}
+            </h4>
+          );
+        }
+
+        if (isInstruction) {
+          return (
+            <div key={idx} className="flic-asgn-passage-directions">
+              {trimmed}
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className="flic-asgn-passage-paragraph">
+            {trimmed}
+          </p>
+        );
+      })}
+    </>
+  );
+};
+
+const mapDangBaiToType = (db: string): string => {
+  if (!db) return "multiple";
+  const dbClean = db.trim();
+  if (dbClean === "Nghe audio trắc nghiệm") return "listening-mcq";
+  if (dbClean === "Hình ảnh chọn đáp án") return "listening-image";
+  if (dbClean === "Nghe chép chính tả") return "listening-dictation";
+  if (dbClean === "Điền từ vào đoạn văn") return "listening-fill-in";
+  if (dbClean === "Luyện phát âm (check phát âm tự động)") return "speaking-pronounce";
+  if (dbClean === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking-topic";
+  if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
+  if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "reading-vocab-mcq";
+  if (dbClean === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "writing-tense-mcq";
+  if (dbClean === "Viết đoạn văn ngắn") return "writing-essay";
+  if (dbClean === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
+  return dbClean;
+};
+
 function AssignmentDetail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
-  const maLopHoc = location.state?.maLopHoc;
+  const { id, classId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
+  const maLopHoc = classId ? Number(classId) : location.state?.maLopHoc;
+
+  const handleBackNavigation = () => {
+    if (location.pathname.includes('/hoc-thu-sv/')) {
+      if (classId && lessonId) {
+        const isExamTab = location.pathname.includes('/bt/');
+        const tabKey = isExamTab ? 'bt' : 'lt';
+        navigate(`/hoc-thu-sv/${classId}/${lessonId}/${tabKey}/${id}`);
+      } else {
+        navigate(-1);
+      }
+      return;
+    }
+
+    if (classId && lessonId) {
+      const isExamTab = location.pathname.includes('/bt/');
+      const tabKey = isExamTab ? 'bt' : 'lt';
+      navigate(`/MyCourses/${classId}/${lessonId}/${tabKey}/${id}`);
+    } else if (maLopHoc) {
+      navigate(`/MyCourses/${maLopHoc}`);
+    } else {
+      navigate("/MyCourses");
+    }
+  };
 
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const maNguoiDung = user.MaNguoiDung;
@@ -27,8 +125,69 @@ function AssignmentDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [lockMessage, setLockMessage] = useState<string>("");
+
+  useEffect(() => {
+    if (!maNguoiDung) return;
+    fetch(`${API}/students/by-user/${maNguoiDung}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.MaSinhVien) {
+          setMaSinhVien(data.MaSinhVien);
+        } else {
+          setMaSinhVien(maNguoiDung);
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching student info:", err);
+        setMaSinhVien(maNguoiDung);
+      });
+  }, [maNguoiDung]);
+
+  useEffect(() => {
+    if (!exercise || !maSinhVien || (user.VaiTro !== "Sinh Viên" && user.VaiTro !== "Học Viên")) return;
+
+    if (maNguoiDung === 123456 || maNguoiDung === 5) {
+      setIsLocked(false);
+      return;
+    }
+
+    if (exercise.MaBaiHoc) {
+      const checkProgress = async () => {
+        try {
+          const mtRes = await fetch(`${API}/minitest/baigiang/${exercise.MaBaiHoc}?role=student`);
+          const mtData = await mtRes.json();
+          const hasMinitest = mtData && mtData.MaMinitest;
+
+          const progRes = await fetch(`${API}/student/progress/minitest/${exercise.MaBaiHoc}/${maSinhVien}`);
+          const progData = await progRes.json();
+
+          const daXemVideo = progData.DaXemVideo === 1;
+          const daDatMinitest = progData.DaDatMinitest === 1;
+
+          if (!daXemVideo) {
+            setIsLocked(true);
+            setLockMessage("Bạn cần xem hết video bài giảng để mở khóa bài tập này.");
+          } else if (hasMinitest && !daDatMinitest) {
+            setIsLocked(true);
+            setLockMessage("Bạn đã xem xong bài giảng nhưng cần hoàn thành và đạt bài Minitest để mở khóa bài tập này.");
+          } else {
+            setIsLocked(false);
+          }
+        } catch (err) {
+          console.error("Lỗi khi kiểm tra tiến trình học tập:", err);
+        }
+      };
+      checkProgress();
+    }
+  }, [exercise, maSinhVien, user.VaiTro]);
+
+
+
   // Solving states
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [mcAnswers, setMcAnswers] = useState<Record<string | number, string>>({}); // mapped by questionIdx
   const [essayAnswers, setEssayAnswers] = useState<Record<string | number, string>>({}); // mapped by questionIdx
   const [fillInAnswers, setFillInAnswers] = useState<Record<string | number, string[]>>({}); // questionIdx -> list of answers
@@ -44,7 +203,7 @@ function AssignmentDetail() {
   const [recordedUrls, setRecordedUrls] = useState<Record<string | number, string>>({});
   const [isRecording, setIsRecording] = useState<Record<string | number, boolean>>({});
   const [recordSeconds, setRecordSeconds] = useState<Record<string | number, number>>({});
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<any>(null);
 
@@ -83,98 +242,424 @@ function AssignmentDetail() {
 
   // Build/Parse Questions List
   const questionsList = useMemo(() => {
-    if (isExam) return []; // Exams use sections
-    if (!exercise?.Questions) {
-      // Fallback for single question templates
-      return [{
-        question: exercise?.Title || "",
-        audioUrl: exercise?.AudioUrl || "",
-        imageUrl: parsedContent.imageUrl || "",
-        text: parsedContent.text || exercise?.Content || "",
-        prompt: parsedContent.prompt || exercise?.Content || "",
-        level: parsedContent.level || "Đọc theo câu",
-        explanation: ""
-      }];
-    }
-    try {
-      if (exercise.Questions.trim().startsWith("[")) {
-        return JSON.parse(exercise.Questions);
-      }
-    } catch (e) {}
-
-    // Fallback to old custom text formatting
-    const exType = (exercise?.Type || "").toLowerCase();
-    const isMultiple = ["multiple", "quiz", "trắc nghiệm", "reading-vocab-mcq", "writing-tense-mcq"].includes(exType);
-    const isListening = ["listening", "nghe", "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in"].includes(exType);
-    const isReadingSplit = exType === "reading-split";
-
-    if (isMultiple || isListening || isReadingSplit) {
-      // Parse MCQs
-      const raw = exercise.Questions;
-      if (raw.includes("###") || raw.includes("||")) {
-        return raw.split("###").map(block => {
-          const parts = block.split("||");
-          const question = parts[0]?.trim() || "";
-          const rest = parts[1] || "";
-          const items = rest.split("|");
-          const options: { label: string; text: string }[] = [];
-          let correct = "A";
-          let explanation = "";
-          items.forEach(item => {
-            const trimmed = item.trim();
-            if (trimmed.startsWith("Đáp án đúng:")) {
-              correct = trimmed.replace("Đáp án đúng:", "").trim();
-            } else if (trimmed.startsWith("Giải thích:")) {
-              explanation = trimmed.replace("Giải thích:", "").trim();
-            } else {
-              const match = trimmed.match(/^([A-D])\.\s*(.+)/);
-              if (match) options.push({ label: match[1], text: match[2] });
-            }
-          });
-          return { question, answers: options.map(o => o.text), correct, explanation };
-        }).filter(q => q.question);
-      }
-    }
-
-    // Single item fallback based on type
-    if (exType === "listening-dictation") {
-      return [{ audioUrl: exercise.AudioUrl, text: exercise.Content }];
-    }
-    if (exType === "listening-fill-in") {
-      return [{ audioUrl: exercise.AudioUrl, text: exercise.Content, fillInAnswers: (exercise.Questions || "").split("|").map(s => s.trim()) }];
-    }
-    if (exType === "speaking-pronounce") {
-      return [{ text: parsedContent.text || exercise.Content, level: parsedContent.level || "Đọc theo câu", explanation: exercise.Questions || "" }];
-    }
-    if (exType === "speaking-topic") {
-      return [{ prompt: parsedContent.prompt || exercise.Content, imageUrl: parsedContent.imageUrl || "" }];
-    }
-    if (exType === "writing-order-words") {
-      return [{ text: exercise.Content, correctSentence: exercise.Questions }];
-    }
-    if (exType === "writing-order-sentences") {
-      return [{ sentences: (exercise.Questions || "").split("###").map(s => s.trim()).filter(Boolean) }];
-    }
-    if (exType === "writing-essay") {
-      return [{ prompt: exercise.Content }];
-    }
-
-    return [{ question: exercise.Title, text: exercise.Content }];
+    return parseQuestionsList(exercise, isExam, parsedContent);
   }, [exercise, isExam, parsedContent]);
+
+  // Group questions into pages:
+  // - Questions of the same reading-split passage go on the same page.
+  // - Questions sharing the same audioUrl go on the same page.
+  // - General/Simple questions with no audio or passage are grouped together on a single page.
+  const questionPages = useMemo(() => {
+    if (isExam) return []; // Exams use their own sections tabs
+    if (questionsList.length === 0) return [];
+
+    const pages: any[][] = [];
+    let currentAudioGroup: any[] = [];
+    let currentAudioUrl: string | null = null;
+    let currentSimpleGroup: any[] = [];
+
+    questionsList.forEach((q) => {
+      // 1. Reading split passage has its own page
+      if ((exercise?.Type || "").toLowerCase() === "reading-split" || q.subQuestions) {
+        if (currentAudioGroup.length > 0) {
+          pages.push(currentAudioGroup);
+          currentAudioGroup = [];
+          currentAudioUrl = null;
+        }
+        if (currentSimpleGroup.length > 0) {
+          pages.push(currentSimpleGroup);
+          currentSimpleGroup = [];
+        }
+        pages.push([q]);
+        return;
+      }
+
+      // 2. Questions sharing the same audio Url
+      if (q.audioUrl) {
+        if (currentSimpleGroup.length > 0) {
+          pages.push(currentSimpleGroup);
+          currentSimpleGroup = [];
+        }
+
+        if (currentAudioUrl && q.audioUrl === currentAudioUrl) {
+          currentAudioGroup.push(q);
+        } else {
+          if (currentAudioGroup.length > 0) {
+            pages.push(currentAudioGroup);
+          }
+          currentAudioGroup = [q];
+          currentAudioUrl = q.audioUrl;
+        }
+        return;
+      }
+
+      // 3. Simple questions with no audio or reading-split
+      if (currentAudioGroup.length > 0) {
+        pages.push(currentAudioGroup);
+        currentAudioGroup = [];
+        currentAudioUrl = null;
+      }
+      currentSimpleGroup.push(q);
+    });
+
+    if (currentAudioGroup.length > 0) {
+      pages.push(currentAudioGroup);
+    }
+    if (currentSimpleGroup.length > 0) {
+      pages.push(currentSimpleGroup);
+    }
+
+    return pages;
+  }, [questionsList, isExam, exercise]);
 
   // Load prior submission and metadata
   useEffect(() => {
     if (!id) return;
+    if (maNguoiDung && maSinhVien === null) return;
+
+    if (id === "mock-speaking-topic-1" || id === "mock-speaking-topic-2") {
+      const isExam = id === "mock-speaking-topic-1";
+      const mockEx = {
+        MaBaiTap: id,
+        Title: isExam ? "Bài tập: Nói theo chủ đề (ghi âm nộp GV chấm)" : "Luyện tập: Giới thiệu bản thân và gia đình",
+        Type: "speaking-topic",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          prompt: isExam ? "Introduce yourself and describe your hometown. Where is it located, what is it famous for, and what do you like most about it?" : "Describe your family. How many people are there in your family? What do they do? Talk about a memorable family event.",
+          imageUrl: ""
+        }),
+        Questions: JSON.stringify([
+          {
+            prompt: isExam ? "Introduce yourself and describe your hometown. Where is it located, what is it famous for, and what do you like most about it?" : "Describe your family. How many people are there in your family? What do they do? Talk about a memorable family event.",
+            imageUrl: "",
+            explanation: "Focus on using appropriate vocabulary, clear pronunciation, and organized structure."
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-reading-split-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Đọc hiểu - The History of Extinction",
+        Type: "reading-split",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: `The History of Extinction
+
+In this section, you will read several passages. Each one is followed by several questions about it. For questions 1-40, you are to choose the one best answer A, B, C or D to each question. Answer all questions following a passage on the basis of what is stated or implied in that passage.
+
+(A) It is estimated that over 99 percent of all species that ever existed have become extinct. What causes extinction? When a species is no longer adapted to a changed environment, it may perish. The exact causes of a species' death vary from situation to situation. Rapid ecological change may render an environment hostile to a species. For example, temperatures may change and a species may not be able to adapt. Food resources may be affected by environmental changes, which will then cause problems for a species requiring these resources. Other species may become better adapted to an environment, resulting in competition and, ultimately, in the death of a species. The fossil record reveals that extinction has occurred throughout the history of Earth. Recent analyses have also revealed that on some occasions many species became extinct at the same time—a mass extinction. One of the best-known examples of mass extinction occurred 65 million years ago with the demise of dinosaurs and many other forms of life.`,
+          imageUrl: ""
+        }),
+        Questions: JSON.stringify([
+          {
+            text: `The History of Extinction
+
+In this section, you will read several passages. Each one is followed by several questions about it. For questions 1-40, you are to choose the one best answer A, B, C or D to each question. Answer all questions following a passage on the basis of what is stated or implied in that passage.
+
+(A) It is estimated that over 99 percent of all species that ever existed have become extinct. What causes extinction? When a species is no longer adapted to a changed environment, it may perish. The exact causes of a species' death vary from situation to situation. Rapid ecological change may render an environment hostile to a species. For example, temperatures may change and a species may not be able to adapt. Food resources may be affected by environmental changes, which will then cause problems for a species requiring these resources. Other species may become better adapted to an environment, resulting in competition and, ultimately, in the death of a species. The fossil record reveals that extinction has occurred throughout the history of Earth. Recent analyses have also revealed that on some occasions many species became extinct at the same time—a mass extinction. One of the best-known examples of mass extinction occurred 65 million years ago with the demise of dinosaurs and many other forms of life.`,
+            subQuestions: [
+              {
+                question: "The word 'it' in paragraph (A) refers to",
+                options: [
+                  { label: "A", text: "extinction" },
+                  { label: "B", text: "species" },
+                  { label: "C", text: "environment" },
+                  { label: "D", text: "99 percent" }
+                ],
+                correct: "B",
+                explanation: "The pronoun 'it' refers to 'a species' mentioned in the preceding clause."
+              },
+              {
+                question: "The word 'ultimately' in paragraph (A) is closest in meaning to",
+                options: [
+                  { label: "A", text: "unfortunately" },
+                  { label: "B", text: "eventually" },
+                  { label: "C", text: "exceptionally" },
+                  { label: "D", text: "dramatically" }
+                ],
+                correct: "B",
+                explanation: "'Ultimately' means in the end, which is closest in meaning to 'eventually'."
+              },
+              {
+                question: "The word 'ultimately' in paragraph (A) is closest in meaning to",
+                options: [
+                  { label: "A", text: "unfortunately" },
+                  { label: "B", text: "eventually" },
+                  { label: "C", text: "exceptionally" },
+                  { label: "D", text: "dramatically" }
+                ],
+                correct: "B",
+                explanation: "'Ultimately' means in the end, which is closest in meaning to 'eventually'."
+              },
+              {
+                question: "The word 'ultimately' in paragraph (A) is closest in meaning to",
+                options: [
+                  { label: "A", text: "unfortunately" },
+                  { label: "B", text: "eventually" },
+                  { label: "C", text: "exceptionally" },
+                  { label: "D", text: "dramatically" }
+                ],
+                correct: "B",
+                explanation: "'Ultimately' means in the end, which is closest in meaning to 'eventually'."
+              }
+            ]
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-reading-vocab-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Từ vựng - Nối từ (Match the pairs)",
+        Type: "reading-vocab-mcq",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Nối các từ tiếng Anh ở cột trái với nghĩa tiếng Việt tương ứng ở cột phải"
+        }),
+        Questions: JSON.stringify([
+          {
+            vocabPairs: [
+              { word: "postpone", meaning: "hoãn lại" },
+              { word: "supportive", meaning: "nhiệt tình hỗ trợ" },
+              { word: "attitude", meaning: "thái độ" },
+              { word: "colleague", meaning: "đồng nghiệp" },
+              { word: "accelerate", meaning: "thúc đẩy/tăng tốc" }
+            ]
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-writing-order-words-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Kéo thả sắp xếp câu",
+        Type: "writing-order-words",
+        CreatedDate: "2026-06-24",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Kéo thả hoặc click các từ bên dưới để ghép thành câu có nghĩa hoàn chỉnh"
+        }),
+        Questions: JSON.stringify([
+          {
+            text: "Chúng tôi cần thúc đẩy quá trình chuyển đổi sang năng lượng tái tạo.",
+            correctSentence: "We need to accelerate the transition to renewable energy"
+          },
+          {
+            text: "Đồng nghiệp nhiệt tình hỗ trợ đã giúp tôi hoãn cuộc họp lại.",
+            correctSentence: "The supportive colleague helped me postpone the meeting"
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-writing-essay-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Bài tập tự luận: Viết về đồng nghiệp của bạn",
+        Type: "writing-essay",
+        CreatedDate: "2026-06-24",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Hãy viết một bài luận ngắn (tối thiểu 50 từ) mô tả về một đồng nghiệp thân thiết của bạn."
+        }),
+        Questions: JSON.stringify([
+          {
+            prompt: "Write a short essay (minimum 50 words) describing one of your close colleagues, their supportive attitude, and how you work together.",
+            minWords: 50
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-writing-order-sentences-1") {
+      const mockEx = {
+        MaBaiTap: id,
+        Title: "Luyện tập: Sắp xếp câu thành đoạn văn",
+        Type: "writing-order-sentences",
+        CreatedDate: "2026-06-24",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Sắp xếp các câu sau thành một đoạn văn hoàn chỉnh có nghĩa logic"
+        }),
+        Questions: JSON.stringify([
+          {
+            sentences: [
+              "First, select the correct words from the bank.",
+              "Then, drag them into the sentence area.",
+              "After that, you can reorder them if needed.",
+              "Finally, click the submit button to finish."
+            ]
+          },
+          {
+            sentences: [
+              "Learning English requires daily practice and patience.",
+              "To start, you should focus on building basic vocabulary.",
+              "Next, practice listening to simple conversations and songs.",
+              "Gradually, try speaking with others to gain confidence."
+            ]
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
+    if (id === "mock-speaking-pronounce-1" || id === "mock-speaking-pronounce-2" || id === "speaking-pronounce-mock" || ((maNguoiDung === 5 || maNguoiDung === 123456) && id === "1")) {
+      const mockEx = {
+        MaBaiTap: 9999,
+        Title: "Bài tập Luyện phát âm tự động (Web Speech API)",
+        Type: "speaking-pronounce",
+        CreatedDate: "2026-06-23",
+        MaBuoiHoc: 1,
+        Content: JSON.stringify({
+          isExam: false,
+          text: "Luyện phát âm các từ vựng và câu thông dụng về chủ đề giới thiệu bản thân.",
+          level: "Đọc theo câu"
+        }),
+        Questions: JSON.stringify([
+          {
+            text: "Hello",
+            level: "Luyện âm đơn",
+            explanation: "/həˈloʊ/ - Pronounce clearly with a silent breath on the 'h' and a rounded 'o' at the end."
+          },
+          {
+            text: "Beautiful",
+            level: "Đọc từ theo âm",
+            explanation: "/ˈbjuː.tɪ.fəl/ - Keep the stress on the first syllable."
+          },
+          {
+            text: "How is it going?",
+            level: "Đọc theo câu",
+            explanation: "/haʊ ɪz ɪt ˈɡoʊ.ɪŋ/ - Link 'is' and 'it' together seamlessly."
+          },
+          {
+            text: "I am learning English with FLIC.",
+            level: "Đọc theo câu",
+            explanation: "/aɪ æm ˈlɜː.nɪŋ ˈɪŋ.ɡlɪʃ wɪð FLIC/ - Focus on natural sentence stress and rhythm."
+          }
+        ]),
+        AudioUrl: "",
+        ShowAnswer: 0
+      };
+      const mockLop = {
+        MaLopHoc: 1,
+        TenLop: "Lớp học giao tiếp cơ bản",
+        TienDo: 50,
+        TenKhoaHoc: "FLIC Communication Basics",
+        TenGiangVien: "Thầy Nhã"
+      };
+      setExercise(mockEx);
+      setLopInfo(mockLop);
+      setBaiNop(null);
+      setLoading(false);
+      return;
+    }
+
     Promise.all([
       fetch(`${API}/baitap/${id}`).then(r => r.json()),
       maLopHoc ? fetch(`${API}/classes/${maLopHoc}/info`).then(r => r.json()) : Promise.resolve(null),
       fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()),
     ])
       .then(([exData, lopData, nopData]) => {
-        setExercise(exData);
+        setExercise({ ...exData, Type: mapDangBaiToType(exData.Type) });
         setLopInfo(lopData);
         const myNop = Array.isArray(nopData)
-          ? nopData.find((b: any) => b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung)
+          ? nopData.find((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung)
           : null;
         setBaiNop(myNop || null);
         if (myNop) {
@@ -246,9 +731,9 @@ function AssignmentDetail() {
           }
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
-  }, [id, maLopHoc]);
+  }, [id, maLopHoc, maSinhVien, maNguoiDung]);
 
   // Initializing words and sentences shuffle
   useEffect(() => {
@@ -350,32 +835,7 @@ function AssignmentDetail() {
     return new Date().getTime() > new Date(deadlineStr).getTime();
   }, [parsedContent, submitted]);
 
-  // Auto-grading score calculators
-  const calcDictationScore = (studentText: string, correctText: string): number => {
-    const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
-    const std = clean(studentText);
-    const cor = clean(correctText);
-    if (!cor) return 0;
-    if (std === cor) return 10;
-    const stdWords = std.split(" ").filter(Boolean);
-    const corWords = cor.split(" ").filter(Boolean);
-    if (corWords.length === 0) return 0;
-    let correct = 0;
-    corWords.forEach((word, idx) => {
-      if (stdWords[idx] === word) correct++;
-    });
-    return Math.round((correct / corWords.length) * 10 * 10) / 10;
-  };
 
-  const calcSpeechScore = (spoken: string, expected: string): number => {
-    if (!expected) return 0;
-    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-    const spokenWords = normalize(spoken).split(/\s+/).filter(Boolean);
-    const expectedWords = normalize(expected).split(/\s+/).filter(Boolean);
-    if (expectedWords.length === 0) return 0;
-    const correct = spokenWords.filter(w => expectedWords.includes(w)).length;
-    return Math.min(Math.round((correct / expectedWords.length) * 10 * 10) / 10, 10);
-  };
 
   // RECORDING FUNCTIONS
   const startRecording = async (idx: number | string) => {
@@ -439,7 +899,10 @@ function AssignmentDetail() {
 
   // SUBMIT HANDLER
   const handleSubmit = async () => {
-    if (submitted) { navigate(-1); return; }
+    if (submitted) {
+      handleBackNavigation();
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -603,8 +1066,8 @@ function AssignmentDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            MaExercise: parseInt(id!),
-            MaSinhVien: maNguoiDung,
+            MaExercise: isNaN(Number(id)) ? id! : Number(id),
+            MaSinhVien: maSinhVien || maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: examFinalScore,
             TrangThai: isFullyAutoGraded ? "Đã chấm" : "Chờ chấm"
@@ -616,7 +1079,10 @@ function AssignmentDetail() {
             title: exercise?.Title,
             maLopHoc: maLopHoc,
             diem: examFinalScore,
-            loai: "Exam"
+            loai: "Exam",
+            maBaiTap: id,
+            lessonId: lessonId,
+            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt'
           }
         });
 
@@ -633,7 +1099,19 @@ function AssignmentDetail() {
 
             // Grade individual question
             let qScore = 0;
-            if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
+            if (questionType === "reading-vocab-mcq") {
+              if (q.vocabPairs && q.vocabPairs.length > 0) {
+                const correctCount = mcAnswers[qIdx] ? Number(mcAnswers[qIdx]) : 0;
+                qResult.chosenAnswer = `${correctCount}/${q.vocabPairs.length}`;
+                qResult.correctAnswer = `${q.vocabPairs.length}/${q.vocabPairs.length}`;
+                qResult.score = q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
+              } else {
+                const ans = mcAnswers[qIdx] || "";
+                qResult.chosenAnswer = ans;
+                qResult.correctAnswer = q.correct;
+                qResult.score = ans === q.correct ? 10 : 0;
+              }
+            } else if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
               const ans = mcAnswers[qIdx] || "";
               qResult.chosenAnswer = ans;
               qResult.correctAnswer = q.correct;
@@ -731,8 +1209,8 @@ function AssignmentDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            MaExercise: parseInt(id!),
-            MaSinhVien: maNguoiDung,
+            MaExercise: isNaN(Number(id)) ? id! : Number(id),
+            MaSinhVien: maSinhVien || maNguoiDung,
             NoiDung: JSON.stringify(submissionData),
             Diem: finalScore,
             TrangThai: isFullyAuto ? "Đã chấm" : "Chờ chấm"
@@ -744,7 +1222,10 @@ function AssignmentDetail() {
             title: exercise?.Title,
             maLopHoc: maLopHoc,
             diem: finalScore,
-            loai: exercise?.Type || "Bài tập"
+            loai: exercise?.Type || "Bài tập",
+            maBaiTap: id,
+            lessonId: lessonId,
+            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt'
           }
         });
       }
@@ -757,80 +1238,96 @@ function AssignmentDetail() {
     }
   };
 
-  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Đang tải...</div>;
-  if (!exercise) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Không tìm thấy bài tập.</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Loading...</div>;
+  if (!exercise) return <div style={{ textAlign: "center", padding: 40, color: "#999" }}>Exercise not found.</div>;
+
+  if (isLocked) {
+    return (
+      <div className="ad-content" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", padding: "40px 20px" }}>
+        <button className="ad-back" onClick={() => navigate(-1)} style={{ alignSelf: "flex-start", marginBottom: 20 }}>← Back</button>
+        <div style={{
+          background: "#fff",
+          borderRadius: 16,
+          padding: "40px 30px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+          textAlign: "center",
+          maxWidth: 500,
+          border: "1px solid #fee2e2"
+        }}>
+          <div style={{ fontSize: 64, marginBottom: 20 }}>🔒</div>
+          <h2 style={{ color: "#1e3a8a", marginBottom: 16, fontWeight: 700, fontSize: "24px" }}>Bài tập đang bị khóa</h2>
+          <p style={{ color: "#4b5563", fontSize: 16, lineHeight: 1.6, marginBottom: 24 }}>
+            {lockMessage}
+          </p>
+          <button 
+            onClick={() => navigate(-1)}
+            style={{
+              background: "linear-gradient(135deg, #f95800, #ff7e40)",
+              color: "#fff",
+              border: "none",
+              padding: "12px 28px",
+              borderRadius: 30,
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 4px 15px rgba(249, 88, 0, 0.3)",
+              transition: "all 0.2s"
+            }}
+          >
+            Quay lại bài giảng
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // RENDER QUESTION SUB-COMPONENTS
   const renderMCQBlock = (q: any, qIdx: number, subIdxPrefix?: string) => {
-    const key = subIdxPrefix !== undefined ? `${subIdxPrefix}_${qIdx}` : qIdx;
-    const chosen = mcAnswers[key] || "";
-    const optionsList = q.options || (q.answers?.map((t: string, i: number) => ({ label: ["A", "B", "C", "D"][i], text: t })) || []);
-    const isCorrect = submitted && chosen === q.correct;
-    const isWrong = submitted && chosen && chosen !== q.correct;
-
     return (
-      <div key={qIdx} style={{
-        background: submitted ? (isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "#fff") : "#fff",
-        border: `1.5px solid ${submitted ? (isCorrect ? "#86efac" : isWrong ? "#fecaca" : "#f0e8dc") : "#f0e8dc"}`,
-        borderRadius: 12, padding: "16px 18px", marginBottom: 14
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-          <p style={{ margin: 0, fontWeight: 700, color: "#5a3e2b" }}>Câu {qIdx + 1}: {q.question}</p>
-          {submitted && (
-            <span style={{ fontSize: 12, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626" }}>
-              {isCorrect ? "✓ Đúng" : "✗ Sai"}
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {optionsList.map((opt: any) => {
-            const isChosen = chosen === opt.label;
-            const isCorrectOpt = submitted && opt.label === q.correct;
-            const isWrongOpt = submitted && isChosen && opt.label !== q.correct;
-
-            return (
-              <label key={opt.label} style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8,
-                cursor: submitted ? "default" : "pointer",
-                border: `1.5px solid ${isCorrectOpt ? "#86efac" : isWrongOpt ? "#fecaca" : isChosen ? "#e87722" : "#e0d8cc"}`,
-                background: isCorrectOpt ? "#f0fdf4" : isWrongOpt ? "#fef2f2" : isChosen ? "#fff3e0" : "#fafafa",
-              }}>
-                <input
-                  type="radio"
-                  disabled={submitted || isOverdue || (isExam && !examStarted)}
-                  checked={isChosen}
-                  onChange={() => {
-                    setMcAnswers(prev => ({ ...prev, [key]: opt.label }));
-                  }}
-                  style={{ accentColor: "#e87722" }}
-                />
-                <span style={{ fontWeight: 600, color: "#e87722" }}>{opt.label}.</span>
-                <span>{opt.text}</span>
-              </label>
-            );
-          })}
-        </div>
-        {submitted && (
-          <div style={{ marginTop: 10, fontSize: 13, borderTop: "1px dashed #e0d8cc", paddingTop: 8 }}>
-            <p style={{ margin: 0, color: "#16a34a", fontWeight: "600" }}>Đáp án đúng: {q.correct}</p>
-            {q.explanation && <p style={{ margin: "4px 0 0", color: "#666" }}>Giải thích: {q.explanation}</p>}
-          </div>
-        )}
-      </div>
+      <CauHoiTracNghiem
+        q={q}
+        qIdx={qIdx}
+        subIdxPrefix={subIdxPrefix}
+        mcAnswers={mcAnswers}
+        setMcAnswers={setMcAnswers}
+        submitted={submitted}
+        isOverdue={isOverdue}
+        isExam={isExam}
+        examStarted={examStarted}
+      />
     );
   };
 
-  const renderCurrentQuestionBlock = (q: any, qIdx: number) => {
+  const renderCurrentQuestionBlock = (q: any, qIdx: number, hideAudio: boolean = false) => {
     const questionType = (exercise?.Type || "").toLowerCase();
 
-    if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "reading-vocab-mcq" || questionType === "multiple") {
+    if (questionType === "reading-vocab-mcq") {
+      if (q.vocabPairs && q.vocabPairs.length > 0) {
+        return (
+          <NoiTu
+            q={q}
+            qIdx={qIdx}
+            mcAnswers={mcAnswers}
+            setMcAnswers={setMcAnswers}
+            submitted={submitted}
+            onAutoSubmit={handleSubmit}
+          />
+        );
+      }
       return (
         <div>
-          {q.audioUrl && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
+          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
+          {renderMCQBlock(q, qIdx)}
+        </div>
+      );
+    }
+
+    if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
+      return (
+        <div>
+          {q.audioUrl && !hideAudio && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
             <div style={{ marginBottom: 12 }}>
-              <audio controls style={{ width: "100%" }}>
-                <source src={`${API}${q.audioUrl}`} />
-              </audio>
+              <CustomAudioPlayer src={`${API}${q.audioUrl}`} />
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
@@ -841,532 +1338,184 @@ function AssignmentDetail() {
 
     if (questionType === "listening-image") {
       return (
-        <div>
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Listening image visual" style={{ maxWidth: "100%", maxHeight: 300, display: "block", margin: "0 auto 12px", borderRadius: 8 }} />}
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          {renderMCQBlock({ question: "Chọn đáp án đúng theo hình ảnh và âm thanh:", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx)}
-        </div>
+        <NgheChonAnh
+          q={q}
+          qIdx={qIdx}
+          exercise={exercise}
+          hideAudio={hideAudio}
+          mcAnswers={mcAnswers}
+          setMcAnswers={setMcAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          isExam={isExam}
+          examStarted={examStarted}
+          API={API}
+        />
       );
     }
 
     if (questionType === "listening-dictation") {
       return (
-        <div>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và viết lại chính xác:</p>
-          {submitted ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ background: "#fafafa", border: "1px solid #e0d8cc", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Bạn viết:</p>
-                <p style={{ margin: 0, fontWeight: 700 }}>"{essayAnswers[qIdx] || ""}"</p>
-              </div>
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#16a34a" }}>Đáp án đúng:</p>
-                <p style={{ margin: 0, color: "#15803d", fontWeight: 700 }}>"{q.text}"</p>
-              </div>
-            </div>
-          ) : (
-            <textarea
-              className="ad-q-input"
-              disabled={isOverdue}
-              value={essayAnswers[qIdx] || ""}
-              onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-              placeholder="Nhập những gì bạn nghe được..."
-              rows={3}
-            />
-          )}
-        </div>
+        <NgheChepChinhTa
+          q={q}
+          qIdx={qIdx}
+          exercise={exercise}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          isExam={isExam}
+          examStarted={examStarted}
+          API={API}
+        />
       );
     }
 
     if (questionType === "listening-fill-in") {
-      const parts = (q.text || "").split(/(\[\d+\])/g);
-      const correctAnswers = q.fillInAnswers || [];
-
       return (
-        <div>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và điền vào ô trống:</p>
-          <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
-            {parts.map((part: string, idx: number) => {
-              const match = part.match(/^\[(\d+)\]$/);
-              if (match) {
-                const blankIdx = parseInt(match[1]) - 1;
-                const stdAns = (fillInAnswers[qIdx] || [])[blankIdx] || "";
-                const correctAns = correctAnswers[blankIdx] || "";
-                const isCorrect = submitted && stdAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
-
-                return (
-                  <span key={idx} style={{ display: "inline-block", margin: "0 4px" }}>
-                    <input
-                      type="text"
-                      disabled={submitted || isOverdue}
-                      value={stdAns}
-                      onChange={e => {
-                        const copyAnswers = [...(fillInAnswers[qIdx] || [])];
-                        copyAnswers[blankIdx] = e.target.value;
-                        setFillInAnswers(prev => ({ ...prev, [qIdx]: copyAnswers }));
-                      }}
-                      style={{
-                        padding: "2px 6px", borderRadius: 4, textAlign: "center", width: 100,
-                        border: `1.5px solid ${submitted ? (isCorrect ? "#22c55e" : "#ef4444") : "#e87722"}`,
-                        background: submitted ? (isCorrect ? "#f0fdf4" : "#fef2f2") : "#fff"
-                      }}
-                    />
-                    {submitted && !isCorrect && <span style={{ fontSize: 11, color: "#16a34a", display: "block" }}>({correctAns})</span>}
-                  </span>
-                );
-              }
-              return <span key={idx}>{part}</span>;
-            })}
-          </div>
-        </div>
+        <NgheDienTu
+          q={q}
+          qIdx={qIdx}
+          fillInAnswers={fillInAnswers}
+          setFillInAnswers={setFillInAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          API={API}
+        />
       );
     }
 
     if (questionType === "speaking-pronounce") {
-      const speechScore = speechScores[qIdx];
-      const spokenText = spokenTexts[qIdx] || "";
-      const isList = isListeningSTT[qIdx];
-
       return (
-        <div>
-          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 10 }}>🎯 Cấp độ: {q.level}</span>
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600 }}>🗣️ Đọc câu sau:</p>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e3a8a" }}>{q.text}</p>
-          </div>
-
-          {!submitted ? (
-            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center" }}>
-              {isList ? (
-                <div>
-                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Đang nhận âm...</span>
-                  <button onClick={() => stopSpeechRecognition(qIdx)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Dừng</button>
-                </div>
-              ) : (
-                <button disabled={isOverdue} onClick={() => startSpeechRecognition(qIdx, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700 }}>🎙️ Bấm để nói</button>
-              )}
-              {spokenText && (
-                <div style={{ marginTop: 15, textAlign: "left" }}>
-                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Nhận âm: "{spokenText}"</p>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Điểm: {speechScore}/10</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0 }}><strong>Bạn đọc:</strong> "{spokenText || "—"}"</p>
-              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Điểm chấm tự động:</strong> {speechScore}/10</p>
-            </div>
-          )}
-        </div>
+        <PhatAmTuDong
+          q={q}
+          qIdx={qIdx}
+          speechScores={speechScores}
+          setSpeechScores={setSpeechScores}
+          spokenTexts={spokenTexts}
+          setSpokenTexts={setSpokenTexts}
+          isListeningSTT={isListeningSTT}
+          setIsListeningSTT={setIsListeningSTT}
+          submitted={submitted}
+          isOverdue={isOverdue}
+        />
       );
     }
 
     if (questionType === "speaking-topic") {
-      const url = recordedUrls[qIdx];
-      const isRec = isRecording[qIdx];
-      const secs = recordSeconds[qIdx] || 0;
-
       return (
-        <div>
-          <div style={{ background: "#fff3e0", border: "1px solid #f0d8b0", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700, color: "#5a3e2b" }}>📌 {q.prompt}</p>
-          </div>
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-
-          {!submitted ? (
-            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 12 }}>
-              {isRec ? (
-                <div>
-                  <span style={{ color: "#dc2626" }}>🔴 Đang ghi âm: {secs}s </span>
-                  <button onClick={() => stopRecording(qIdx)} style={{ padding: "6px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4 }}>Dừng</button>
-                </div>
-              ) : (
-                <button disabled={isOverdue} onClick={() => startRecording(qIdx)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, fontWeight: 700 }}>🎙️ Bắt đầu ghi âm</button>
-              )}
-              {url && (
-                <div style={{ marginTop: 15 }}>
-                  <audio src={url} controls style={{ width: "100%" }} />
-                </div>
-              )}
-            </div>
-          ) : (
-            url && <div style={{ marginBottom: 12 }}><audio src={`${API}${url}`} controls style={{ width: "100%" }} /></div>
-          )}
-
-          <textarea
-            className="ad-q-input"
-            disabled={submitted || isOverdue}
-            value={essayAnswers[qIdx] || ""}
-            onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-            placeholder="Ghi chú bài nói..."
-            rows={2}
-          />
-        </div>
+        <NoiTheoChuDe
+          q={q}
+          qIdx={qIdx}
+          recordedUrls={recordedUrls}
+          setRecordedUrls={setRecordedUrls}
+          recordedBlobs={recordedBlobs}
+          setRecordedBlobs={setRecordedBlobs}
+          isRecording={isRecording}
+          setIsRecording={setIsRecording}
+          recordSeconds={recordSeconds}
+          setRecordSeconds={setRecordSeconds}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          API={API}
+        />
       );
     }
 
     if (questionType === "writing-order-words") {
-      const sWords = shuffledWords[qIdx] || [];
-      const oWords = orderedWords[qIdx] || [];
-
       return (
-        <div>
-          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Gợi ý:</p>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
-          </div>
-
-          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
-            {oWords.map((w, i) => (
-              <span key={i} onClick={() => {
-                if (submitted) return;
-                setOrderedWords(prev => ({ ...prev, [qIdx]: oWords.filter((_, idx) => idx !== i) }));
-                setShuffledWords(prev => ({ ...prev, [qIdx]: [...sWords, w] }));
-              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
-            ))}
-          </div>
-
-          {!submitted && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {sWords.map((w, i) => (
-                <span key={i} onClick={() => {
-                  setOrderedWords(prev => ({ ...prev, [qIdx]: [...oWords, w] }));
-                  setShuffledWords(prev => ({ ...prev, [qIdx]: sWords.filter((_, idx) => idx !== i) }));
-                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
-              ))}
-            </div>
-          )}
-
-          {submitted && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
-            </div>
-          )}
-        </div>
+        <SapXepTu
+          q={q}
+          qIdx={qIdx}
+          shuffledWords={shuffledWords}
+          setShuffledWords={setShuffledWords}
+          orderedWords={orderedWords}
+          setOrderedWords={setOrderedWords}
+          submitted={submitted}
+        />
       );
     }
 
     if (questionType === "writing-order-sentences") {
-      const sSents = shuffledSentences[qIdx] || [];
-      const correctSentences = q.sentences || [];
-
       return (
-        <div>
-          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {sSents.map((sent, idx) => {
-              const isCorrect = submitted && sent === correctSentences[idx];
-              return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
-                  <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
-                  <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
-                  {!submitted && (
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <button disabled={idx === 0 || isOverdue} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx - 1];
-                        copy[idx - 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [qIdx]: copy }));
-                      }}>▲</button>
-                      <button disabled={idx === sSents.length - 1 || isOverdue} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx + 1];
-                        copy[idx + 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [qIdx]: copy }));
-                      }}>▼</button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <SapXepCau
+          q={q}
+          qIdx={qIdx}
+          shuffledSentences={shuffledSentences}
+          setShuffledSentences={setShuffledSentences}
+          submitted={submitted}
+          isOverdue={isOverdue}
+        />
       );
     }
 
     if (questionType === "writing-essay") {
       return (
-        <div>
-          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.prompt}</p>
-          </div>
-          {submitted ? (
-            <div style={{ background: "#fafafa", padding: 12, border: "1px solid #e0d8cc", borderRadius: 8 }}>
-              <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{essayAnswers[qIdx] || ""}</p>
-            </div>
-          ) : (
-            <textarea
-              className="ad-q-input"
-              disabled={isOverdue}
-              value={essayAnswers[qIdx] || ""}
-              onChange={e => setEssayAnswers(prev => ({ ...prev, [qIdx]: e.target.value }))}
-              placeholder="Nhập bài viết của bạn tại đây..."
-              rows={6}
-            />
-          )}
-        </div>
+        <VietDoanVan
+          q={q}
+          qIdx={qIdx}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+        />
       );
     }
 
     if (questionType === "reading-split") {
       return (
-        <div style={{ display: "flex", gap: 20, height: 500 }}>
-          <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
-            <h5 style={{ margin: 0, fontWeight: 700 }}>📖 Reading Passage</h5>
-            <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{q.text}</p>
+        <div className="flic-asgn-reading-split-container">
+          <div className="flic-asgn-reading-passage-panel">
+            <h5 className="flic-asgn-panel-title">
+              <FiBookOpen /> Reading Passage
+            </h5>
+            <div className="flic-asgn-passage-text">
+              {renderReadingPassage(q.text)}
+            </div>
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            <h5 style={{ margin: 0, fontWeight: 700, marginBottom: 10 }}>❓ Questions</h5>
+          <div className="flic-asgn-reading-questions-panel">
+            <h5 className="flic-asgn-panel-title">
+              <FiList /> Questions
+            </h5>
             {q.subQuestions?.map((sub: any, subIdx: number) => (
-              renderMCQBlock(sub, subIdx, `${qIdx}`)
+              <CauHoiTracNghiem
+                key={subIdx}
+                q={sub}
+                qIdx={subIdx}
+                subIdxPrefix={`${qIdx}`}
+                mcAnswers={mcAnswers}
+                setMcAnswers={setMcAnswers}
+                submitted={submitted}
+                isOverdue={isOverdue}
+                isExam={isExam}
+                examStarted={examStarted}
+              />
             ))}
           </div>
         </div>
       );
     }
 
-    return null;
+    // Default fallback for general/text-only assignments (Type is null/empty or unknown)
+    return (
+      <VietDoanVan
+        q={q}
+        qIdx={qIdx}
+        essayAnswers={essayAnswers}
+        setEssayAnswers={setEssayAnswers}
+        submitted={submitted}
+        isOverdue={isOverdue}
+      />
+    );
   };
 
-  const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
-    const key = `${sIdx}_${qIdx}`;
 
-    if (secType === "listening-mcq" || secType === "writing-tense-mcq" || secType === "reading-vocab-mcq") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && (
-            <div style={{ marginBottom: 12 }}>
-              <audio controls style={{ width: "100%" }}>
-                <source src={`${API}${q.audioUrl}`} />
-              </audio>
-            </div>
-          )}
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx, `${sIdx}`)}
-        </div>
-      );
-    }
-
-    if (secType === "listening-image") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Listening image visual" style={{ maxWidth: "100%", maxHeight: 300, display: "block", margin: "0 auto 12px", borderRadius: 8 }} />}
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          {renderMCQBlock({ question: "Chọn đáp án đúng theo hình ảnh và âm thanh:", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }, qIdx, `${sIdx}`)}
-        </div>
-      );
-    }
-
-    if (secType === "listening-dictation") {
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và viết lại chính xác:</p>
-          {submitted ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ background: "#fafafa", border: "1px solid #e0d8cc", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Bạn viết:</p>
-                <p style={{ margin: 0, fontWeight: 700 }}>"{essayAnswers[key] || ""}"</p>
-              </div>
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: 12 }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#16a34a" }}>Đáp án đúng:</p>
-                <p style={{ margin: 0, color: "#15803d", fontWeight: 700 }}>"{q.text}"</p>
-              </div>
-            </div>
-          ) : (
-            <textarea
-              className="ad-q-input"
-              disabled={!examStarted || examEnded}
-              value={essayAnswers[key] || ""}
-              onChange={e => setEssayAnswers(prev => ({ ...prev, [key]: e.target.value }))}
-              placeholder="Nhập những gì bạn nghe được..."
-              rows={3}
-            />
-          )}
-        </div>
-      );
-    }
-
-    if (secType === "listening-fill-in") {
-      const parts = (q.text || "").split(/(\[\d+\])/g);
-      const correctAnswers = q.fillInAnswers || [];
-
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          {q.audioUrl && <audio controls style={{ width: "100%", marginBottom: 12 }}><source src={`${API}${q.audioUrl}`} /></audio>}
-          <p style={{ fontWeight: 600, color: "#5a3e2b" }}>Nghe và điền vào ô trống:</p>
-          <div style={{ lineHeight: 2.2, fontSize: 15, color: "#333", background: "#f9f5f0", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
-            {parts.map((part: string, idx: number) => {
-              const match = part.match(/^\[(\d+)\]$/);
-              if (match) {
-                const blankIdx = parseInt(match[1]) - 1;
-                const stdAns = (fillInAnswers[key] || [])[blankIdx] || "";
-                const correctAns = correctAnswers[blankIdx] || "";
-                const isCorrect = submitted && stdAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
-
-                return (
-                  <span key={idx} style={{ display: "inline-block", margin: "0 4px" }}>
-                    <input
-                      type="text"
-                      disabled={submitted || !examStarted || examEnded}
-                      value={stdAns}
-                      onChange={e => {
-                        const copyAnswers = [...(fillInAnswers[key] || [])];
-                        copyAnswers[blankIdx] = e.target.value;
-                        setFillInAnswers(prev => ({ ...prev, [key]: copyAnswers }));
-                      }}
-                      style={{
-                        padding: "2px 6px", borderRadius: 4, textAlign: "center", width: 100,
-                        border: `1.5px solid ${submitted ? (isCorrect ? "#22c55e" : "#ef4444") : "#e87722"}`,
-                        background: submitted ? (isCorrect ? "#f0fdf4" : "#fef2f2") : "#fff"
-                      }}
-                    />
-                    {submitted && !isCorrect && <span style={{ fontSize: 11, color: "#16a34a", display: "block" }}>({correctAns})</span>}
-                  </span>
-                );
-              }
-              return <span key={idx}>{part}</span>;
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    if (secType === "speaking-pronounce") {
-      const speechScore = speechScores[key];
-      const spokenText = spokenTexts[key] || "";
-      const isList = isListeningSTT[key];
-
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "inline-block", marginBottom: 10 }}>🎯 Cấp độ: {q.level}</span>
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8", fontWeight: 600 }}>🗣️ Đọc câu sau:</p>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e3a8a" }}>{q.text}</p>
-          </div>
-
-          {!submitted ? (
-            <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center" }}>
-              {isList ? (
-                <div>
-                  <span style={{ color: "#dc2626", fontWeight: 700 }}>🔴 Đang nhận âm...</span>
-                  <button onClick={() => stopSpeechRecognition(key)} style={{ marginLeft: 10, padding: "4px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Dừng</button>
-                </div>
-              ) : (
-                <button disabled={!examStarted || examEnded} onClick={() => startSpeechRecognition(key, q.text)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700 }}>🎙️ Bấm để nói</button>
-              )}
-              {spokenText && (
-                <div style={{ marginTop: 15, textAlign: "left" }}>
-                  <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Nhận âm: "{spokenText}"</p>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: (speechScore || 0) >= 7 ? "green" : "orange" }}>Điểm: {speechScore}/10</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: "#fafafa", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0 }}><strong>Bạn đọc:</strong> "{spokenText || "—"}"</p>
-              <p style={{ margin: "5px 0 0", color: "green" }}><strong>Điểm chấm tự động:</strong> {speechScore}/10</p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (secType === "writing-order-words") {
-      const sWords = shuffledWords[key] || [];
-      const oWords = orderedWords[key] || [];
-
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>Gợi ý:</p>
-            <p style={{ margin: 0, fontWeight: 700 }}>{q.text}</p>
-          </div>
-
-          <div style={{ minHeight: 48, border: "2px dashed #e87722", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 6, background: "#fffbf5", marginBottom: 12 }}>
-            {oWords.map((w, i) => (
-              <span key={i} onClick={() => {
-                if (submitted) return;
-                setOrderedWords(prev => ({ ...prev, [key]: oWords.filter((_, idx) => idx !== i) }));
-                setShuffledWords(prev => ({ ...prev, [key]: [...sWords, w] }));
-              }} style={{ background: "#e87722", color: "#fff", padding: "4px 10px", borderRadius: 20, cursor: submitted ? "default" : "pointer" }}>{w} ✕</span>
-            ))}
-          </div>
-
-          {!submitted && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {sWords.map((w, i) => (
-                <span key={i} onClick={() => {
-                  setOrderedWords(prev => ({ ...prev, [key]: [...oWords, w] }));
-                  setShuffledWords(prev => ({ ...prev, [key]: sWords.filter((_, idx) => idx !== i) }));
-                }} style={{ background: "#f0e8dc", padding: "4px 10px", borderRadius: 20, cursor: "pointer" }}>{w}</span>
-              ))}
-            </div>
-          )}
-
-          {submitted && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", padding: 12, borderRadius: 8 }}>
-              <p style={{ margin: 0, color: "green" }}>Đáp án đúng: {q.correctSentence}</p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (secType === "writing-order-sentences") {
-      const sSents = shuffledSentences[key] || [];
-      const correctSentences = q.sentences || [];
-
-      return (
-        <div key={qIdx} style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 13, color: "#666" }}>Di chuyển vị trí câu để sắp xếp đoạn văn đúng logic:</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {sSents.map((sent, idx) => {
-              return (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, border: "1px solid #e0d8cc", borderRadius: 8, background: "#fafafa" }}>
-                  <span style={{ fontWeight: 700 }}>{idx + 1}.</span>
-                  <p style={{ margin: 0, flex: 1, fontSize: 14 }}>{sent}</p>
-                  {!submitted && (
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <button disabled={idx === 0 || !examStarted || examEnded} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx - 1];
-                        copy[idx - 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [key]: copy }));
-                      }}>▲</button>
-                      <button disabled={idx === sSents.length - 1 || !examStarted || examEnded} onClick={() => {
-                        const copy = [...sSents];
-                        const tmp = copy[idx];
-                        copy[idx] = copy[idx + 1];
-                        copy[idx + 1] = tmp;
-                        setShuffledSentences(prev => ({ ...prev, [key]: copy }));
-                      }}>▼</button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    if (secType === "reading-split") {
-      return renderMCQBlock(q, qIdx, `${sIdx}`);
-    }
-
-    return null;
-  };
-
-  return (
-    <div className="ad-content">
-      <button className="ad-back" onClick={() => navigate(-1)}>← Quay lại</button>
+  try {
+    return (
+      <div className="ad-content">
+      <button className="ad-back" onClick={handleBackNavigation}>← Quay lại</button>
 
       {/* Course Info Card */}
       {lopInfo && (
@@ -1381,15 +1530,12 @@ function AssignmentDetail() {
 
       {/* OVERDUE DEADLINE WARNING BANNER */}
       {isOverdue && (
-        <div style={{
-          background: "#fef2f2", border: "2px solid #ef4444", borderRadius: 12,
-          padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12
-        }}>
+        <div className="ad-banner ad-banner-overdue">
           <span style={{ fontSize: 24 }}>⚠️</span>
           <div>
-            <h4 style={{ margin: 0, color: "#991b1b", fontSize: 16 }}>Bài tập đã quá hạn nộp!</h4>
-            <p style={{ margin: "4px 0 0", color: "#7f1d1d", fontSize: 13 }}>
-              Hạn nộp bài là: <strong>{new Date(parsedContent.deadline).toLocaleString()}</strong>. Bạn chỉ có thể xem lại đề bài, không thể làm bài hoặc nộp bài.
+            <h4>Assignment overdue!</h4>
+            <p>
+              The deadline was: <strong>{new Date(parsedContent.deadline).toLocaleString()}</strong>. You can only view the questions, but cannot answer or submit.
             </p>
           </div>
         </div>
@@ -1397,30 +1543,29 @@ function AssignmentDetail() {
 
       {/* EXAM COUNTDOWN / OVER / RUNNING HEADER */}
       {isExam && (
-        <div style={{
-          background: "#fffbeb", border: "2px solid #f59e0b", borderRadius: 12,
-          padding: "16px 20px", marginBottom: 20, textAlign: "center"
-        }}>
-          <h3 style={{ margin: 0, color: "#b45309" }}>⏱️ Bài Kiểm Tra Khảo Sát</h3>
-          <p style={{ margin: "4px 0 12px", color: "#d97706", fontSize: 13 }}>
-            Thời lượng: <strong>{parsedContent.duration} phút</strong> · Thời gian mở: {new Date(parsedContent.startTime).toLocaleString()}
+        <div className="ad-banner ad-banner-exam">
+          <h3 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+            <FiClock /> Assessment Exam
+          </h3>
+          <p className="exam-meta">
+            Duration: <strong>{parsedContent.duration} minutes</strong> · Open time: {new Date(parsedContent.startTime).toLocaleString()}
           </p>
 
           {timeToExamStart !== null && (
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#b45309" }}>
-              ⏳ Bài thi sẽ bắt đầu sau: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <FiClock /> The exam starts in: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
             </div>
           )}
 
           {examStarted && !examEnded && (
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#dc2626" }}>
-              ⏳ THỜI GIAN LÀM BÀI CÒN LẠI: <span style={{ fontFamily: "monospace", fontSize: 24, padding: "4px 12px", background: "#fef2f2", borderRadius: 8 }}>{formattedExamTime}</span>
+            <div className="exam-timer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <FiClock /> REMAINING TIME: <span className="exam-timer-span">{formattedExamTime}</span>
             </div>
           )}
 
           {examEnded && (
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#dc2626" }}>
-              🛑 Bài kiểm tra đã kết thúc.
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <FiXCircle /> The exam has ended.
             </div>
           )}
         </div>
@@ -1430,19 +1575,16 @@ function AssignmentDetail() {
 
       {/* SUBMISSION STATE BANNER */}
       {submitted && baiNop && (
-        <div style={{
-          background: "#dcfce7", border: "1px solid #86efac",
-          borderRadius: 12, padding: "14px 18px", marginBottom: 20
-        }}>
-          <p style={{ margin: 0, fontWeight: 600, color: "#15803d" }}>✅ Bạn đã nộp bài này</p>
+        <div className="ad-banner ad-banner-submitted">
+          <p className="status-title">✅ You have submitted this assignment</p>
           {baiNop.Diem !== null && baiNop.Diem !== undefined ? (
-            <p style={{ margin: "6px 0 0", color: "#166534" }}>
-              Điểm của bạn: <strong>{baiNop.Diem}/10</strong>
-              {baiNop.NhanXet && ` · Nhận xét: ${baiNop.NhanXet}`}
+            <p className="score-info">
+              Your grade: <strong>{baiNop.Diem}/10</strong>
+              {baiNop.NhanXet && ` · Feedback: ${baiNop.NhanXet}`}
             </p>
           ) : (
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#166534" }}>
-              Đang chờ giáo viên chấm điểm thủ công bài tự luận/nói.
+            <p className="score-info" style={{ fontSize: 13 }}>
+              Awaiting teacher manual grading for essay/speaking questions.
             </p>
           )}
         </div>
@@ -1452,201 +1594,115 @@ function AssignmentDetail() {
       {isExam ? (
         <div>
           {timeToExamStart !== null ? (
-            <div style={{ textAlign: "center", padding: 50, background: "#fafafa", borderRadius: 12, border: "1px solid #e0d8cc", color: "#888" }}>
-              <h3>Chờ đến giờ bắt đầu làm bài thi...</h3>
-              <p>Màn hình làm bài sẽ tự động hiển thị khi đồng hồ đếm ngược kết thúc.</p>
+            <div className="ad-exam-waiting">
+              <h3>Waiting for the exam to start...</h3>
+              <p>The exam interface will automatically display when the countdown reaches 0.</p>
             </div>
           ) : examEnded && !submitted ? (
-            <div style={{ textAlign: "center", padding: 50, background: "#fef2f2", borderRadius: 12, border: "1px solid #fecaca", color: "#dc2626" }}>
-              <h3>Đã quá thời gian làm bài kiểm tra!</h3>
-              <p>Hệ thống đã khóa nhận bài thi.</p>
+            <div className="ad-exam-waiting" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#dc2626" }}>
+              <h3>The exam time limit has expired!</h3>
+              <p>Submissions are now closed.</p>
             </div>
           ) : (
-            <div>
-              {/* Section Tabs */}
-              <div style={{ display: "flex", gap: 10, marginBottom: 20, overflowX: "auto" }}>
-                {parsedContent.sections?.map((sec: any, sIdx: number) => (
-                  <button
-                    key={sIdx}
-                    onClick={() => setActiveSectionIdx(sIdx)}
-                    style={{
-                      padding: "10px 20px", borderRadius: 20, border: "none",
-                      background: activeSectionIdx === sIdx ? "#F95800" : "#e0d4c3",
-                      color: activeSectionIdx === sIdx ? "#fff" : "#444",
-                      fontWeight: 600, cursor: "pointer"
-                    }}
-                  >
-                    {sec.title} ({sec.type.replace("-", " ")})
-                  </button>
-                ))}
-              </div>
-
-              {/* Render Selected Section */}
-              {parsedContent.sections?.map((sec: any, sIdx: number) => {
-                if (activeSectionIdx !== sIdx) return null;
-
-                return (
-                  <div key={sIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}>
-                    <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
-
-                    {sec.type === "writing-essay" && (
-                      <div>
-                        <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-                          <p style={{ margin: 0, fontWeight: 700 }}>{sec.content}</p>
-                        </div>
-                        {submitted ? (
-                          <div style={{ background: "#fafafa", padding: 12, border: "1px solid #e0d8cc", borderRadius: 8 }}>
-                            <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{essayAnswers[sIdx] || ""}</p>
-                          </div>
-                        ) : (
-                          <textarea
-                            className="ad-q-input"
-                            disabled={!examStarted || examEnded}
-                            value={essayAnswers[sIdx] || ""}
-                            onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
-                            placeholder="Nhập câu trả lời viết luận..."
-                            rows={8}
-                          />
-                        )}
-                      </div>
-                    )}
-
-                    {sec.type === "speaking-topic" && (
-                      <div>
-                        <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
-                          <p style={{ margin: 0, fontWeight: 700 }}>{sec.content}</p>
-                        </div>
-                        {sec.imageUrl && <img src={`${API}${sec.imageUrl}`} alt="Topic hint" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-
-                        {!submitted ? (
-                          <div style={{ border: "2px dashed #e87722", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 12 }}>
-                            {isRecording[sIdx] ? (
-                              <div>
-                                <span style={{ color: "#dc2626" }}>🔴 Đang ghi âm: {recordSeconds[sIdx] || 0}s </span>
-                                <button onClick={() => stopRecording(sIdx)} style={{ padding: "6px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 4 }}>Dừng</button>
-                              </div>
-                            ) : (
-                              <button disabled={!examStarted || examEnded} onClick={() => startRecording(sIdx)} style={{ padding: "10px 20px", background: "#e87722", color: "#fff", border: "none", borderRadius: 20, fontWeight: 700 }}>🎙️ Ghi âm bài nói</button>
-                            )}
-                            {recordedUrls[sIdx] && (
-                              <div style={{ marginTop: 15 }}>
-                                <audio src={recordedUrls[sIdx]} controls style={{ width: "100%" }} />
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          recordedUrls[sIdx] && <div style={{ marginBottom: 12 }}><audio src={`${API}${recordedUrls[sIdx]}`} controls style={{ width: "100%" }} /></div>
-                        )}
-
-                        <textarea
-                          className="ad-q-input"
-                          disabled={submitted || !examStarted || examEnded}
-                          value={essayAnswers[sIdx] || ""}
-                          onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
-                          placeholder="Ghi chú thêm cho bài nói..."
-                          rows={2}
-                        />
-                      </div>
-                    )}
-
-                    {sec.type === "reading-split" && (
-                      <div style={{ display: "flex", gap: 20, height: 500 }}>
-                        <div style={{ flex: 1, overflowY: "auto", borderRight: "1px solid #e0d8cc", paddingRight: 15 }}>
-                          <p style={{ whiteSpace: "pre-line", lineHeight: 1.6 }}>{sec.content}</p>
-                        </div>
-                        <div style={{ flex: 1, overflowY: "auto" }}>
-                          {sec.questions?.map((q: any, qIdx: number) => (
-                            renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {sec.type !== "writing-essay" && sec.type !== "speaking-topic" && sec.type !== "reading-split" && (
-                      <div>
-                        {sec.audioUrl && (
-                          <div style={{ marginBottom: 20 }}>
-                            <audio controls style={{ width: "100%" }}><source src={`${API}${sec.audioUrl}`} /></audio>
-                          </div>
-                        )}
-                        {sec.questions?.map((q: any, qIdx: number) => (
-                          renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <BoGiaiDeThi
+              exercise={exercise}
+              parsedContent={parsedContent}
+              submitted={submitted}
+              examStarted={examStarted}
+              examEnded={examEnded}
+              activeSectionIdx={activeSectionIdx}
+              setActiveSectionIdx={setActiveSectionIdx}
+              mcAnswers={mcAnswers}
+              setMcAnswers={setMcAnswers}
+              essayAnswers={essayAnswers}
+              setEssayAnswers={setEssayAnswers}
+              fillInAnswers={fillInAnswers}
+              setFillInAnswers={setFillInAnswers}
+              shuffledSentences={shuffledSentences}
+              setShuffledSentences={setShuffledSentences}
+              shuffledWords={shuffledWords}
+              setShuffledWords={setShuffledWords}
+              orderedWords={orderedWords}
+              setOrderedWords={setOrderedWords}
+              recordedUrls={recordedUrls}
+              isRecording={isRecording}
+              recordSeconds={recordSeconds}
+              spokenTexts={spokenTexts}
+              setSpokenTexts={setSpokenTexts}
+              speechScores={speechScores}
+              setSpeechScores={setSpeechScores}
+              isListeningSTT={isListeningSTT}
+              setIsListeningSTT={setIsListeningSTT}
+              startRecording={startRecording}
+              stopRecording={stopRecording}
+              API={API}
+            />
           )}
         </div>
       ) : (
         /* ────────────────── REGULAR MULTI-QUESTION SOLVER ────────────────── */
         <div>
           {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq" && (
-            <div style={{
-              background: "#fff",
-              border: "1px solid #e0d4c3",
-              padding: "16px 20px",
-              borderRadius: 12,
-              marginBottom: 16,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-            }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#5a3e2b", fontSize: "14px", fontWeight: 600 }}>🎵 File nghe chung cho toàn bộ bài tập:</h4>
-              <audio controls style={{ width: "100%" }}>
-                <source src={`${API}${exercise.AudioUrl}`} />
-              </audio>
+            <div className="ad-audio-card">
+              <h4><FiVolume2 style={{ color: "#f95800", fontSize: "1.2rem" }} /> General audio file for the entire assignment:</h4>
+              <CustomAudioPlayer src={`${API}${exercise.AudioUrl}`} className="ad-audio-player" />
             </div>
           )}
 
           {/* Progress pagination indicators */}
-          {questionsList.length > 1 && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15, background: "#fafafa", padding: "10px 16px", borderRadius: 8, border: "1px solid #e0d8cc" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#5a3e2b" }}>
-                Câu hỏi {currentQuestionIdx + 1} trên {questionsList.length}
+          {questionPages.length > 1 && (
+            <div className="ad-progress-bar">
+              <span className="ad-progress-text">
+                Page {currentPageIdx + 1} of {questionPages.length}
               </span>
-              <div style={{ display: "flex", gap: 8 }}>
-                {questionsList.map((_, qIdx) => (
+              <div className="ad-progress-dots">
+                {questionPages.map((_, pIdx) => (
                   <span
-                    key={qIdx}
-                    onClick={() => setCurrentQuestionIdx(qIdx)}
-                    style={{
-                      width: 10, height: 10, borderRadius: "50%",
-                      background: currentQuestionIdx === qIdx ? "#F95800" : "#e0d4c3",
-                      cursor: "pointer"
-                    }}
+                    key={pIdx}
+                    onClick={() => setCurrentPageIdx(pIdx)}
+                    className={`ad-progress-dot ${currentPageIdx === pIdx ? "active" : ""}`}
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Render Active Question */}
-          {questionsList.map((q, qIdx) => {
-            if (qIdx !== currentQuestionIdx) return null;
+          {/* Render Questions inside Current Page */}
+          {questionPages.map((page, pIdx) => {
+            if (pIdx !== currentPageIdx) return null;
+
+            const alreadyHasGlobalAudio = exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq";
+
             return (
-              <div key={qIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
-                {renderCurrentQuestionBlock(q, qIdx)}
+              <div key={pIdx} className="ad-page-container">
+                {page.map((q) => {
+                  const originalIdx = questionsList.indexOf(q);
+                  return (
+                    <div key={originalIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
+                      {renderCurrentQuestionBlock(q, originalIdx, alreadyHasGlobalAudio)}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
 
           {/* Pagination Buttons */}
-          {questionsList.length > 1 && (
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 15 }}>
+          {questionPages.length > 1 && (
+            <div className="ad-nav-buttons">
               <button
-                disabled={currentQuestionIdx === 0}
-                onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                style={{ padding: "8px 20px", borderRadius: 20, border: "1.5px solid #F95800", background: "#fff", color: "#F95800", fontWeight: 600, cursor: currentQuestionIdx === 0 ? "default" : "pointer", opacity: currentQuestionIdx === 0 ? 0.5 : 1 }}
+                disabled={currentPageIdx === 0}
+                onClick={() => setCurrentPageIdx(prev => prev - 1)}
+                className="ad-nav-btn ad-nav-btn-prev"
               >
-                ← Quay lại
+                ← Back
               </button>
               <button
-                disabled={currentQuestionIdx === questionsList.length - 1}
-                onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
-                style={{ padding: "8px 20px", borderRadius: 20, border: "none", background: "#F95800", color: "#fff", fontWeight: 600, cursor: currentQuestionIdx === questionsList.length - 1 ? "default" : "pointer", opacity: currentQuestionIdx === questionsList.length - 1 ? 0.5 : 1 }}
+                disabled={currentPageIdx === questionPages.length - 1}
+                onClick={() => setCurrentPageIdx(prev => prev + 1)}
+                className="ad-nav-btn ad-nav-btn-next"
               >
-                Tiếp theo →
+                Next →
               </button>
             </div>
           )}
@@ -1654,10 +1710,14 @@ function AssignmentDetail() {
       )}
 
       {/* SUBMIT BUTTON FOOTER */}
-      <div className="ad-footer" style={{ marginTop: 30 }}>
+      <div className="ad-footer">
         {submitted ? (
-          <button className="ad-submit-btn" style={{ background: "#6b7280" }} onClick={() => navigate(-1)}>
-            ← Quay lại Lớp học
+          <button
+            className="ad-submit-btn"
+            style={{ backgroundColor: "#64748b" }}
+            onClick={handleBackNavigation}
+          >
+            Quay lại lớp học
           </button>
         ) : (
           <button
@@ -1665,12 +1725,23 @@ function AssignmentDetail() {
             onClick={handleSubmit}
             disabled={submitting || isOverdue || (isExam && (!examStarted || examEnded))}
           >
-            {submitting ? "Đang nộp..." : isExam ? "Nộp bài Thi" : "Nộp bài tập"}
+            {submitting ? "Submitting..." : isExam ? "Submit Exam" : "Submit"}
           </button>
         )}
       </div>
     </div>
-  )
+    );
+  } catch (err: any) {
+    return (
+      <div style={{ padding: 40, color: "red", background: "#fee2e2", margin: 20, borderRadius: 8, border: "1px solid #fca5a5" }}>
+        <h3 style={{ margin: "0 0 10px 0" }}>Render Error in AssignmentDetail:</h3>
+        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, fontFamily: "monospace", fontSize: 13 }}>
+          {err.stack || err.message || String(err)}
+        </pre>
+      </div>
+    );
+  }
 }
 
 export default AssignmentDetail;
+

@@ -1,6 +1,9 @@
+import { useState } from "react"
 import "./results.css"
 
 export default function Results() {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   const images = [
     "/image(5).png",
     "/image(6).png",
@@ -30,12 +33,27 @@ export default function Results() {
         </p>
 
         <div className="results-grid">
-          {images.map((img, index) => (
-            <div key={index} className="result-card">
-              <img src={img} alt={`Kết quả ${index + 1}`} />
-            </div>
-          ))}
+          {images.map((img, index) => {
+            const fullUrl = `${import.meta.env.BASE_URL}${img.substring(1)}`;
+            return (
+              <div key={index} className="result-card" onClick={() => setSelectedImage(fullUrl)}>
+                <img src={fullUrl} alt={`Kết quả ${index + 1}`} />
+              </div>
+            );
+          })}
         </div>
+
+        {/* Modal phong to anh */}
+        {selectedImage && (
+          <div className="results-modal-overlay" onClick={() => setSelectedImage(null)}>
+            <div className="results-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="results-modal-close" onClick={() => setSelectedImage(null)}>
+                &times;
+              </button>
+              <img src={selectedImage} alt="Kết quả học tập lớn" className="results-modal-img" />
+            </div>
+          </div>
+        )}
 
       </div>
     </section>

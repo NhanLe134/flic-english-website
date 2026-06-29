@@ -18,7 +18,7 @@
 /* HEADER CARD */
 .ce-header-card {
   background: white;
-  padding: 24px 28px;
+  padding: 12px 20px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -26,13 +26,8 @@
 }
 
 .ce-header-card h1 {
-  margin: 0 0 4px;
-  font-size: 26px;
-}
-
-.ce-header-card p {
   margin: 0;
-  color: #666;
+  font-size: 18px;
 }
 
 /* TABS */
@@ -101,6 +96,8 @@
 
 /* TYPE SELECT */
 .exercise-type {
+  box-sizing: border-box;
+  height: 44px;
   margin-top: 15px;
   margin-bottom: 20px;
   padding: 10px 14px;
@@ -354,4 +351,85 @@ textarea.exercise-content {
   gap: 10px;
   margin-bottom: 10px;
   align-items: center;
+}
+
+/* Floating formatting toolbar */
+.formatting-toolbar {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.95); /* Slate 900 */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 99999;
+  backdrop-filter: blur(4px);
+  animation: fadeInFormatter 0.15s ease-out;
+}
+
+@keyframes fadeInFormatter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -90%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
+
+.formatting-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  transition: all 0.1s ease;
+}
+
+.formatting-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.formatting-btn.bold {
+  font-weight: bold;
+}
+
+.formatting-btn.italic {
+  font-style: italic;
+}
+
+.formatting-btn.underline {
+  text-decoration: underline;
+}
+
+/* Rich editable custom styles */
+div.exercise-content.rich-editable {
+  min-height: 60px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: block;
+}
+
+div.exercise-content.rich-editable:empty:before {
+  content: attr(placeholder);
+  color: #94a3b8;
+  cursor: text;
+  pointer-events: none;
+}
+
+div.exercise-content.rich-editable:focus {
+  border-color: #F95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.12);
 }

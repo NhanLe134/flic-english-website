@@ -1,7 +1,7 @@
 import "./DocumentManagement.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
 
 interface DocumentManagementProps {
   buoiHocIdProp?: string;
@@ -102,7 +102,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       {/* PAGE HEADER */}
       {!isEmbedded && (
         <div className="page-header">
-          <h1 className="page-title">DANH SÁCH TÀI LIỆU</h1>
+          <h1 className="page-title">Danh sách tài liệu</h1>
         </div>
       )}
 
@@ -116,34 +116,17 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button className="search-button" type="button">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <FiSearch size={16} />
           </button>
         </form>
         <button
-          className="add-btn"
+          className="add-btn-reuse"
           onClick={openReuseModal}
-          style={{
-            background: "#000080",
-            color: "#fff",
-            border: "none",
-          }}
         >
-          + Chọn tài liệu có sẵn
+          <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn tài liệu có sẵn
         </button>
         <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
-          + Thêm tài liệu
+          <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm tài liệu
         </button>
       </div>
 
@@ -153,17 +136,21 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
           <div key={doc.MaTaiLieu} className="doc-card">
             <div className="doc-left">
               <h3 style={{ margin: 0 }}>{doc.TieuDe}</h3>
-              <p className="doc-desc" style={{ marginTop: '8px' }}>{doc.MoTa}</p>
+              <p className="doc-desc" style={{ marginTop: '4px' }}>{doc.MoTa}</p>
             </div>
             <div className="doc-right">
               <span className="doc-date">
                 ⏱ Cập nhật: {new Date(doc.NgayCapNhat).toLocaleDateString("vi-VN")}
               </span>
-              <button className="detaill-btn" onClick={() => navigate(`/quan-ly-tai-lieu/${doc.MaTaiLieu}`)}>
-                Xem Chi Tiết
+              <button className="action-icon-btn detail-icon-btn" 
+                onClick={() => navigate(`/quan-ly-tai-lieu/${doc.MaTaiLieu}`)}
+                title="Xem Chi Tiết">
+                <FiEye size={16} />
               </button>
-              <button className="delete-btn" onClick={() => handleOpenDelete(doc.MaTaiLieu)}>
-                Xóa
+              <button className="action-icon-btn delete-icon-btn" 
+                onClick={() => handleOpenDelete(doc.MaTaiLieu)}
+                title="Xóa tài liệu">
+                <FiTrash2 size={16} />
               </button>
             </div>
           </div>
@@ -241,3 +228,4 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 };
 
 export default DocumentManagement;
+

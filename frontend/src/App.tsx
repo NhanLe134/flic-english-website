@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import TeacherLayout from "./giangvien/layout/TeacherLayout"
 import Home from "./home_pages/Home/Home"
@@ -36,7 +37,9 @@ import KetQuaHocTapHocVien from "./giangvien_qtv_shared/KetQuaHocTapHocVien/KetQ
 import SuaKetQuaHocTapHocVien from "./giangvien_qtv_shared/SuaKetQuaHocTapHocVien/SuaKetQuaHocTapHocVien"
 import DoiMatKhau from "./giangvien_qtv_shared/DoiMatKhau/DoiMatKhau"
 import HocThu from "./home_pages/HocThu/HocThu"
+import TestThuPublic from "./home_pages/TestThu/TestThuPublic"
 import DraftsManagement from "./giangvien/pages/DraftsManagement/DraftsManagement"
+import QuanLyDeThiThu from "./giangvien_qtv_shared/QuanLyDeThiThu/QuanLyDeThiThu"
 
 /* ADMIN */
 import AdminLayout from "./admin/layout/AdminLayout"
@@ -54,12 +57,10 @@ import CourseRegister from "./sinhvien/pages/CourseRegister/CourseRegister"
 import Profile from "./sinhvien/pages/Profile/Profile"
 import ProfilePage from "./sinhvien/pages/ProfilePage/ProfilePage"
 import MyCourses from "./sinhvien/pages/MyCourses/MyCourses"
-import CourseDetailSV from "./sinhvien/pages/CourseDetail/CourseDetailSV"
 import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
 import Progress from "./sinhvien/pages/Progress/Progress"
 import Settings from "./sinhvien/pages/Settings/Settings"
-import Assignments from "./sinhvien/pages/Assignments/Assignments"
 import AssignmentDetail from "./sinhvien/pages/AssignmentDetail/AssignmentDetail"
 import AssignmentSuccess from "./sinhvien/pages/AssignmentSuccess/AssignmentSuccess"
 import QuizDetail from "./sinhvien/pages/QuizDetail/QuizDetail"
@@ -67,13 +68,43 @@ import EssayDetail from "./sinhvien/pages/EssayDetail/EssayDetail"
 import DanhSachBaiNop from "./giangvien_qtv_shared/DanhSachBaiNop/DanhSachBaiNop"
 import ChamBaiPage from "./giangvien_qtv_shared/ChamBaiPage/ChamBaiPage"
 import BaoCaoKetQuaQTV from "./qtv/pages/BaoCaoKetQuaQTV/BaoCaoKetQuaQTV"
+import StudentListQTV from "./qtv/pages/StudentListQTV/StudentListQTV"
 import BaiGiangSV from "./sinhvien/pages/LessonDetail/BaiGiangSV"
 import StudentLayout from "./sinhvien/layout/StudentLayout"
 import HocThuSV from "./sinhvien/pages/HocThuSV"
 import TestThuSV from "./sinhvien/pages/TestThuSV"
 import TestExamPage from "./sinhvien/pages/TestExamPage"
+import ClassDetailTrial from "./sinhvien/pages/ClassDetail/ClassDetailTrial"
+import NavbarAuto from "./components/NavbarAuto"
+import Footer from "./components/Footer"
+
+const ClassDetailTrialPublic = () => {
+  return (
+    <>
+      <NavbarAuto />
+      <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <ClassDetailTrial />
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
 
 function App() {
+  useEffect(() => {
+    try {
+      const sessionUser = sessionStorage.getItem("user");
+      if (!sessionUser || sessionUser === "{}") {
+        localStorage.removeItem("user");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   return (
     <BrowserRouter basename="/flic-english-website">
       <Routes>
@@ -86,6 +117,9 @@ function App() {
         <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
         <Route path="/register-success" element={<RegisterSuccess />} />
         <Route path="/hoc-thu" element={<HocThu />} />
+        <Route path="/hoc-thu/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailTrialPublic />} />
+        <Route path="/test-thu" element={<TestThuPublic />} />
+        <Route path="/test-exam/:testId" element={<TestExamPage />} />
 
         {/* LOGIN */}
         <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
@@ -96,6 +130,7 @@ function App() {
         {/* GIẢNG VIÊN - bọc trong TeacherLayout */}
         <Route element={<TeacherLayout />}>
           <Route path="/quan-ly-khoa-hoc" element={<QuanLyKhoaHoc />} />
+          <Route path="/quan-ly-de-thi" element={<QuanLyDeThiThu />} />
           <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
           <Route path="/lessonlist/:id" element={<LessonList />} />
           <Route path="/class/:id" element={<ClassDetail />} />
@@ -149,28 +184,34 @@ function App() {
           <Route index element={<Navigate to="khoahoc" />} />
           <Route path="khoahoc" element={<CoursePageQTV />} />
           <Route path="baocao" element={<BaoCaoKetQuaQTV />} />
+          <Route path="hocvien" element={<StudentListQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
           <Route path="create-exercise/:id" element={<CreateExercise />} />
+          <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
         </Route>
 
         {/*Sinh viên*/}
         <Route element={<StudentLayout />}>
           <Route path="/course-register" element={<CourseRegister />} />
           <Route path="/hoc-thu-sv" element={<HocThuSV />} />
+          <Route path="/hoc-thu-sv/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailTrial />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
-          <Route path="/test-exam/:testId" element={<TestExamPage />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />
           <Route path="/MyCourses" element={<MyCourses />} />
-          <Route path="/class-detail/:id" element={<ClassDetailSV />} />
-          <Route path="/course-detail/:id" element={<CourseDetailSV />} />
+          <Route path="/MyCourses/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailSV />} />
+          <Route path="/MyCourses/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
+          <Route path="/MyCourses/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
+          <Route path="/MyCourses/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/assignments" element={<Assignments />} />
           <Route path="/baitap/:id" element={<AssignmentDetail />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />

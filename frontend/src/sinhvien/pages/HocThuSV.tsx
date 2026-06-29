@@ -1,86 +1,104 @@
-import { FiBookOpen, FiPlayCircle, FiHeadphones, FiCheckCircle, FiClock } from "react-icons/fi";
-import "./hocthu.css"; // Reuse existing css or add sv styling
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+import "./MyCourses/MyCourses.css"; // Reuse styling directly
+
+const API = "http://localhost:5000";
 
 export default function HocThuSV() {
-  const trialLessons = [
-    {
-      id: 1,
-      skill: "Listening",
-      title: "IELTS Listening Practice - Section 1: Hotel Reservation",
-      duration: "15 phút",
-      icon: <FiHeadphones size={24} color="#3b82f6" />,
-      desc: "Luyện tập kỹ năng nghe điền từ thông tin cá nhân và hội thoại đời thường."
-    },
-    {
-      id: 2,
-      skill: "Reading",
-      title: "Reading Comprehension - Skimming & Scanning Techniques",
-      duration: "20 phút",
-      icon: <FiBookOpen size={24} color="#10b981" />,
-      desc: "Nắm vững kỹ năng đọc lướt tìm ý chính và quét thông tin trả lời câu hỏi."
-    },
-    {
-      id: 3,
-      skill: "Speaking",
-      title: "Speaking Part 1 - Common Topics & Model Answers",
-      duration: "12 phút",
-      icon: <FiPlayCircle size={24} color="#f59e0b" />,
-      desc: "Hướng dẫn trả lời các câu hỏi cơ bản về bản thân, sở thích và gia đình."
+  const navigate = useNavigate();
+  const isLoggedIn = !!sessionStorage.getItem("user");
+  const homePath = isLoggedIn ? "/profile" : "/";
+
+  const [classes, setClasses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch trial classes
+  useEffect(() => {
+    fetch(`${API}/student/trial-classes`)
+      .then((res) => res.json())
+      .then((data) => {
+        setClasses(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching trial classes:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleClassClick = (c: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggedIn) {
+      navigate(`/hoc-thu-sv/${c.MaLopHoc}`);
+    } else {
+      navigate(`/hoc-thu/${c.MaLopHoc}`);
     }
-  ];
+  };
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "30px 20px 0 20px", fontFamily: "Inter, sans-serif" }}>
+      {/* Breadcrumb */}
+      <nav className="courses-breadcrumb" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", marginTop: "0px", marginBottom: "24px" }}>
+        <Link to={homePath} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Trang chủ</Link>
+        <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>
+        <span style={{ color: "#777777", fontWeight: 500 }}>Học & thi thử</span>
+        <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>
+        <span style={{ color: "#F95800", fontWeight: 600 }}>Học thử</span>
+      </nav>
+
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #FFF2EB 0%, #FFEBE0 100%)', borderRadius: '16px', padding: '36px', marginBottom: '32px', border: '1px solid #FFE0D1' }}>
-        <h1 style={{ margin: '0 0 12px 0', color: '#dd4e00', fontSize: '28px', fontWeight: 800 }}>LỚP HỌC TRẢI NGHIỆM THỬ</h1>
-        <p style={{ color: '#64748b', fontSize: '15px', margin: 0, lineHeight: '1.6' }}>
-          Chào mừng bạn đến với góc học thử của trung tâm FLIC! Dưới đây là các tài liệu và bài giảng mẫu được thiết kế chuẩn xác giúp bạn làm quen với phương pháp dạy học tại trung tâm trước khi đăng ký chính thức.
+      <div style={{ background: "linear-gradient(135deg, #FFF2EB 0%, #FFEBE0 100%)", borderRadius: "16px", padding: "36px", marginBottom: "32px", border: "1px solid #FFE0D1" }}>
+        <h1 style={{ margin: "0 0 12px 0", color: "#dd4e00", fontSize: "28px", fontWeight: 800 }}>LỚP HỌC TRẢI NGHIỆM THỬ</h1>
+        <p style={{ color: "#64748b", fontSize: "15px", margin: 0, lineHeight: "1.6" }}>
+          Chào mừng bạn đến với góc học thử của trung tâm FLIC! Dưới đây là danh sách các lớp học thử nghiệm được thiết kế giúp bạn làm quen với phương pháp dạy học trước khi đăng ký chính thức.
         </p>
       </div>
 
-      <h2 style={{ fontSize: '20px', color: '#0f172a', fontWeight: 700, marginBottom: '20px' }}>Bài Học Trải Nghiệm Mẫu</h2>
-      
-      {/* Lesson List */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
-        {trialLessons.map(lesson => (
-          <div key={lesson.id} style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'transform 0.2s', cursor: 'pointer' }} className="trial-lesson-card">
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', background: '#f1f5f9', color: '#475569' }}>
-                  {lesson.skill}
-                </span>
-                <span style={{ fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <FiClock size={14} /> {lesson.duration}
-                </span>
+      {loading ? (
+        <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Đang tải danh sách lớp học thử...</div>
+      ) : classes.length === 0 ? (
+        <div style={{ padding: 40, textAlign: "center", color: "#64748b", background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+          Hiện chưa có lớp học thử nào được xuất bản.
+        </div>
+      ) : (
+        <div className="mc-list-layout">
+          {classes.map((c, i) => {
+            return (
+              <div className="mc-card" key={c.MaLopHoc} style={{ animationDelay: `${i * 60}ms`, padding: "24px 30px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "16px" }}>
+                  <div>
+                    <h3 className="mc-card-name" style={{ margin: "0 0 8px 0", color: "#000080" }}>{c.TenLop}</h3>
+                    <span style={{ display: "inline-block", background: "#FFF2EB", color: "#F95800", padding: "4px 10px", borderRadius: "12px", fontSize: "13px", fontWeight: 600 }}>
+                      {c.TenKhoaHoc}
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => handleClassClick(c, e)}
+                    style={{
+                      background: "linear-gradient(135deg, #000080, #0000b3)",
+                      color: "#fff",
+                      border: "none",
+                      padding: "12px 28px",
+                      borderRadius: "10px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      boxShadow: "0 4px 15px rgba(0, 0, 128, 0.15)",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    Vào học thử
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-                <div style={{ marginTop: '2px' }}>{lesson.icon}</div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: '1.4' }}>
-                  {lesson.title}
-                </h3>
-              </div>
-              <p style={{ color: '#64748b', fontSize: '13.5px', margin: '0 0 20px 0', lineHeight: '1.5' }}>
-                {lesson.desc}
-              </p>
-            </div>
-            <button 
-              onClick={() => alert(`Bắt đầu học thử bài: ${lesson.title}`)}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#000080', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-            >
-              <FiPlayCircle size={16} /> Bắt đầu học ngay
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Info Card */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: '#eff6ff', borderRadius: '12px', padding: '20px', marginTop: '36px', border: '1px solid #bfdbfe' }}>
-        <FiCheckCircle size={24} color="#1d4ed8" />
-        <span style={{ color: '#1e3a8a', fontSize: '14.5px', fontWeight: 500 }}>
-          Học thử hoàn toàn miễn phí. Kết quả học thử và thông tin của bạn được ghi nhận vào hệ thống để hỗ trợ tư vấn lộ trình học phù hợp nhất.
-        </span>
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -49,7 +49,7 @@ interface Lesson {
 }
 
 export default function ClassDetailSV() {
-  const { id } = useParams<{ id: string }>();
+  const { id, lessonId, tab, itemId } = useParams<{ id: string; lessonId?: string; tab?: string; itemId?: string }>();
   const classId = Number(id);
   const navigate = useNavigate();
 
@@ -57,6 +57,7 @@ export default function ClassDetailSV() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
@@ -81,11 +82,29 @@ export default function ClassDetailSV() {
         setLoading(true);
         setError(null);
 
-        // Fetch class info and lessons in parallel
-        const [infoRes, lessonsRes] = await Promise.all([
+        // Fetch user from sessionStorage to get student ID
+        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+        const userId = user.MaNguoiDung;
+
+        // Fetch class info, lessons, and student submissions in parallel
+        const [infoRes, lessonsRes, submissionsRes, myClassesRes] = await Promise.all([
           fetch(`${API}/classes/${classId}/info`).then((r) => r.json()),
-          fetch(`${API}/classes/${classId}/lessons`).then((r) => r.json())
+          fetch(`${API}/classes/${classId}/lessons`).then((r) => r.json()),
+          userId
+            ? fetch(`${API}/student/bainop/${userId}`).then((r) => r.json()).catch(() => [])
+            : Promise.resolve([]),
+          userId
+            ? fetch(`${API}/student/my-classes/${userId}`).then((r) => r.json()).catch(() => [])
+            : Promise.resolve([])
         ]);
+
+        const myClasses = Array.isArray(myClassesRes) ? myClassesRes : [];
+        const enrolledClass = myClasses.find((c: any) => c.MaLopHoc === Number(classId));
+
+        if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành')) {
+          setError("Bạn không có quyền truy cập lớp học này hoặc yêu cầu ghi danh của bạn đang chờ duyệt.");
+          return;
+        }
 
         if (infoRes && infoRes.MaLopHoc) {
           setInfo(infoRes);
@@ -100,6 +119,10 @@ export default function ClassDetailSV() {
         } else {
           setLessons([]);
         }
+
+        if (Array.isArray(submissionsRes)) {
+          setSubmissions(submissionsRes);
+        }
       } catch (err) {
         console.error("Error fetching class details:", err);
         setError("Lỗi kết nối máy chủ. Vui lòng thử lại sau.");
@@ -111,16 +134,77 @@ export default function ClassDetailSV() {
     fetchData();
   }, [classId]);
 
+  const tabMapping: Record<string, string> = {
+    bg: "lectures",
+    tl: "documents",
+    lt: "practices",
+    bt: "exams",
+    lectures: "lectures",
+    documents: "documents",
+    practices: "practices",
+    exams: "exams"
+  };
+
+  const urlTabMapping: Record<string, string> = {
+    lectures: "bg",
+    documents: "tl",
+    practices: "lt",
+    exams: "bt"
+  };
+
+  useEffect(() => {
+    if (lessons.length > 0 && lessonId) {
+      const numericLessonId = Number(lessonId);
+      const mappedTab = tab ? (tabMapping[tab] || "lectures") : "lectures";
+      if (expandedLessonId !== numericLessonId || !lessonDetails[numericLessonId] || lessonDetails[numericLessonId].activeTab !== mappedTab) {
+        handleToggleLesson(numericLessonId, mappedTab);
+      }
+    }
+  }, [lessons, lessonId, tab]);
+
+  // Scroll to selected exercise item if itemId is provided in URL
+  useEffect(() => {
+    if (itemId && expandedLessonId) {
+      const detail = lessonDetails[expandedLessonId];
+      if (detail && !detail.loading) {
+        const timer = setTimeout(() => {
+          const element = document.getElementById(`ex-${itemId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            element.style.transition = "background-color 0.5s ease";
+            element.style.backgroundColor = "#fffae6";
+            setTimeout(() => {
+              element.style.backgroundColor = "";
+            }, 2000);
+          }
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [itemId, expandedLessonId, lessonDetails]);
+
   // Toggle accordion and fetch data for the lesson
-  const handleToggleLesson = async (lessonId: number) => {
-    if (expandedLessonId === lessonId) {
+  const handleToggleLesson = async (lessonId: number, defaultTab: string = "lectures") => {
+    if (expandedLessonId === lessonId && defaultTab === "lectures") {
       setExpandedLessonId(null);
+      navigate(`/MyCourses/${classId}`, { replace: true });
       return;
     }
 
     setExpandedLessonId(lessonId);
+    const shortTab = urlTabMapping[defaultTab] || "bg";
+    navigate(`/MyCourses/${classId}/${lessonId}/${shortTab}`, { replace: true });
 
-    if (lessonDetails[lessonId]) return;
+    if (lessonDetails[lessonId]) {
+      setLessonDetails(prev => ({
+        ...prev,
+        [lessonId]: {
+          ...prev[lessonId],
+          activeTab: defaultTab
+        }
+      }));
+      return;
+    }
 
     setLessonDetails(prev => ({
       ...prev,
@@ -131,22 +215,110 @@ export default function ClassDetailSV() {
         practices: [],
         exams: [],
         activeBaiHoc: null,
-        activeTab: "lectures"
+        activeTab: defaultTab
       }
     }));
 
     try {
-      const [baigiangData, tailieuData, baitapData] = await Promise.all([
+      const [baigiangData, tailieuData, rawBaitapData] = await Promise.all([
         fetch(`${API}/baigiang/${lessonId}?role=Sinh Viên`).then(r => r.json()),
         fetch(`${API}/tailieu/${lessonId}?role=Sinh Viên`).then(r => r.json()),
-        fetch(`${API}/baitap/${lessonId}`).then(r => r.json())
+        fetch(`${API}/baitap/buoihoc/${lessonId}`).then(r => r.json())
       ]);
 
       const published = Array.isArray(baigiangData)
         ? baigiangData.filter((b: any) => b.TrangThai === "published")
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
-      const baiTaps = Array.isArray(baitapData) ? baitapData : [];
+      let baitapData = Array.isArray(rawBaitapData)
+        ? rawBaitapData.filter((ex: any) => ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt" || ex.TrangThaiDuyet === "Đã duyệt")
+        : [];
+      
+      // Inject mock exercises unconditionally for testing
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-pronounce-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-pronounce-1",
+          Title: "Bài tập: Luyện phát âm tự động (Web Speech API)",
+          Type: "speaking-pronounce",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 1
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-pronounce-2")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-pronounce-2",
+          Title: "Luyện tập: Phát âm từ vựng cơ bản",
+          Type: "speaking-pronounce",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-topic-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-topic-1",
+          Title: "Bài tập: Nói theo chủ đề (ghi âm nộp GV chấm)",
+          Type: "speaking-topic",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 1
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-topic-2")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-topic-2",
+          Title: "Luyện tập: Giới thiệu bản thân và gia đình",
+          Type: "speaking-topic",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-reading-split-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-reading-split-1",
+          Title: "Luyện tập: Đọc hiểu - The History of Extinction",
+          Type: "reading-split",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-reading-vocab-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-reading-vocab-1",
+          Title: "Luyện tập: Từ vựng - Nối từ (Match the pairs)",
+          Type: "reading-vocab-mcq",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-writing-order-words-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-writing-order-words-1",
+          Title: "Luyện tập: Kéo thả sắp xếp câu",
+          Type: "writing-order-words",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-writing-essay-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-writing-essay-1",
+          Title: "Bài tập tự luận: Viết về đồng nghiệp của bạn",
+          Type: "writing-essay",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-writing-order-sentences-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-writing-order-sentences-1",
+          Title: "Luyện tập: Sắp xếp câu thành đoạn văn",
+          Type: "writing-order-sentences",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      
+      const baiTaps = baitapData;
+
 
       const practices = baiTaps.filter((ex: any) => {
         const isTest = ex.IsExam === 1 || ex.IsExam === true || ex.Type?.toLowerCase() === "exam" || ex.Type?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
@@ -168,7 +340,7 @@ export default function ClassDetailSV() {
           practices,
           exams,
           activeBaiHoc,
-          activeTab: "lectures"
+          activeTab: defaultTab
         }
       }));
     } catch (err) {
@@ -195,6 +367,8 @@ export default function ClassDetailSV() {
         }
       };
     });
+    const shortTab = urlTabMapping[tabName] || "bg";
+    navigate(`/MyCourses/${classId}/${lessonId}/${shortTab}`, { replace: true });
   };
 
   // Helper date formatter
@@ -203,6 +377,16 @@ export default function ClassDetailSV() {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
+
+  const mapTypeToSkillName = (type?: string) => {
+    if (!type) return "";
+    const t = type.toLowerCase().trim();
+    if (t === "listening" || t === "l" || t === "nghe") return "Listening";
+    if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
+    if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
+    if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   if (loading) {
@@ -430,7 +614,7 @@ export default function ClassDetailSV() {
                                 onClick={() => handleTabChange(lesson.MaLesson, 'exams')}
                               >
                                 <FaClipboardCheck className="ld2-tab-icon" />
-                                <span>Kiểm tra</span>
+                                <span>Bài tập</span>
                                 <span className="ld2-tab-badge">{detail.exams.length}</span>
                               </button>
                             </div>
@@ -445,27 +629,25 @@ export default function ClassDetailSV() {
                                         <table className="ld2-table">
                                           <thead>
                                             <tr>
-                                              <th>#</th>
+                                              <th style={{ textAlign: "center" }}>#</th>
                                               <th>Tên bài giảng</th>
-                                              <th>Loại</th>
-                                              <th>Thời lượng</th>
-                                              <th>Hành động</th>
+                                              <th style={{ textAlign: "center" }}>Loại</th>
+                                              <th style={{ textAlign: "center" }}>Thời lượng</th>
+                                              <th style={{ textAlign: "center" }}>Hành động</th>
                                             </tr>
                                           </thead>
                                           <tbody>
                                             {detail.baiGiangs.map((b, i) => (
                                               <tr key={b.MaBaiHoc}>
-                                                <td>{i + 1}</td>
+                                                <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{b.TieuDe}</strong></td>
-                                                <td><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
-                                                <td>{b.ThoiLuong || "—"}</td>
-                                                <td>
+                                                <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
+                                                <td style={{ textAlign: "center" }}>{b.ThoiLuong || "—"}</td>
+                                                <td style={{ textAlign: "center" }}>
                                                   <button
                                                     className="ld2-open-btn"
                                                     onClick={() => {
-                                                      navigate(`/bai-giangSV/${b.MaBaiHoc}`, {
-                                                        state: { fromStudent: true, maLopHoc: info.MaLopHoc, maBuoiHoc: lesson.MaLesson }
-                                                      });
+                                                      navigate(`/MyCourses/${info.MaLopHoc}/${lesson.MaLesson}/bg/${b.MaBaiHoc}`);
                                                     }}
                                                   >
                                                     Xem
@@ -477,21 +659,6 @@ export default function ClassDetailSV() {
                                         </table>
                                       </div>
 
-                                      <div className="ld2-video-wrap">
-                                        <div className="ld2-video-player">
-                                          <div className="ld2-play-icon" onClick={() => {
-                                            if (detail.activeBaiHoc) {
-                                              navigate(`/bai-giangSV/${detail.activeBaiHoc}`, {
-                                                state: { fromStudent: true, maLopHoc: info.MaLopHoc, maBuoiHoc: lesson.MaLesson }
-                                              });
-                                            }
-                                          }}>▶</div>
-                                          <p className="ld2-video-label">{lesson.TenLesson || "Bài học"}</p>
-                                          <p className="ld2-video-sub">
-                                            {detail.activeBaiHoc ? "Bấm phát video hoặc Xem để bắt đầu học" : "Chọn bài giảng từ danh sách trên để xem"}
-                                          </p>
-                                        </div>
-                                      </div>
                                     </>
                                   ) : (
                                     <div className="ld2-empty-state">
@@ -507,10 +674,12 @@ export default function ClassDetailSV() {
                                   {detail.taiLieus.length > 0 ? (
                                     <div className="ld2-docs-grid">
                                       {detail.taiLieus.map((t, idx) => (
-                                        <div
+                                        <a
                                           key={t.MaTaiLieu}
+                                          href={t.FileUrl ? (t.FileUrl.startsWith('http') ? t.FileUrl : `${API}${t.FileUrl}`) : `${import.meta.env.BASE_URL}doc-detail/${t.MaTaiLieu}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
                                           className="ld2-doc-card"
-                                          onClick={() => navigate(`/doc-detail/${t.MaTaiLieu}`)}
                                         >
                                           <div className="ld2-doc-icon-wrapper">
                                             <FaFileAlt className="ld2-doc-icon" />
@@ -522,7 +691,7 @@ export default function ClassDetailSV() {
                                           <div className="ld2-doc-action">
                                             <button className="ld2-doc-btn">Xem chi tiết</button>
                                           </div>
-                                        </div>
+                                        </a>
                                       ))}
                                     </div>
                                   ) : (
@@ -541,35 +710,42 @@ export default function ClassDetailSV() {
                                       <table className="ld2-table">
                                         <thead>
                                           <tr>
-                                            <th>#</th>
+                                            <th style={{ textAlign: "center" }}>#</th>
                                             <th>Tên bài tập</th>
-                                            <th>Phân loại</th>
-                                            <th>Ngày tạo</th>
-                                            <th>Hành động</th>
+                                            <th style={{ textAlign: "center" }}>Phân loại</th>
+                                            <th style={{ textAlign: "center" }}>Ngày tạo</th>
+                                            <th style={{ textAlign: "center" }}>Số lần làm bài</th>
+                                            <th style={{ textAlign: "center" }}>Điểm số</th>
+                                            <th style={{ textAlign: "center" }}>Hành động</th>
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {detail.practices.map((ex: any, i: number) => (
-                                            <tr key={ex.MaBaiTap}>
-                                              <td>{i + 1}</td>
-                                              <td><strong>{ex.Title}</strong></td>
-                                              <td><span className="ld2-type-badge" style={{ background: '#fff7ed', color: '#ea580c' }}>{ex.Type || "Practice"}</span></td>
-                                              <td>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
-                                              <td>
-                                                <button
-                                                  className="ld2-open-btn"
-                                                  style={{ background: '#F95800' }}
-                                                  onClick={() => {
-                                                    navigate(`/baitap/${ex.MaBaiTap}`, {
-                                                      state: { maLopHoc: info.MaLopHoc }
-                                                    });
-                                                  }}
-                                                >
-                                                  Làm bài
-                                                </button>
-                                              </td>
-                                            </tr>
-                                          ))}
+                                          {detail.practices.map((ex: any, i: number) => {
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
+                                            const attempts = exSubmissions.length;
+                                            const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
+                                            const score = gradedSubmissions.length > 0 ? gradedSubmissions[gradedSubmissions.length - 1].Diem : "";
+                                            return (
+                                              <tr key={ex.MaBaiTap} id={`ex-${ex.MaBaiTap}`}>
+                                                <td style={{ textAlign: "center" }}>{i + 1}</td>
+                                                <td><strong>{ex.Title}</strong></td>
+                                                <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
+                                                <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                                <td style={{ textAlign: "center" }}>{attempts}</td>
+                                                <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
+                                                <td style={{ textAlign: "center" }}>
+                                                  <button
+                                                    className="ld2-open-btn"
+                                                    onClick={() => {
+                                                      navigate(`/MyCourses/${info?.MaLopHoc}/${lesson.MaLesson}/${detail.activeTab === 'practices' ? 'lt' : 'bt'}/${ex.MaBaiTap}`);
+                                                    }}
+                                                  >
+                                                    Làm bài
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
                                         </tbody>
                                       </table>
                                     </div>
@@ -589,35 +765,42 @@ export default function ClassDetailSV() {
                                       <table className="ld2-table">
                                         <thead>
                                           <tr>
-                                            <th>#</th>
+                                            <th style={{ textAlign: "center" }}>#</th>
                                             <th>Tên bài kiểm tra</th>
-                                            <th>Phân loại</th>
-                                            <th>Ngày tạo</th>
-                                            <th>Hành động</th>
+                                            <th style={{ textAlign: "center" }}>Phân loại</th>
+                                            <th style={{ textAlign: "center" }}>Ngày tạo</th>
+                                            <th style={{ textAlign: "center" }}>Số lần làm bài</th>
+                                            <th style={{ textAlign: "center" }}>Điểm số</th>
+                                            <th style={{ textAlign: "center" }}>Hành động</th>
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {detail.exams.map((ex: any, i: number) => (
-                                            <tr key={ex.MaBaiTap}>
-                                              <td>{i + 1}</td>
-                                              <td><strong>{ex.Title}</strong></td>
-                                              <td><span className="ld2-type-badge" style={{ background: '#f0fdf4', color: '#16a34a' }}>{ex.Type || "Exam"}</span></td>
-                                              <td>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
-                                              <td>
-                                                <button
-                                                  className="ld2-open-btn"
-                                                  style={{ background: '#16a34a' }}
-                                                  onClick={() => {
-                                                    navigate(`/baitap/${ex.MaBaiTap}`, {
-                                                      state: { maLopHoc: info.MaLopHoc }
-                                                    });
-                                                  }}
-                                                >
-                                                  Làm bài
-                                                </button>
-                                              </td>
-                                            </tr>
-                                          ))}
+                                          {detail.exams.map((ex: any, i: number) => {
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
+                                            const attempts = exSubmissions.length;
+                                            const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
+                                            const score = gradedSubmissions.length > 0 ? gradedSubmissions[gradedSubmissions.length - 1].Diem : "";
+                                            return (
+                                              <tr key={ex.MaBaiTap} id={`ex-${ex.MaBaiTap}`}>
+                                                <td style={{ textAlign: "center" }}>{i + 1}</td>
+                                                <td><strong>{ex.Title}</strong></td>
+                                                <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
+                                                <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                                <td style={{ textAlign: "center" }}>{attempts}</td>
+                                                <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
+                                                <td style={{ textAlign: "center" }}>
+                                                  <button
+                                                    className="ld2-open-btn"
+                                                    onClick={() => {
+                                                      navigate(`/MyCourses/${info?.MaLopHoc}/${lesson.MaLesson}/${detail.activeTab === 'practices' ? 'lt' : 'bt'}/${ex.MaBaiTap}`);
+                                                    }}
+                                                  >
+                                                    Làm bài
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
                                         </tbody>
                                       </table>
                                     </div>
@@ -644,3 +827,4 @@ export default function ClassDetailSV() {
     </div>
   );
 }
+

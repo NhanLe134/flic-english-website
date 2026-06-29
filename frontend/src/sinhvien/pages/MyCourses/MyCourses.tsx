@@ -20,6 +20,16 @@ function pctColor(pct: number) {
   return "#f97316";
 }
 
+function mapTypeToSkillName(type?: string) {
+  if (!type) return "";
+  const t = type.toLowerCase().trim();
+  if (t === "listening" || t === "l" || t === "nghe") return "Listening";
+  if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
+  if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
+  if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
 function MyCourses() {
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const userId = user.MaNguoiDung;
@@ -58,6 +68,10 @@ function MyCourses() {
   }, [userId, refreshTrigger]);
 
   const handleToggleClassDetails = async (classId: number) => {
+    const cls = classes.find(c => c.MaLopHoc === classId);
+    const isApproved = cls && (cls.TrangThai === 'Đang học' || cls.TrangThai === 'Đã hoàn thành');
+    if (!isApproved) return;
+
     // Toggle expanded state
     setExpandedClasses(prev => ({
       ...prev,
@@ -106,7 +120,7 @@ function MyCourses() {
           const data = await res.json();
           return {
             lessonId: l.MaLesson,
-            lectures: Array.isArray(data) ? data : []
+            lectures: Array.isArray(data) ? data.filter((bg: any) => bg.TrangThai === "published" || bg.TrangThai === "Đã duyệt") : []
           };
         } catch (err) {
           console.error(`Error fetching lectures for lesson ${l.MaLesson}`, err);
@@ -152,39 +166,33 @@ function MyCourses() {
       alert("Vui lòng nhập mã sinh viên.");
       return;
     }
-    if (!enrollClassId) {
-      alert("Vui lòng chọn lớp học.");
+    if (!enrollClassId.trim()) {
+      alert("Vui lòng nhập mã lớp học.");
       return;
     }
 
     try {
-      const res = await fetch(`${API}/qtv/lophoc/${enrollClassId.trim()}/ghidanh`, {
+      const res = await fetch(`${API}/student/lophoc/request-ghidanh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ MaSinhVien: enrollStudentId })
+        body: JSON.stringify({ 
+          MaLopHoc: enrollClassId.trim(), 
+          MaSinhVien: enrollStudentId 
+        })
       });
       const data = await res.json();
 
-      alert(data.message || "Đã thực hiện ghi danh.");
-
-      if (data.message && data.message.includes("thành công")) {
-        // Refresh classes list
-        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
-        const userId = user.MaNguoiDung;
-        if (userId) {
-          setLoading(true);
-          const r = await fetch(`${API}/student/my-classes/${userId}`);
-          const classData = await r.json();
-          setClasses(Array.isArray(classData) ? classData : []);
-          setLoading(false);
-        }
+      if (res.ok) {
+        alert(data.message || "Gửi yêu cầu ghi danh thành công! Vui lòng chờ Quản trị viên phê duyệt.");
         setShowEnrollModal(false);
+      } else {
+        alert(data.message || "Lỗi khi gửi yêu cầu ghi danh.");
       }
     } catch (err) {
-      console.error("Error enrolling student:", err);
-      alert("Lỗi hệ thống khi ghi danh vào lớp.");
+      console.error("Error sending enrollment request:", err);
+      alert("Lỗi hệ thống khi gửi yêu cầu ghi danh.");
     }
   };
 
@@ -295,29 +303,54 @@ function MyCourses() {
               {classes.map((c, i) => {
                 const isExpanded = !!expandedClasses[c.MaLopHoc];
                 const details = classDetails[c.MaLopHoc];
+                const isApproved = c.TrangThai === 'Đang học' || c.TrangThai === 'Đã hoàn thành';
 
-                return (
-                  <div className="mc-card" key={c.MaLopHoc} style={{ animationDelay: `${i * 60}ms` }}>
-                    <Link to={`/class-detail/${c.MaLopHoc}`} className="mc-card-main-info">
-                      <div className="mc-card-header">
-                        <div>
-                          <h3 className="mc-card-name">{c.TenLop}</h3>
-                          <span className="mc-card-code">{c.TenKhoaHoc}</span>
-                        </div>
+                const CardContent = (
+                  <>
+                    <div className="mc-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                      <div>
+                        <h3 className="mc-card-name">{c.TenLop}</h3>
+                        <span className="mc-card-code">{c.TenKhoaHoc}</span>
                       </div>
+                      
+                      {/* Status badges */}
+                      {c.TrangThai === 'Chờ duyệt' && (
+                        <span className="mc-status-badge" style={{
+                          background: '#FFF2EB',
+                          color: '#F95800',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap'
+                        }}>⏳ Chờ duyệt</span>
+                      )}
+                      {c.TrangThai === 'Từ chối' && (
+                        <span className="mc-status-badge" style={{
+                          background: '#FEE2E2',
+                          color: '#EF4444',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap'
+                        }}>❌ Bị từ chối</span>
+                      )}
+                    </div>
 
-                      <div className="mc-card-meta-grid">
-                        <div className="mc-meta-column">
-                          {c.LichHoc && (
-                            <span>
-                              <FaCalendarAlt className="mc-icon" />
-                              Lịch học: {c.LichHoc}
-                            </span>
-                          )}
+                    <div className="mc-card-meta-grid">
+                      <div className="mc-meta-column">
+                        {c.LichHoc && (
                           <span>
-                            <FaUsers className="mc-icon" />
-                            Sĩ số: {c.SoLuongHocVien || 0} học viên
+                            <FaCalendarAlt className="mc-icon" />
+                            Lịch học: {c.LichHoc}
                           </span>
+                        )}
+                        <span>
+                          <FaUsers className="mc-icon" />
+                          Sĩ số: {c.SoLuongHocVien || 0} học viên
+                        </span>
+                        {isApproved && (
                           <div className="mc-progress-inline">
                             <span className="mc-progress-label">
                               <FaChartLine className="mc-icon" />
@@ -331,18 +364,34 @@ function MyCourses() {
                             </div>
                             <span className="mc-progress-pct">{c.TienDo || 0}%</span>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    </Link>
-
-                    <div
-                      className={`mc-card-actions ${isExpanded ? "expanded" : ""}`}
-                      onClick={() => handleToggleClassDetails(c.MaLopHoc)}
-                    >
-                      <span className={`mc-toggle-syllabus-text ${isExpanded ? "active" : ""}`}>
-                        Bài cần hoàn thiện {isExpanded ? <FaChevronUp size={12} style={{ marginLeft: 4 }} /> : <FaChevronDown size={12} style={{ marginLeft: 4 }} />}
-                      </span>
                     </div>
+                  </>
+                );
+
+                return (
+                  <div className="mc-card" key={c.MaLopHoc} style={{ animationDelay: `${i * 60}ms` }}>
+                    {isApproved ? (
+                      <Link to={`/MyCourses/${c.MaLopHoc}`} className="mc-card-main-info">
+                        {CardContent}
+                      </Link>
+                    ) : (
+                      <div className="mc-card-main-info" style={{ cursor: 'default', opacity: 0.8 }}>
+                        {CardContent}
+                      </div>
+                    )}
+
+                    {isApproved && (
+                      <div
+                        className={`mc-card-actions ${isExpanded ? "expanded" : ""}`}
+                        onClick={() => handleToggleClassDetails(c.MaLopHoc)}
+                      >
+                        <span className={`mc-toggle-syllabus-text ${isExpanded ? "active" : ""}`}>
+                          Bài cần hoàn thiện {isExpanded ? <FaChevronUp size={12} style={{ marginLeft: 4 }} /> : <FaChevronDown size={12} style={{ marginLeft: 4 }} />}
+                        </span>
+                      </div>
+                    )}
 
                     {isExpanded && (
                       <div className="mc-expanded-syllabus">
@@ -427,7 +476,7 @@ function MyCourses() {
                                                 {isTest ? "Bài kiểm tra" : "Bài tập thực hành"}
                                               </span>
                                               <p className="mc-item-title">{ex.Title}</p>
-                                              <span className="mc-item-meta">{ex.Type || "Practice"}</span>
+                                              <span className="mc-item-meta">{mapTypeToSkillName(ex.Type) || "Practice"}</span>
                                             </div>
                                           </Link>
                                         );

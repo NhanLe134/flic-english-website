@@ -1,4 +1,4 @@
-import "./Header.css";
+﻿import "./Header.css";
 import { useAvatar } from "../context/AvatarContext";
 import { useState, useEffect } from "react";
 

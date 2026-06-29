@@ -24,7 +24,7 @@ const AddLesson: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [name, setName] = useState("");
-  const [type, setType] = useState("Video");
+  const type = "Video";
   const [duration, setDuration] = useState("");
   const [lessonDate, setLessonDate] = useState("");
   const [moTa, setMoTa] = useState("");
@@ -73,13 +73,14 @@ const AddLesson: React.FC = () => {
           body: formData
         });
         const uploadData = await uploadRes.json();
-        fileUrl = uploadData.url ? `http://localhost:5000${uploadData.url}` : "";
+        fileUrl = uploadData.url || "";
       }
 
       if (link && !fileUrl) fileUrl = link;
 
       const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
-      const isTeacher = user.VaiTro === "Giảng Viên";
+      const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
+      const isTeacher = vaiTroLower === "giảng viên";
 
       const newLesson = {
         TieuDe: name,
@@ -143,13 +144,6 @@ const AddLesson: React.FC = () => {
             onChange={(e) => setLessonDate(e.target.value)}
           />
 
-          <label>Loại nội dung *</label>
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option>Video</option>
-            <option>PDF</option>
-            <option>Writing</option>
-            <option>Audio</option>
-          </select>
 
           <label>Mô tả nội dung</label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, marginBottom: 16, background: "#fff" }}>
@@ -259,7 +253,7 @@ const AddLesson: React.FC = () => {
 
           <div className="right-card">
             <h3>Hành động</h3>
-            {JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}").VaiTro === "Giảng Viên" ? (
+            {(JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}").VaiTro || "").toLowerCase().trim() === "giảng viên" ? (
               <>
                 <button
                   className="draft-btn"
@@ -306,3 +300,4 @@ const AddLesson: React.FC = () => {
 };
 
 export default AddLesson;
+

@@ -89,11 +89,8 @@ const AddDocument = () => {
 
   return (
     <div className="ad-wrapper">
-
-      <div className="header-row">
-        <h1>THÊM TÀI LIỆU</h1>
-        <span className="back-btn" onClick={() => navigate(-1)}>← Quay lại</span>
-      </div>
+      <span className="back-btn" onClick={() => navigate(-1)}>← Quay lại</span>
+      <h1 className="page-title">Thêm tài liệu</h1>
 
       <div className="form-card">
         <h3>Thông tin bài học</h3>
@@ -183,3 +180,4 @@ const AddDocument = () => {
 };
 
 export default AddDocument;
+

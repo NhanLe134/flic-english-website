@@ -1,7 +1,8 @@
-import "./PersonalInfoView.css";
+﻿import "./PersonalInfoView.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAvatar } from "../../context/AvatarContext";
+import { FiAward, FiBriefcase, FiUser, FiMail, FiPhone } from "react-icons/fi";
 
 const PersonalInfoView = () => {
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ const PersonalInfoView = () => {
 
   if (!data) return <p>Đang tải...</p>;
 
+  const displayAvatar = avatar || (data.AnhDaiDien ? (data.AnhDaiDien.startsWith("http") ? data.AnhDaiDien : `http://localhost:5000${data.AnhDaiDien}`) : null);
+
   return (
     <div className="piv-wrapper">
       <div className="piv-header-row">
@@ -40,8 +43,8 @@ const PersonalInfoView = () => {
         {/* LEFT CARD */}
         <div className="piv-sidebar-card">
           <div className="piv-avatar-wrapper">
-            {avatar || data.AnhDaiDien ? (
-              <img src={avatar || data.AnhDaiDien} alt="avatar" />
+            {displayAvatar ? (
+              <img src={displayAvatar} alt="avatar" />
             ) : (
               <div className="piv-avatar-initial">{data.HoTen?.charAt(0).toUpperCase()}</div>
             )}
@@ -51,11 +54,15 @@ const PersonalInfoView = () => {
 
           <div className="piv-contact-section">
             <div className="piv-contact-item">
-              <span className="piv-contact-label">Email</span>
+              <span className="piv-contact-label">
+                <FiMail style={{ marginRight: 6, verticalAlign: 'middle' }} /> Email
+              </span>
               <p className="piv-contact-value">{data.Email || "Chưa cập nhật"}</p>
             </div>
             <div className="piv-contact-item">
-              <span className="piv-contact-label">Số điện thoại</span>
+              <span className="piv-contact-label">
+                <FiPhone style={{ marginRight: 6, verticalAlign: 'middle' }} /> Số điện thoại
+              </span>
               <p className="piv-contact-value">{data.SoDienThoai || "Chưa cập nhật"}</p>
             </div>
           </div>
@@ -64,16 +71,25 @@ const PersonalInfoView = () => {
         {/* RIGHT CARDS */}
         <div className="piv-main-content">
           <div className="piv-info-card">
-            <h3>Chuyên môn</h3>
+            <h3>
+              <FiAward style={{ marginRight: 8, color: '#F95800', verticalAlign: 'middle' }} /> Chuyên môn
+            </h3>
             <p>{data.ChuyenMon || "Chưa cập nhật thông tin chuyên môn."}</p>
           </div>
 
           <div className="piv-info-card">
-            <h3>Kinh nghiệm giảng dạy</h3>
+            <h3>
+              <FiBriefcase style={{ marginRight: 8, color: '#F95800', verticalAlign: 'middle' }} /> Kinh nghiệm giảng dạy
+            </h3>
             <p>{data.KinhNghiem || "Chưa cập nhật kinh nghiệm giảng dạy."}</p>
           </div>
 
-          {/* 'Giới thiệu bản thân' đã được xoá theo yêu cầu */}
+          <div className="piv-info-card">
+            <h3>
+              <FiUser style={{ marginRight: 8, color: '#F95800', verticalAlign: 'middle' }} /> Giới thiệu
+            </h3>
+            <p>{data.GioiThieu || "Chưa cập nhật thông tin giới thiệu."}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -81,3 +97,4 @@ const PersonalInfoView = () => {
 };
 
 export default PersonalInfoView;
+

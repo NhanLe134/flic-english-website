@@ -1,19 +1,28 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import NavbarAuto from "../../components/NavbarAuto";
 import Footer from "../../components/Footer";
-import { FiCpu } from "react-icons/fi";
-import "./HocThu.css";
+import HocThuSV from "../../sinhvien/pages/HocThuSV";
 
 const HocThu = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+      if (user && user.VaiTro === "Học Viên") {
+        navigate("/hoc-thu-sv", { replace: true });
+      }
+    } catch (e) {
+      console.error("Error checking user in HocThu", e);
+    }
+  }, [navigate]);
+
   return (
     <>
       <NavbarAuto />
-      <div className="hoc-thu-container">
-        <div className="hoc-thu-card">
-          <FiCpu className="hoc-thu-icon" />
-          <h1>HỌC THỬ</h1>
-          <p className="status-text">Đang triển khai</p>
-          <p className="sub-text">Tính năng này đang được phát triển. Vui lòng quay lại sau!</p>
-        </div>
+      <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
+        <HocThuSV />
       </div>
       <Footer />
     </>

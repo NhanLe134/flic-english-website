@@ -1,6 +1,8 @@
-import "./DocumentDetail.css";
+﻿import "./DocumentDetail.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+
+const API = "http://localhost:5000";
 
 const DocumentDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -9,7 +11,7 @@ const DocumentDetail: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/tailieu/detail/${id}`)
+    fetch(`${API}/tailieu/detail/${id}`)
       .then(res => res.json())
       .then(data => setDocument(data))
       .catch(err => console.log(err));
@@ -21,9 +23,9 @@ const DocumentDetail: React.FC = () => {
   const noidungText = document.NoiDung?.split("\nFile:")[0] || "";
 
   const fileUrl = document.FileUrl
-    ? `http://localhost:5000${document.FileUrl}`
+    ? (document.FileUrl.startsWith("http") ? document.FileUrl : `${API}${document.FileUrl}`)
     : document.NoiDung?.includes("File: /uploads/")
-    ? `http://localhost:5000${document.NoiDung.split("File: ")[1]?.trim()}`
+    ? `${API}${document.NoiDung.split("File: ")[1]?.trim()}`
     : null;
 
   const isImage = fileUrl && /\.(png|jpg|jpeg|gif|webp)$/i.test(fileUrl);
@@ -99,3 +101,4 @@ const DocumentDetail: React.FC = () => {
 };
 
 export default DocumentDetail;
+

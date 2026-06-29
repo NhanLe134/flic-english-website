@@ -6,8 +6,9 @@
 /* HEADER ROW */
 .lrp-header-row {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-bottom: 24px;
 }
 
@@ -156,14 +157,13 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
-
 th {
   text-align: left;
   padding: 14px 16px;
-  background: #000080;
+  background: #000080 !important;
   font-size: 12px;
   font-weight: 600;
-  color: #ffffff;
+  color: #ffffff !important;
   border-bottom: 2px solid #000066;
   white-space: nowrap;
   text-transform: uppercase;
@@ -175,10 +175,21 @@ td {
   font-size: 14px;
   color: #333;
   white-space: nowrap;
+  transition: background-color 0.15s ease;
 }
 
-tr:hover td {
-  background: #f8fafc;
+/* ROW & CELL HOVER WITH PREMIUM LIGHT BLUE */
+tr.lrp-row:hover td {
+  background-color: #f0f7ff !important;
+}
+
+tr.lrp-row td:hover {
+  background-color: #e0f2fe !important;
+}
+
+/* Details sub-rows cell hover */
+tr:not(.lrp-row) td:hover {
+  background-color: #f1f5f9 !important;
 }
 
 .lrp-code-cell {

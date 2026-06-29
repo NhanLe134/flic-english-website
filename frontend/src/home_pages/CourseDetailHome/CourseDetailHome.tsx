@@ -1,4 +1,4 @@
-import "./CourseDetailHome.css";
+﻿import "./CourseDetailHome.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import NavbarAuto from "../../components/NavbarAuto";
@@ -191,3 +191,4 @@ function CourseDetail() {
 }
 
 export default CourseDetail;
+

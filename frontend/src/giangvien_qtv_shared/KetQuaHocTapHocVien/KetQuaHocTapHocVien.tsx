@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+﻿import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./KetQuaHocTapHocVien.css";
 
@@ -68,7 +68,8 @@ const KetQuaHocTapHocVien = () => {
           <div className="avatar">👤</div>
           <div>
             <h3>{student.HoTen || "N/A"}</h3>
-            <p className="student-id">{student.MaSinhVien}</p>
+            <p className="student-id">Mã học viên: {student.MaSinhVien}</p>
+            {student.MSSV && <p className="student-id" style={{ marginTop: '2px' }}>MSSV (Trường): {student.MSSV}</p>}
             <span className={`badge ${tienDo === 100 ? "finished" : "learning"}`}>
               {tienDo === 100 ? "Hoàn thành" : tienDo > 0 ? "Đang học" : "Chưa học"}
             </span>
@@ -142,3 +143,4 @@ const KetQuaHocTapHocVien = () => {
 };
 
 export default KetQuaHocTapHocVien;
+

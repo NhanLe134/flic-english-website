@@ -1,4 +1,4 @@
-import "./Login.css";
+﻿import "./Login.css";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -56,13 +56,19 @@ const Login = ({ isModal = false }: LoginProps) => {
       const vaiTro   = roleData?.VaiTro || "Học Viên"
 
       sessionStorage.setItem("user", JSON.stringify({ ...data, VaiTro: vaiTro }))
-      localStorage.setItem("user", JSON.stringify({ ...data, VaiTro: vaiTro }))
 
       // Khi đăng nhập thành công và chuyển hướng, query param ?auth=login sẽ tự động mất đi
-      if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
-      else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
-      else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/khoahoc")
-      else                                       navigate("/profile")
+      if (window.location.pathname.includes("/test-exam/")) {
+        navigate("/test-thu-sv", { replace: true });
+        setTimeout(() => {
+          window.location.href = window.location.pathname;
+        }, 100);
+      } else {
+        if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
+        else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
+        else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/khoahoc")
+        else                                       navigate("/course-register")
+      }
     } catch (err) {
       console.error(err);
       setLoginError("Không kết nối được server");
@@ -162,7 +168,7 @@ const Login = ({ isModal = false }: LoginProps) => {
 
         <p style={{ textAlign:"center", marginTop:12, fontSize:15, color:"#666" }}>
           Chưa có tài khoản?{" "}
-          <Link to={isModal ? "?auth=register" : "/register"} style={{ color:"#000080", fontWeight:600 }}>
+          <Link replace to={isModal ? "?auth=register" : "/register"} style={{ color:"#000080", fontWeight:600 }}>
             Đăng ký ngay
           </Link>
         </p>
@@ -255,3 +261,4 @@ const Login = ({ isModal = false }: LoginProps) => {
 };
 
 export default Login;
+

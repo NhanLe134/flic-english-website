@@ -90,7 +90,7 @@ const PersonalInfo: React.FC = () => {
               className="sidebar-item"
               onClick={() => navigate("/quan-ly-khoa-hoc")}
             >
-              Quản lý khóa học
+              Quản lý giảng dạy
             </div>
 
             <div onClick={() => navigate("/thong-tin-ca-nhan")} className="sidebar-item active">

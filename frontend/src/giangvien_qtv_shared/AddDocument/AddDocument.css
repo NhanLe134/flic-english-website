@@ -1,28 +1,25 @@
 .ad-wrapper {
   font-family: "Segoe UI", sans-serif;
   width: 100%;
+  background: #ffffff;
 }
 
-/* HEADER ROW */
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.header-row h1 {
-  font-size: 26px;
+/* PAGE TITLE */
+.page-title {
+  font-size: 20px;
   font-weight: 700;
-  margin: 0;
-  color: #333;
-  letter-spacing: 1px;
+  margin: 12px 0 20px;
+  color: #F95800 !important;
+  text-align: left;
+  letter-spacing: 0.5px;
 }
 
 .back-btn {
   cursor: pointer;
   font-size: 14px;
   color: #555;
+  display: inline-block;
+  margin-bottom: 6px;
 }
 
 .back-btn:hover {
@@ -30,20 +27,21 @@
 }
 
 /* FORM CARD */
-.form-card {
-  background: white;
+.ad-wrapper .form-card {
+  background: #f0f7ff;
   padding: 32px;
-  border-radius: 16px;
-  border: 1px solid #e0d4c3;
+  border-radius: 12px;
+  border: 1px solid #d0e1fd;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
-.form-card h3 {
+.ad-wrapper .form-card h3 {
   margin: 0 0 20px;
   font-size: 17px;
   color: #333;
 }
 
-.form-card label {
+.ad-wrapper .form-card label {
   display: block;
   margin-top: 16px;
   margin-bottom: 6px;
@@ -52,27 +50,29 @@
   color: #555;
 }
 
-.form-card input,
-.form-card select,
-.form-card textarea {
+.ad-wrapper .form-card input,
+.ad-wrapper .form-card select,
+.ad-wrapper .form-card textarea {
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid #e0d4c3;
-  background: #fdf8f3;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
   font-size: 14px;
   font-family: "Segoe UI", sans-serif;
   box-sizing: border-box;
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-card input:focus,
-.form-card select:focus,
-.form-card textarea:focus {
+.ad-wrapper .form-card input:focus,
+.ad-wrapper .form-card select:focus,
+.ad-wrapper .form-card textarea:focus {
   border-color: #F95800;
+  box-shadow: 0 0 0 2px rgba(249, 88, 0, 0.1);
 }
 
-.form-card textarea {
+.ad-wrapper .form-card textarea {
   height: 100px;
   resize: vertical;
 }
@@ -121,19 +121,19 @@
 }
 
 .file-col input[type="file"] {
-  background: #fdf8f3;
+  background: #ffffff;
   cursor: pointer;
   padding: 8px;
 }
 
 /* UPLOAD BOX */
 .upload-box {
-  border: 2px dashed #cdbda9;
+  border: 2px dashed #cbd5e1;
   border-radius: 12px;
   padding: 24px 20px;
   text-align: center;
   cursor: pointer;
-  background: #fdf6ee;
+  background: #ffffff;
   transition: 0.2s;
   margin-bottom: 16px;
   box-sizing: border-box;
@@ -142,12 +142,12 @@
 
 .upload-box:hover {
   border-color: #F95800;
-  background: #fff4ec;
+  background: #f8fafc;
 }
 
 .upload-box.dragging {
   border-color: #F95800;
-  background: #fff4ec;
+  background: #f8fafc;
 }
 
 .upload-icon {
@@ -171,8 +171,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fff4ec;
-  border: 1px solid #F95800;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
   padding: 12px 16px;
   text-align: left;
