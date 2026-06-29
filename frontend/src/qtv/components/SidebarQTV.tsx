@@ -1,10 +1,11 @@
 import styles from "./SidebarQTV.module.css"
-import { NavLink, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import { useState } from "react"
 import { FiBook, FiFileText, FiCheckSquare, FiLogOut, FiUsers } from "react-icons/fi"
 
 const SidebarQTV = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogout = () => {
@@ -28,7 +29,14 @@ const SidebarQTV = () => {
 
       <ul className={styles.menu}>
         <li>
-          <NavLink to="/QTV/khoahoc" className={({ isActive }) => isActive ? styles.active : ""}>
+          <NavLink 
+            to="/QTV/khoahoc" 
+            className={
+              location.pathname === "/QTV/khoahoc" || location.pathname === "/QTV/kho-hoc-lieu" 
+                ? styles.active 
+                : ""
+            }
+          >
             <FiBook className="menu-icon" />
             <span>Khóa học</span>
           </NavLink>

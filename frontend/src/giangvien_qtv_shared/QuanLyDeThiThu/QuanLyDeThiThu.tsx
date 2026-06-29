@@ -1898,8 +1898,8 @@ D. Visiting friends
                               }}
                               style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", background: "white" }}
                             >
-                              <option value="Email">Email / Thư</option>
-                              <option value="Essay">Essay (Nghị luận)</option>
+                              <option value="Email">Letter </option>
+                              <option value="Essay">Email </option>
                             </select>
                           </div>
 

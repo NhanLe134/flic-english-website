@@ -35,6 +35,15 @@
   flex-direction: column;
   gap: 4px;
 }
+.statCardClickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.statCardClickable:hover {
+  border-color: #000080;
+  box-shadow: 0 4px 12px rgba(0, 0, 128, 0.05);
+  transform: translateY(-2px);
+}
 .statMint   { background: transparent; }
 .statGreen  { background: transparent; }
 .statBlue   { background: transparent; }

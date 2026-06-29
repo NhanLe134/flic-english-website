@@ -30,13 +30,6 @@ interface ExamSection {
   questions?: Question[];
 }
 
-const getDangBaiOptions = (kn: string): string[] => {
-  if (kn === "Nghe") return ["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"];
-  if (kn === "Noi") return ["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"];
-  if (kn === "Doc") return ["Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Nối từ"];
-  if (kn === "Viet") return ["Sắp xếp từ thành câu", "Trắc nghiệm", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"];
-  return [];
-};
 
 const mapDangBaiToType = (db: string): string => {
   if (db === "Nghe audio trắc nghiệm") return "listening-mcq";
@@ -207,6 +200,14 @@ const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children 
   );
 };
 
+const getSkillFromDangBai = (db: string): string => {
+  if (["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"].includes(db)) return "Nghe";
+  if (["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"].includes(db)) return "Noi";
+  if (["Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Nối từ"].includes(db)) return "Doc";
+  if (["Sắp xếp từ thành câu", "Trắc nghiệm", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"].includes(db)) return "Viet";
+  return "Nghe";
+};
+
 const CreateExercise = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -228,6 +229,7 @@ const CreateExercise = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
   const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
   const [type, setType] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
   
   const [kyNang, setKyNang] = useState(isMiniTest ? "Viet" : "Nghe");
@@ -1213,14 +1215,6 @@ const CreateExercise = () => {
     return data.url || "";
   };
 
-  const handleKyNangChange = (kn: string) => {
-    setKyNang(kn);
-    const opts = getDangBaiOptions(kn);
-    if (opts.length > 0) {
-      handleDangBaiChange(opts[0]);
-    }
-  };
-
   const handleDangBaiChange = (db: string) => {
     setDangBai(db);
     const targetType = mapDangBaiToType(db);
@@ -1414,11 +1408,16 @@ const CreateExercise = () => {
           }))
         },
         {
-          type: "listening-fill-in",
+          type: "reading-split",
           title: "Part 6: Text Completion (Điền đoạn văn)",
           questions: Array.from({ length: 4 }).map(() => ({
             text: "",
-            fillInAnswers: ["", "", "", ""]
+            subQuestions: Array.from({ length: 4 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
           }))
         },
         {
@@ -1497,11 +1496,16 @@ const CreateExercise = () => {
           }))
         },
         {
-          type: "listening-fill-in",
+          type: "reading-split",
           title: "Part 6: Text Completion (Điền đoạn văn)",
           questions: Array.from({ length: 4 }).map(() => ({
             text: "",
-            fillInAnswers: ["", "", "", ""]
+            subQuestions: Array.from({ length: 4 }).map(() => ({
+              question: "",
+              answers: ["", "", "", ""],
+              correct: "A",
+              explanation: ""
+            }))
           }))
         },
         {
@@ -1768,7 +1772,12 @@ const CreateExercise = () => {
 
   /* ===== CREATE & POST BAITAP ===== */
   const handleCreate = async (statusOverride?: "draft" | "pending" | "published" | "practice") => {
-    if (!title) { alert("Vui lòng nhập tiêu đề"); return; }
+    if (!title.trim()) {
+      setTitleError("Vui lòng nhập tiêu đề");
+      const el = document.querySelector(".exercise-title");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
 
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
     const user = JSON.parse(userStr || "{}");
@@ -2188,41 +2197,55 @@ const CreateExercise = () => {
             className="exercise-title"
             placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập / bài kiểm tra"}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (e.target.value.trim()) setTitleError("");
+            }}
           />
+          {titleError && (
+            <p style={{ color: "#c5221f", fontStyle: "italic", fontSize: "12.5px", margin: "4px 0 10px 0", fontWeight: 500 }}>
+              {titleError}
+            </p>
+          )}
 
         {/* Global Settings Grid */}
         {!isMiniTest && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Kỹ năng</label>
-              <select
-                className="exercise-type"
-                style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-                value={kyNang}
-                disabled={isExam}
-                onChange={(e) => handleKyNangChange(e.target.value)}
-              >
-                <option value="Nghe">Nghe (Listening)</option>
-                <option value="Noi">Nói (Speaking)</option>
-                <option value="Doc">Đọc (Reading)</option>
-                <option value="Viet">Viết (Writing)</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Dạng bài tập</label>
-              <select
-                className="exercise-type"
-                style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-                value={dangBai}
-                disabled={isExam}
-                onChange={(e) => handleDangBaiChange(e.target.value)}
-              >
-                {getDangBaiOptions(kyNang).map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
+          <div style={{ marginBottom: 15 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Dạng bài tập</label>
+            <select
+              className="exercise-type"
+              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+              value={dangBai}
+              disabled={isExam}
+              onChange={(e) => {
+                const selectedFormat = e.target.value;
+                setDangBai(selectedFormat);
+                const skill = getSkillFromDangBai(selectedFormat);
+                setKyNang(skill);
+                handleDangBaiChange(selectedFormat);
+              }}
+            >
+              <optgroup label="Kỹ năng Nghe (Listening)">
+                <option value="Nghe audio trắc nghiệm">Nghe audio trắc nghiệm</option>
+                <option value="Hình ảnh chọn đáp án">Hình ảnh chọn đáp án</option>
+                <option value="Nghe chép chính tả">Nghe chép chính tả</option>
+                <option value="Điền từ vào đoạn văn">Điền từ vào đoạn văn</option>
+              </optgroup>
+              <optgroup label="Kỹ năng Nói (Speaking)">
+                <option value="Luyện phát âm (check phát âm tự động)">Luyện phát âm (check phát âm tự động)</option>
+                <option value="Nói theo chủ đề (ghi âm nộp GV)">Nói theo chủ đề (ghi âm nộp GV)</option>
+              </optgroup>
+              <optgroup label="Kỹ năng Đọc (Reading)">
+                <option value="Trắc nghiệm đọc hiểu (chia đôi màn hình)">Trắc nghiệm đọc hiểu (chia đôi màn hình)</option>
+                <option value="Nối từ">Nối từ</option>
+              </optgroup>
+              <optgroup label="Kỹ năng Viết (Writing)">
+                <option value="Sắp xếp từ thành câu">Sắp xếp từ thành câu</option>
+                <option value="Trắc nghiệm">Trắc nghiệm</option>
+                <option value="Viết đoạn văn ngắn">Viết đoạn văn ngắn</option>
+                <option value="Sắp xếp câu thành đoạn văn">Sắp xếp câu thành đoạn văn</option>
+              </optgroup>
+            </select>
           </div>
         )}
 
@@ -2439,7 +2462,7 @@ const CreateExercise = () => {
                         key={idx}
                         onClick={() => {
                           const el = document.getElementById(`exam-section-card-${idx}`);
-                          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                         }}
                         style={{
                           padding: "8px 12px",
@@ -2851,6 +2874,28 @@ const CreateExercise = () => {
                               style={{ display: "block", marginTop: 5 }}
                             />
                             {q.audioUrl && <p style={{ color: "green", fontSize: 11 }}>✓ Đã tải: {q.audioUrl}</p>}
+                          </div>
+                        )}
+
+                        {sec.type === "listening-mcq" && (sec.title.includes("Part 3") || sec.title.includes("Part 4")) && (
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Hình ảnh cho nhóm này (Tùy chọn)</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async e => {
+                                if (e.target.files && e.target.files[0]) {
+                                  await handleExamQuestionFileUpload(secIdx, qIdx, "imageUrl", e.target.files[0]);
+                                }
+                              }}
+                              style={{ display: "block", marginTop: 5 }}
+                            />
+                            {q.imageUrl && (
+                              <div style={{ marginTop: 5 }}>
+                                <p style={{ color: "green", fontSize: 11, margin: 0 }}>✓ Đã tải hình ảnh: {q.imageUrl}</p>
+                                <img src={q.imageUrl} alt="Preview" style={{ maxHeight: 80, marginTop: 5, borderRadius: 4 }} />
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -3445,6 +3490,28 @@ const CreateExercise = () => {
                             placeholder="Nhập bài đọc cho nhóm này..."
                           />
                         </div>
+
+                        {sec.type === "reading-split" && sec.title.includes("Part 7") && (
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Hình ảnh cho bài đọc này (Tùy chọn)</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async e => {
+                                if (e.target.files && e.target.files[0]) {
+                                  await handleExamQuestionFileUpload(secIdx, qIdx, "imageUrl", e.target.files[0]);
+                                }
+                              }}
+                              style={{ display: "block", marginTop: 5 }}
+                            />
+                            {q.imageUrl && (
+                              <div style={{ marginTop: 5 }}>
+                                <p style={{ color: "green", fontSize: 11, margin: 0 }}>✓ Đã tải hình ảnh: {q.imageUrl}</p>
+                                <img src={q.imageUrl} alt="Preview" style={{ maxHeight: 80, marginTop: 5, borderRadius: 4 }} />
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         <div style={{ marginTop: 10 }}>
                           <p style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>Các câu hỏi đọc hiểu của nhóm này:</p>

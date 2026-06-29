@@ -302,7 +302,44 @@ const ClassDetail = () => {
                     )}
                   </div>
 
-                  <p>{ex.Type || "Bài tập"}</p>
+                  {(() => {
+                    let parsedContent: any = {};
+                    try {
+                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                    } catch (e) {}
+                    const isExam = ex.IsExam === 1 || ex.Type === "exam" || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+                    
+                    let label = "BaiTap";
+                    let color = "#000080";
+                    let bg = "#e0e7ff";
+                    
+                    if (ex.TrangThai === "practice") {
+                      label = "LuyenTapThem";
+                      color = "#c2410c";
+                      bg = "#ffedd5";
+                    } else if (isExam) {
+                      label = "BaiKTra";
+                      color = "#b91c1c";
+                      bg = "#fee2e2";
+                    }
+
+                    return (
+                      <span style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: color,
+                        background: bg,
+                        padding: "3px 8px",
+                        borderRadius: "12px",
+                        display: "inline-block",
+                        width: "fit-content",
+                        marginTop: "4px",
+                        marginBottom: "12px"
+                      }}>
+                        {label}
+                      </span>
+                    );
+                  })()}
                   
                   {(() => {
                     let parsedContent: any = {};

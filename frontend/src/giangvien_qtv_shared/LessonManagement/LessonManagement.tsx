@@ -221,7 +221,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
       {showReuseModal && (
         <div className="baigiang-modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal" style={{ maxWidth: "600px", padding: "20px" }}>
+          <div className="modal" style={{ maxWidth: "800px", width: "90%", padding: "20px" }}>
             <h3 style={{ marginBottom: "15px" }}>Chọn bài giảng có sẵn</h3>
             
             <input
@@ -239,7 +239,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
               }}
             />
 
-            <div style={{ maxHeight: "300px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
+            <div style={{ maxHeight: "450px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
               {allExistingLectures.filter(bg => bg.TieuDe?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
                 <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy bài giảng nào.</div>
               ) : (

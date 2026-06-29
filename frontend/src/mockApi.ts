@@ -663,20 +663,23 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/baigiang/detail/") && method === "GET") {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
-      return new Response(
-        JSON.stringify({
-          MaBaiHoc: id,
-          TieuDe: id === 2 ? "Giáo trình ngữ pháp nâng cao" : "Bài giảng lý thuyết thì hiện tại đơn",
-          LoaiBaiHoc: id === 2 ? "PDF" : "Video",
-          ThoiLuong: id === 2 ? "30 phút" : "15 phút",
-          TrangThai: "published",
-          NoiDung: id === 2
-            ? "### Tài liệu đọc hiểu Ngữ pháp nâng cao\n\nHọc viên tải tệp đính kèm bên dưới để đọc tài liệu chi tiết.\n\n* Nội dung ôn tập:\n  - Các dạng câu điều kiện (Conditional Sentences)\n  - Mệnh đề quan hệ (Relative Clauses)\n  - Câu bị động (Passive Voice)\n\nChúc các em ôn tập đạt kết quả tốt!"
-            : "### Video Bài giảng lý thuyết về các thì hiện tại\n\nHọc viên chú ý theo dõi video bài học dưới đây và chép bài đầy đủ vào vở bài tập.\n\n* Nội dung gồm:\n  - Công thức & Cách dùng thì Hiện tại đơn (Present Simple)\n  - Hiện tại tiếp diễn (Present Continuous)\n  - Hiện tại hoàn thành (Present Perfect)\n\n* Tệp đính kèm bên dưới là audio tóm tắt bài giảng.",
-          FileUrl: id === 2 ? "/job-interview.mp3" : "/coffee-shop.mp3"
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+      if (id === 1 || id === 2) {
+        return new Response(
+          JSON.stringify({
+            MaBaiHoc: id,
+            TieuDe: id === 2 ? "Giáo trình ngữ pháp nâng cao" : "Bài giảng lý thuyết thì hiện tại đơn",
+            LoaiBaiHoc: id === 2 ? "PDF" : "Video",
+            ThoiLuong: id === 2 ? "30 phút" : "15 phút",
+            TrangThai: "published",
+            NoiDung: id === 2
+              ? "### Tài liệu đọc hiểu Ngữ pháp nâng cao\n\nHọc viên tải tệp đính kèm bên dưới để đọc tài liệu chi tiết.\n\n* Nội dung ôn tập:\n  - Các dạng câu điều kiện (Conditional Sentences)\n  - Mệnh đề quan hệ (Relative Clauses)\n  - Câu bị động (Passive Voice)\n\nChúc các em ôn tập đạt kết quả tốt!"
+              : "### Video Bài giảng lý thuyết về các thì hiện tại\n\nHọc viên chú ý theo dõi video bài học dưới đây và chép bài đầy đủ vào vở bài tập.\n\n* Nội dung gồm:\n  - Công thức & Cách dùng thì Hiện tại đơn (Present Simple)\n  - Hiện tại tiếp diễn (Present Continuous)\n  - Hiện tại hoàn thành (Present Perfect)\n\n* Tệp đính kèm bên dưới là audio tóm tắt bài giảng.",
+            FileUrl: id === 2 ? "/job-interview.mp3" : "/coffee-shop.mp3"
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return originalFetch(input, init);
     }
 
     // 9. GET STUDENTS FOR TEACHER OR CLASS
@@ -1064,24 +1067,27 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
         );
       }
 
-      // Default/Fallback
-      return new Response(
-        JSON.stringify({
-          MaBaiTap: id,
-          TenBai: `Bài tập thực hành TOEIC #${id}`,
-          LoaiBaiHoc: "Tự luận",
-          Content: "Hãy viết một đoạn văn ngắn (150 từ) kể về kỳ nghỉ hè đáng nhớ nhất của bạn.",
-          Questions: "1. Kể lại thời gian và địa điểm của kỳ nghỉ?\n2. Có những hoạt động thú vị nào đã diễn ra?",
-          Type: "Writing",
-          KyNang: "Writing",
-          DangBai: "Essay",
-          FileUrl: "",
-          Vocabulary: "vacation, memory, beach, travel",
-          TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản",
-          ThuTu: 1
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+      // Default/Fallback -> If not a mock ID, delegate to real server
+      if (id === 1 || (id >= 10 && id <= 16)) {
+        return new Response(
+          JSON.stringify({
+            MaBaiTap: id,
+            TenBai: `Bài tập thực hành TOEIC #${id}`,
+            LoaiBaiHoc: "Tự luận",
+            Content: "Hãy viết một đoạn văn ngắn (150 từ) kể về kỳ nghỉ hè đáng nhớ nhất của bạn.",
+            Questions: "1. Kể lại thời gian và địa điểm của kỳ nghỉ?\n2. Có những hoạt động thú vị nào đã diễn ra?",
+            Type: "Writing",
+            KyNang: "Writing",
+            DangBai: "Essay",
+            FileUrl: "",
+            Vocabulary: "vacation, memory, beach, travel",
+            TenBuoiHoc: "Buổi 1: Ngữ pháp cơ bản",
+            ThuTu: 1
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return originalFetch(input, init);
     }
 
     // 14. GET SUBMISSIONS FOR BAITAP
@@ -1132,11 +1138,14 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     if (urlStr.includes("/tailieu/detail/")) {
       const parts = urlStr.split("/");
       const id = parseInt(parts[parts.length - 1]);
-      const doc = db.documents.find((d: any) => d.MaTaiLieu === id) || db.documents[0];
-      return new Response(
-        JSON.stringify(doc),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+      const doc = db.documents.find((d: any) => d.MaTaiLieu === id);
+      if (doc) {
+        return new Response(
+          JSON.stringify(doc),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return originalFetch(input, init);
     }
 
     // 18. LECTURES BY LESSON
