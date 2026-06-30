@@ -1,5 +1,5 @@
 .student-navbar {
-  background: white;
+  background: white !important;
   padding: 15px 0;
   position: sticky;
   top: 0;
@@ -7,6 +7,8 @@
   font-family: 'Inter', sans-serif;
   border-bottom: 1px solid #eee;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  overflow: visible !important;
+  height: auto !important;
 }
 
 .student-navbar .nav-wrapper {
@@ -97,6 +99,18 @@
 }
 
 .student-navbar .user-chevron.open {
+  transform: rotate(180deg);
+}
+
+.student-navbar .nav-dropdown-wrap {
+  position: relative;
+}
+
+.student-navbar .nav-chevron {
+  transition: transform 0.2s ease;
+}
+
+.student-navbar .nav-chevron.open {
   transform: rotate(180deg);
 }
 

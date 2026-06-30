@@ -86,7 +86,13 @@ export default function StudentNavbar() {
             onMouseEnter={() => setShowTrialDropdown(true)}
             onMouseLeave={() => setShowTrialDropdown(false)}
           >
-            <span className={`nav-dropdown-trigger ${isActive("/hoc-thu-sv") || isActive("/test-thu-sv") ? "active-link" : ""}`}>
+            <span 
+              className={`nav-dropdown-trigger ${isActive("/hoc-thu-sv") || isActive("/test-thu-sv") ? "active-link" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTrialDropdown(prev => !prev);
+              }}
+            >
               Học & thi thử <FiChevronDown className={`nav-chevron ${showTrialDropdown ? "open" : ""}`} />
             </span>
             {showTrialDropdown && (
