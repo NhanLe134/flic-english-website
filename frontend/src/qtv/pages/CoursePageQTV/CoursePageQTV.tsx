@@ -1050,7 +1050,7 @@ export default function CoursePageQTV() {
     (!levelFilter || (c.level && c.level.split(',').map(s => s.trim()).includes(levelFilter)))
   )
 
-  const totalCls = courses.reduce((s, c) => s + (c.classCount || 0), 0)
+
 
 
 
@@ -1068,7 +1068,6 @@ export default function CoursePageQTV() {
             <div className={styles.statLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FiPackage style={{ color: '#000080' }} /> Kho học liệu <FiChevronRight /></div>
             <div className={styles.statValue} style={{ fontSize: '13px', fontWeight: 'normal', color: '#64748b', marginTop: '6px' }}>Quản lý bài giảng / bài tập / tài liệu</div>
           </div>
-          <div className={`${styles.statCard} ${styles.statBlue}`}><div className={styles.statLabel}>Tổng lớp học</div><div className={styles.statValue}>{totalCls}</div></div>
           <div className={`${styles.statCard} ${styles.statOrange}`} style={{ cursor:'pointer' }} onClick={() => setShowRegModal(true)}>
             <div className={styles.statLabel}>Yêu cầu ghi danh</div>
             <div className={styles.statValue}>{pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</div>
@@ -1565,19 +1564,13 @@ export default function CoursePageQTV() {
               <button className={styles.modalClose} onClick={closeDetail}>×</button>
             </div>
 
-            <div className={styles.detailStats}>
-              <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{enrolledStudents.length}</div><div className={styles.detailStatLbl}>Học viên</div></div>
-
-              <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{lessons.length}</div><div className={styles.detailStatLbl}>Buổi học</div></div>
-              <div className={styles.detailStatItem}><div className={styles.detailStatVal}>{detailClass.progress}%</div><div className={styles.detailStatLbl}>Tiến độ</div></div>
-            </div>
 
             <div className={styles.tabs}>
               <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
-                👥 Học viên ({enrolledStudents.length})
+                Học viên ({enrolledStudents.length})
               </button>
               <button className={`${styles.tab} ${detailTab === 'roadmap' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('roadmap'); sessionStorage.setItem('lastOpenTab', 'roadmap'); }}>
-                📚 Lộ trình ({lessons.length})
+                Lộ trình ({lessons.length})
               </button>
             </div>
 
@@ -1653,7 +1646,7 @@ export default function CoursePageQTV() {
                                 <div className={styles.roadmapTitle}>{l.title}</div>
                                 {l.desc && <div className={styles.roadmapDesc}>{l.desc}</div>}
                                 <div className={styles.roadmapMeta}>
-                                  {l.startDate && <span className={styles.durationText}>📅 {new Date(l.startDate).toLocaleDateString('vi-VN')}</span>}
+                                  {l.startDate && <span className={styles.durationText}>{new Date(l.startDate).toLocaleDateString('vi-VN')}</span>}
                                   {l.endDate && <span className={styles.durationText}> → {new Date(l.endDate).toLocaleDateString('vi-VN')}</span>}
                                 </div>
                               </div>
@@ -2037,32 +2030,43 @@ export default function CoursePageQTV() {
       {showDeleteModal && (
         <div
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999,
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }}
           onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
         >
           <div
             style={{
-              background: '#fff', borderRadius: 16, padding: '36px 32px',
-              minWidth: 340, textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.18)'
+              background: '#ffffff', padding: '32px 40px', borderRadius: 16,
+              width: '90%', maxWidth: 480, textAlign: 'center',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Icon ! */}
-            <div style={{
-              width: 52, height: 52, borderRadius: '50%',
-              border: '2px solid #e57373', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 16px', color: '#e57373', fontSize: 24, fontWeight: 700
-            }}>!</div>
-            <h3 style={{ marginBottom: 8, fontSize: 18, fontWeight: 700, color: '#222' }}>
-              Xác nhận Xóa
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: '0 0 16px 0' }}>
+              Xác nhận xóa
             </h3>
-            <p style={{ color: '#777', marginBottom: 24, fontSize: 14 }}>
+            <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 24px 0', lineHeight: '1.5' }}>
               {deleteMessage}
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  padding: '10px 24px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Hủy
+              </button>
               <button
                 onClick={async () => {
                   if (deleteAction) {
@@ -2072,22 +2076,18 @@ export default function CoursePageQTV() {
                   setDeleteAction(null)
                 }}
                 style={{
-                  padding: '12px', borderRadius: 8, border: 'none',
-                  background: '#ef9a9a', color: '#fff',
-                  cursor: 'pointer', fontWeight: 600, fontSize: 15
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px 24px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
                 }}
               >
                 Xác nhận
-              </button>
-              <button
-                onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
-                style={{
-                  padding: '12px', borderRadius: 8, border: 'none',
-                  background: '#f5f5f5', color: '#555',
-                  cursor: 'pointer', fontWeight: 500, fontSize: 15
-                }}
-              >
-                Không
               </button>
             </div>
           </div>

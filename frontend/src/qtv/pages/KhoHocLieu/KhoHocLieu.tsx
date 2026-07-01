@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./KhoHocLieu.module.css";
 import { FiSearch, FiEye, FiTrash2, FiAlertTriangle, FiBookOpen, FiPlayCircle, FiFolder, FiPackage, FiArrowLeft } from "react-icons/fi";
 
@@ -55,6 +55,8 @@ const mapDangBaiToVi = (type: string): string => {
 
 const KhoHocLieu = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isQTV = location.pathname.startsWith("/QTV");
   const [activeTab, setActiveTab] = useState<ActiveTab>("baigiang");
   
   // Data lists
@@ -70,6 +72,46 @@ const KhoHocLieu = () => {
   
   // Delete confirm modal
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; type: ActiveTab; title: string } | null>(null);
+
+  const handleViewDocumentDetail = (doc: any) => {
+    const fileUrl = doc.FileUrl
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://localhost:5000${doc.FileUrl}`)
+      : doc.NoiDung?.includes("File: /uploads/")
+      ? `http://localhost:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      : null;
+
+    if (fileUrl) {
+      window.open(fileUrl, "_blank");
+    } else {
+      const newWindow = window.open("", "_blank");
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>${doc.TieuDe || "Tài liệu"}</title>
+              <style>
+                body {
+                  font-family: system-ui, -apple-system, sans-serif;
+                  padding: 40px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  line-height: 1.6;
+                  color: #333;
+                }
+                h1 { color: #000080; border-bottom: 2px solid #eee; padding-bottom: 12px; }
+                p { font-size: 16px; white-space: pre-wrap; }
+              </style>
+            </head>
+            <body>
+              <h1>${doc.TieuDe || "Tài liệu"}</h1>
+              <p>${doc.NoiDung || ""}</p>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    }
+  };
 
   // Fetch all lists
   const fetchData = async () => {
@@ -262,7 +304,7 @@ const KhoHocLieu = () => {
                             <button
                               className={`${styles.actionBtn} ${styles.actionBtnView}`}
                               title="Xem chi tiết"
-                              onClick={() => navigate(`/baigiang/detail/${l.MaBaiHoc}`)}
+                              onClick={() => navigate(isQTV ? `/QTV/bai-giang/${l.MaBaiHoc}` : `/bai-giang/${l.MaBaiHoc}`)}
                             >
                               <FiEye />
                             </button>
@@ -315,7 +357,7 @@ const KhoHocLieu = () => {
                             <button
                               className={`${styles.actionBtn} ${styles.actionBtnView}`}
                               title="Xem chi tiết"
-                              onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/0`)}
+                              onClick={() => navigate(isQTV ? `/QTV/baitap-detail/${ex.MaBaiTap}/0` : `/baitap-detail/${ex.MaBaiTap}/0`)}
                             >
                               <FiEye />
                             </button>
@@ -366,7 +408,7 @@ const KhoHocLieu = () => {
                             <button
                               className={`${styles.actionBtn} ${styles.actionBtnView}`}
                               title="Xem chi tiết"
-                              onClick={() => window.open(`${import.meta.env.BASE_URL}tailieu/detail/${doc.MaTaiLieu}`, "_blank")}
+                              onClick={() => handleViewDocumentDetail(doc)}
                             >
                               <FiEye />
                             </button>

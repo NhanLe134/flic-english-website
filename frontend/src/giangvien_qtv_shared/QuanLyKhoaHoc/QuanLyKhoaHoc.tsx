@@ -1,7 +1,7 @@
 import "./QuanLyKhoaHoc.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiBookOpen, FiUsers, FiCheckSquare } from "react-icons/fi";
+
 
 interface ClassItem {
   id: number;
@@ -17,7 +17,7 @@ const QuanLyKhoaHoc = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [classes, setClasses] = useState<ClassItem[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
+
 
   /* LẤY LỚP HỌC TỪ API */
   useEffect(() => {
@@ -40,12 +40,6 @@ const QuanLyKhoaHoc = () => {
         setClasses(mappedClasses);
       })
       .catch(err => console.log(err));
-
-    // Lấy số lượng bài tập cần duyệt
-    fetch("http://localhost:5000/teacher/submissions/pending-count")
-      .then(res => res.json())
-      .then(data => setPendingCount(data.count))
-      .catch(err => console.log(err));
   }, []);
 
   /* SEARCH */
@@ -60,39 +54,7 @@ const QuanLyKhoaHoc = () => {
       <div className="qlkh-content-card">
         <h1 style={{ color: "#F95800" }}>Lớp học của tôi</h1>
 
-        {/* STATS */}
-        <div className="stats">
-          <div className="stat-box courses-stat">
-            <div className="stat-icon-wrapper">
-              <FiBookOpen size={16} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-label">Lớp học</span>
-              <h3 className="stat-value">{filteredClasses.length}</h3>
-              <span className="stat-desc">Tổng số lớp học</span>
-            </div>
-          </div>
-          <div className="stat-box students-stat">
-            <div className="stat-icon-wrapper">
-              <FiUsers size={16} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-label">Sinh viên</span>
-              <h3 className="stat-value">{filteredClasses.reduce((t, c) => t + c.students, 0)}</h3>
-              <span className="stat-desc">Học viên hoạt động</span>
-            </div>
-          </div>
-          <div className="stat-box pending-stat">
-            <div className="stat-icon-wrapper">
-              <FiCheckSquare size={16} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-label">Bài tập</span>
-              <h3 className="stat-value">{pendingCount} bài</h3>
-              <span className="stat-desc">Bài tập cần duyệt</span>
-            </div>
-          </div>
-        </div>
+
 
         {/* SEARCH CONTAINER - PREVENT SUBMIT/RELOAD */}
         <form className="search-container" onSubmit={(e) => e.preventDefault()}>

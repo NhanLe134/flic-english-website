@@ -143,9 +143,9 @@
 }
 
 .exercise-header h1 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
-  color: #9b3b2c;
+  color: #F95800;
   margin: 0;
 }
 
@@ -327,6 +327,7 @@
   color: white;
   padding: 8px 16px;
   border-radius: 8px;
+  border: none;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;

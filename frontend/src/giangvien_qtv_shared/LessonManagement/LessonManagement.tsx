@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiMessageSquare, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
 
 interface LessonManagementProps {
@@ -181,11 +181,6 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}
                         title="Xem chi tiết">
                         <FiEye size={16} />
-                      </button>
-                      <button className="action-icon-btn discuss-icon-btn"
-                        onClick={() => navigate(`/lesson-discussion/${l.MaBaiHoc}`)}
-                        title="Thảo luận">
-                        <FiMessageSquare size={16} />
                       </button>
                       <button className="action-btn minitest-btn"
                         onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}

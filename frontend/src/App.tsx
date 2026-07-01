@@ -20,7 +20,7 @@ import LessonDetail from "./giangvien_qtv_shared/LessonDetail/LessonDetail"
 import AddLesson from "./giangvien_qtv_shared/AddLesson/AddLesson"
 import DocumentManagement from "./giangvien_qtv_shared/DocumentManagement/DocumentManagement"
 import AddDocument from "./giangvien_qtv_shared/AddDocument/AddDocument"
-import DocumentDetail from "./giangvien_qtv_shared/DocumentDetail/DocumentDetail"
+
 import CreatepersonalInfo from "./giangvien_qtv_shared/CreatepersonalInfo/CreatepersonalInfo"
 import PersonalInfoView from "./giangvien_qtv_shared/PersonalInfoView/PersonalInfoView"
 import EditPersonalInfo from "./giangvien_qtv_shared/EditPersonalInfo/EditPersonalInfo"
@@ -144,7 +144,7 @@ function App() {
           <Route path="/them-bai-giang/:buoiHocId" element={<AddLesson />} />
           <Route path="/documents/:buoiHocId" element={<DocumentManagement />} />
           <Route path="/them-tai-lieu/:buoiHocId" element={<AddDocument />} />
-          <Route path="/quan-ly-tai-lieu/:id" element={<DocumentDetail />} />
+
 
           {/* PROFILE */}
           <Route path="/personal-info-view" element={<CreatepersonalInfo />} />
@@ -190,6 +190,8 @@ function App() {
           <Route path="create-exercise/:id" element={<CreateExercise />} />
           <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
+          <Route path="bai-giang/:id" element={<LessonDetail />} />
+          <Route path="baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
         </Route>
 
         {/*Sinh viên*/}

@@ -1298,6 +1298,27 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
     const { maNguoiDung } = req.params;
     const pool = await poolPromise;
 
+    // Tự động xóa các bản nháp sau 30 ngày kể từ ngày tạo
+    try {
+      await pool.request().query(`
+        DELETE FROM BAIHOCKHOAHOC
+        WHERE (TrangThai = 'draft' OR TrangThai = N'Nháp')
+          AND NgayTao < DATEADD(day, -30, GETDATE())
+      `);
+      await pool.request().query(`
+        DELETE FROM BAITAP
+        WHERE (TrangThai = 'draft' OR TrangThai = N'Nháp')
+          AND NgayTao < DATEADD(day, -30, GETDATE())
+      `);
+      await pool.request().query(`
+        DELETE FROM BAIKIEMTRA
+        WHERE (TrangThai = 'draft' OR TrangThai = N'Nháp' OR TrangThaiDuyet = N'Nháp')
+          AND NgayBatDau < DATEADD(day, -30, GETDATE())
+      `);
+    } catch (cleanErr) {
+      console.error("Lỗi khi tự động dọn dẹp bản nháp cũ:", cleanErr);
+    }
+
     // 1. Ánh xạ MaNguoiDung sang MaGiangVien
     const gvResult = await pool.request()
       .input("maNguoiDung", maNguoiDung)

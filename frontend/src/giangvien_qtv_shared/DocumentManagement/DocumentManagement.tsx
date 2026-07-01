@@ -18,6 +18,46 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
 
+  const handleViewDocumentDetail = (doc: any) => {
+    const fileUrl = doc.FileUrl
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://localhost:5000${doc.FileUrl}`)
+      : doc.NoiDung?.includes("File: /uploads/")
+      ? `http://localhost:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      : null;
+
+    if (fileUrl) {
+      window.open(fileUrl, "_blank");
+    } else {
+      const newWindow = window.open("", "_blank");
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>${doc.TieuDe || "Tài liệu"}</title>
+              <style>
+                body {
+                  font-family: system-ui, -apple-system, sans-serif;
+                  padding: 40px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  line-height: 1.6;
+                  color: #333;
+                }
+                h1 { color: #000080; border-bottom: 2px solid #eee; padding-bottom: 12px; }
+                p { font-size: 16px; white-space: pre-wrap; }
+              </style>
+            </head>
+            <body>
+              <h1>${doc.TieuDe || "Tài liệu"}</h1>
+              <p>${doc.NoiDung || ""}</p>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    }
+  };
+
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [allExistingDocs, setAllExistingDocs] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
@@ -143,7 +183,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
                 ⏱ Cập nhật: {new Date(doc.NgayCapNhat).toLocaleDateString("vi-VN")}
               </span>
               <button className="action-icon-btn detail-icon-btn" 
-                onClick={() => navigate(`/quan-ly-tai-lieu/${doc.MaTaiLieu}`)}
+                onClick={() => handleViewDocumentDetail(doc)}
                 title="Xem Chi Tiết">
                 <FiEye size={16} />
               </button>

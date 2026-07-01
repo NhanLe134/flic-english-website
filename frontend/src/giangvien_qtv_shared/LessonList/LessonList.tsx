@@ -1,7 +1,7 @@
 import "./LessonList.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FiUsers, FiTrendingUp, FiCheckSquare, FiArrowLeft, FiFileText } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiTrash2 } from "react-icons/fi";
 
 interface Lesson {
   MaBuoiHoc: number;
@@ -22,9 +22,7 @@ const LessonList = () => {
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [studentCount, setStudentCount] = useState(0);
-  const [classProgress, setClassProgress] = useState(57);
-  const [pendingCount, setPendingCount] = useState(0);
+
   const [activeBuoiHocId, setActiveBuoiHocId] = useState<number | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -35,6 +33,37 @@ const LessonList = () => {
     endDate: "",
     order: 1
   });
+
+  // Custom popup overlay state
+  const [dialog, setDialog] = useState<{
+    show: boolean;
+    type: "confirm" | "alert";
+    message: string;
+    subMessage?: string;
+    onConfirm?: () => void;
+  }>({
+    show: false,
+    type: "alert",
+    message: ""
+  });
+
+  const showAlert = (message: string) => {
+    setDialog({
+      show: true,
+      type: "alert",
+      message
+    });
+  };
+
+  const showConfirm = (message: string, subMessage: string, onConfirm: () => void) => {
+    setDialog({
+      show: true,
+      type: "confirm",
+      message,
+      subMessage,
+      onConfirm
+    });
+  };
 
   const fetchClassInfo = () => {
     fetch(`http://localhost:5000/classes/${id}/info`)
@@ -47,6 +76,28 @@ const LessonList = () => {
       .catch(err => console.log(err));
   };
 
+  const handleDeleteLesson = (lessonId: number, lessonName: string) => {
+    showConfirm(
+      `Bạn có chắc chắn muốn xóa buổi học "${lessonName}" không?`,
+      "Tất cả tài liệu, bài giảng, và bài tập liên kết với buổi này sẽ bị ảnh hưởng.",
+      async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/qtv/buoihoc/${lessonId}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            setLessons(prev => prev.filter(l => l.MaBuoiHoc !== lessonId));
+          } else {
+            showAlert("Lỗi khi xóa buổi học");
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert("Lỗi kết nối khi xóa buổi học");
+        }
+      }
+    );
+  };
+
   const handleMarkActiveLesson = async (lessonId: number) => {
     try {
       const res = await fetch(`http://localhost:5000/classes/${id}/active-buoihoc`, {
@@ -57,7 +108,7 @@ const LessonList = () => {
       if (res.ok) {
         setActiveBuoiHocId(lessonId);
       } else {
-        alert("Lỗi khi cập nhật buổi học đang học");
+        showAlert("Lỗi khi cập nhật buổi học đang học");
       }
     } catch (err) {
       console.error(err);
@@ -66,12 +117,12 @@ const LessonList = () => {
 
   const saveLesson = async () => {
     if (!lessonForm.title.trim()) {
-      alert("Vui lòng nhập tên buổi học!");
+      showAlert("Vui lòng nhập tên buổi học!");
       return;
     }
     const minOrder = Math.max(1, lessons.length);
     if (lessonForm.order < minOrder) {
-      alert(`Thứ tự buổi học không được nhỏ hơn số buổi hiện có ở lớp này (${lessons.length})!`);
+      showAlert(`Thứ tự buổi học không được nhỏ hơn số buổi hiện có ở lớp này (${lessons.length})!`);
       return;
     }
     try {
@@ -102,11 +153,11 @@ const LessonList = () => {
           .then(data => setLessons(data))
           .catch(err => console.log(err));
       } else {
-        alert("Lỗi khi thêm buổi học");
+        showAlert("Lỗi khi thêm buổi học");
       }
     } catch (err) {
       console.error(err);
-      alert("Lỗi server khi thêm buổi học");
+      showAlert("Lỗi server khi thêm buổi học");
     }
   };
 
@@ -128,31 +179,6 @@ const LessonList = () => {
       .catch(err => console.log(err));
 
     fetchClassInfo();
-
-    // Fetch số học viên của lớp
-    fetch(`http://localhost:5000/lophoc/${id}/students/count`)
-      .then(res => res.json())
-      .then(data => setStudentCount(data?.SoLuongHocVien ?? 12))
-      .catch(() => setStudentCount(12));
-
-    // Lấy tiến độ lớp học thực tế từ backend
-    fetch(`http://localhost:5000/lophoc/${id}/tiendo`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data.TienDo === 'number') {
-          setClassProgress(data.TienDo);
-        }
-      })
-      .catch(err => {
-        console.log("Error loading class progress:", err);
-        setClassProgress(57); // fallback
-      });
-
-    // Lấy số lượng bài tập cần duyệt
-    fetch("http://localhost:5000/teacher/submissions/pending-count")
-      .then(res => res.json())
-      .then(data => setPendingCount(data.count))
-      .catch(err => console.log(err));
   }, [id]);
 
   const filteredLessons = lessons.filter((lesson) =>
@@ -173,39 +199,6 @@ const LessonList = () => {
         </div>
       </div>
 
-      {/* STATS */}
-      <div className="lesson-stats">
-        <div className="lesson-stat-card students-card">
-          <div className="stat-icon-wrapper">
-            <FiUsers size={16} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Học viên</span>
-            <h3 className="stat-value">{studentCount}</h3>
-            <span className="stat-desc">Tổng số học viên</span>
-          </div>
-        </div>
-        <div className="lesson-stat-card progress-card">
-          <div className="stat-icon-wrapper">
-            <FiTrendingUp size={16} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Tiến độ</span>
-            <h3 className="stat-value">{classProgress}%</h3>
-            <span className="stat-desc">Tiến độ trung bình</span>
-          </div>
-        </div>
-        <div className="lesson-stat-card pending-card">
-          <div className="stat-icon-wrapper">
-            <FiCheckSquare size={16} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Bài tập</span>
-            <h3 className="stat-value">{pendingCount} bài</h3>
-            <span className="stat-desc">Bài tập cần duyệt</span>
-          </div>
-        </div>
-      </div>
 
       {/* SEARCH CONTAINER & DRAFTS BUTTON */}
       <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "24px" }}>
@@ -289,6 +282,17 @@ const LessonList = () => {
       <div className="lesson-grid">
         {filteredLessons.map((lesson) => (
           <div key={lesson.MaBuoiHoc} className="lesson-card">
+            <button
+              type="button"
+              className="lesson-delete-btn"
+              title="Xóa buổi học"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteLesson(lesson.MaBuoiHoc, lesson.TenBuoiHoc);
+              }}
+            >
+              <FiTrash2 />
+            </button>
             <h3>{lesson.TenBuoiHoc}</h3>
             <p className="lesson-desc">{lesson.MoTa}</p>
             <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -407,6 +411,105 @@ const LessonList = () => {
             <div className="modal-footer">
               <button className="btn-outline" onClick={() => setShowAddModal(false)}>Hủy</button>
               <button className="btn-primary" onClick={saveLesson}>Thêm buổi</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {dialog.show && (
+        <div className="modal-overlay" style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1001,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>
+          <div className="modal-container" style={{
+            background: "#ffffff",
+            padding: "32px 40px",
+            borderRadius: "16px",
+            width: "90%",
+            maxWidth: "480px",
+            textAlign: "center",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+          }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#1e293b", margin: "0 0 16px 0" }}>
+              {dialog.type === "confirm" ? "Xác nhận xóa" : "Thông báo"}
+            </h3>
+            <p style={{ fontSize: "14px", color: "#475569", margin: dialog.subMessage ? "0 0 8px 0" : "0 0 24px 0", lineHeight: "1.5" }}>
+              {dialog.message}
+            </p>
+            {dialog.subMessage && (
+              <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 24px 0", lineHeight: "1.5" }}>
+                {dialog.subMessage}
+              </p>
+            )}
+            <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
+              {dialog.type === "confirm" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDialog(p => ({ ...p, show: false }))}
+                    style={{
+                      background: "#f1f5f9",
+                      color: "#475569",
+                      border: "1px solid #cbd5e1",
+                      padding: "10px 24px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDialog(p => ({ ...p, show: false }));
+                      if (dialog.onConfirm) dialog.onConfirm();
+                    }}
+                    style={{
+                      background: "#ef4444",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "10px 24px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    Xóa
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDialog(p => ({ ...p, show: false }))}
+                  style={{
+                    background: "#F95800",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "10px 32px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  Đóng
+                </button>
+              )}
             </div>
           </div>
         </div>
