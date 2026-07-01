@@ -9,27 +9,36 @@
   padding: 0 24px;
   font-family: 'Inter', sans-serif;
   color: #1e293b;
+  position: relative;
 }
 
-/* Back button */
-.ad-back {
-  background: none;
-  border: none;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 0;
+/* Floating Back button overlay */
+.ad-back-overlay {
+  position: fixed;
+  top: 136px;
+  left: 50px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #F95800;
+  border: 1px solid #F95800;
+  box-shadow: 0 4px 14px rgba(249, 88, 0, 0.35);
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: color 0.2s ease, transform 0.2s ease;
-  margin-bottom: 24px;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
-.ad-back:hover {
+.ad-back-overlay:hover {
+  background: #ffffff;
   color: #F95800;
-  transform: translateX(-4px);
+  border-color: #F95800;
+  box-shadow: 0 4px 14px rgba(249, 88, 0, 0.2);
+  transform: scale(1.05);
 }
 
 /* Course details header card */
@@ -105,6 +114,7 @@
   background-color: #fef2f2;
   border-color: #fca5a5;
   color: #991b1b;
+  align-items: center;
 }
 
 .ad-banner-overdue h4 {
@@ -369,6 +379,49 @@
   border-color: #fecaca;
   background: #fef2f2;
   cursor: default;
+}
+
+/* Cac trang thai xem lai (Review mode) */
+/* Sinh vien chon dung -> To xanh la */
+.ad-mcq-option.review-correct-chosen {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  cursor: default;
+  font-weight: 600;
+}
+/* Sinh vien chon sai -> To do */
+.ad-mcq-option.review-wrong-chosen {
+  border-color: #ef4444;
+  background: #fef2f2;
+  cursor: default;
+  font-weight: 600;
+}
+/* Sinh vien chon sai -> To xanh la dap an dung de doi chieu */
+.ad-mcq-option.review-correct-unchosen {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  cursor: default;
+}
+/* Sinh vien khong chon -> To vang dap an dung */
+.ad-mcq-option.review-no-choice-correct {
+  border-color: #eab308;
+  background: #fefce8;
+  cursor: default;
+}
+
+/* Kieu hien thi so cau hoi dang vong tron xanh (McqQuestionCircleBadge) */
+.mcq-question-circle-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #eff6ff; /* Mau nen xanh nhat */
+  color: #000080; /* Mau chu xanh dam chu dao */
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
 /* MCQ radio input style reset */
@@ -1299,4 +1352,121 @@ audio {
   100% {
     box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
   }
+}
+
+/* Exit Confirmation Modal */
+.exit-confirm-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exit-confirm-modal-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 30px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  text-align: left;
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exit-confirm-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.exit-confirm-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.exit-confirm-modal-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0 0 24px 0;
+}
+
+.exit-confirm-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.exit-cancel-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exit-cancel-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.exit-confirm-btn {
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exit-confirm-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.exit-modal-close-x {
+  position: absolute;
+  top: 4px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 36px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.exit-modal-close-x:hover {
+  color: #475569;
 }

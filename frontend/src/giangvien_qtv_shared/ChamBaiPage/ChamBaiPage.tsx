@@ -244,7 +244,7 @@ const ChamBaiPage = () => {
 
       {/* Submission Rendering Card */}
       <div className="cb-card">
-        <h3>📝 Bài làm của học viên</h3>
+        <h3>Bài làm của học viên</h3>
 
         {/* ── CASE 1: TIMED EXAMS (SECTIONS-BASED) ── */}
         {isExam && parsedSubmission ? (
@@ -445,9 +445,9 @@ const ChamBaiPage = () => {
                                     </td>
                                     <td style={{ padding: 8, textAlign: "center" }}>
                                       {pair.isCorrect ? (
-                                        <span style={{ color: "#22c55e", fontWeight: "bold" }}>✓ Đúng</span>
+                                        <span style={{ color: "#22c55e", fontWeight: "bold" }}>Đúng</span>
                                       ) : (
-                                        <span style={{ color: "#ef4444", fontWeight: "bold" }}>✗ Sai</span>
+                                        <span style={{ color: "#ef4444", fontWeight: "bold" }}>Sai</span>
                                       )}
                                     </td>
                                   </tr>
@@ -503,7 +503,7 @@ const ChamBaiPage = () => {
                                 const isOk = stdAns.trim().toLowerCase() === cAns.trim().toLowerCase();
                                 return (
                                   <p key={blankIdx} style={{ margin: "4px 0", fontSize: 13, color: isOk ? "green" : "red" }}>
-                                    Ô trống [{blankIdx + 1}]: SV điền "{stdAns}" (Đáp án đúng: "{cAns}") {isOk ? "✓" : "✗"}
+                                    Ô trống [{blankIdx + 1}]: SV điền "{stdAns}" (Đáp án đúng: "{cAns}") {isOk ? "(Đúng)" : "(Sai)"}
                                   </p>
                                 );
                               })}
@@ -664,9 +664,9 @@ const ChamBaiPage = () => {
                               </td>
                               <td style={{ padding: 8, textAlign: "center" }}>
                                 {pair.isCorrect ? (
-                                  <span style={{ color: "#22c55e", fontWeight: "bold" }}>✓ Đúng</span>
+                                  <span style={{ color: "#22c55e", fontWeight: "bold" }}>Đúng</span>
                                 ) : (
-                                  <span style={{ color: "#ef4444", fontWeight: "bold" }}>✗ Sai</span>
+                                  <span style={{ color: "#ef4444", fontWeight: "bold" }}>Sai</span>
                                 )}
                               </td>
                             </tr>
@@ -712,7 +712,7 @@ const ChamBaiPage = () => {
                           const isOk = stdAns.trim().toLowerCase() === cAns.trim().toLowerCase();
                           return (
                             <p key={blankIdx} style={{ margin: "4px 0", fontSize: 13, color: isOk ? "green" : "red" }}>
-                              Ô trống [{blankIdx + 1}]: SV điền "{stdAns}" (Đáp án đúng: "{cAns}") {isOk ? "✓" : "✗"}
+                              Ô trống [{blankIdx + 1}]: SV điền "{stdAns}" (Đáp án đúng: "{cAns}") {isOk ? "(Đúng)" : "(Sai)"}
                             </p>
                           );
                         })}
@@ -887,11 +887,7 @@ const ChamBaiPage = () => {
 
       {/* Chấm điểm */}
       <div className="cb-card">
-        <h3>🎯 Chấm điểm</h3>
-
-        <div style={{ background: "#fff3e0", border: "1px solid #f0d8b0", borderRadius: 10, padding: "12px 16px", marginBottom: 16, fontSize: 14, color: "#92400e" }}>
-          ✏️ Chấm điểm thủ công cho học sinh (hoặc xác nhận điểm máy tự động chấm).
-        </div>
+        <h3>Chấm điểm</h3>
 
         <div className="cb-score-row">
           <div className="cb-score-input">
@@ -917,7 +913,7 @@ const ChamBaiPage = () => {
         <div className="cb-actions">
           <button className="cb-cancel-btn" onClick={() => navigate(-1)}>Hủy</button>
           <button className="cb-submit-btn" onClick={handleCham} disabled={loading}>
-            {loading ? "Đang lưu..." : "✓ Xác nhận chấm bài"}
+            {loading ? "Đang lưu..." : "Xác nhận chấm bài"}
           </button>
         </div>
       </div>

@@ -20,7 +20,7 @@ import LessonDetail from "./giangvien_qtv_shared/LessonDetail/LessonDetail"
 import AddLesson from "./giangvien_qtv_shared/AddLesson/AddLesson"
 import DocumentManagement from "./giangvien_qtv_shared/DocumentManagement/DocumentManagement"
 import AddDocument from "./giangvien_qtv_shared/AddDocument/AddDocument"
-import DocumentDetail from "./giangvien_qtv_shared/DocumentDetail/DocumentDetail"
+
 import CreatepersonalInfo from "./giangvien_qtv_shared/CreatepersonalInfo/CreatepersonalInfo"
 import PersonalInfoView from "./giangvien_qtv_shared/PersonalInfoView/PersonalInfoView"
 import EditPersonalInfo from "./giangvien_qtv_shared/EditPersonalInfo/EditPersonalInfo"
@@ -61,7 +61,7 @@ import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
 import Progress from "./sinhvien/pages/Progress/Progress"
 import Settings from "./sinhvien/pages/Settings/Settings"
-import AssignmentDetail from "./sinhvien/pages/AssignmentDetail/AssignmentDetail"
+import ChiTietBaiTap from "./sinhvien/pages/AssignmentDetail/ChiTietBaiTap"
 import AssignmentSuccess from "./sinhvien/pages/AssignmentSuccess/AssignmentSuccess"
 import QuizDetail from "./sinhvien/pages/QuizDetail/QuizDetail"
 import EssayDetail from "./sinhvien/pages/EssayDetail/EssayDetail"
@@ -144,7 +144,7 @@ function App() {
           <Route path="/them-bai-giang/:buoiHocId" element={<AddLesson />} />
           <Route path="/documents/:buoiHocId" element={<DocumentManagement />} />
           <Route path="/them-tai-lieu/:buoiHocId" element={<AddDocument />} />
-          <Route path="/quan-ly-tai-lieu/:id" element={<DocumentDetail />} />
+
 
           {/* PROFILE */}
           <Route path="/personal-info-view" element={<CreatepersonalInfo />} />
@@ -190,6 +190,8 @@ function App() {
           <Route path="create-exercise/:id" element={<CreateExercise />} />
           <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
+          <Route path="bai-giang/:id" element={<LessonDetail />} />
+          <Route path="baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
         </Route>
 
         {/*Sinh viên*/}
@@ -198,8 +200,8 @@ function App() {
           <Route path="/hoc-thu-sv" element={<HocThuSV />} />
           <Route path="/hoc-thu-sv/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailTrial />} />
           <Route path="/hoc-thu-sv/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
-          <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
-          <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<ChiTietBaiTap />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<ChiTietBaiTap />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
@@ -207,14 +209,14 @@ function App() {
           <Route path="/MyCourses" element={<MyCourses />} />
           <Route path="/MyCourses/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailSV />} />
           <Route path="/MyCourses/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
-          <Route path="/MyCourses/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
-          <Route path="/MyCourses/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
+          <Route path="/MyCourses/:classId/:lessonId/lt/:id" element={<ChiTietBaiTap />} />
+          <Route path="/MyCourses/:classId/:lessonId/bt/:id" element={<ChiTietBaiTap />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/baitap/:id" element={<AssignmentDetail />} />
+          <Route path="/baitap/:id" element={<ChiTietBaiTap />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />
           <Route path="/essay-detail" element={<EssayDetail />} />

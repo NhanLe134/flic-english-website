@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FiArrowLeft, FiFileText, FiEdit, FiTrash2 } from "react-icons/fi";
@@ -9,10 +9,22 @@ const API = "http://localhost:5000";
 
 const LessonDetail: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
+  const isQTV = location.pathname.startsWith("/QTV");
   const [lesson, setLesson] = useState<any>(null);
   const [minitest, setMinitest] = useState<any>(null);
   const [minitestQuestions, setMinitestQuestions] = useState<any[]>([]);
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    show: boolean;
+    message: string;
+    subMessage?: string;
+    onConfirm?: () => void;
+  }>({
+    show: false,
+    message: ""
+  });
 
   const unescapeMarkdown = (str: string) => {
     let s = str
@@ -78,24 +90,25 @@ const LessonDetail: React.FC = () => {
       .catch(err => console.error("Error fetching minitest:", err));
   }, [id]);
 
-  const handleDeleteMinitest = async () => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa MiniTest này không?")) return;
-    try {
-      const res = await fetch(`${API}/minitest/baigiang/${id}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        setMinitest(null);
-        setMinitestQuestions([]);
-        alert("Đã xóa MiniTest thành công");
-      } else {
-        const text = await res.text();
-        alert("Xóa thất bại: " + text);
+  const handleDeleteMinitest = () => {
+    setConfirmDialog({
+      show: true,
+      message: "Bạn có chắc chắn muốn xóa MiniTest này không?",
+      subMessage: "Hành động này sẽ xóa vĩnh viễn MiniTest liên kết với buổi học hiện tại.",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API}/minitest/baigiang/${id}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            setMinitest(null);
+            setMinitestQuestions([]);
+          }
+        } catch (e) {
+          console.error(e);
+        }
       }
-    } catch (e) {
-      console.error(e);
-      alert("Lỗi kết nối");
-    }
+    });
   };
 
   if (!lesson) return <p style={{ padding: 20 }}>Đang tải...</p>;
@@ -155,7 +168,7 @@ const LessonDetail: React.FC = () => {
   };
 
   return (
-    <div className="ld-wrapper">
+    <div className="ld-wrapper" style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
 
       <div className="back-btn" onClick={() => navigate(-1)}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
@@ -163,7 +176,7 @@ const LessonDetail: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: '8px' }}>
-        <h1 className="detail-title" style={{ margin: 0 }}>{lesson.TieuDe}</h1>
+        <h1 className="detail-title" style={{ margin: 0, color: isQTV ? "#f95800" : undefined }}>{lesson.TieuDe}</h1>
         <span style={{
           background: lesson.TrangThai === 'published' ? '#e8f5e9' : lesson.TrangThai === 'pending' ? '#fff3e0' : '#ffebee',
           color: lesson.TrangThai === 'published' ? '#2e7d32' : lesson.TrangThai === 'pending' ? '#F95800' : '#c62828',
@@ -433,6 +446,83 @@ const LessonDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {confirmDialog.show && (
+        <div className="modal-overlay" style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1001,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>
+          <div className="modal-container" style={{
+            background: "#ffffff",
+            padding: "32px 40px",
+            borderRadius: "16px",
+            width: "90%",
+            maxWidth: "480px",
+            textAlign: "center",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+          }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#1e293b", margin: "0 0 16px 0" }}>
+              Xác nhận xóa
+            </h3>
+            <p style={{ fontSize: "14px", color: "#475569", margin: confirmDialog.subMessage ? "0 0 8px 0" : "0 0 24px 0", lineHeight: "1.5" }}>
+              {confirmDialog.message}
+            </p>
+            {confirmDialog.subMessage && (
+              <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 24px 0", lineHeight: "1.5" }}>
+                {confirmDialog.subMessage}
+              </p>
+            )}
+            <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(p => ({ ...p, show: false }))}
+                style={{
+                  background: "#f1f5f9",
+                  color: "#475569",
+                  border: "1px solid #cbd5e1",
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s"
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDialog(p => ({ ...p, show: false }));
+                  if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+                }}
+                style={{
+                  background: "#ef4444",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s"
+                }}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

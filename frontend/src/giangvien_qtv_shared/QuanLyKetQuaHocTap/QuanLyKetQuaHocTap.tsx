@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./QuanLyKetQuaHocTap.css";
 
@@ -34,36 +34,13 @@ const QuanLyKetQuaHocTap = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const totalStudents = classes.reduce((t, c) => t + (c.SoLuongHocVien || 0), 0);
+
 
   return (
     <div className="qlkq-wrapper">
       <h1 className="qlkq-title">Quản lý kết quả học tập</h1>
 
-      {/* STATS */}
-      <div className="stats-container">
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">Tổng số lớp</span>
-            <h3 className="stat-value">{classes.length}</h3>
-            <span className="stat-desc">Đang hoạt động</span>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">Học sinh</span>
-            <h3 className="stat-value">{totalStudents}</h3>
-            <span className="stat-desc">Đang hoạt động</span>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-info">
-            <span className="stat-label">Điểm trung bình</span>
-            <h3 className="stat-value">8.5</h3>
-            <span className="stat-desc">+ 5% so với tuần trước</span>
-          </div>
-        </div>
-      </div>
+
 
       {/* CLASS CARDS */}
       {loading ? (

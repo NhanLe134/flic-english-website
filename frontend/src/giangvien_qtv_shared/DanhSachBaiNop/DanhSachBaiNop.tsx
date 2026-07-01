@@ -45,7 +45,6 @@ const DanhSachBaiNop = () => {
       <div className="dsbn-header">
         <div>
           <h1>{exercise?.Title || "Đang tải..."}</h1>
-          <p>Loại: {exercise?.Type} • Danh sách bài nộp của học viên</p>
         </div>
       </div>
 
