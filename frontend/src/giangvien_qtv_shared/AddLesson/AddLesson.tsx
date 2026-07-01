@@ -25,7 +25,7 @@ const AddLesson: React.FC = () => {
 
   const [name, setName] = useState("");
   const type = "Video";
-  const [duration, setDuration] = useState("");
+  const duration = "";
   const [lessonDate, setLessonDate] = useState("");
   const [moTa, setMoTa] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -171,25 +171,12 @@ const AddLesson: React.FC = () => {
             />
           </div>
 
-          <div className="row">
-            <div>
-              <label>Thời lượng (phút)</label>
-              <input
-                type="number"
-                placeholder="30"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-              />
-            </div>
-            <div>
-              <label>Mức độ</label>
-              <select value={level} onChange={(e) => setLevel(e.target.value)}>
-                <option>Beginner</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-              </select>
-            </div>
-          </div>
+          <label>Mức độ</label>
+          <select value={level} onChange={(e) => setLevel(e.target.value)}>
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
           
           <div style={{ marginTop: 16 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: '500', color: '#5a3e2b' }}>

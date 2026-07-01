@@ -215,7 +215,7 @@ export default function CoursePageQTV() {
   // Lecture Modal
   const [showAddLectureModal, setShowAddLectureModal] = useState(false)
   const [bgTab, setBgTab] = useState<'create' | 'reuse'>('create')
-  const [bgForm, setBgForm] = useState({ title: '', content: '', fileUrl: '', type: 'Video', duration: '30 phút', order: 1 })
+  const [bgForm, setBgForm] = useState({ title: '', content: '', fileUrl: '', type: 'Video', duration: '0 phút', order: 1 })
   const [allExistingBg, setAllExistingBg] = useState<any[]>([])
 
 
@@ -256,7 +256,7 @@ export default function CoursePageQTV() {
 
   const openAddLecture = (lessonId: number) => {
     setActiveLessonIdForAsset(lessonId)
-    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '30 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
+    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '0 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
     setBgTab('create')
     setShowAddLectureModal(true)
     fetch(`${API}/baigiang/list/all`)
@@ -1843,10 +1843,6 @@ export default function CoursePageQTV() {
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>
                   <input value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Thời lượng</label>
-                  <input value={bgForm.duration} onChange={e => setBgForm(p => ({...p, duration: e.target.value}))} placeholder="VD: 45 phút" />
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>
