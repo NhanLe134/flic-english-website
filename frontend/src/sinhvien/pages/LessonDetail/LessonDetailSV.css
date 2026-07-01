@@ -154,6 +154,26 @@
   transform: translateY(-1px);
 }
 
+.ld2-review-btn {
+  background-color: #ffffff;
+  color: #000080;
+  border: 1.5px solid #000080;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.ld2-review-btn:hover {
+  background-color: #F95800;
+  color: #ffffff;
+  border-color: #F95800;
+  transform: translateY(-1px);
+}
+
 /* ── Video Player & Sidebar Split ── */
 .ld2-video-wrap {
   display: grid;

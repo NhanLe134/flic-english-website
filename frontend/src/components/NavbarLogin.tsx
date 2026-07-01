@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FiBookOpen, FiEdit3 } from "react-icons/fi";
+import { FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
 import "./NavbarLogin.css";
 import "./NavbarLogin_TuongThich.css"; // Import file css tuong thich mobile/tablet
 
@@ -137,45 +137,30 @@ function NavbarLogin() {
       {/* MODAL XÁC NHẬN ĐĂNG XUẤT */}
       {showLogoutModal && (
         <div
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 9999
-          }}
+          className="logout-modal-backdrop"
           onClick={() => setShowLogoutModal(false)}
         >
           <div
-            style={{
-              background: "#fff", borderRadius: 16, padding: "36px 32px",
-              minWidth: 320, textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.15)"
-            }}
+            className="logout-modal-card"
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ fontSize: 40, marginBottom: 12 }}>👋</div>
-            <h3 style={{ marginBottom: 8, fontSize: 20, fontWeight: 700, color: "#222" }}>
-              Đăng xuất
-            </h3>
-            <p style={{ color: "#777", marginBottom: 24, fontSize: 14 }}>
+            <div className="logout-modal-icon-container">
+              <FiLogOut className="logout-modal-large-icon" size={44} color="#F95800" />
+            </div>
+            <h3 className="logout-modal-title">Đăng xuất</h3>
+            <p className="logout-modal-text">
               Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <div className="logout-modal-actions">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                style={{
-                  padding: "10px 24px", borderRadius: 8,
-                  border: "1px solid #ddd", background: "#fff",
-                  color: "#555", cursor: "pointer", fontWeight: 500
-                }}
+                className="logout-modal-cancel-btn"
               >
                 Hủy
               </button>
               <button
                 onClick={handleLogout}
-                style={{
-                  padding: "10px 24px", borderRadius: 8,
-                  border: "none", background: "#e87722",
-                  color: "#fff", cursor: "pointer", fontWeight: 600
-                }}
+                className="logout-modal-confirm-btn"
               >
                 Đăng xuất
               </button>

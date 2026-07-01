@@ -61,7 +61,7 @@ import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
 import DocDetail from "./sinhvien/pages/DocDetail/DocDetail"
 import Progress from "./sinhvien/pages/Progress/Progress"
 import Settings from "./sinhvien/pages/Settings/Settings"
-import AssignmentDetail from "./sinhvien/pages/AssignmentDetail/AssignmentDetail"
+import ChiTietBaiTap from "./sinhvien/pages/AssignmentDetail/ChiTietBaiTap"
 import AssignmentSuccess from "./sinhvien/pages/AssignmentSuccess/AssignmentSuccess"
 import QuizDetail from "./sinhvien/pages/QuizDetail/QuizDetail"
 import EssayDetail from "./sinhvien/pages/EssayDetail/EssayDetail"
@@ -198,8 +198,8 @@ function App() {
           <Route path="/hoc-thu-sv" element={<HocThuSV />} />
           <Route path="/hoc-thu-sv/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailTrial />} />
           <Route path="/hoc-thu-sv/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
-          <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
-          <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<ChiTietBaiTap />} />
+          <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<ChiTietBaiTap />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
           <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
@@ -207,14 +207,14 @@ function App() {
           <Route path="/MyCourses" element={<MyCourses />} />
           <Route path="/MyCourses/:id/:lessonId?/:tab?/:itemId?" element={<ClassDetailSV />} />
           <Route path="/MyCourses/:classId/:lessonId/bg/:id" element={<BaiGiangSV />} />
-          <Route path="/MyCourses/:classId/:lessonId/lt/:id" element={<AssignmentDetail />} />
-          <Route path="/MyCourses/:classId/:lessonId/bt/:id" element={<AssignmentDetail />} />
+          <Route path="/MyCourses/:classId/:lessonId/lt/:id" element={<ChiTietBaiTap />} />
+          <Route path="/MyCourses/:classId/:lessonId/bt/:id" element={<ChiTietBaiTap />} />
           <Route path="/doc-detail/:id" element={<DocDetail />} />
           <Route path="/bai-giangSV/:id" element={<BaiGiangSV />} />
           
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/baitap/:id" element={<AssignmentDetail />} />
+          <Route path="/baitap/:id" element={<ChiTietBaiTap />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />
           <Route path="/essay-detail" element={<EssayDetail />} />

@@ -1,11 +1,13 @@
 //quản lý toàn bộ State, giao tiếp với API, điều hướng và cấu trúc bố cục trang
 // @ts-nocheck
-import "./AssignmentDetail.css";
+import "./ChiTietBaiTap.css";
+import "./ChiTietBaiTap_TuongThich.css";
 import "./AssignmentTypes.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { FiVolume2, FiEdit3, FiBookOpen, FiFileText, FiCheckCircle, FiXCircle, FiClock, FiMic, FiAward, FiList } from "react-icons/fi";
+import { FiVolume2, FiEdit3, FiBookOpen, FiFileText, FiCheckCircle, FiXCircle, FiClock, FiMic, FiAward, FiList, FiAlertTriangle, FiChevronLeft, FiLock } from "react-icons/fi";
 import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
+import { FaReply } from "react-icons/fa";
 
 import { CauHoiTracNghiem } from "./CauHoiTracNghiem";
 import { NgheChonAnh } from "./NgheChonAnh";
@@ -86,18 +88,36 @@ const mapDangBaiToType = (db: string): string => {
   return dbClean;
 };
 
-function AssignmentDetail() {
+function ChiTietBaiTap() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id, classId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
   const maLopHoc = classId ? Number(classId) : location.state?.maLopHoc;
 
-  const handleBackNavigation = () => {
+  const isReview = new URLSearchParams(location.search).get("mode") === "review";
+  const [showBackBtn, setShowBackBtn] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientX < window.innerWidth / 2 && e.clientY < window.innerHeight / 2) {
+        setShowBackBtn(true);
+      } else {
+        setShowBackBtn(false);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
+  const executeBackNavigation = () => {
     if (location.pathname.includes('/hoc-thu-sv/')) {
       if (classId && lessonId) {
         const isExamTab = location.pathname.includes('/bt/');
         const tabKey = isExamTab ? 'bt' : 'lt';
-        navigate(`/hoc-thu-sv/${classId}/${lessonId}/${tabKey}/${id}`);
+        navigate(`/hoc-thu-sv/${classId}/${lessonId}/${tabKey}`);
       } else {
         navigate(-1);
       }
@@ -107,11 +127,19 @@ function AssignmentDetail() {
     if (classId && lessonId) {
       const isExamTab = location.pathname.includes('/bt/');
       const tabKey = isExamTab ? 'bt' : 'lt';
-      navigate(`/MyCourses/${classId}/${lessonId}/${tabKey}/${id}`);
+      navigate(`/MyCourses/${classId}/${lessonId}/${tabKey}`);
     } else if (maLopHoc) {
       navigate(`/MyCourses/${maLopHoc}`);
     } else {
       navigate("/MyCourses");
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (isReview || submitted) {
+      executeBackNavigation();
+    } else {
+      setShowExitConfirm(true);
     }
   };
 
@@ -912,39 +940,44 @@ function AssignmentDetail() {
 
   if (isLocked) {
     return (
-      <div className="ad-content" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", padding: "40px 20px" }}>
-        <button className="ad-back" onClick={() => navigate(-1)} style={{ alignSelf: "flex-start", marginBottom: 20 }}>← Back</button>
-        <div style={{
-          background: "#fff",
-          borderRadius: 16,
-          padding: "40px 30px",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-          textAlign: "center",
-          maxWidth: 500,
-          border: "1px solid #fee2e2"
-        }}>
-          <div style={{ fontSize: 64, marginBottom: 20 }}>🔒</div>
-          <h2 style={{ color: "#1e3a8a", marginBottom: 16, fontWeight: 700, fontSize: "24px" }}>Bài tập đang bị khóa</h2>
-          <p style={{ color: "#4b5563", fontSize: 16, lineHeight: 1.6, marginBottom: 24 }}>
+      <div className="exit-confirm-modal-backdrop" onClick={() => navigate(-1)}>
+        <div className="exit-confirm-modal-card" style={{ textAlign: "center", position: "relative", maxWidth: "440px", padding: "40px 30px" }} onClick={(e) => e.stopPropagation()}>
+          <button 
+            className="exit-modal-close-x" 
+            onClick={() => navigate(-1)}
+            title="Quay lại"
+          >
+            &times;
+          </button>
+          
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+            <FiLock size={56} color="#F95800" />
+          </div>
+          
+          <h2 style={{ color: "#1e3a8a", marginBottom: 16, fontWeight: 700, fontSize: "22px" }}>Bài tập đang bị khóa</h2>
+          <p style={{ color: "#4b5563", fontSize: "14.5px", lineHeight: 1.6, marginBottom: 28 }}>
             {lockMessage}
           </p>
-          <button 
-            onClick={() => navigate(-1)}
-            style={{
-              background: "linear-gradient(135deg, #f95800, #ff7e40)",
-              color: "#fff",
-              border: "none",
-              padding: "12px 28px",
-              borderRadius: 30,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: "pointer",
-              boxShadow: "0 4px 15px rgba(249, 88, 0, 0.3)",
-              transition: "all 0.2s"
-            }}
-          >
-            Quay lại bài giảng
-          </button>
+          
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button 
+              onClick={() => navigate(-1)}
+              style={{
+                background: "linear-gradient(135deg, #f95800, #ff7e40)",
+                color: "#fff",
+                border: "none",
+                padding: "12px 28px",
+                borderRadius: 30,
+                fontSize: "15px",
+                fontWeight: 600,
+                cursor: "pointer",
+                boxShadow: "0 4px 15px rgba(249, 88, 0, 0.3)",
+                transition: "all 0.2s"
+              }}
+            >
+              Quay lại bài giảng
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -963,6 +996,7 @@ function AssignmentDetail() {
         isOverdue={isOverdue}
         isExam={isExam}
         examStarted={examStarted}
+        isReview={isReview}
       />
     );
   };
@@ -1160,6 +1194,7 @@ function AssignmentDetail() {
                 isOverdue={isOverdue}
                 isExam={isExam}
                 examStarted={examStarted}
+                isReview={isReview}
               />
             ))}
           </div>
@@ -1184,7 +1219,46 @@ function AssignmentDetail() {
   try {
     return (
       <div className="ad-content">
-      <button className="ad-back" onClick={handleBackNavigation}>← Quay lại</button>
+      {showBackBtn && (
+        <button 
+          className="ad-back-overlay" 
+          onClick={handleBackNavigation}
+          title="Quay lại"
+        >
+          <FaReply size={18} style={{ marginRight: "1px" }} />
+        </button>
+      )}
+
+      {showExitConfirm && (
+        <div className="exit-confirm-modal-backdrop" onClick={() => setShowExitConfirm(false)}>
+          <div className="exit-confirm-modal-card" style={{ textAlign: "center", position: "relative", maxWidth: "320px" }} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="exit-modal-close-x" 
+              onClick={() => setShowExitConfirm(false)}
+              title="Đóng"
+            >
+              &times;
+            </button>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px", marginTop: "10px" }}>
+              <FiAlertTriangle size={48} color="#F95800" />
+            </div>
+            <p className="exit-confirm-modal-text" style={{ fontSize: "15px", fontWeight: "500", color: "#334155" }}>
+              Bạn có chắc chắn muốn rời khỏi trang này? Tất cả các câu trả lời hiện tại sẽ bị mất.
+            </p>
+            <div className="exit-confirm-modal-actions" style={{ justifyContent: "center", marginTop: "24px" }}>
+              <button 
+                className="exit-confirm-btn" 
+                onClick={() => {
+                  setShowExitConfirm(false);
+                  executeBackNavigation();
+                }}
+              >
+                Đồng ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Course Info Card */}
       {lopInfo && (
@@ -1200,7 +1274,7 @@ function AssignmentDetail() {
       {/* OVERDUE DEADLINE WARNING BANNER */}
       {isOverdue && (
         <div className="ad-banner ad-banner-overdue">
-          <span style={{ fontSize: 24 }}>⚠️</span>
+          <FiAlertTriangle size={24} style={{ flexShrink: 0 }} />
           <div>
             <h4>Assignment overdue!</h4>
             <p>
@@ -1380,7 +1454,7 @@ function AssignmentDetail() {
 
       {/* SUBMIT BUTTON FOOTER */}
       <div className="ad-footer">
-        {submitted ? (
+        {isReview ? null : submitted ? (
           <button
             className="ad-submit-btn"
             style={{ backgroundColor: "#64748b" }}
@@ -1403,7 +1477,7 @@ function AssignmentDetail() {
   } catch (err: any) {
     return (
       <div style={{ padding: 40, color: "red", background: "#fee2e2", margin: 20, borderRadius: 8, border: "1px solid #fca5a5" }}>
-        <h3 style={{ margin: "0 0 10px 0" }}>Render Error in AssignmentDetail:</h3>
+        <h3 style={{ margin: "0 0 10px 0" }}>Render Error in ChiTietBaiTap:</h3>
         <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, fontFamily: "monospace", fontSize: 13 }}>
           {err.stack || err.message || String(err)}
         </pre>
@@ -1412,5 +1486,5 @@ function AssignmentDetail() {
   }
 }
 
-export default AssignmentDetail;
+export default ChiTietBaiTap;
 
