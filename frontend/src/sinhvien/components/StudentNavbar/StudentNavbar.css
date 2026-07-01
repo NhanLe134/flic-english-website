@@ -114,7 +114,6 @@
   transform: rotate(180deg);
 }
 
-/* Dropdown học thử & thi thử chuyên nghiệp (hover bridge) */
 .student-navbar .nav-dropdown {
   position: absolute;
   top: 100%;
@@ -125,6 +124,7 @@
   z-index: 1000;
   border: none;
   box-shadow: none;
+  display: block !important;
 }
 
 .student-navbar .nav-dropdown::before {
