@@ -5,6 +5,23 @@ import "./TestExamPage.css";
 
 const BASE = import.meta.env.BASE_URL;
 
+const resolveUrl = (url: string | undefined) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  const isMockFile = url === "/coffee-shop.mp3" || url === "/job-interview.mp3" || url === "/weather-forecast.mp3" ||
+                     url === "coffee-shop.mp3" || url === "job-interview.mp3" || url === "weather-forecast.mp3";
+  if (isMockFile) {
+    const cleanBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+    const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+    return cleanBase + cleanUrl;
+  }
+
+  const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+  return `http://localhost:5000${cleanUrl}`;
+};
+
 interface CauHoi { id: number; noiDung: string; luaChon: string[]; dapAn: string; }
 interface ListeningPart { soPhan: number; tieuDe: string; huongDan: string; audioUrl: string; cauHois: CauHoi[]; }
 interface ReadingPart { soPhan: number; tieuDe: string; huongDan: string; doanVan: string; cauHois: CauHoi[]; }
@@ -105,7 +122,7 @@ function CustomAudioPlayer({ audioUrl, onEnded, isOnce = true, reviewMode = fals
 
   return (
     <div className="custom-audio-wrapper">
-      <audio ref={audioRef} src={BASE.replace(/\/$/, "") + audioUrl} preload="metadata" onEnded={onEnded} />
+      <audio ref={audioRef} src={resolveUrl(audioUrl)} preload="metadata" onEnded={onEnded} />
       <div className="audio-player-custom">
         <button
           className="audio-play-btn"
@@ -329,7 +346,7 @@ function SpeakingSection({
               <div className="speaking-q-content" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
               {part.imageUrl && (
                 <div style={{ marginTop: 12, textAlign: "center" }}>
-                  <img src={part.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+                  <img src={resolveUrl(part.imageUrl)} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
                 </div>
               )}
             </div>
@@ -383,7 +400,7 @@ function SpeakingSection({
     <div className="speaking-layout">
       <audio
         ref={audioRef}
-        src={BASE.replace(/\/$/, "") + part.audioUrl}
+        src={resolveUrl(part.audioUrl)}
         autoPlay={speakingPhase === "audio_playing"}
         onEnded={onAudioEnded}
       />
@@ -426,7 +443,7 @@ function SpeakingSection({
           <div className="speaking-q-content" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
           {part.imageUrl && (
             <div style={{ marginTop: 12, textAlign: "center" }}>
-              <img src={part.imageUrl} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
+              <img src={resolveUrl(part.imageUrl)} alt="Speaking Visual Prompt" style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain", border: "1px solid #cbd5e1" }} />
             </div>
           )}
         </div>

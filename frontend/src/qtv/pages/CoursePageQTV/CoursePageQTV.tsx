@@ -215,7 +215,7 @@ export default function CoursePageQTV() {
   // Lecture Modal
   const [showAddLectureModal, setShowAddLectureModal] = useState(false)
   const [bgTab, setBgTab] = useState<'create' | 'reuse'>('create')
-  const [bgForm, setBgForm] = useState({ title: '', content: '', fileUrl: '', type: 'Video', duration: '30 phút', order: 1 })
+  const [bgForm, setBgForm] = useState({ title: '', content: '', fileUrl: '', type: 'Video', duration: '0 phút', order: 1 })
   const [allExistingBg, setAllExistingBg] = useState<any[]>([])
 
 
@@ -256,7 +256,7 @@ export default function CoursePageQTV() {
 
   const openAddLecture = (lessonId: number) => {
     setActiveLessonIdForAsset(lessonId)
-    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '30 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
+    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '0 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
     setBgTab('create')
     setShowAddLectureModal(true)
     fetch(`${API}/baigiang/list/all`)
@@ -749,9 +749,19 @@ export default function CoursePageQTV() {
 
   const deleteCourse = (id: number) => {
     confirmAction('Bạn có chắc chắn muốn xóa khóa học này?', async () => {
-      await fetch(`${API}/qtv/khoahoc/${id}`, { method: 'DELETE' })
-      setToast('Đã xóa!')
-      loadCourses()
+      try {
+        const res = await fetch(`${API}/qtv/khoahoc/${id}`, { method: 'DELETE' })
+        if (res.ok) {
+          setToast('Đã xóa khóa học!')
+          loadCourses()
+        } else {
+          const errText = await res.text()
+          alert('Lỗi khi xóa khóa học: ' + errText)
+        }
+      } catch (err: any) {
+        console.error(err)
+        alert('Lỗi kết nối khi xóa khóa học: ' + err.message)
+      }
     })
   }
 
@@ -802,9 +812,19 @@ export default function CoursePageQTV() {
 
   const deleteClass = (courseId: number, classId: number) => {
     confirmAction('Bạn có chắc chắn muốn xóa lớp học này?', async () => {
-      await fetch(`${API}/qtv/lophoc/${classId}`, { method: 'DELETE' })
-      setClassesMap(prev => ({ ...prev, [courseId]: (prev[courseId] || []).filter(cl => cl.id !== classId) }))
-      setToast('Đã xóa lớp học!')
+      try {
+        const res = await fetch(`${API}/qtv/lophoc/${classId}`, { method: 'DELETE' })
+        if (res.ok) {
+          setClassesMap(prev => ({ ...prev, [courseId]: (prev[courseId] || []).filter(cl => cl.id !== classId) }))
+          setToast('Đã xóa lớp học!')
+        } else {
+          const errText = await res.text()
+          alert('Lỗi khi xóa lớp học: ' + errText)
+        }
+      } catch (err: any) {
+        console.error(err)
+        alert('Lỗi kết nối khi xóa lớp học: ' + err.message)
+      }
     })
   }
 
@@ -958,9 +978,19 @@ export default function CoursePageQTV() {
 
   const deleteLesson = (buoiHocId: number) => {
     confirmAction('Bạn có chắc chắn muốn xóa buổi học này?', async () => {
-      await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
-      setLessons(prev => prev.filter(l => l.id !== buoiHocId))
-      setToast('Đã xóa buổi học!')
+      try {
+        const res = await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
+        if (res.ok) {
+          setLessons(prev => prev.filter(l => l.id !== buoiHocId))
+          setToast('Đã xóa buổi học!')
+        } else {
+          const errText = await res.text()
+          alert('Lỗi khi xóa buổi học: ' + errText)
+        }
+      } catch (err: any) {
+        console.error(err)
+        alert('Lỗi kết nối khi xóa buổi học: ' + err.message)
+      }
     })
   }
 
@@ -1813,10 +1843,6 @@ export default function CoursePageQTV() {
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>
                   <input value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Thời lượng</label>
-                  <input value={bgForm.duration} onChange={e => setBgForm(p => ({...p, duration: e.target.value}))} placeholder="VD: 45 phút" />
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>

@@ -381,11 +381,14 @@ app.get("/qtv/baigiang", async (req, res) => {
     const result = await pool.request().query(`
       SELECT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.NoiDung, b.FileUrl, b.MaKhoaHoc, b.MaGiangVien, b.MaBuoiHoc,
              n.HoTen AS TenGiangVien, k.TenKhoaHoc, k.TrinhDo AS CapDo,
-             k.NgayTao AS NgayGui
+             ISNULL(b.NgayTao, k.NgayTao) AS NgayGui,
+             l.TenLop
       FROM BAIHOCKHOAHOC b
       LEFT JOIN GIANGVIEN gv ON b.MaGiangVien = gv.MaGiangVien
       LEFT JOIN NGUOIDUNG n ON gv.MaNguoiDung = n.MaNguoiDung
       LEFT JOIN KHOAHOC k ON b.MaKhoaHoc = k.MaKhoaHoc
+      LEFT JOIN BUOIHOC ls ON b.MaBuoiHoc = ls.MaBuoiHoc
+      LEFT JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
       ORDER BY b.MaBaiHoc DESC
     `);
     res.json(result.recordset);
@@ -595,7 +598,7 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
         -- 2. Xóa ghi danh học viên lớp học
         DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc = @id;
 
-        -- 3. Xóa bài nộp của học viên trong lớp
+        -- 3. Xóa bài nộp của học viên trong lớp (bài tập chính)
         DELETE FROM BAINOP 
         WHERE MaBaiTap IN (
           SELECT MaBaiTap FROM BAITAP 
@@ -606,7 +609,7 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
           )
         );
 
-        -- 4. Xóa bài tập
+        -- 4. Xóa bài tập chính
         DELETE FROM BAITAP 
         WHERE MaBaiHoc IN (
           SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
@@ -614,7 +617,28 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
           )
         );
 
-        -- 5. Xóa đáp án bài kiểm tra thuộc buổi học trong lớp
+        -- 5. Xóa bài nộp luyện tập thêm (bài tập phụ)
+        DELETE FROM BAINOPTHEM
+        WHERE MaLuyenTapThem IN (
+          SELECT MaLuyenTapThem FROM LUYENTAPTHEM
+          WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 6. Xóa các bài luyện tập thêm
+        DELETE FROM LUYENTAPTHEM
+        WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+        );
+
+        -- 7. Xóa tài liệu bài học đính kèm
+        DELETE FROM TAILIEU
+        WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+        );
+
+        -- 8. Xóa đáp án bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM DAPAN WHERE MaCauHoi IN (
           SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
             SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
@@ -623,38 +647,38 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
           )
         );
 
-        -- 6. Xóa câu hỏi bài kiểm tra thuộc buổi học trong lớp
+        -- 9. Xóa câu hỏi bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
           SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
             SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
           )
         );
 
-        -- 7. Xóa kết quả bài kiểm tra thuộc buổi học trong lớp
+        -- 10. Xóa kết quả bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
           SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
             SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
           )
         );
 
-        -- 8. Xóa bài kiểm tra thuộc buổi học trong lớp
+        -- 11. Xóa bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 9. Nullify ActiveBuoiHocId in LOPHOC
+        -- 12. Nullify ActiveBuoiHocId in LOPHOC
         UPDATE LOPHOC SET ActiveBuoiHocId = NULL WHERE MaLopHoc = @id;
 
-        -- 10. Nullify MaBuoiHoc in BAIHOCKHOAHOC
+        -- 13. Nullify MaBuoiHoc in BAIHOCKHOAHOC
         UPDATE BAIHOCKHOAHOC SET MaBuoiHoc = NULL 
         WHERE MaBuoiHoc IN (
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 11. Xóa các buổi học (BUOIHOC)
+        -- 14. Xóa các buổi học (BUOIHOC)
         DELETE FROM BUOIHOC WHERE MaLopHoc = @id;
 
-        -- 12. Xóa chính lớp học (LOPHOC)
+        -- 15. Xóa chính lớp học (LOPHOC)
         DELETE FROM LOPHOC WHERE MaLopHoc = @id;
       `)
     res.json({ message: "Đã xóa lớp học" })
@@ -3067,7 +3091,7 @@ app.get("/qtv/baitap", async (req, res) => {
       SELECT DISTINCT 'exam-' + CAST(e.MaBaiKiemTra AS VARCHAR) AS MaBaiTap, 
              e.TenBai AS Title, 
              N'Bài kiểm tra' AS Type, 
-             NULL AS CreatedDate,
+             ISNULL(e.NgayTao, k.NgayTao) AS CreatedDate,
              N'Thời gian làm bài: ' + CAST(e.ThoiGian AS VARCHAR) + N' phút. Tổng điểm: ' + CAST(e.TongDiem AS VARCHAR) AS Content,
              NULL AS Questions, 
              NULL AS Vocabulary, 
