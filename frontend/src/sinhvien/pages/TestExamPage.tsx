@@ -4,6 +4,7 @@ import { FiPlay } from "react-icons/fi";
 import "./TestExamPage.css";
 
 const BASE = import.meta.env.BASE_URL;
+const API = "http://localhost:5000";
 
 const resolveUrl = (url: string | undefined) => {
   if (!url) return "";
@@ -19,7 +20,7 @@ const resolveUrl = (url: string | undefined) => {
   }
 
   const cleanUrl = url.startsWith("/") ? url : `/${url}`;
-  return `http://localhost:5000${cleanUrl}`;
+  return `${API}${cleanUrl}`;
 };
 
 interface CauHoi { id: number; noiDung: string; luaChon: string[]; dapAn: string; }
@@ -50,6 +51,34 @@ const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[parts.length - 2].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
+const reindexQuestions = (kyNangData: any) => {
+  const cloned = JSON.parse(JSON.stringify(kyNangData));
+  
+  if (cloned.listening && cloned.listening.parts) {
+    let currentId = 1;
+    cloned.listening.parts.forEach((part: any) => {
+      if (part.cauHois) {
+        part.cauHois.forEach((q: any) => {
+          q.id = currentId++;
+        });
+      }
+    });
+  }
+  
+  if (cloned.reading && cloned.reading.parts) {
+    let currentId = 1;
+    cloned.reading.parts.forEach((part: any) => {
+      if (part.cauHois) {
+        part.cauHois.forEach((q: any) => {
+          q.id = currentId++;
+        });
+      }
+    });
+  }
+  
+  return cloned;
 };
 
 // ---- CUSTOM MODAL ----
@@ -261,13 +290,13 @@ function WritingSection({ part, value, onChange, reviewMode }: {
     <div className="writing-section">
       <div className="writing-prompt-box">
         <div className="writing-prompt-header" dangerouslySetInnerHTML={{ __html: part.huongDan || "" }} />
+        <div className="writing-letter-quote" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
         {part.goiY && (
-          <div className="writing-suggested-hints" style={{ marginTop: 12, marginBottom: 12, padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px" }}>
+          <div className="writing-suggested-hints" style={{ marginTop: 12, marginBottom: 12, padding: "16px 20px", background: "#FFF2EB", borderLeft: "4px solid #F95800", borderRadius: "0 8px 8px 0", fontSize: "13.5px", boxSizing: "border-box" }}>
             <strong style={{ color: "#F95800" }}>Gợi ý làm bài:</strong>
-            <div style={{ marginTop: 6, lineHeight: "1.5" }} dangerouslySetInnerHTML={{ __html: part.goiY }} />
+            <div style={{ marginTop: 6, lineHeight: "1.6", color: "#475569" }} dangerouslySetInnerHTML={{ __html: part.goiY }} />
           </div>
         )}
-        <div className="writing-letter-quote" dangerouslySetInnerHTML={{ __html: part.noiDung || "" }} />
         <div className="writing-instruction">{part.yeuCau}</div>
       </div>
       <div className="writing-answer-box">
@@ -295,7 +324,9 @@ function SpeakingSection({
   speakingPartIdx,
   speakingPhase,
   speakingCountdown,
-  onAudioEnded
+  onAudioEnded,
+  speakingUrls = {},
+  speakingBlobs = {}
 }: {
   parts: SpeakingPart[];
   reviewMode: boolean;
@@ -303,6 +334,8 @@ function SpeakingSection({
   speakingPhase: SpeakPhase;
   speakingCountdown: number;
   onAudioEnded: () => void;
+  speakingUrls?: Record<number, string>;
+  speakingBlobs?: Record<number, Blob>;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [reviewPartIdx, setReviewPartIdx] = useState(0);
@@ -353,12 +386,28 @@ function SpeakingSection({
           </div>
           <div className="speaking-right-pane">
             <div className="speaking-status-box">
-              <div className="speaking-status-inner">
-                <div className="speaking-status-label green-text">BÀI NÓI ĐÃ ĐƯỢC GHI NHẬN</div>
-                <p className="speaking-saved-sub" style={{ marginTop: 12 }}>
-                  Bài nói của phần này đã được lưu lại để gửi giảng viên chấm điểm.
-                </p>
-              </div>
+              {(() => {
+                const audioSrc = speakingUrls[activeIdx]
+                  ? resolveUrl(speakingUrls[activeIdx])
+                  : (speakingBlobs[activeIdx] ? URL.createObjectURL(speakingBlobs[activeIdx]) : "");
+                
+                return audioSrc ? (
+                  <div className="speaking-status-inner">
+                    <div className="speaking-status-label green-text" style={{ marginBottom: 16 }}>BÀI NÓI ĐÃ ĐƯỢC GHI NHẬN</div>
+                    <audio src={audioSrc} controls style={{ width: "100%", marginTop: 8 }} />
+                    <p className="speaking-saved-sub" style={{ marginTop: 12 }}>
+                      Nhấp nút Play để nghe lại bài nói của bạn.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="speaking-status-inner">
+                    <div className="speaking-status-label red-text">KHÔNG CÓ BÀI THU ÂM</div>
+                    <p className="speaking-saved-sub" style={{ marginTop: 12 }}>
+                      Không tìm thấy file ghi âm cho phần này.
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -473,7 +522,6 @@ function SpeakingSection({
                   <div key={i} className="wave-bar" />
                 ))}
               </div>
-              <div className="speaking-countdown-big">{fmt(speakingCountdown)}</div>
             </div>
           )}
           {speakingPhase === "saved" && (
@@ -694,7 +742,23 @@ export default function TestExamPage() {
   // Speaking States
   const [speakingPartIdx, setSpeakingPartIdx] = useState(0);
   const [speakingPhase, setSpeakingPhase] = useState<SpeakPhase>("initial_prep");
-  const [speakingCountdown, setSpeakingCountdown] = useState(60);
+  const [speakingCountdown, setSpeakingCountdown] = useState(3);
+  const [partRecordingTimeLeft, setPartRecordingTimeLeft] = useState(0);
+  const [speakingBlobs, setSpeakingBlobs] = useState<Record<number, Blob>>({});
+  const [speakingUrls, setSpeakingUrls] = useState<Record<number, string>>({});
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Cleanup MediaRecorder on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   // Generate persistent mock "Mã lượt thi"
   const luotThiCodeRef = useRef(Math.floor(100000 + Math.random() * 900000));
@@ -714,54 +778,94 @@ export default function TestExamPage() {
     } catch { /* empty */ }
 
     const testIdNum = parseInt(testId || "1");
-    let testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
-    let testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
-    let customQuestions = STATIC_QUESTIONS;
 
-    const localTestsStr = localStorage.getItem("flic_student_practice_tests");
-    if (localTestsStr) {
-      try {
-        const localTests = JSON.parse(localTestsStr);
-        const currentTest = localTests.find((t: any) => t.MaBaiTest === testIdNum);
-        if (currentTest) {
-          testTitle = currentTest.TieuDe;
-          testLevel = currentTest.CapDo;
-          if (currentTest.kyNang) {
-            customQuestions = currentTest.kyNang;
-          } else if (currentTest.questions && currentTest.questions.length > 0) {
-            const cloned = JSON.parse(JSON.stringify(STATIC_QUESTIONS));
-            cloned.reading.parts = [
-              {
-                soPhan: 1,
-                tieuDe: "Phần 1: Câu hỏi do Giảng viên tạo",
-                huongDan: "Đọc kỹ câu hỏi và chọn đáp án chính xác.",
-                doanVan: currentTest.MoTa || "Vui lòng chọn đáp án đúng cho từng câu hỏi bên dưới.",
-                cauHois: currentTest.questions.map((q: any, index: number) => ({
-                  id: q.id || index + 1,
-                  noiDung: q.noiDung,
-                  luaChon: q.luaChon || [],
-                  dapAn: q.dapAn
-                }))
-              }
-            ];
-            cloned.reading.parts = [cloned.reading.parts[0]];
-            cloned.reading.thoiGian = (currentTest.TongThoiGian || 120) * 60;
-            customQuestions = cloned;
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    // Nếu là đề thi tĩnh (1, 2, 3) dùng trực tiếp STATIC_QUESTIONS
+    if (testIdNum === 1 || testIdNum === 2 || testIdNum === 3) {
+      const testTitle = testIdNum === 1 ? "VSTEP B1 - Đề thi mẫu số 1" : testIdNum === 2 ? "VSTEP B2 - Đề thi mẫu số 2" : "TOEIC Practice Test - Full Exam";
+      const testLevel = testIdNum === 3 ? "Intermediate" : testIdNum === 1 ? "B1" : "B2";
+      const reindexedQuestions = reindexQuestions(STATIC_QUESTIONS);
+      setTestData({
+        MaBaiTest: testIdNum,
+        TieuDe: testTitle,
+        CapDo: testLevel,
+        kyNang: reindexedQuestions
+      });
+      setTimeLeft(reindexedQuestions.listening.thoiGian);
+      setLoading(false);
+      return;
     }
 
-    setTestData({
-      MaBaiTest: testIdNum,
-      TieuDe: testTitle,
-      CapDo: testLevel,
-      kyNang: customQuestions
-    });
-    setTimeLeft(customQuestions.listening.thoiGian);
-    setLoading(false);
+    // Với đề thi tùy chỉnh, tải dữ liệu đề thi thực tế từ API
+    setLoading(true);
+    fetch(`${API}/dethi/${testIdNum}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Không thể tải đề thi từ máy chủ");
+        return res.json();
+      })
+      .then((data) => {
+        let parsedKyNang = {};
+        try {
+          parsedKyNang = typeof data.NoiDungDeThi === "string"
+            ? JSON.parse(data.NoiDungDeThi)
+            : data.NoiDungDeThi;
+        } catch (e) {
+          console.error("Lỗi parse cấu trúc kỹ năng:", e);
+        }
+
+        // Đảm bảo cấu hình thời gian
+        const kyNang = parsedKyNang as any;
+        if (kyNang) {
+          if (kyNang.listening && !kyNang.listening.thoiGian) kyNang.listening.thoiGian = 45 * 60;
+          if (kyNang.reading && !kyNang.reading.thoiGian) kyNang.reading.thoiGian = 60 * 60;
+          if (kyNang.writing && !kyNang.writing.thoiGian) kyNang.writing.thoiGian = 60 * 60;
+          if (kyNang.speaking && !kyNang.speaking.thoiGian) kyNang.speaking.thoiGian = 12 * 60;
+        }
+
+        const reindexedQuestions = reindexQuestions(kyNang || STATIC_QUESTIONS);
+        setTestData({
+          MaBaiTest: data.MaDeThi,
+          TieuDe: data.TieuDe,
+          CapDo: data.CapDo || "B1",
+          kyNang: reindexedQuestions
+        });
+        setTimeLeft(reindexedQuestions.listening.thoiGian);
+      })
+      .catch((err) => {
+        console.error("Lỗi khi tải đề thi từ API:", err);
+        // Fallback to localStorage
+        const localTestsStr = localStorage.getItem("flic_student_practice_tests");
+        if (localTestsStr) {
+          try {
+            const localTests = JSON.parse(localTestsStr);
+            const currentTest = localTests.find((t: any) => t.MaBaiTest === testIdNum);
+            if (currentTest) {
+              const reindexedQuestions = reindexQuestions(currentTest.kyNang || STATIC_QUESTIONS);
+              setTestData({
+                MaBaiTest: testIdNum,
+                TieuDe: currentTest.TieuDe,
+                CapDo: currentTest.CapDo || "B1",
+                kyNang: reindexedQuestions
+              });
+              setTimeLeft(reindexedQuestions.listening.thoiGian);
+              return;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        // Fallback to static questions
+        const reindexedQuestions = reindexQuestions(STATIC_QUESTIONS);
+        setTestData({
+          MaBaiTest: testIdNum,
+          TieuDe: "VSTEP Practice Test",
+          CapDo: "B1",
+          kyNang: reindexedQuestions
+        });
+        setTimeLeft(reindexedQuestions.listening.thoiGian);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [testId]);
 
   const showToast = useCallback((msg: string) => {
@@ -781,17 +885,154 @@ export default function TestExamPage() {
   }, []);
 
   // Timer Effect supporting refined Speaking logic
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      let options = {};
+      if (MediaRecorder.isTypeSupported("audio/webm")) {
+        options = { mimeType: "audio/webm" };
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        options = { mimeType: "audio/mp4" };
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.start();
+    } catch (err) {
+      console.error("Lỗi khi truy cập micro:", err);
+      showToast("Không thể kết nối micro để thu âm!");
+    }
+  };
+
+  const stopRecordingAndUpload = (partIndex: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const recorder = mediaRecorderRef.current;
+      if (!recorder || recorder.state === "inactive") {
+        resolve("");
+        return;
+      }
+      
+      recorder.onstop = async () => {
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+          setSpeakingBlobs(prev => ({ ...prev, [partIndex]: audioBlob }));
+          
+          const formData = new FormData();
+          const ext = recorder.mimeType.includes("mp4") ? "mp4" : "webm";
+          formData.append("file", audioBlob, `speaking-part-${partIndex + 1}-${Date.now()}.${ext}`);
+          
+          const API = "http://localhost:5000";
+          const response = await fetch(`${API}/upload`, {
+            method: "POST",
+            body: formData
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const uploadedUrl = data.url;
+            setSpeakingUrls(prev => ({ ...prev, [partIndex]: uploadedUrl }));
+            resolve(uploadedUrl);
+          } else {
+            console.error("Lỗi upload file ghi âm");
+            resolve("");
+          }
+        } catch (error) {
+          console.error("Lỗi xử lý file ghi âm:", error);
+          resolve("");
+        } finally {
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+          mediaRecorderRef.current = null;
+        }
+      };
+      
+      recorder.stop();
+    });
+  };
+
+  const pruneUnsavedAnswers = () => {
+    const cleanListening: Record<number, string> = {};
+    if (testData?.kyNang.listening.parts) {
+      testData.kyNang.listening.parts.forEach((part, pIdx) => {
+        if (doneParts[`listening_${pIdx}`]) {
+          part.cauHois.forEach(q => {
+            if (answers.listening?.[q.id]) {
+              cleanListening[q.id] = answers.listening[q.id];
+            }
+          });
+        }
+      });
+    }
+
+    const cleanReading: Record<number, string> = {};
+    if (testData?.kyNang.reading.parts) {
+      testData.kyNang.reading.parts.forEach((part, pIdx) => {
+        if (doneParts[`reading_${pIdx}`]) {
+          part.cauHois.forEach(q => {
+            if (answers.reading?.[q.id]) {
+              cleanReading[q.id] = answers.reading[q.id];
+            }
+          });
+        }
+      });
+    }
+
+    const cleanWriting: Record<number, string> = {};
+    if (testData?.kyNang.writing.parts) {
+      testData.kyNang.writing.parts.forEach((part, pIdx) => {
+        if (doneParts[`writing_${pIdx}`]) {
+          if (writingAnswers[part.soPhan]) {
+            cleanWriting[part.soPhan] = writingAnswers[part.soPhan];
+          }
+        }
+      });
+    }
+
+    setAnswers({
+      listening: cleanListening,
+      reading: cleanReading
+    });
+    setWritingAnswers(cleanWriting);
+
+    return {
+      listening: cleanListening,
+      reading: cleanReading,
+      writing: cleanWriting
+    };
+  };
+
   useEffect(() => {
     if (!testData || loading || isSubmitted || reviewMode) return;
 
     if (timeLeft <= 0) {
       if (skill === "speaking") {
-        if (speakingPhase !== "saved") {
-          calculateScores();
-          setIsSubmitted(true);
-          setModal(null);
-          return;
+        if (speakingPhase === "recording") {
+          setSpeakingPhase("saved");
+          stopRecordingAndUpload(speakingPartIdx).then((uploadedUrl) => {
+            const latestSpeakingUrls = {
+              ...speakingUrls,
+              [speakingPartIdx]: uploadedUrl
+            };
+            const pruned = pruneUnsavedAnswers();
+            submitTestToBackend(pruned, latestSpeakingUrls);
+          });
+        } else if (speakingPhase !== "saved") {
+          const pruned = pruneUnsavedAnswers();
+          submitTestToBackend(pruned);
         }
+        return;
       } else {
         doSave();
         const idx = skillList.indexOf(skill);
@@ -804,7 +1045,7 @@ export default function TestExamPage() {
           
           if (next === "speaking") {
             setSpeakingPhase("initial_prep");
-            setSpeakingCountdown(60);
+            setSpeakingCountdown(3);
             setSpeakingPartIdx(0);
           }
         }
@@ -818,45 +1059,51 @@ export default function TestExamPage() {
     } else {
       const t = setInterval(() => {
         if (speakingPhase === "recording") {
-          setTimeLeft(p => p - 1);
-        }
-
-        if (speakingPhase === "initial_prep" || speakingPhase === "pre_record" || speakingPhase === "audio_playing" || speakingPhase === "saved") {
+          setTimeLeft(p => {
+            const nextTimeLeft = p - 1;
+            setSpeakingCountdown(nextTimeLeft);
+            
+            setPartRecordingTimeLeft(pr => {
+              if (pr <= 1 || nextTimeLeft <= 0) {
+                setSpeakingPhase("saved");
+                stopRecordingAndUpload(speakingPartIdx);
+                setSpeakingCountdown(3);
+                return 0;
+              }
+              return pr - 1;
+            });
+            
+            return nextTimeLeft;
+          });
+        } else {
           setSpeakingCountdown(c => {
             if (c <= 1) {
               if (speakingPhase === "initial_prep") {
                 setSpeakingPhase("audio_playing");
-                return 30; // 30s audio playing countdown
+                return 30;
               } else if (speakingPhase === "audio_playing") {
                 setSpeakingPhase("pre_record");
-                return 60; // 60s prep countdown
+                return 60;
               } else if (speakingPhase === "pre_record") {
                 setSpeakingPhase("recording");
-                // Q1: 3 min (180s), Q2: 4 min (240s), Q3: 5 min (300s)
-                const recordTimes = [180, 240, 300];
-                return recordTimes[speakingPartIdx] || 180;
+                startRecording();
+                const partDuration = testData.kyNang.speaking.parts[speakingPartIdx]?.thoiGianNoi || 180;
+                setPartRecordingTimeLeft(partDuration);
+                return timeLeft;
               } else if (speakingPhase === "saved") {
                 const nextIdx = speakingPartIdx + 1;
                 if (nextIdx < testData.kyNang.speaking.parts.length) {
                   setSpeakingPartIdx(nextIdx);
                   setSpeakingPhase("audio_playing");
-                  return 30; // 30s audio playing for next part
+                  return 30;
                 } else {
-                  calculateScores();
-                  setIsSubmitted(true);
-                  setModal(null);
+                  const pruned = pruneUnsavedAnswers();
+                  calculateScores(pruned);
+                  submitTestToBackend(pruned, speakingUrls);
                   return 0;
                 }
               }
               return 0;
-            }
-            return c - 1;
-          });
-        } else if (speakingPhase === "recording") {
-          setSpeakingCountdown(c => {
-            if (c <= 1) {
-              setSpeakingPhase("saved");
-              return 3; // 3 seconds display of saved status
             }
             return c - 1;
           });
@@ -925,7 +1172,7 @@ export default function TestExamPage() {
       setTimeLeft(testData!.kyNang[next].thoiGian);
       if (next === "speaking") {
         setSpeakingPhase("initial_prep");
-        setSpeakingCountdown(60);
+        setSpeakingCountdown(3);
         setSpeakingPartIdx(0);
       }
     }
@@ -971,8 +1218,16 @@ export default function TestExamPage() {
   };
 
   // Auto-grading of Listening & Reading
-  const calculateScores = () => {
+  const calculateScores = (prunedAnswers?: {
+    listening: Record<number, string>;
+    reading: Record<number, string>;
+  }) => {
     if (!testData) return;
+
+    const activeAnswers = prunedAnswers || {
+      listening: answers.listening || {},
+      reading: answers.reading || {}
+    };
 
     // Listening
     let correctListening = 0;
@@ -980,7 +1235,7 @@ export default function TestExamPage() {
     testData.kyNang.listening.parts.forEach(part => {
       part.cauHois.forEach(q => {
         totalListening++;
-        const userAns = answers.listening?.[q.id];
+        const userAns = activeAnswers.listening[q.id];
         if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
           correctListening++;
         }
@@ -994,7 +1249,7 @@ export default function TestExamPage() {
     testData.kyNang.reading.parts.forEach(part => {
       part.cauHois.forEach(q => {
         totalReading++;
-        const userAns = answers.reading?.[q.id];
+        const userAns = activeAnswers.reading[q.id];
         if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
           correctReading++;
         }
@@ -1019,17 +1274,31 @@ export default function TestExamPage() {
     });
   };
 
-  const submitTestToBackend = async () => {
+  const submitTestToBackend = async (
+    pruned?: {
+      listening: Record<number, string>;
+      reading: Record<number, string>;
+      writing: Record<number, string>;
+    },
+    latestSpeakingUrls?: Record<number, string>
+  ) => {
     if (!testData) return;
 
     try {
+      const activeAnswers = pruned || {
+        listening: answers.listening || {},
+        reading: answers.reading || {}
+      };
+      const activeWriting = pruned?.writing || writingAnswers;
+      const activeSpeakingUrls = latestSpeakingUrls || speakingUrls;
+
       // 1. Tính điểm Listening
       let correctListening = 0;
       let totalListening = 0;
       testData.kyNang.listening.parts.forEach(part => {
         part.cauHois.forEach(q => {
           totalListening++;
-          const userAns = answers.listening?.[q.id];
+          const userAns = activeAnswers.listening[q.id];
           if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
             correctListening++;
           }
@@ -1043,7 +1312,7 @@ export default function TestExamPage() {
       testData.kyNang.reading.parts.forEach(part => {
         part.cauHois.forEach(q => {
           totalReading++;
-          const userAns = answers.reading?.[q.id];
+          const userAns = activeAnswers.reading[q.id];
           if (userAns && userAns.toUpperCase() === q.dapAn.toUpperCase()) {
             correctReading++;
           }
@@ -1052,10 +1321,12 @@ export default function TestExamPage() {
       const readingScore = totalReading > 0 ? parseFloat(((correctReading / totalReading) * 10).toFixed(2)) : 0;
 
       // 3. Chuẩn bị câu trả lời Viết (dạng mảng các câu văn học viên đã nhập)
-      const writingArray = testData.kyNang.writing.parts.map((_, idx) => writingAnswers[idx] || "");
+      const writingArray = testData.kyNang.writing.parts.map((part) => activeWriting[part.soPhan] || "");
 
-      // 4. Chuẩn bị câu trả lời Nói (ghi nhận dummy text do là giao diện simulation)
-      const speakingArray = testData.kyNang.speaking.parts.map(() => "Bài nói của học viên đã được hệ thống ghi nhận thành công.");
+      // 4. Chuẩn bị câu trả lời Nói (ghi nhận file ghi âm URL)
+      const speakingArray = testData.kyNang.speaking.parts.map((_, idx) => {
+        return activeSpeakingUrls[idx] || "Bài nói của học viên đã được hệ thống ghi nhận thành công.";
+      });
 
       const u = JSON.parse(sessionStorage.getItem("user") || "{}");
       const maNguoiDung = u.MaNguoiDung;
@@ -1084,12 +1355,16 @@ export default function TestExamPage() {
       }
 
       // 6. Tính điểm hiển thị kết quả local
-      calculateScores();
+      calculateScores(activeAnswers);
       setIsSubmitted(true);
     } catch (err: any) {
       console.error("Lỗi khi nộp bài:", err);
       alert("Hệ thống ghi nhận kết quả bài thi ngoại tuyến: " + err.message);
-      calculateScores();
+      const activeAnswers = pruned || {
+        listening: answers.listening || {},
+        reading: answers.reading || {}
+      };
+      calculateScores(activeAnswers);
       setIsSubmitted(true);
     }
   };
@@ -1099,7 +1374,20 @@ export default function TestExamPage() {
       type: "submit",
       onConfirm: async () => {
         setModal(null);
-        await submitTestToBackend();
+        const pruned = pruneUnsavedAnswers();
+        
+        if (skill === "speaking" && speakingPhase === "recording") {
+          setSpeakingPhase("saved");
+          showToast("Đang dừng ghi âm và tải file lên máy chủ...");
+          const uploadedUrl = await stopRecordingAndUpload(speakingPartIdx);
+          const latestSpeakingUrls = {
+            ...speakingUrls,
+            [speakingPartIdx]: uploadedUrl
+          };
+          await submitTestToBackend(pruned, latestSpeakingUrls);
+        } else {
+          await submitTestToBackend(pruned);
+        }
       }
     });
   };
@@ -1319,6 +1607,8 @@ export default function TestExamPage() {
             speakingPhase={speakingPhase}
             speakingCountdown={speakingCountdown}
             onAudioEnded={handleSpeakingAudioEnded}
+            speakingUrls={speakingUrls}
+            speakingBlobs={speakingBlobs}
           />
         )}
       </main>
