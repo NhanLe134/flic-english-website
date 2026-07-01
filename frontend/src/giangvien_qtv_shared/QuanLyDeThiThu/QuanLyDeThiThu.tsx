@@ -75,12 +75,63 @@ interface BaiTest {
   NgayTao: string;
   TrangThai: string; // "published" | "draft"
   kyNang: {
-    listening: { parts: ListeningPart[] };
-    reading: { parts: ReadingPart[] };
-    writing: { parts: WritingPart[] };
-    speaking: { parts: SpeakingPart[] };
+    listening: { thoiGian?: number; parts: ListeningPart[] };
+    reading: { thoiGian?: number; parts: ReadingPart[] };
+    writing: { thoiGian?: number; parts: WritingPart[] };
+    speaking: { thoiGian?: number; parts: SpeakingPart[] };
   };
 }
+
+const ensureSkillTimes = (test: BaiTest): BaiTest => {
+  const updated = { ...test };
+  if (!updated.kyNang.listening) {
+    updated.kyNang.listening = { parts: [] };
+  }
+  if (!updated.kyNang.listening.thoiGian) {
+    updated.kyNang.listening.thoiGian = 45 * 60;
+  }
+  
+  if (!updated.kyNang.reading) {
+    updated.kyNang.reading = { parts: [] };
+  }
+  if (!updated.kyNang.reading.thoiGian) {
+    updated.kyNang.reading.thoiGian = 60 * 60;
+  }
+  
+  if (!updated.kyNang.writing) {
+    updated.kyNang.writing = { parts: [] };
+  }
+  if (!updated.kyNang.writing.thoiGian) {
+    updated.kyNang.writing.thoiGian = 60 * 60;
+  }
+  
+  if (!updated.kyNang.speaking) {
+    updated.kyNang.speaking = { parts: [] };
+  }
+  if (!updated.kyNang.speaking.thoiGian) {
+    if (updated.kyNang.speaking.parts?.[0]?.thoiGianNoi) {
+      updated.kyNang.speaking.thoiGian = updated.kyNang.speaking.parts[0].thoiGianNoi;
+    } else {
+      updated.kyNang.speaking.thoiGian = 12 * 60;
+    }
+  }
+  
+  if (!updated.kyNang.speaking.parts?.[0]) {
+    updated.kyNang.speaking.parts[0] = {
+      soPhan: 1,
+      tieuDe: "Speaking Part 1",
+      moTa: "Speaking Practice",
+      audioUrl: "",
+      noiDung: "",
+      thoiGianChuanBi: 60,
+      thoiGianNoi: updated.kyNang.speaking.thoiGian
+    };
+  } else {
+    updated.kyNang.speaking.parts[0].thoiGianNoi = updated.kyNang.speaking.thoiGian;
+  }
+  
+  return updated;
+};
 
 const DEFAULT_TESTS: BaiTest[] = [
   {
@@ -640,30 +691,34 @@ const QuanLyDeThiThu = () => {
       MaBaiTest: Date.now(),
       TieuDe: "",
       MoTa: "",
-      TongThoiGian: 120,
+      TongThoiGian: 177,
       CapDo: "B1",
       LoaiBai: "VSTEP",
       NgayTao: new Date().toISOString(),
       TrangThai: "draft",
       kyNang: {
         listening: {
+          thoiGian: 45 * 60,
           parts: [
             { soPhan: 1, tieuDe: "Listening Part 1", huongDan: "Listen and choose the best answers.", audioUrl: "", cauHois: [] }
           ]
         },
         reading: {
+          thoiGian: 60 * 60,
           parts: [
             { soPhan: 1, tieuDe: "Reading Part 1", huongDan: "Read the passage and choose the best answers.", doanVan: "", cauHois: [] }
           ]
         },
         writing: {
+          thoiGian: 60 * 60,
           parts: [
             { soPhan: 1, tieuDe: "Writing Part 1", huongDan: "You should spend about 20 minutes on this task.", yeuCau: "Email", noiDung: "", soTuToiThieu: 120 }
           ]
         },
         speaking: {
+          thoiGian: 12 * 60,
           parts: [
-            { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 }
+            { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 12 * 60 }
           ]
         }
       }
@@ -727,7 +782,7 @@ const QuanLyDeThiThu = () => {
   };
 
   const handleOpenEditWorkspace = (test: BaiTest) => {
-    setEditingTest(JSON.parse(JSON.stringify(test)));
+    setEditingTest(ensureSkillTimes(JSON.parse(JSON.stringify(test))));
     setWorkspaceSkill("listening");
     setActivePartIdx(0);
     setImportedQuestions([]);
@@ -1308,14 +1363,95 @@ D. Visiting friends
                 />
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", boxSizing: "border-box" }}>
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian (phút)</label>
-                <input
-                  type="number"
-                  value={editingTest.TongThoiGian}
-                  onChange={(e) => setEditingTest({ ...editingTest, TongThoiGian: Number(e.target.value) || 0 })}
-                  style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", boxSizing: "border-box" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nghe (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.listening.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.listening.thoiGian = val * 60;
+                      updated.TongThoiGian = val + Math.round((updated.kyNang.reading.thoiGian || 0)/60) + Math.round((updated.kyNang.writing.thoiGian || 0)/60) + Math.round((updated.kyNang.speaking.thoiGian || 0)/60);
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Đọc (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.reading.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.reading.thoiGian = val * 60;
+                      updated.TongThoiGian = Math.round((updated.kyNang.listening.thoiGian || 0)/60) + val + Math.round((updated.kyNang.writing.thoiGian || 0)/60) + Math.round((updated.kyNang.speaking.thoiGian || 0)/60);
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Viết (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.writing.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.writing.thoiGian = val * 60;
+                      updated.TongThoiGian = Math.round((updated.kyNang.listening.thoiGian || 0)/60) + Math.round((updated.kyNang.reading.thoiGian || 0)/60) + val + Math.round((updated.kyNang.speaking.thoiGian || 0)/60);
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nói (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.speaking.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.speaking.thoiGian = val * 60;
+                      if (!updated.kyNang.speaking.parts[0]) {
+                        updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: val * 60 };
+                      } else {
+                        updated.kyNang.speaking.parts[0].thoiGianNoi = val * 60;
+                      }
+                      updated.TongThoiGian = Math.round((updated.kyNang.listening.thoiGian || 0)/60) + Math.round((updated.kyNang.reading.thoiGian || 0)/60) + Math.round((updated.kyNang.writing.thoiGian || 0)/60) + val;
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+              </div>
+              <div style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, marginTop: "4px" }}>
+                Tổng thời gian: {editingTest.TongThoiGian} phút
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "14px", borderTop: "1px solid #f1f5f9", paddingTop: "16px", boxSizing: "border-box" }}>
@@ -1404,7 +1540,12 @@ D. Visiting friends
                             Part {p.soPhan}
                           </button>
                           <button
-                            onClick={() => handleDeletePart("listening", idx)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeletePart("listening", idx);
+                            }}
                             style={{ border: "none", background: "none", display: "flex", alignItems: "center", cursor: "pointer", color: activePartIdx === idx ? "white" : "#ef4444", padding: "2px" }}
                             title="Xóa Part"
                           >
@@ -1433,6 +1574,7 @@ D. Visiting friends
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
                           <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Tải file audio lên (MP3/WAV)</label>
                           <input
+                            key={`listening-audio-input-${activePartIdx}`}
                             type="file"
                             accept="audio/*"
                             onChange={(e) => handleListeningAudioUpload(e, activePartIdx)}
@@ -1456,6 +1598,7 @@ D. Visiting friends
 
                             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                               <input
+                                key={`listening-import-input-${activePartIdx}`}
                                 type="file" accept=".txt,.docx" id={`file-import-listen-${activePartIdx}`} style={{ display: "none" }}
                                 onChange={(e) => handleFileUpload(e, activePartIdx)}
                               />
@@ -1641,7 +1784,12 @@ D. Visiting friends
                             Part {p.soPhan}
                           </button>
                           <button
-                            onClick={() => handleDeletePart("reading", idx)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeletePart("reading", idx);
+                            }}
                             style={{ border: "none", background: "none", display: "flex", alignItems: "center", cursor: "pointer", color: activePartIdx === idx ? "white" : "#ef4444", padding: "2px" }}
                             title="Xóa Part"
                           >
@@ -1689,6 +1837,7 @@ D. Visiting friends
 
                             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                               <input
+                                key={`reading-import-input-${activePartIdx}`}
                                 type="file" accept=".txt,.docx" id={`file-import-read-${activePartIdx}`} style={{ display: "none" }}
                                 onChange={(e) => handleFileUpload(e, activePartIdx)}
                               />
@@ -1874,7 +2023,12 @@ D. Visiting friends
                             Part {p.soPhan}
                           </button>
                           <button
-                            onClick={() => handleDeletePart("writing", idx)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeletePart("writing", idx);
+                            }}
                             style={{ border: "none", background: "none", display: "flex", alignItems: "center", cursor: "pointer", color: activePartIdx === idx ? "white" : "#ef4444", padding: "2px" }}
                             title="Xóa Part"
                           >
@@ -1898,8 +2052,8 @@ D. Visiting friends
                               }}
                               style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", background: "white" }}
                             >
-                              <option value="Email">Letter </option>
-                              <option value="Essay">Email </option>
+                              <option value="Letter">Letter</option>
+                              <option value="Email">Email</option>
                             </select>
                           </div>
 
@@ -1946,19 +2100,6 @@ D. Visiting friends
                           />
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
-                          <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "4px" }}>Yêu cầu / Tiêu chí đánh giá</label>
-                          <RichTextEditor
-                            id={`textarea-write-yeucau-${activePartIdx}`}
-                            value={editingTest.kyNang.writing.parts[activePartIdx].yeuCau}
-                            onChange={(val) => {
-                              const updated = { ...editingTest };
-                              updated.kyNang.writing.parts[activePartIdx].yeuCau = val;
-                              setEditingTest(updated);
-                            }}
-                            minHeight="80px"
-                          />
-                        </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
                           <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "4px" }}>Gợi ý dàn ý (Không bắt buộc)</label>
@@ -2039,45 +2180,113 @@ D. Visiting friends
                     )}
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", boxSizing: "border-box", width: "100%" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Thời gian chuẩn bị (giây)</label>
-                      <input
-                        type="number"
-                        value={editingTest.kyNang.speaking.parts[0]?.thoiGianChuanBi || 60}
-                        onChange={(e) => {
-                          const updated = { ...editingTest };
-                          if (!updated.kyNang.speaking.parts[0]) {
-                            updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
-                          }
-                          updated.kyNang.speaking.parts[0].thoiGianChuanBi = Number(e.target.value) || 0;
-                          setEditingTest(updated);
-                        }}
-                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }}
-                      />
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Thời gian trả lời (giây)</label>
-                      <input
-                        type="number"
-                        value={editingTest.kyNang.speaking.parts[0]?.thoiGianNoi || 180}
-                        onChange={(e) => {
-                          const updated = { ...editingTest };
-                          if (!updated.kyNang.speaking.parts[0]) {
-                            updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
-                          }
-                          updated.kyNang.speaking.parts[0].thoiGianNoi = Number(e.target.value) || 0;
-                          setEditingTest(updated);
-                        }}
-                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }}
-                      />
-                    </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Thời gian chuẩn bị (giây)</label>
+                    <input
+                      type="number"
+                      value={editingTest.kyNang.speaking.parts[0]?.thoiGianChuanBi ?? 60}
+                      onChange={(e) => {
+                        let rawVal = e.target.value;
+                        if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                          rawVal = rawVal.replace(/^0+/, "");
+                          e.target.value = rawVal;
+                        }
+                        const val = Number(rawVal) || 0;
+                        const updated = { ...editingTest };
+                        if (!updated.kyNang.speaking.parts[0]) {
+                          updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: val, thoiGianNoi: 12 * 60 };
+                        } else {
+                          updated.kyNang.speaking.parts[0].thoiGianChuanBi = val;
+                        }
+                        setEditingTest(updated);
+                      }}
+                      style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }}
+                    />
                   </div>
                 </div>
               </div>
             )}
           </div>
+          {/* Custom Exit Confirmation Modal */}
+          {showExitConfirmPopup && (
+            <div style={{
+              position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+            }} onClick={() => setShowExitConfirmPopup(false)}>
+              <div style={{
+                background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+                boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+                border: "1px solid #cbd5e1", textAlign: "center"
+              }} onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+                  Xác nhận rời khỏi thiết kế
+                </h3>
+                <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+                  Bạn có muốn rời khỏi thiết kế đề thi? Các thay đổi chưa lưu sẽ bị mất.
+                </p>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <button
+                    onClick={() => setShowExitConfirmPopup(false)}
+                    style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    onClick={() => {
+                      isExitingRef.current = true;
+                      setShowExitConfirmPopup(false);
+                      setEditingTest(null);
+                      setAddQuestionError("");
+                      setAddAnswersError("");
+                      setTestTitleError("");
+                      window.history.back();
+                    }}
+                    style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+                  >
+                    Rời khỏi
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Custom Delete Part Confirmation Modal */}
+          {showDeletePartConfirmPopup && (
+            <div style={{
+              position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+            }} onClick={() => { setShowDeletePartConfirmPopup(false); setDeletePartInfo(null); }}>
+              <div style={{
+                background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+                boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+                border: "1px solid #cbd5e1", textAlign: "center"
+              }} onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+                  Xác nhận xóa Part
+                </h3>
+                <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+                  Bạn có chắc muốn xóa Part này cùng tất cả nội dung bên trong?
+                </p>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <button
+                    onClick={() => {
+                      setShowDeletePartConfirmPopup(false);
+                      setDeletePartInfo(null);
+                    }}
+                    style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleConfirmDeletePart}
+                    style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+                  >
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -256,6 +256,14 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
     const method = init?.method?.toUpperCase() || "GET";
     const bodyObj = init?.body ? JSON.parse(init.body as string) : null;
 
+    // DELETE BUOIHOC
+    if (urlStr.includes("/qtv/buoihoc/") && method === "DELETE") {
+      return new Response(
+        JSON.stringify({ message: "Đã xóa buổi học" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // 1. LOGIN
     if (urlStr.endsWith("/login") && method === "POST") {
       const { username, password } = bodyObj || {};

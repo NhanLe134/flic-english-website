@@ -24,7 +24,7 @@
 .content { padding: 0 32px 32px 32px; }
 
 /* ── Stat row ── */
-.statRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.statRow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; max-width: 640px; }
 .statCard { 
   background: #ffffff; 
   border: 1px solid #eef2f6; 
@@ -256,10 +256,11 @@
 .inlineActions   { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 
 /* ── Detail Modal: stats + tabs ── */
-.detailStats   { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 16px 0; padding: 16px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 12px; }
-.detailStatItem{ text-align: center; }
-.detailStatVal { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #F95800; }
-.detailStatLbl { font-size: 11px; color: #888; }
+.detailStats   { display: flex; gap: 16px; margin: 16px 0 24px; }
+.detailStatItem{ flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all .2s ease; }
+.detailStatItem:hover { background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-1px); }
+.detailStatVal { font-size: 26px; font-weight: 700; color: #000080; margin-bottom: 2px; }
+.detailStatLbl { font-size: 13px; font-weight: 600; color: #64748b; }
 
 .tabs    { display: flex; gap: 4px; border-bottom: 2px solid #eef2f6; margin-bottom: 16px; }
 .tab     { padding: 9px 20px; font-size: 13px; font-weight: 600; color: #888; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; border-radius: 6px 6px 0 0; font-family: inherit; transition: all .2s; }

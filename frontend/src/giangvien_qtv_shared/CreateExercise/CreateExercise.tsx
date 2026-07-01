@@ -228,6 +228,12 @@ const CreateExercise = () => {
   const isQTV = vaiTroLower === "quản trị nội dung" || vaiTroLower === "quản trị viên" || vaiTroLower === "admin" || window.location.pathname.toLowerCase().includes("/qtv");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("Lưu kết quả thành công");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({ show: false, title: "", message: "" });
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
   const [type, setType] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
@@ -563,7 +569,7 @@ const CreateExercise = () => {
       if (res.ok) {
         setSuccessMessage("Sao chép bài tập thành công");
         setShowSuccess(true);
-        const isQTVPath = window.location.pathname.startsWith("/QTV");
+        const isQTVPath = location.pathname.startsWith("/QTV");
         if (isQTVPath) {
           setTimeout(() => navigate("/QTV/khoahoc"), 1500);
         } else {
@@ -1342,9 +1348,12 @@ const CreateExercise = () => {
 
   const applyPreset = (presetType: "toeic2" | "toeic4" | "vstep4") => {
     const confirmMsg = "Áp dụng cấu trúc mẫu sẽ XÓA và THAY THẾ toàn bộ phần thi hiện tại. Bạn có chắc chắn muốn tiếp tục?";
-    if (!window.confirm(confirmMsg)) return;
-
-    let newSections: ExamSection[] = [];
+    setConfirmDialog({
+      show: true,
+      title: "Xác nhận áp dụng cấu trúc mẫu",
+      message: confirmMsg,
+      onConfirm: () => {
+        let newSections: ExamSection[] = [];
 
     if (presetType === "toeic2") {
       newSections = [
@@ -1655,8 +1664,10 @@ const CreateExercise = () => {
       ];
     }
 
-    setExamSections(newSections);
-    setCollapsedSections({});
+        setExamSections(newSections);
+        setCollapsedSections({});
+      }
+    });
   };
 
   const removeExamSection = (idx: number) => {
@@ -1880,7 +1891,7 @@ const CreateExercise = () => {
           : "Tạo bài tập thành công"
       );
       setShowSuccess(true);
-      const isQTVPath = window.location.pathname.startsWith("/QTV");
+      const isQTVPath = location.pathname.startsWith("/QTV");
       if (isQTVPath) {
         setTimeout(() => {
           navigate("/QTV/khoahoc", {
@@ -2570,9 +2581,14 @@ const CreateExercise = () => {
                           className="remove-btn"
                           style={{ margin: 0, background: "#fff", border: "1px solid #fee2e2", color: "#ef4444", padding: "4px 8px", borderRadius: "6px" }}
                           onClick={() => {
-                            if (window.confirm("Bạn có chắc chắn muốn xóa phần thi này?")) {
-                              removeExamSection(secIdx);
-                            }
+                            setConfirmDialog({
+                              show: true,
+                              title: "Xác nhận xóa phần thi",
+                              message: "Bạn có chắc chắn muốn xóa phần thi này không?",
+                              onConfirm: () => {
+                                removeExamSection(secIdx);
+                              }
+                            });
                           }}
                         >
                           ✕ Xóa phần
@@ -4491,6 +4507,78 @@ const CreateExercise = () => {
         </div>
       )}
       {renderFormattingToolbar()}
+
+      {confirmDialog.show && (
+        <div className="modal-overlay" style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>
+          <div className="modal-container" style={{
+            background: "#ffffff",
+            padding: "32px 40px",
+            borderRadius: "16px",
+            width: "90%",
+            maxWidth: "480px",
+            textAlign: "center",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+          }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#1e293b", margin: "0 0 16px 0" }}>
+              {confirmDialog.title}
+            </h3>
+            <p style={{ fontSize: "14px", color: "#475569", margin: "0 0 24px 0", lineHeight: "1.5" }}>
+              {confirmDialog.message}
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(p => ({ ...p, show: false }))}
+                style={{
+                  background: "#f1f5f9",
+                  color: "#475569",
+                  border: "1px solid #cbd5e1",
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s"
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDialog(p => ({ ...p, show: false }));
+                  if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+                }}
+                style={{
+                  background: "#ef4444",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s"
+                }}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

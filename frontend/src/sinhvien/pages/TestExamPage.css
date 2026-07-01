@@ -417,13 +417,13 @@
 }
 
 .writing-letter-quote {
-  border-left: 4px solid #F95800;
-  background: #FFF2EB; /* Orange background */
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff; /* Clean white background */
   padding: 16px 20px;
-  border-radius: 0 8px 8px 0;
+  border-radius: 8px; /* Balanced border-radius on all corners */
   margin: 16px 0;
-  font-style: italic;
-  color: #475569;
+  font-style: normal; /* Normal font style (no italics) */
+  color: #1e293b;
   font-size: 14.5px;
   line-height: 1.7;
   white-space: pre-line;

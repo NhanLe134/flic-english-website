@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, Fragment } from "react"
 import styles from "./BaoCaoKetQuaQTV.module.css"
-import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
+import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
 
 const API = 'http://localhost:5000'
 
@@ -236,8 +236,14 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   }, [filtered, currentPage])
 
   const tongHV    = filtered.length
-  const dangHoc   = filtered.filter(h => h.trangThai === "Đang học").length
-  const hoanThanh = filtered.filter(h => h.trangThai === "Hoàn thành").length
+  const chuaHoanThanh = filtered.filter(h => {
+    const classExs = activeHeaders.filter(ex => ex.TenLop === h.lopKhoaHoc)
+    if (classExs.length === 0) return false
+    return classExs.some(ex => {
+      const score = h.rawScores[ex.MaBaiTap];
+      return score === null || score === undefined || score === "Chưa nộp";
+    });
+  }).length
   const diemTBs   = filtered.filter(h => h.diemTB !== null).map(h => h.diemTB as number)
   const diemTBchung = diemTBs.length > 0
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
@@ -291,25 +297,14 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             </div>
           </div>
 
-          <div className={`${styles.card} ${styles.cardActive}`}>
-            <div className={styles.cardIconContainer}>
-              <FiUsers size={18} />
+          <div className={`${styles.card} ${styles.cardCompleted}`} style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+            <div className={styles.cardIconContainer} style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' }}>
+              <FiAlertCircle size={18} />
             </div>
             <div className={styles.cardContent}>
-              <span className={styles.cardLabel}>Đang học</span>
-              <h2 className={styles.cardValue}>{dangHoc}</h2>
-              <small className={styles.cardSubtext}>Học viên đang học</small>
-            </div>
-          </div>
-
-          <div className={`${styles.card} ${styles.cardCompleted}`}>
-            <div className={styles.cardIconContainer}>
-              <FiCheckCircle size={18} />
-            </div>
-            <div className={styles.cardContent}>
-              <span className={styles.cardLabel}>Hoàn thành</span>
-              <h2 className={styles.cardValue}>{hoanThanh}</h2>
-              <small className={styles.cardSubtext}>Học viên hoàn thành</small>
+              <span className={styles.cardLabel}>Chưa hoàn thành</span>
+              <h2 className={styles.cardValue}>{chuaHoanThanh}</h2>
+              <small className={styles.cardSubtext}>Học viên chưa hoàn thành</small>
             </div>
           </div>
 
@@ -342,12 +337,14 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
           <select className={styles.select} value={filterKhoa} onChange={e => setFilterKhoa(e.target.value)}>
             {khoaList.map(k => <option key={k}>{k}</option>)}
           </select>
-          <select className={styles.select} value={filterLop} onChange={e => setFilterLop(e.target.value)}>
-            {lopList.map(l => <option key={l}>{l}</option>)}
-          </select>
-          <select className={styles.select} value={filterTT} onChange={e => setFilterTT(e.target.value)}>
-            {ttList.map(t => <option key={t}>{t}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+            <select className={styles.select} value={filterLop} onChange={e => setFilterLop(e.target.value)}>
+              {lopList.map(l => <option key={l}>{l}</option>)}
+            </select>
+            <select className={styles.select} value={filterTT} onChange={e => setFilterTT(e.target.value)}>
+              {ttList.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* TABLE */}

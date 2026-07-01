@@ -1,5 +1,5 @@
 import "./ExerciseDetail.css";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 interface Pair { left: string; right: string; }
@@ -26,11 +26,13 @@ const mapDangBaiToType = (db: string): string => {
 
 const ExerciseDetail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
+  const isQTV = location.pathname.startsWith("/QTV");
 
   const [exercise, setExercise] = useState<any>(null);
 
-  const [editTitle,       setEditTitle]       = useState("");
+
   const [editContent,     setEditContent]     = useState("");
   const [editQuestions,   setEditQuestions]   = useState<Question[]>([]);
   const [editPairs,       setEditPairs]       = useState<Pair[]>([]);
@@ -113,12 +115,22 @@ const ExerciseDetail = () => {
 
   useEffect(() => {
     if (!exercise) return;
-    setEditTitle(exercise.Title || "");
 
-    const contentParts: string[] = exercise.Content
-      ? exercise.Content.split("\n---\n").map((s: string) => s.trim()).filter(Boolean)
-      : [];
-    const mainContent = contentParts[0] || "";
+
+    let mainContent = "";
+    if (exercise.Content) {
+      if (exercise.Content.trim().startsWith("{")) {
+        try {
+          const parsed = JSON.parse(exercise.Content);
+          mainContent = parsed.description || "";
+        } catch (e) {
+          mainContent = exercise.Content;
+        }
+      } else {
+        const contentParts: string[] = exercise.Content.split("\n---\n").map((s: string) => s.trim()).filter(Boolean);
+        mainContent = contentParts[0] || "";
+      }
+    }
     setEditContent(mainContent);
 
     // Speaking topic
@@ -175,6 +187,7 @@ const ExerciseDetail = () => {
 
     // Extra questions (essay/dictation/pronounce/order words/sentences)
     if (normalizedType === "essay") {
+      const contentParts: string[] = exercise.Content?.split("\n---\n").map((s: string) => s.trim()).filter(Boolean) || [];
       const essayFromContent = contentParts.slice(1);
       let essayFromQuestions: string[] = [];
       if (exercise.Questions) {
@@ -232,7 +245,7 @@ const ExerciseDetail = () => {
   if (!exercise) return <p style={{ padding: 20 }}>Đang tải dữ liệu...</p>;
 
   return (
-    <div className="ed-wrapper">
+    <div className="ed-wrapper" style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
       <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
 
       {/* TITLE BAR */}
@@ -247,28 +260,44 @@ const ExerciseDetail = () => {
 
       {/* RENDER THE FORM DIRECTLY */}
       <div className="exercise-detail-card">
-        <div style={{ paddingBottom: "16px", borderBottom: "1px solid #e2e8f0" }}>
-          <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#000080", margin: 0 }}>
-            📝 Chi tiết bài tập ({exercise.DangBai || exercise.Type})
-          </h3>
-          <p style={{ margin: "6px 0 0 0", color: "#64748b", fontSize: "14px" }}>
-            Tiêu đề: <strong style={{ color: "#0f172a" }}>{editTitle}</strong>
-          </p>
-        </div>
 
         {/* Section Audio Player */}
         {exercise.AudioUrl && (
           <div style={{ padding: "12px", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd" }}>
-            <label style={{ fontWeight: 600, fontSize: "13px", color: "#0369a1", display: "block", marginBottom: "6px" }}>🎵 File nghe chung cho phần này</label>
+            <label style={{ fontWeight: 600, fontSize: "13px", color: "#0369a1", display: "block", marginBottom: "6px" }}>File nghe chung cho phần này</label>
             <audio src={exercise.AudioUrl.startsWith("http") || exercise.AudioUrl.startsWith("/uploads") ? (exercise.AudioUrl.startsWith("http") ? exercise.AudioUrl : `http://localhost:5000${exercise.AudioUrl}`) : `http://localhost:5000/uploads/${exercise.AudioUrl}`} controls style={{ width: "100%", height: "35px" }} />
           </div>
         )}
 
         {/* Passage / Content / Instructions */}
-        {editContent && (
-          <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-            <label style={{ fontWeight: 600, fontSize: "13px", color: "#475569", display: "block", marginBottom: "6px" }}>📖 Nội dung / đoạn văn / đề bài</label>
-            <div style={{ fontSize: "13.5px", color: "#1e293b", whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
+        {editContent && editContent.trim() !== "" && (
+          <div style={{
+            padding: "16px 20px",
+            background: "#f8fafc",
+            borderRadius: "8px",
+            border: "1px solid #cbd5e1",
+            borderLeft: "4px solid #000080",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+            marginBottom: "16px"
+          }}>
+            <label style={{
+              fontWeight: 700,
+              fontSize: "12px",
+              color: "#000080",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              display: "block",
+              marginBottom: "8px"
+            }}>
+              Đề bài
+            </label>
+            <div style={{
+              fontSize: "14px",
+              color: "#334155",
+              whiteSpace: "pre-wrap",
+              lineHeight: "1.6",
+              fontFamily: "inherit"
+            }}>
               {editContent}
             </div>
           </div>
@@ -319,7 +348,7 @@ const ExerciseDetail = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {editVocab.length > 0 && (
               <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-                <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#000080", marginBottom: "8px" }}>📚 Từ vựng</div>
+                <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#000080", marginBottom: "8px" }}>Từ vựng</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {editVocab.map((v, i) => (
                     <div key={i} style={{ display: "flex", gap: "12px", borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
@@ -354,7 +383,7 @@ const ExerciseDetail = () => {
             {editSpeakingAns && (
               <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
                 <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#107544", marginBottom: "6px" }}>
-                  🎯 Đáp án mẫu / Gợi ý
+                  Đáp án mẫu / Gợi ý
                 </div>
                 <div style={{ fontSize: "13px", color: "#334155", whiteSpace: "pre-wrap" }}>
                   {editSpeakingAns}
@@ -390,7 +419,7 @@ const ExerciseDetail = () => {
         {normalizedType === "ordering" && (
           <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
             <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b" }}>
-              🔤 Các từ cần sắp xếp
+              Các từ cần sắp xếp
             </div>
             <div style={{ fontSize: "13.5px", color: "#475569", marginTop: "8px" }}>
               {editContent || "(Không có từ)"}
@@ -404,7 +433,7 @@ const ExerciseDetail = () => {
             {editVocab.length > 0 && (
               <div style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
                 <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#107544", marginBottom: "8px" }}>
-                  📚 Danh sách từ vựng
+                  Danh sách từ vựng
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {editVocab.map((v, i) => (
@@ -430,7 +459,7 @@ const ExerciseDetail = () => {
               editReadingSplit.map((group, gi) => (
                 <div key={gi} style={{ padding: "16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
                   <div style={{ marginBottom: "14px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "10px" }}>
-                    <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 8px 0" }}>📖 Nhóm bài đọc {gi + 1}</h4>
+                    <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 8px 0" }}>Nhóm bài đọc {gi + 1}</h4>
                     {group.imageUrl && (
                       <div style={{ marginBottom: "10px" }}>
                         <img src={group.imageUrl.startsWith("http") || group.imageUrl.startsWith("/uploads") ? (group.imageUrl.startsWith("http") ? group.imageUrl : `http://localhost:5000${group.imageUrl}`) : `http://localhost:5000/uploads/${group.imageUrl}`} alt="Passage visual" style={{ maxHeight: "200px", borderRadius: "8px" }} />
@@ -482,7 +511,7 @@ const ExerciseDetail = () => {
               editFillIn.map((group, gi) => (
                 <div key={gi} style={{ padding: "16px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
                   <div style={{ marginBottom: "12px" }}>
-                    <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 6px 0" }}>📝 Nhóm điền từ {gi + 1}</h4>
+                    <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 6px 0" }}>Nhóm điền từ {gi + 1}</h4>
                     <div style={{ padding: "12px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "13px", lineHeight: "1.6" }}>
                       {group.text || "(Không có nội dung)"}
                     </div>
