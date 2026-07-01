@@ -299,6 +299,7 @@ export default function CoursePageQTV() {
           LoaiBaiHoc: bgForm.type,
           ThoiLuong: bgForm.duration,
           TrangThai: 'published',
+          TrangThaiDuyet: 'Đã duyệt',
           ThuTu: bgForm.order,
           MaKhoaHoc: detailCourse?.id,
           MaGiangVien: user.MaNguoiDung || 1,
@@ -325,7 +326,8 @@ export default function CoursePageQTV() {
           MoTa: docForm.desc,
           NoiDung: docForm.content,
           FileUrl: docForm.fileUrl,
-          MaLesson: activeLessonIdForAsset
+          MaLesson: activeLessonIdForAsset,
+          TrangThai: 'Đã duyệt'
         })
       });
       setToast('Đã thêm tài liệu mới!');
@@ -1843,8 +1845,8 @@ export default function CoursePageQTV() {
                   <input value={bgForm.title} onChange={e => setBgForm(p => ({...p, title: e.target.value}))} placeholder="VD: Lesson 1: Grammar basics" />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Nội dung (Markdown hoặc HTML)</label>
-                  <textarea value={bgForm.content} onChange={e => setBgForm(p => ({...p, content: e.target.value}))} placeholder="Nội dung bài học..." rows={5} />
+                  <label>Mô tả nội dung</label>
+                  <textarea value={bgForm.content} onChange={e => setBgForm(p => ({...p, content: e.target.value}))} placeholder="Nhập mô tả hoặc nội dung bài học..." rows={5} />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>

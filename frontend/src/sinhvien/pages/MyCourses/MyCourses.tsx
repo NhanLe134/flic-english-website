@@ -52,6 +52,7 @@ function MyCourses() {
   }>>({});
 
   const [submittedExerciseIds, setSubmittedExerciseIds] = useState<Set<number>>(new Set());
+  const [completedLectureIds, setCompletedLectureIds] = useState<Set<number>>(new Set());
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
@@ -65,6 +66,18 @@ function MyCourses() {
         }
       })
       .catch((err) => console.error("Error fetching submissions:", err));
+  }, [userId, refreshTrigger]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API}/student/completed-lectures/${userId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCompletedLectureIds(new Set<number>(data.map((id: any) => Number(id))));
+        }
+      })
+      .catch((err) => console.error("Error fetching completed lectures:", err));
   }, [userId, refreshTrigger]);
 
   const handleToggleClassDetails = async (classId: number) => {
@@ -406,7 +419,7 @@ function MyCourses() {
 
                           const uncompletedLessons = activeLessons.map((l: any, idx: number) => {
                             const lectures = (details.lecturesMap[l.MaLesson] || []).filter(
-                              (lec: any) => localStorage.getItem(`completed_lecture_${userId}_${lec.MaBaiHoc}`) !== "true"
+                              (lec: any) => !completedLectureIds.has(Number(lec.MaBaiHoc))
                             );
                             const exercises = details.exercises
                               .filter((ex: any) => ex.MaLesson === l.MaLesson)

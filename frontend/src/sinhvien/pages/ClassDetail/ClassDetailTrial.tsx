@@ -218,7 +218,7 @@ export default function ClassDetailTrial() {
       ]);
 
       const published = Array.isArray(baigiangData)
-        ? baigiangData.filter((b: any) => b.TrangThai === "published" && b.IsFree === 1)
+        ? baigiangData.filter((b: any) => b.TrangThai === "published" && (b.IsFree === 1 || b.IsFree === true))
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
       let baitapData = Array.isArray(rawBaitapData)

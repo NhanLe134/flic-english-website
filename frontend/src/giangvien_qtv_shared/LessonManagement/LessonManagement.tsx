@@ -78,10 +78,19 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   const confirmDelete = async () => {
     if (selectedId !== null) {
-      await fetch(`http://localhost:5000/baigiang/${selectedId}`, {
-        method: "DELETE"
-      });
-      setLessons(lessons.filter(l => l.MaBaiHoc !== selectedId));
+      try {
+        const res = await fetch(`http://localhost:5000/baigiang/${selectedId}`, {
+          method: "DELETE"
+        });
+        if (res.ok) {
+          setLessons(lessons.filter(l => l.MaBaiHoc !== selectedId));
+        } else {
+          const body = await res.text();
+          alert("Xóa bài giảng thất bại: " + body);
+        }
+      } catch (err) {
+        alert("Lỗi kết nối: " + err);
+      }
     }
     setShowModal(false);
     setSelectedId(null);
