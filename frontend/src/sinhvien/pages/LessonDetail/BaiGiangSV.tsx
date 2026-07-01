@@ -582,19 +582,6 @@ function BaiGiangSV() {
         <div className="ld2-main-col">
           {/* Khung chứa Video Player */}
           {(() => {
-            const getYouTubeEmbedUrl = (url: string): string => {
-              let videoId = "";
-              if (url.includes("youtu.be/")) {
-                videoId = url.split("youtu.be/")[1]?.split(/[?#]/)[0] || "";
-              } else if (url.includes("youtube.com/watch")) {
-                const searchParams = new URLSearchParams(url.split("?")[1] || "");
-                videoId = searchParams.get("v") || "";
-              } else if (url.includes("youtube.com/embed/")) {
-                videoId = url.split("youtube.com/embed/")[1]?.split(/[?#]/)[0] || "";
-              }
-              return `https://www.youtube.com/embed/${videoId}`;
-            };
-
             const getGoogleDrivePreviewUrl = (url: string): string => {
               if (url.includes("/view")) {
                 return url.replace("/view", "/preview");
