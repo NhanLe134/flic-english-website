@@ -1029,14 +1029,14 @@ app.get("/baigiang/:buoiHocId", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("buoiHocId", req.params.buoiHocId)
-      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu`);
+      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, IsFree FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
 
 app.post("/baigiang", async (req, res) => {
   try {
-    const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc } = req.body;
+    const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc, IsFree } = req.body;
     const pool = await poolPromise;
 
     let resolvedMaGiangVien = null;
@@ -1075,8 +1075,9 @@ app.post("/baigiang", async (req, res) => {
       .input("MaKhoaHoc", MaKhoaHoc)
       .input("MaGiangVien", resolvedMaGiangVien || 1)
       .input("MaBuoiHoc", MaBuoiHoc)
-      .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc) 
-              VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc)`);
+      .input("IsFree", IsFree !== undefined ? IsFree : 0)
+      .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc, IsFree) 
+              VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc, @IsFree)`);
     res.json({ message: "Thêm bài giảng thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
