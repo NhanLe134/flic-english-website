@@ -1,5 +1,7 @@
 import React, { useRef, useState } from "react";
 import { FiVolume2, FiMic, FiPlay, FiPause } from "react-icons/fi";
+import "./PhatAmTuDong.css";
+import "./PhatAmTuDong_TuongThich.css";
 
 interface PhatAmTuDongProps {
   q: any;
@@ -12,6 +14,7 @@ interface PhatAmTuDongProps {
   setIsListeningSTT: React.Dispatch<React.SetStateAction<Record<string | number, boolean>>>;
   submitted: boolean;
   isOverdue: boolean;
+  isReview?: boolean; // Che do xem lai
 }
 
 export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
@@ -25,6 +28,7 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
   setIsListeningSTT,
   submitted,
   isOverdue,
+  isReview = false,
 }) => {
   const speechScore = speechScores[qIdx];
   const spokenText = spokenTexts[qIdx] || "";
@@ -223,9 +227,8 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
         )}
       </div>
 
-      {!submitted ? (
+      {(!submitted && !isReview) ? (
         isList ? (
-          /* State 2: When listening, center everything inside the container */
           <div className="pronounce-waveform-box" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
             <div className="pronounce-waveform-listening">
               <div className="pronounce-wave-bar"></div>
@@ -246,7 +249,6 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
             </button>
           </div>
         ) : !spokenText ? (
-          /* State 1: Before user records, center the start button in the box */
           <div className="pronounce-waveform-box" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
             <button
               type="button"
@@ -259,9 +261,7 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
             </button>
           </div>
         ) : (
-          /* State 3: After user records, show split layout (left evaluation, right start button) */
           <div className="pronounce-waveform-box" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, textAlign: "left" }}>
-            {/* Left: spokenText and score display */}
             <div style={{ flex: 1 }}>
               <div className="ad-stt-text-output" style={{ width: "100%", borderTop: "none", marginTop: 0, paddingTop: 0 }}>
                 <p style={{ fontStyle: "italic", margin: "0 0 8px 0" }}>Nhận diện được: "{spokenText}"</p>
@@ -305,8 +305,6 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
                 )}
               </div>
             </div>
-
-            {/* Right: record button */}
             <div style={{ flexShrink: 0 }}>
               <button
                 type="button"
@@ -323,18 +321,22 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
       ) : (
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, border: "1px solid #e2e8f0" }}>
           <p style={{ margin: "0 0 10px 0", fontSize: 14 }}>
-            <strong>Nội dung bạn đã đọc:</strong> "{spokenText || "—"}"
+            <strong>Nội dung bạn đã đọc:</strong> "{spokenText || "(Không có phản hồi)"}"
           </p>
           <div className="pronounce-score-container">
             <div className={`pronounce-score-circle ${(speechScore || 0) >= 7 ? "excellent" : "needs-work"}`}>
-              {speechScore}/10
+              {speechScore !== null && speechScore !== undefined ? `${speechScore}/10` : "0/10"}
             </div>
             <div>
               <h4 style={{ margin: "0 0 4px 0", color: (speechScore || 0) >= 7 ? "#16a34a" : "#ea580c" }}>
                 Điểm đánh giá tự động
               </h4>
               <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>
-                Đã được hệ thống lưu lại và tính vào điểm trung bình.
+                {speechScore !== null && speechScore !== undefined ? (
+                  (speechScore || 0) >= 9 ? "Xuất sắc (Phát âm chính xác hầu hết các từ)" : (speechScore || 0) >= 7 ? "Rất tốt (Phát âm chính xác phần lớn các từ)" : "Cần luyện tập thêm"
+                ) : (
+                  "Chưa thực hiện ghi âm luyện phát âm"
+                )}
               </p>
             </div>
           </div>

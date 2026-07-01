@@ -235,6 +235,89 @@ export default function ClassDetailSV() {
         ? rawBaitapData.filter((ex: any) => ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt" || ex.TrangThaiDuyet === "Đã duyệt")
         : [];
       
+      // Inject mock exercises unconditionally for testing in regular courses
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-pronounce-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-pronounce-1",
+          Title: "Bài tập: Luyện phát âm tự động (Web Speech API)",
+          Type: "speaking-pronounce",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 1
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-pronounce-2")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-pronounce-2",
+          Title: "Luyện tập: Phát âm từ vựng cơ bản",
+          Type: "speaking-pronounce",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-topic-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-topic-1",
+          Title: "Bài tập: Nói theo chủ đề (ghi âm nộp GV chấm)",
+          Type: "speaking-topic",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 1
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-speaking-topic-2")) {
+        baitapData.push({
+          MaBaiTap: "mock-speaking-topic-2",
+          Title: "Luyện tập: Giới thiệu bản thân và gia đình",
+          Type: "speaking-topic",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-reading-split-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-reading-split-1",
+          Title: "Luyện tập: Đọc hiểu - The History of Extinction",
+          Type: "reading-split",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-reading-vocab-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-reading-vocab-1",
+          Title: "Luyện tập: Từ vựng - Nối từ (Match the pairs)",
+          Type: "reading-vocab-mcq",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-writing-order-words-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-writing-order-words-1",
+          Title: "Luyện tập: Kéo thả sắp xếp câu",
+          Type: "writing-order-words",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-writing-essay-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-writing-essay-1",
+          Title: "Bài tập tự luận: Viết về đồng nghiệp của bạn",
+          Type: "writing-essay",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+      if (!baitapData.some((ex: any) => ex.MaBaiTap === "mock-writing-order-sentences-1")) {
+        baitapData.push({
+          MaBaiTap: "mock-writing-order-sentences-1",
+          Title: "Luyện tập: Sắp xếp câu thành đoạn văn",
+          Type: "writing-order-sentences",
+          CreatedDate: new Date().toISOString(),
+          IsExam: 0
+        });
+      }
+
       const baiTaps = baitapData;
 
 

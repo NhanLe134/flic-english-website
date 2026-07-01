@@ -7,6 +7,7 @@ const fs = require("fs");
 const nodemailer = require("nodemailer")
 
 const app = express();
+global.mockSubmissionsStore = [];
 
 // Helper functions to convert between integer MaSinhVien in Database and string SV000000xx on UI
 function parseStudentId(maSVStr) {
@@ -1842,8 +1843,13 @@ app.put("/doi-mat-khau", async (req, res) => {
 // Lấy danh sách bài nộp theo exercise
 app.get("/bainop/baitap/:maBaiTap", async (req, res) => {
   try {
+    const rawMaBaiTap = req.params.maBaiTap.trim();
+    if (rawMaBaiTap.startsWith("mock-")) {
+      const list = (global.mockSubmissionsStore || []).filter(s => s.MaBaiTap === rawMaBaiTap);
+      return res.json(list);
+    }
     const pool = await poolPromise;
-    const maBaiTap = parseInt(req.params.maBaiTap.trim());
+    const maBaiTap = parseInt(rawMaBaiTap);
     
     // Kiểm tra xem ID này có thuộc BAIKIEMTRA hay không
     const examCheck = await pool.request()
@@ -1961,6 +1967,24 @@ app.post("/bainop", async (req, res) => {
   try {
     const { MaSinhVien, NoiDung, Diem, TrangThai } = req.body;
     const MaBaiTap = req.body.MaBaiTap || req.body.MaExercise;
+    if (typeof MaBaiTap === "string" && MaBaiTap.startsWith("mock-")) {
+      const newSubmission = {
+        MaBaiNop: Math.floor(Math.random() * 1000000) + 20000,
+        MaBaiTap: MaBaiTap,
+        MaSinhVien: MaSinhVien,
+        NoiDung: NoiDung || "",
+        Diem: Diem ?? null,
+        TrangThai: TrangThai || "Đã chấm",
+        NgayNop: new Date().toISOString(),
+        MSSV: "SV01",
+        HoTen: "Học viên học thử"
+      };
+      if (!global.mockSubmissionsStore) {
+        global.mockSubmissionsStore = [];
+      }
+      global.mockSubmissionsStore.push(newSubmission);
+      return res.json({ message: "Nộp bài thành công", submission: newSubmission });
+    }
     const pool = await poolPromise;
     const parsedSV = parseStudentId(MaSinhVien);
 
@@ -3721,7 +3745,27 @@ app.get("/student/bainop/:maNguoiDung", async (req, res) => {
     if (buoiHocId) request.input("buoiHocId", buoiHocId)
     
     const result = await request.query(query)
-    res.json(result.recordset)
+    
+    const userIdStr = String(req.params.maNguoiDung);
+    const userIdInt = parseInt(userIdStr);
+    const formattedUserIdStr = "SV" + String(userIdInt).padStart(8, '0');
+
+    const mockMatches = (global.mockSubmissionsStore || []).filter(s => {
+      const sSV = String(s.MaSinhVien);
+      return sSV === userIdStr || sSV === String(userIdInt) || sSV === formattedUserIdStr;
+    }).map(s => ({
+      MaBaiNop: s.MaBaiNop,
+      MaBaiTap: s.MaBaiTap,
+      Diem: s.Diem,
+      NgayNop: s.NgayNop,
+      TrangThai: s.TrangThai,
+      TenBaiTap: "Bài tập luyện tập mẫu",
+      MaBuoiHoc: 0,
+      IsExam: 0
+    }));
+
+    const finalSubmissions = [...result.recordset, ...mockMatches];
+    res.json(finalSubmissions);
   } catch (err) { res.status(500).send(err.message) }
 })
 
