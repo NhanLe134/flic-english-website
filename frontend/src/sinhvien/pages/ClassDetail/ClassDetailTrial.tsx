@@ -57,6 +57,7 @@ export default function ClassDetailTrial() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [selectedExercise, setSelectedExercise] = useState<any>(null);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
@@ -627,12 +628,11 @@ export default function ClassDetailTrial() {
                                         <thead>
                                           <tr>
                                             <th style={{ textAlign: "center" }}>#</th>
-                                            <th>Tên bài tập</th>
+                                            <th>Tên bài luyện tập thêm</th>
                                             <th style={{ textAlign: "center" }}>Phân loại</th>
                                             <th style={{ textAlign: "center" }}>Ngày tạo</th>
                                             <th style={{ textAlign: "center" }}>Số lần làm bài</th>
                                             <th style={{ textAlign: "center" }}>Điểm số</th>
-                                            <th style={{ textAlign: "center" }}>Hành động</th>
                                           </tr>
                                         </thead>
                                         <tbody>
@@ -642,21 +642,18 @@ export default function ClassDetailTrial() {
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             const score = gradedSubmissions.length > 0 ? gradedSubmissions[gradedSubmissions.length - 1].Diem : "";
                                             return (
-                                              <tr key={ex.MaBaiTap} id={`ex-${ex.MaBaiTap}`}>
+                                              <tr 
+                                                key={ex.MaBaiTap} 
+                                                id={`ex-${ex.MaBaiTap}`}
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() => setSelectedExercise({ ...ex, activeTab: 'practices', lesson })}
+                                              >
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
                                                 <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
                                                 <td style={{ textAlign: "center" }}>{attempts}</td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
-                                                <td style={{ textAlign: "center" }}>
-                                                  <button
-                                                    className="ld2-open-btn"
-                                                    onClick={(e) => handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${lesson.MaLesson}/lt/${ex.MaBaiTap}`, e)}
-                                                  >
-                                                    Làm bài
-                                                  </button>
-                                                </td>
                                               </tr>
                                             );
                                           })}
@@ -680,7 +677,7 @@ export default function ClassDetailTrial() {
                                         <thead>
                                           <tr>
                                             <th style={{ textAlign: "center" }}>#</th>
-                                            <th>Tên bài kiểm tra</th>
+                                            <th>Tên bài tập</th>
                                             <th style={{ textAlign: "center" }}>Phân loại</th>
                                             <th style={{ textAlign: "center" }}>Ngày tạo</th>
                                             <th style={{ textAlign: "center" }}>Số lần làm bài</th>
@@ -695,21 +692,18 @@ export default function ClassDetailTrial() {
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             const score = gradedSubmissions.length > 0 ? gradedSubmissions[gradedSubmissions.length - 1].Diem : "";
                                             return (
-                                              <tr key={ex.MaBaiTap} id={`ex-${ex.MaBaiTap}`}>
+                                              <tr 
+                                                key={ex.MaBaiTap} 
+                                                id={`ex-${ex.MaBaiTap}`}
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() => setSelectedExercise({ ...ex, activeTab: 'exams', lesson })}
+                                              >
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
                                                 <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
                                                 <td style={{ textAlign: "center" }}>{attempts}</td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
-                                                <td style={{ textAlign: "center" }}>
-                                                  <button
-                                                    className="ld2-open-btn"
-                                                    onClick={(e) => handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${lesson.MaLesson}/bt/${ex.MaBaiTap}`, e)}
-                                                  >
-                                                    Làm bài
-                                                  </button>
-                                                </td>
                                               </tr>
                                             );
                                           })}
@@ -736,6 +730,80 @@ export default function ClassDetailTrial() {
           </div>
         )}
       </div>
+      {selectedExercise && (
+        <div className="exit-confirm-modal-backdrop" onClick={() => setSelectedExercise(null)}>
+          <div className="exit-confirm-modal-card" style={{ maxWidth: "420px", textAlign: "left", position: "relative" }} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="exit-modal-close-x" 
+              onClick={() => setSelectedExercise(null)}
+              title="Đóng"
+            >
+              &times;
+            </button>
+            <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "700", color: "#1e3a8a", paddingRight: "24px" }}>
+              {selectedExercise.Title}
+            </h3>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px" }}>Phân loại:</span>
+                <span style={{ fontWeight: "600", color: "#334155", fontSize: "14px" }}>
+                  {mapTypeToSkillName(selectedExercise.Type) || (selectedExercise.activeTab === 'practices' ? 'Practice' : 'Exam')}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px" }}>Ngày tạo:</span>
+                <span style={{ fontWeight: "600", color: "#334155", fontSize: "14px" }}>
+                  {selectedExercise.CreatedDate ? new Date(selectedExercise.CreatedDate).toLocaleDateString("vi-VN") : "—"}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px" }}>Số lần làm bài:</span>
+                <span style={{ fontWeight: "600", color: "#334155", fontSize: "14px" }}>
+                  {submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap)).length} lần
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "4px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px" }}>Điểm số gần nhất:</span>
+                <span style={{ fontWeight: "700", color: "#f95800", fontSize: "14px" }}>
+                  {(() => {
+                    const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap));
+                    const graded = exSubs.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
+                    return graded.length > 0 ? graded[graded.length - 1].Diem : "Chưa có điểm";
+                  })()}
+                </span>
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              {submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap)).length > 0 && (
+                <button
+                  className="ld2-review-btn"
+                  style={{ margin: 0, padding: "10px 20px" }}
+                  onClick={(e) => {
+                    const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                    handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review`, e);
+                    setSelectedExercise(null);
+                  }}
+                >
+                  Xem lại
+                </button>
+              )}
+              <button
+                className="ld2-open-btn"
+                style={{ padding: "10px 20px" }}
+                onClick={(e) => {
+                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                  handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`, e);
+                  setSelectedExercise(null);
+                }}
+              >
+                Làm bài
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
