@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FiPlay } from "react-icons/fi";
+import { FiPlay, FiPause, FiSettings, FiRotateCcw } from "react-icons/fi";
 import "./TestExamPage.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -27,7 +27,7 @@ interface CauHoi { id: number; noiDung: string; luaChon: string[]; dapAn: string
 interface ListeningPart { soPhan: number; tieuDe: string; huongDan: string; audioUrl: string; cauHois: CauHoi[]; }
 interface ReadingPart { soPhan: number; tieuDe: string; huongDan: string; doanVan: string; cauHois: CauHoi[]; }
 interface WritingPart { soPhan: number; tieuDe: string; huongDan: string; noiDung: string; yeuCau: string; soTuToiThieu: number; loaiBai?: string; goiY?: string; }
-interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; imageUrl?: string; imageName?: string; }
+interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; thoiGianChuanBi?: number; imageUrl?: string; imageName?: string; }
 interface TestData {
   MaBaiTest: number; TieuDe: string; CapDo: string;
   kyNang: {
@@ -192,39 +192,115 @@ function ListeningSection({ part, answers, onAnswer, reviewMode }: {
       <CustomAudioPlayer audioUrl={part.audioUrl} isOnce={true} reviewMode={reviewMode} />
 
       <div className="questions-container">
-        {part.cauHois.map((q) => (
-          <div key={q.id} className="question-card-exam">
-            <div className="question-text-exam">Question {q.id}: {q.noiDung}</div>
-            <div className="options-list">
-              {q.luaChon.map((opt) => {
-                const optLetter = opt.charAt(0);
-                const isSelected = answers[q.id] === optLetter;
-                
-                let reviewClass = "";
-                if (reviewMode) {
-                  if (optLetter === q.dapAn) {
-                    reviewClass = "correct-answer-review";
-                  } else if (isSelected) {
-                    reviewClass = "incorrect-answer-review";
-                  }
-                }
+        {part.cauHois.map((q) => {
+          const studentAnswer = answers[q.id];
+          return (
+            <div key={q.id} className="question-card-exam">
+              <div className="question-text-exam">Question {q.id}: {q.noiDung}</div>
+              <div className="options-list">
+                {q.luaChon.map((opt) => {
+                  const optLetter = opt.charAt(0);
+                  const isSelected = studentAnswer === optLetter;
+                  const isCorrect = optLetter === q.dapAn;
 
-                return (
-                  <div
-                    key={opt}
-                    className={`option-row ${isSelected ? "selected" : ""} ${reviewClass} ${reviewMode ? "disabled" : ""}`}
-                    onClick={() => !reviewMode && onAnswer(q.id, optLetter)}
-                  >
-                    <div className="option-radio">
-                      {isSelected && <div className="option-radio-dot" />}
+                  let optionStyle: React.CSSProperties = {};
+                  let badge = null;
+                  let checkCrossIcon = null;
+
+                  if (reviewMode) {
+                    if (isCorrect) {
+                      if (!studentAnswer) {
+                        optionStyle = {
+                          background: "#fffbeb",
+                          border: "1.5px solid #f59e0b",
+                          color: "#b45309"
+                        };
+                        checkCrossIcon = (
+                          <span style={{ color: "#f59e0b", fontWeight: "bold", fontSize: "16px" }}>✓</span>
+                        );
+                        badge = (
+                          <span style={{ 
+                            fontSize: 10, 
+                            fontWeight: "bold", 
+                            padding: "2px 6px", 
+                            borderRadius: 4, 
+                            marginLeft: 8,
+                            background: "#f59e0b",
+                            color: "#fff"
+                          }}>
+                            Chưa chọn
+                          </span>
+                        );
+                      } else {
+                        optionStyle = {
+                          background: "#f0fdf4",
+                          border: "1.5px solid #22c55e",
+                          color: "#166534"
+                        };
+                        checkCrossIcon = (
+                          <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "16px" }}>✓</span>
+                        );
+                      }
+                    } else if (isSelected) {
+                      optionStyle = {
+                        background: "#fef2f2",
+                        border: "1.5px solid #ef4444",
+                        color: "#991b1b"
+                      };
+                      checkCrossIcon = (
+                        <span style={{ color: "#ef4444", fontWeight: "bold", fontSize: "16px" }}>✗</span>
+                      );
+                    } else {
+                      optionStyle = {
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        color: "#94a3b8",
+                        opacity: 0.7
+                      };
+                    }
+
+                    if (isSelected) {
+                      badge = (
+                        <span style={{ 
+                          fontSize: 10, 
+                          fontWeight: "bold", 
+                          padding: "2px 6px", 
+                          borderRadius: 4, 
+                          marginLeft: 8,
+                          background: isCorrect ? "#22c55e" : "#ef4444",
+                          color: "#fff"
+                        }}>
+                          Lựa chọn của bạn
+                        </span>
+                      );
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={opt}
+                      className={`option-row ${isSelected ? "selected" : ""} ${reviewMode ? "disabled" : ""}`}
+                      style={optionStyle}
+                      onClick={() => !reviewMode && onAnswer(q.id, optLetter)}
+                    >
+                      {!reviewMode ? (
+                        <div className="option-radio">
+                          {isSelected && <div className="option-radio-dot" />}
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", marginRight: 8 }}>
+                          {checkCrossIcon || <span style={{ width: 14 }} />}
+                        </div>
+                      )}
+                      <span className="option-label-text" style={{ flex: 1 }}>{opt}</span>
+                      {badge}
                     </div>
-                    <span className="option-label-text">{opt}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -244,39 +320,115 @@ function ReadingSection({ part, answers, onAnswer, reviewMode }: {
         <div className="passage-content" dangerouslySetInnerHTML={{ __html: part.doanVan || "" }} />
       </div>
       <div className="reading-questions">
-        {part.cauHois.map((q) => (
-          <div key={q.id} className="question-card-exam">
-            <div className="question-text-exam">Question {q.id}: {q.noiDung}</div>
-            <div className="options-list">
-              {q.luaChon.map((opt) => {
-                const optLetter = opt.charAt(0);
-                const isSelected = answers[q.id] === optLetter;
+        {part.cauHois.map((q) => {
+          const studentAnswer = answers[q.id];
+          return (
+            <div key={q.id} className="question-card-exam">
+              <div className="question-text-exam">Question {q.id}: {q.noiDung}</div>
+              <div className="options-list">
+                {q.luaChon.map((opt) => {
+                  const optLetter = opt.charAt(0);
+                  const isSelected = studentAnswer === optLetter;
+                  const isCorrect = optLetter === q.dapAn;
 
-                let reviewClass = "";
-                if (reviewMode) {
-                  if (optLetter === q.dapAn) {
-                    reviewClass = "correct-answer-review";
-                  } else if (isSelected) {
-                    reviewClass = "incorrect-answer-review";
+                  let optionStyle: React.CSSProperties = {};
+                  let badge = null;
+                  let checkCrossIcon = null;
+
+                  if (reviewMode) {
+                    if (isCorrect) {
+                      if (!studentAnswer) {
+                        optionStyle = {
+                          background: "#fffbeb",
+                          border: "1.5px solid #f59e0b",
+                          color: "#b45309"
+                        };
+                        checkCrossIcon = (
+                          <span style={{ color: "#f59e0b", fontWeight: "bold", fontSize: "16px" }}>✓</span>
+                        );
+                        badge = (
+                          <span style={{ 
+                            fontSize: 10, 
+                            fontWeight: "bold", 
+                            padding: "2px 6px", 
+                            borderRadius: 4, 
+                            marginLeft: 8,
+                            background: "#f59e0b",
+                            color: "#fff"
+                          }}>
+                            Chưa chọn
+                          </span>
+                        );
+                      } else {
+                        optionStyle = {
+                          background: "#f0fdf4",
+                          border: "1.5px solid #22c55e",
+                          color: "#166534"
+                        };
+                        checkCrossIcon = (
+                          <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "16px" }}>✓</span>
+                        );
+                      }
+                    } else if (isSelected) {
+                      optionStyle = {
+                        background: "#fef2f2",
+                        border: "1.5px solid #ef4444",
+                        color: "#991b1b"
+                      };
+                      checkCrossIcon = (
+                        <span style={{ color: "#ef4444", fontWeight: "bold", fontSize: "16px" }}>✗</span>
+                      );
+                    } else {
+                      optionStyle = {
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        color: "#94a3b8",
+                        opacity: 0.7
+                      };
+                    }
+
+                    if (isSelected) {
+                      badge = (
+                        <span style={{ 
+                          fontSize: 10, 
+                          fontWeight: "bold", 
+                          padding: "2px 6px", 
+                          borderRadius: 4, 
+                          marginLeft: 8,
+                          background: isCorrect ? "#22c55e" : "#ef4444",
+                          color: "#fff"
+                        }}>
+                          Lựa chọn của bạn
+                        </span>
+                      );
+                    }
                   }
-                }
 
-                return (
-                  <div
-                    key={opt}
-                    className={`option-row ${isSelected ? "selected" : ""} ${reviewClass} ${reviewMode ? "disabled" : ""}`}
-                    onClick={() => !reviewMode && onAnswer(q.id, optLetter)}
-                  >
-                    <div className="option-radio">
-                      {isSelected && <div className="option-radio-dot" />}
+                  return (
+                    <div
+                      key={opt}
+                      className={`option-row ${isSelected ? "selected" : ""} ${reviewMode ? "disabled" : ""}`}
+                      style={optionStyle}
+                      onClick={() => !reviewMode && onAnswer(q.id, optLetter)}
+                    >
+                      {!reviewMode ? (
+                        <div className="option-radio">
+                          {isSelected && <div className="option-radio-dot" />}
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", marginRight: 8 }}>
+                          {checkCrossIcon || <span style={{ width: 14 }} />}
+                        </div>
+                      )}
+                      <span className="option-label-text" style={{ flex: 1 }}>{opt}</span>
+                      {badge}
                     </div>
-                    <span className="option-label-text">{opt}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -297,7 +449,6 @@ function WritingSection({ part, value, onChange, reviewMode }: {
             <div style={{ marginTop: 6, lineHeight: "1.6", color: "#475569" }} dangerouslySetInnerHTML={{ __html: part.goiY }} />
           </div>
         )}
-        <div className="writing-instruction">{part.yeuCau}</div>
       </div>
       <div className="writing-answer-box">
         <div className="writing-answer-header">
@@ -315,6 +466,262 @@ function WritingSection({ part, value, onChange, reviewMode }: {
   );
 }
 
+function ReviewAudioPlayer({ audioSrc }: { audioSrc: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showSpeedSubmenu, setShowSpeedSubmenu] = useState(false);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const updateTime = () => {
+      setCurrentTime(el.currentTime);
+      if (el.duration && el.duration !== Infinity && !isNaN(el.duration)) {
+        setDuration(el.duration);
+      }
+    };
+    const updateDuration = () => {
+      if (el.duration && el.duration !== Infinity && !isNaN(el.duration)) {
+        setDuration(el.duration);
+      }
+    };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    
+    el.addEventListener("timeupdate", updateTime);
+    el.addEventListener("loadedmetadata", updateDuration);
+    el.addEventListener("durationchange", updateDuration);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    
+    if (el.readyState >= 1) {
+      updateDuration();
+      updateTime();
+    }
+    
+    return () => {
+      if (el) {
+        el.removeEventListener("timeupdate", updateTime);
+        el.removeEventListener("loadedmetadata", updateDuration);
+        el.removeEventListener("durationchange", updateDuration);
+        el.removeEventListener("play", onPlay);
+        el.removeEventListener("pause", onPause);
+      }
+    };
+  }, [audioSrc]);
+
+  // Sync playback speed on metadata load
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [audioSrc, playbackRate]);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (audioRef.current.paused) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  };
+
+  const changeSpeed = (rate: number) => {
+    if (!audioRef.current) return;
+    audioRef.current.playbackRate = rate;
+    setPlaybackRate(rate);
+    setShowSpeedSubmenu(false);
+    setShowSettings(false);
+  };
+
+  const handleReload = () => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.playbackRate = playbackRate;
+    audioRef.current.play().catch(() => {});
+    setShowSettings(false);
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!audioRef.current) return;
+    const seekTime = parseFloat(e.target.value);
+    audioRef.current.currentTime = seekTime;
+    setCurrentTime(seekTime);
+  };
+
+  const fmt = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="review-audio-player-container" style={{ position: "relative", width: "100%", marginTop: 12 }}>
+      <audio ref={audioRef} src={audioSrc} preload="metadata" />
+      
+      <div 
+        style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          gap: 12, 
+          padding: "6px 14px", 
+          background: "#f1f3f4", 
+          borderRadius: 24, 
+          height: 38,
+          boxSizing: "border-box",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        }}
+      >
+        <button
+          type="button"
+          onClick={togglePlay}
+          style={{
+            background: "none", 
+            border: "none", 
+            cursor: "pointer", 
+            color: "#3c4043",
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            padding: 4,
+            outline: "none"
+          }}
+        >
+          {isPlaying ? <FiPause size={18} /> : <FiPlay size={18} style={{ marginLeft: 2 }} />}
+        </button>
+        
+        <span style={{ fontSize: 13, color: "#3c4043", minWidth: 70, whiteSpace: "nowrap" }}>
+          {fmt(currentTime)} / {duration > 0 ? fmt(duration) : "0:00"}
+        </span>
+        
+        <input
+          type="range"
+          min={0}
+          max={duration || 100}
+          value={currentTime}
+          onChange={handleSeek}
+          style={{
+            flex: 1,
+            height: 4,
+            accentColor: "#3c4043",
+            cursor: "pointer",
+            outline: "none",
+            background: "#cbd5e1"
+          }}
+        />
+
+        {/* Settings Button */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => {
+              setShowSettings(!showSettings);
+              setShowSpeedSubmenu(false);
+            }}
+            style={{
+              background: "none", 
+              border: "none", 
+              cursor: "pointer", 
+              color: "#3c4043",
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              padding: 6, 
+              borderRadius: "50%",
+              transition: "background 0.2s"
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = "#e2e8f0"}
+            onMouseOut={(e) => e.currentTarget.style.background = "none"}
+          >
+            <FiSettings size={18} />
+          </button>
+
+          {/* Custom Settings Dropdown */}
+          {showSettings && (
+            <div
+              style={{
+                position: "absolute", bottom: "100%", right: 0, marginBottom: 8,
+                background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 8,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 100, minWidth: 130, overflow: "hidden"
+              }}
+            >
+              {!showSpeedSubmenu ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowSpeedSubmenu(true)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      width: "100%", padding: "10px 14px", border: "none", background: "none",
+                      fontSize: 13, cursor: "pointer", color: "#334155", textAlign: "left"
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = "#f1f5f9"}
+                    onMouseOut={(e) => e.currentTarget.style.background = "none"}
+                  >
+                    <span>Speed</span>
+                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: "bold" }}>{playbackRate}x</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={handleReload}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      width: "100%", padding: "10px 14px", border: "none", background: "none",
+                      fontSize: 13, cursor: "pointer", color: "#334155", textAlign: "left",
+                      borderTop: "1px solid #f1f5f9"
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = "#f1f5f9"}
+                    onMouseOut={(e) => e.currentTarget.style.background = "none"}
+                  >
+                    <FiRotateCcw size={13} style={{ color: "#64748b" }} />
+                    <span>Reload</span>
+                  </button>
+                </>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: "bold", borderBottom: "1px solid #f1f5f9", color: "#64748b" }}>Select Speed</div>
+                  {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => changeSpeed(rate)}
+                      style={{
+                        padding: "8px 14px", border: "none", background: playbackRate === rate ? "#f1f5f9" : "none",
+                        fontSize: 13, cursor: "pointer", color: playbackRate === rate ? "#000080" : "#334155",
+                        textAlign: "left", fontWeight: playbackRate === rate ? "bold" : "normal"
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = "#f1f5f9"}
+                      onMouseOut={(e) => e.currentTarget.style.background = playbackRate === rate ? "#f1f5f9" : "none"}
+                    >
+                      {rate === 1.0 ? "Normal (1x)" : `${rate}x`}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowSpeedSubmenu(false)}
+                    style={{
+                      padding: "8px 12px", border: "none", background: "#f8fafc",
+                      fontSize: 12, cursor: "pointer", color: "#64748b", borderTop: "1px solid #f1f5f9",
+                      width: "100%", display: "block"
+                    }}
+                  >
+                    Back
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- SPEAKING SECTION ----
 type SpeakPhase = "initial_prep" | "audio_playing" | "pre_record" | "recording" | "saved" | "all_done";
 
@@ -326,7 +733,8 @@ function SpeakingSection({
   speakingCountdown,
   onAudioEnded,
   speakingUrls = {},
-  speakingBlobs = {}
+  speakingBlobs = {},
+  micVolume = 0
 }: {
   parts: SpeakingPart[];
   reviewMode: boolean;
@@ -336,9 +744,13 @@ function SpeakingSection({
   onAudioEnded: () => void;
   speakingUrls?: Record<number, string>;
   speakingBlobs?: Record<number, Blob>;
+  micVolume?: number;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [reviewPartIdx, setReviewPartIdx] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const activeIdx = reviewMode ? reviewPartIdx : speakingPartIdx;
   const part = parts[activeIdx] || parts[0];
@@ -353,6 +765,44 @@ function SpeakingSection({
       }
     }
   }, [speakingPhase, activeIdx, reviewMode]);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const updateTime = () => {
+      setCurrentTime(el.currentTime);
+      if (el.duration && el.duration !== Infinity && !isNaN(el.duration)) {
+        setDuration(el.duration);
+      }
+    };
+    const updateDuration = () => {
+      if (el.duration && el.duration !== Infinity && !isNaN(el.duration)) {
+        setDuration(el.duration);
+      }
+    };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    el.addEventListener("timeupdate", updateTime);
+    el.addEventListener("loadedmetadata", updateDuration);
+    el.addEventListener("durationchange", updateDuration);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    
+    if (el.readyState >= 1) {
+      updateDuration();
+      updateTime();
+    }
+    
+    return () => {
+      if (el) {
+        el.removeEventListener("timeupdate", updateTime);
+        el.removeEventListener("loadedmetadata", updateDuration);
+        el.removeEventListener("durationchange", updateDuration);
+        el.removeEventListener("play", onPlay);
+        el.removeEventListener("pause", onPause);
+      }
+    };
+  }, [part.audioUrl]);
 
   // Speaking Review Mode Render
   if (reviewMode) {
@@ -394,7 +844,7 @@ function SpeakingSection({
                 return audioSrc ? (
                   <div className="speaking-status-inner">
                     <div className="speaking-status-label green-text" style={{ marginBottom: 16 }}>BÀI NÓI ĐÃ ĐƯỢC GHI NHẬN</div>
-                    <audio src={audioSrc} controls style={{ width: "100%", marginTop: 8 }} />
+                    <ReviewAudioPlayer audioSrc={audioSrc} />
                     <p className="speaking-saved-sub" style={{ marginTop: 12 }}>
                       Nhấp nút Play để nghe lại bài nói của bạn.
                     </p>
@@ -462,26 +912,34 @@ function SpeakingSection({
             <div className="audio-player-custom">
               <button
                 className="audio-play-btn"
-                onClick={() => audioRef.current?.play()}
+                onClick={() => {
+                  if (audioRef.current) {
+                    if (audioRef.current.paused) {
+                      audioRef.current.play().catch(() => {});
+                    } else {
+                      audioRef.current.pause();
+                    }
+                  }
+                }}
                 disabled={speakingPhase !== "audio_playing"}
               >
-                <FiPlay style={{ marginLeft: 2 }} />
+                {isPlaying ? <FiPause /> : <FiPlay style={{ marginLeft: isPlaying ? 0 : 2 }} />}
               </button>
               <span className="audio-time-current">
-                {speakingPhase === "audio_playing" ? fmt(30 - speakingCountdown) : "--:--"}
+                {speakingPhase === "audio_playing" ? fmt(Math.round(currentTime)) : "00:00"}
               </span>
               <div className="audio-progress-bar">
                 <div
                   className="audio-progress-fill"
                   style={{
-                    width: speakingPhase === "audio_playing"
-                      ? `${((30 - speakingCountdown) / 30) * 100}%`
+                    width: duration > 0
+                      ? `${(currentTime / duration) * 100}%`
                       : "0%"
                   }}
                 />
               </div>
               <span className="audio-time-duration">
-                {speakingPhase === "audio_playing" ? "00:30" : "--:--"}
+                {duration > 0 ? fmt(Math.round(duration)) : "00:00"}
               </span>
             </div>
             <p className="speaking-audio-warning">
@@ -503,7 +961,6 @@ function SpeakingSection({
           {speakingPhase === "audio_playing" && (
             <div className="speaking-status-inner">
               <div className="speaking-status-label">Đang phát câu hỏi...</div>
-              <div className="speaking-countdown-big">{speakingCountdown} GIÂY</div>
             </div>
           )}
           {speakingPhase === "pre_record" && (
@@ -518,9 +975,21 @@ function SpeakingSection({
                 ĐANG GHI ÂM BÀI NÓI TRỰC TIẾP
               </div>
               <div className="waveform-container">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <div key={i} className="wave-bar" />
-                ))}
+                {Array.from({ length: 9 }).map((_, i) => {
+                  const volumeNormalized = Math.min(micVolume / 100, 1);
+                  const scale = 1 - Math.abs(i - 4) * 0.15;
+                  const height = 6 + volumeNormalized * 38 * scale * (0.8 + Math.random() * 0.4);
+                  const barStyle = micVolume > 0
+                    ? { height: `${height}px`, transition: "height 0.05s ease", animation: "none" }
+                    : {};
+                  return (
+                    <div
+                      key={i}
+                      className="wave-bar"
+                      style={barStyle}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -730,7 +1199,6 @@ export default function TestExamPage() {
   const [doneParts, setDoneParts] = useState<Record<string, boolean>>({});
   const [doneSkills, setDoneSkills] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState("");
-  const [violationCount, setViolationCount] = useState(0);
   const [modal, setModal] = useState<{ type: string; onConfirm: () => void } | null>(null);
   const [hoTen, setHoTen] = useState("Sinh Viên");
 
@@ -749,12 +1217,23 @@ export default function TestExamPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  
+  const [micVolume, setMicVolume] = useState<number>(0);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
 
   // Cleanup MediaRecorder on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
       }
     };
   }, []);
@@ -880,14 +1359,49 @@ export default function TestExamPage() {
 
   // Speaking Audio Ended Callback
   const handleSpeakingAudioEnded = useCallback(() => {
-    // Left empty: transitions are controlled strictly by speakingCountdown timer
-  }, []);
+    if (speakingPhase === "audio_playing") {
+      setSpeakingPhase("pre_record");
+      const activePart = testData?.kyNang?.speaking?.parts[speakingPartIdx];
+      const prepTime = activePart?.thoiGianChuanBi ?? 60;
+      setSpeakingCountdown(prepTime);
+    }
+  }, [speakingPhase, speakingPartIdx, testData]);
 
   // Timer Effect supporting refined Speaking logic
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+      
+      // Real Web Audio Analyser
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const audioCtx = new AudioContextClass();
+        audioCtxRef.current = audioCtx;
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        const checkVolume = () => {
+          if (!analyserRef.current) return;
+          analyserRef.current.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            sum += dataArray[i];
+          }
+          const average = sum / bufferLength;
+          setMicVolume(average);
+          animationFrameIdRef.current = requestAnimationFrame(checkVolume);
+        };
+        checkVolume();
+      } catch (audioErr) {
+        console.error("Lỗi khởi tạo Web Audio Analyser:", audioErr);
+      }
       
       let options = {};
       if (MediaRecorder.isTypeSupported("audio/webm")) {
@@ -939,7 +1453,11 @@ export default function TestExamPage() {
           if (response.ok) {
             const data = await response.json();
             const uploadedUrl = data.url;
-            setSpeakingUrls(prev => ({ ...prev, [partIndex]: uploadedUrl }));
+            setSpeakingUrls(prev => {
+              const updated = { ...prev, [partIndex]: uploadedUrl };
+              localStorage.setItem(`speaking_urls_${testId}`, JSON.stringify(updated));
+              return updated;
+            });
             resolve(uploadedUrl);
           } else {
             console.error("Lỗi upload file ghi âm");
@@ -949,6 +1467,17 @@ export default function TestExamPage() {
           console.error("Lỗi xử lý file ghi âm:", error);
           resolve("");
         } finally {
+          if (animationFrameIdRef.current) {
+            cancelAnimationFrame(animationFrameIdRef.current);
+            animationFrameIdRef.current = null;
+          }
+          if (audioCtxRef.current) {
+            audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current = null;
+          }
+          analyserRef.current = null;
+          setMicVolume(0);
+
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
@@ -1107,23 +1636,7 @@ export default function TestExamPage() {
     }
   }, [timeLeft, skill, testData, loading, doSave, isSubmitted, reviewMode, speakingPhase, speakingPartIdx]);
 
-  // Keyboard block for Listening & Reading
-  useEffect(() => {
-    if (skill !== "listening" && skill !== "reading" || isSubmitted || reviewMode) return;
-    const block = (e: KeyboardEvent) => {
-      e.preventDefault();
-      setViolationCount(p => {
-        const next = p + 1;
-        if (next >= 2 && skill === "reading") {
-          showToast("Bài thi bị hủy do vi phạm quy định!");
-          setTimeout(() => navigate("/test-thu-sv"), 2000);
-        }
-        return next;
-      });
-    };
-    window.addEventListener("keydown", block);
-    return () => window.removeEventListener("keydown", block);
-  }, [skill, navigate, showToast, isSubmitted, reviewMode]);
+
 
   const getSkillData = () => testData ? testData.kyNang[skill] : null;
 
@@ -1155,7 +1668,37 @@ export default function TestExamPage() {
     return (sd as any).parts.reduce((s: number, p: any) => s + (p.cauHois?.length || 0), 0);
   };
 
+  const clearUnsavedPartAnswers = (sk: Skill, pIdx: number) => {
+    if (doneParts[`${sk}_${pIdx}`]) return;
+    
+    if (sk === "listening" || sk === "reading") {
+      const parts = testData?.kyNang[sk]?.parts;
+      const part = parts ? parts[pIdx] : null;
+      if (part?.cauHois) {
+        const qIds = part.cauHois.map(q => q.id);
+        setAnswers(prev => {
+          const skAns = { ...(prev[sk] || {}) };
+          qIds.forEach(id => {
+            delete skAns[id];
+          });
+          return { ...prev, [sk]: skAns };
+        });
+      }
+    } else if (sk === "writing") {
+      const parts = testData?.kyNang.writing?.parts;
+      const part = parts ? parts[pIdx] : null;
+      if (part) {
+        setWritingAnswers(prev => {
+          const updated = { ...prev };
+          delete updated[part.soPhan];
+          return updated;
+        });
+      }
+    }
+  };
+
   const moveToNextSkill = () => {
+    clearUnsavedPartAnswers(skill, partIdx);
     const idx = skillList.indexOf(skill);
     if (idx < skillList.length - 1) {
       const next = skillList[idx + 1];
@@ -1175,7 +1718,7 @@ export default function TestExamPage() {
     setModal(null);
     const sd = getSkillData() as { parts: unknown[] } | null;
     if (sd?.parts && partIdx < sd.parts.length - 1) {
-      setDoneParts(p => ({ ...p, [`${skill}_${partIdx}`]: true }));
+      clearUnsavedPartAnswers(skill, partIdx);
       setPartIdx(p => p + 1);
       return;
     }
@@ -1197,14 +1740,6 @@ export default function TestExamPage() {
           setSearchParams({ auth: "register" }, { replace: true });
         }
       });
-      return;
-    }
-    const sd = getSkillData() as { parts: { cauHois?: CauHoi[] }[] } | null;
-    if (!sd?.parts) return;
-    const partCauHois = sd.parts[partIdx]?.cauHois || [];
-    const partAnswered = partCauHois.filter(q => (answers[skill] || {})[q.id]).length;
-    if ((skill === "listening" || skill === "reading") && partAnswered < partCauHois.length) {
-      setModal({ type: "incomplete", onConfirm: () => { setModal(null); moveNext(); } });
       return;
     }
     moveNext();
@@ -1390,7 +1925,6 @@ export default function TestExamPage() {
     setWritingAnswers({});
     setDoneParts({});
     setDoneSkills({});
-    setViolationCount(0);
     setIsSubmitted(false);
     setScores(null);
     setSkill("listening");
@@ -1463,28 +1997,17 @@ export default function TestExamPage() {
                 </div>
                 <div className="results-row action-row-res">
                   <span className="results-label">Điểm viết</span>
-                  <div className="results-actions-mid">
-                    <button className="btn-res-action blue-outline" onClick={() => showToast("Đã gửi yêu cầu chấm bài viết!")}>Gửi yêu cầu chấm</button>
-                    <button className="btn-res-action grey-outline" onClick={() => { setReviewMode(true); setIsSubmitted(false); setSkill("writing"); setPartIdx(0); }}>Xem lại</button>
-                  </div>
                   <span className="results-status-right">Chưa chấm</span>
                 </div>
                 <div className="results-row action-row-res">
                   <span className="results-label">Điểm nói</span>
-                  <div className="results-actions-mid">
-                    <button className="btn-res-action blue-outline" onClick={() => showToast("Đã gửi yêu cầu chấm bài nói!")}>Gửi yêu cầu chấm</button>
-                    <button className="btn-res-action grey-outline" onClick={() => { setReviewMode(true); setIsSubmitted(false); setSkill("speaking"); setPartIdx(0); }}>Xem lại</button>
-                  </div>
                   <span className="results-status-right">Chưa chấm</span>
                 </div>
                 <div className="results-row">
                   <span className="results-label">Điểm bài thi</span>
                   <span className="results-value highlight-score">{scores.final}</span>
                 </div>
-                <div className="results-row">
-                  <span className="results-label">Bậc đạt được</span>
-                  <span className={`results-value level-text ${scores.level === "Không xét" ? "no-level" : ""}`}>{scores.level}</span>
-                </div>
+
 
                 <div className="results-card-footer">
                   <button className="btn-res-footer-action blue-fill" onClick={() => { setReviewMode(true); setIsSubmitted(false); }}>Xem lại bài thi</button>
@@ -1530,9 +2053,7 @@ export default function TestExamPage() {
     <div className="exam-wrapper">
       {toast && <div className="exam-toast">{toast}</div>}
 
-      {violationCount === 1 && (skill === "listening" || skill === "reading") && !reviewMode && (
-        <div className="violation-banner">CẢNH BÁO: Vi phạm quy định! Vi phạm tiếp theo sẽ HỦY bài thi.</div>
-      )}
+
 
       {reviewMode && (
         <div className="review-mode-banner">
@@ -1602,6 +2123,7 @@ export default function TestExamPage() {
             onAudioEnded={handleSpeakingAudioEnded}
             speakingUrls={speakingUrls}
             speakingBlobs={speakingBlobs}
+            micVolume={micVolume}
           />
         )}
       </main>
@@ -1627,6 +2149,7 @@ export default function TestExamPage() {
                             setSkill(sk);
                             setPartIdx(i);
                           } else if (sk === skill && !isDone) {
+                            clearUnsavedPartAnswers(skill, partIdx);
                             setPartIdx(i);
                           }
                         }}
@@ -1652,13 +2175,6 @@ export default function TestExamPage() {
         </div>
       </nav>
 
-      {modal?.type === "incomplete" && (
-        <Modal
-          title="Chưa hoàn thành"
-          body={`Bạn mới trả lời được ${answered}/${total} câu hỏi trong phần này. Bạn vẫn muốn chuyển sang phần tiếp theo không?`}
-          onConfirm={modal.onConfirm} onCancel={() => setModal(null)} confirmLabel="Tiếp tục"
-        />
-      )}
       {modal?.type === "switch_skill" && (
         <Modal
           title="Chuyển kỹ năng"
