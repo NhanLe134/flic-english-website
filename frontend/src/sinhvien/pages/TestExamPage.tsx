@@ -743,7 +743,6 @@ export default function TestExamPage() {
   const [speakingPartIdx, setSpeakingPartIdx] = useState(0);
   const [speakingPhase, setSpeakingPhase] = useState<SpeakPhase>("initial_prep");
   const [speakingCountdown, setSpeakingCountdown] = useState(3);
-  const [partRecordingTimeLeft, setPartRecordingTimeLeft] = useState(0);
   const [speakingBlobs, setSpeakingBlobs] = useState<Record<number, Blob>>({});
   const [speakingUrls, setSpeakingUrls] = useState<Record<number, string>>({});
 
@@ -1063,15 +1062,11 @@ export default function TestExamPage() {
             const nextTimeLeft = p - 1;
             setSpeakingCountdown(nextTimeLeft);
             
-            setPartRecordingTimeLeft(pr => {
-              if (pr <= 1 || nextTimeLeft <= 0) {
-                setSpeakingPhase("saved");
-                stopRecordingAndUpload(speakingPartIdx);
-                setSpeakingCountdown(3);
-                return 0;
-              }
-              return pr - 1;
-            });
+            if (nextTimeLeft <= 0) {
+              setSpeakingPhase("saved");
+              stopRecordingAndUpload(speakingPartIdx);
+              setSpeakingCountdown(3);
+            }
             
             return nextTimeLeft;
           });
@@ -1087,8 +1082,6 @@ export default function TestExamPage() {
               } else if (speakingPhase === "pre_record") {
                 setSpeakingPhase("recording");
                 startRecording();
-                const partDuration = testData.kyNang.speaking.parts[speakingPartIdx]?.thoiGianNoi || 180;
-                setPartRecordingTimeLeft(partDuration);
                 return timeLeft;
               } else if (speakingPhase === "saved") {
                 const nextIdx = speakingPartIdx + 1;
