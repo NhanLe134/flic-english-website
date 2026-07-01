@@ -203,13 +203,35 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
       {/* DELETE MODAL */}
       {showModal && (
-        <div className="baigiang-modal-overlay">
-          <div className="modal">
-            <div className="modal-icon">!</div>
-            <h3>Xác nhận Xóa</h3>
-            <p>Bạn có chắc chắn muốn xóa bài học này?</p>
-            <button className="confirm-btn" onClick={confirmDelete}>Xác nhận</button>
-            <button className="cancel-btn" onClick={() => setShowModal(false)}>Không</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => setShowModal(false)}>
+          <div style={{
+            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #cbd5e1", textAlign: "center"
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+              Xác nhận xóa bài học
+            </h3>
+            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Bạn có chắc chắn muốn xóa bài học này?
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+              >
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
       )}

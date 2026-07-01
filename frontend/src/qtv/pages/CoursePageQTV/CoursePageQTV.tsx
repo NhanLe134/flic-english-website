@@ -428,15 +428,28 @@ export default function CoursePageQTV() {
   // Pending registrations
   const [pendingRegs, setPendingRegs]               = useState<PendingReg[]>([])
   const [showRegModal, setShowRegModal]             = useState(false)
-  const [regCourseFilter, setRegCourseFilter]       = useState<number | 'all'>('all')
+  const [regClassFilter, setRegClassFilter]         = useState<string>('all')
   const [selectedReg, setSelectedReg]               = useState<PendingReg | null>(null)
   const [showAssignClassModal, setShowAssignClassModal] = useState(false)
   const [assignClassId, setAssignClassId]           = useState<number | ''>('')
 
-  // ── DELETE MODAL STATE ──────────────────────────────────────────────────────
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteMessage, setDeleteMessage]     = useState('')
   const [deleteAction, setDeleteAction]       = useState<(() => Promise<void>) | null>(null)
+
+  const uniqueRegClasses = useMemo(() => {
+    const list: { id: string; name: string }[] = [];
+    const seen = new Set<string>();
+    pendingRegs.forEach(r => {
+      if (r.className) {
+        if (!seen.has(r.className)) {
+          seen.add(r.className);
+          list.push({ id: String(r.classId || r.className), name: r.className });
+        }
+      }
+    });
+    return list;
+  }, [pendingRegs]);
 
   // Helper: mở modal xác nhận xóa
   const confirmAction = (msg: string, action: () => Promise<void>) => {
@@ -1941,13 +1954,13 @@ export default function CoursePageQTV() {
         <div className={styles.overlay}>
           <div className={styles.regModal}>
             <div className={styles.modalTop}>
-              <div><h3>Danh sách đăng ký khóa học</h3><div className={styles.modalSub}>Sinh viên đã đăng ký – chờ ghi danh vào lớp</div></div>
+              <div><h3>Danh sách ghi danh đăng ký lớp</h3><div className={styles.modalSub}>Sinh viên đã đăng ký – chờ ghi danh vào lớp</div></div>
               <button className={styles.modalClose} onClick={() => setShowRegModal(false)}>×</button>
             </div>
             <div className={styles.regFilterRow}>
-              <select value={regCourseFilter} onChange={e => setRegCourseFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))} className={styles.regSelect}>
-                <option value="all">Tất cả khóa học</option>
-                {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+              <select value={regClassFilter} onChange={e => setRegClassFilter(e.target.value)} className={styles.regSelect}>
+                <option value="all">Tất cả lớp học</option>
+                {uniqueRegClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <div className={styles.regStats}>
                 <span className={styles.regStatPill} style={{ background:'#fef3c7', color:'#d97706' }}>Chờ: {pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</span>
@@ -1956,13 +1969,13 @@ export default function CoursePageQTV() {
             </div>
             <div className={styles.regTableWrap}>
               <table className={styles.table}>
-                <thead><tr><th>Mã SV</th><th>Họ và tên</th><th>SĐT</th><th>Khóa học</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <thead><tr><th>Mã SV</th><th>Họ và tên</th><th>SĐT</th><th>Lớp/Khóa</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
                 <tbody>
-                  {pendingRegs.filter(r => regCourseFilter === 'all' || r.courseId === regCourseFilter).map(r => (
+                  {pendingRegs.filter(r => regClassFilter === 'all' || String(r.classId) === regClassFilter || r.className === regClassFilter).map(r => (
                     <tr key={r.id}>
                       <td className={styles.monoText}>{r.studentId}</td>
                       <td className={styles.boldText}>{r.name}</td>
-                      <td>{r.phone}</td><td>{r.courseName}</td><td>{r.regDate}</td>
+                      <td>{r.phone}</td><td>{r.className ? `${r.className} / ${r.courseName}` : r.courseName}</td><td>{r.regDate}</td>
                       <td><span className={`${styles.badge} ${r.status === 'Chờ ghi danh' ? styles.badgeYellow : r.status === 'Đã ghi danh' ? styles.badgeGreen : styles.badgeRed}`}>{r.status}</span></td>
                       <td>
                         <div className={styles.actionBtns}>

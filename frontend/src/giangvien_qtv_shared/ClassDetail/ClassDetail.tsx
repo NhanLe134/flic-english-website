@@ -474,13 +474,38 @@ const ClassDetail = () => {
 
       {/* ===== MODAL ===== */}
       {showDeleteModal && (
-        <div className="baitap-modal-overlay">
-          <div className="delete-modal">
-            <div className="modal-icon">!</div>
-            <h3>Xác nhận Xóa</h3>
-            <p>Bạn có chắc chắn muốn xóa bài tập này không?</p>
-            <button className="confirm-btn" onClick={handleDelete}>Xác nhận</button>
-            <button className="cancel-btn" onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>Không</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>
+          <div style={{
+            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #cbd5e1", textAlign: "center"
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+              Xác nhận xóa bài tập
+            </h3>
+            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Bạn có chắc chắn muốn xóa bài tập này không?
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedId(null);
+                }}
+                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+              >
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
       )}
