@@ -929,80 +929,6 @@ app.get("/baitap/:id", async (req, res) => {
   } catch (err) { res.status(500).send("Lỗi server"); }
 });
 
-/*
-// ── POST /baitap (DEPRECATED) ──────────────────────────────────────────
-// Thay thế bằng app.post("/baitap/create") ở dòng 1798 hỗ trợ nhiều trường thông tin hơn
-app.post("/baitap", async (req, res) => {
-  try {
-    const { Title, Type, Content, Questions, CreatedDate, MaBuoiHoc, MaBaiHoc, TrangThai, MaGiangVien, FileDinhKem } = req.body;
-    const pool = await poolPromise;
-    let targetMaBaiHoc = MaBaiHoc;
-
-    if (!targetMaBaiHoc && MaBuoiHoc) {
-      // Tìm bài giảng đầu tiên của buổi học này để gán
-      const bhResult = await pool.request()
-        .input("buoiHocId", MaBuoiHoc)
-        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
-      if (bhResult.recordset.length > 0) {
-        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-      } else {
-        // Tạo bài giảng rỗng tạm thời cho buổi học
-        const insertBh = await pool.request()
-          .input("buoiHocId", MaBuoiHoc)
-          .query(`
-            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
-            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
-            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-          `);
-        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
-      }
-    }
-
-    if (!targetMaBaiHoc) {
-      return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
-    }
-
-    // Resolve MaGiangVien if not passed or null
-    let resolvedMaGiangVien = MaGiangVien;
-    if (!resolvedMaGiangVien && MaBuoiHoc) {
-      const classTeacherResult = await pool.request()
-        .input("buoiHocId", MaBuoiHoc)
-        .query(`
-          SELECT TOP 1 pc.MaGiangVien 
-          FROM BUOIHOC b
-          LEFT JOIN PHANCONGGIANGVIEN pc ON b.MaLopHoc = pc.MaLopHoc
-          WHERE b.MaBuoiHoc = @buoiHocId
-        `);
-      if (classTeacherResult.recordset.length > 0) {
-        resolvedMaGiangVien = classTeacherResult.recordset[0].MaGiangVien;
-      }
-    }
-
-    const finalTrangThai = TrangThai || "pending";
-    const finalTrangThaiDuyet = finalTrangThai === "published" ? 'Đã duyệt' : (finalTrangThai === "rejected" ? 'Từ chối' : 'Chờ duyệt');
-
-    await pool.request()
-      .input("TieuDe", Title)
-      .input("DangBai", Type || null)
-      .input("NoiDung", Content || "")
-      .input("CauHoi", Questions || "")
-      .input("NgayTao", CreatedDate || new Date().toISOString().split('T')[0])
-      .input("MaBaiHoc", targetMaBaiHoc)
-      .input("LaBaiKiemTra", Type === "exam" ? 1 : 0)
-      .input("TrangThai", finalTrangThai)
-      .input("TrangThaiDuyet", finalTrangThaiDuyet)
-      .input("MaGiangVien", resolvedMaGiangVien || null)
-      .input("FileDinhKem", FileDinhKem || null)
-      .query(`
-        INSERT INTO BAITAP 
-          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LaBaiKiemTra, TrangThai, TrangThaiDuyet, MaGiangVien, FileDinhKem) 
-        VALUES 
-          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @MaGiangVien, @FileDinhKem)
-      `);
-    res.json({ message: "Thêm bài tập thành công" });
-  } catch (err) { res.status(500).send("Lỗi server: " + err.message); }
-});
-*/
 app.put("/baitap/:id", async (req, res) => {
   try {
     const { Questions } = req.body;
@@ -1016,36 +942,67 @@ app.put("/baitap/:id", async (req, res) => {
 });
 app.delete("/baitap/:id", async (req, res) => {
   try {
+    const { id } = req.params;
     const pool = await poolPromise;
-    const id = parseInt(req.params.id);
 
-    // Xóa bài nộp liên quan trước (foreign key)
-    await pool.request()
-      .input("id", id)
-      .query(`DELETE FROM BAINOP WHERE MaBaiTap = @id`);
+    let targetId = id;
+    let isExam = false;
+    let identified = false;
 
-    // Xóa bài tập
-    await pool.request()
-      .input("id", id)
-      .query(`DELETE FROM BAITAP WHERE MaBaiTap = @id`);
+    if (typeof id === "string") {
+      if (id.startsWith("exam-")) {
+        targetId = parseInt(id.replace("exam-", ""), 10);
+        isExam = true;
+        identified = true;
+      } else if (id.startsWith("baitap-")) {
+        targetId = parseInt(id.replace("baitap-", ""), 10);
+        isExam = false;
+        identified = true;
+      }
+    }
 
-    // Xóa dữ liệu thi liên quan trong BAIKIEMTRA
-    await pool.request()
-      .input("id", id)
-      .query(`DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+    if (!identified) {
+      targetId = parseInt(id, 10);
+      const examCheck = await pool.request()
+        .input("id", targetId)
+        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+      if (examCheck.recordset.length > 0) {
+        isExam = true;
+      }
+    }
 
-    await pool.request()
-      .input("id", id)
-      .query(`DELETE FROM CAUHOI WHERE MaBaiKiemTra = @id`);
-
-    await pool.request()
-      .input("id", id)
-      .query(`DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+    if (isExam) {
+      // Delete answers, questions, results, and the exam itself
+      await pool.request()
+        .input("id", targetId)
+        .query(`DELETE FROM DAPAN WHERE MaCauHoi IN (SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra = @id)`);
+      
+      await pool.request()
+        .input("id", targetId)
+        .query(`DELETE FROM CAUHOI WHERE MaBaiKiemTra = @id`);
+      
+      await pool.request()
+        .input("id", targetId)
+        .query(`DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+      
+      await pool.request()
+        .input("id", targetId)
+        .query(`DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+    } else {
+      // Delete submissions and the exercise
+      await pool.request()
+        .input("id", targetId)
+        .query(`DELETE FROM BAINOP WHERE MaBaiTap = @id`);
+      
+      await pool.request()
+        .input("id", targetId)
+        .query(`DELETE FROM BAITAP WHERE MaBaiTap = @id`);
+    }
 
     res.json({ message: "Xóa thành công" });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Lỗi server");
+    res.status(500).send("Lỗi server: " + err.message);
   }
 });
 /* ===== BÀI GIẢNG ===== */
@@ -1494,52 +1451,6 @@ app.put("/baitap/:id/status", async (req, res) => {
   }
 });
 
-// Xóa bài tập / bài kiểm tra
-app.delete("/baitap/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const pool = await poolPromise;
-
-    let targetId = id;
-    let isExam = false;
-    let identified = false;
-
-    if (typeof id === "string") {
-      if (id.startsWith("exam-")) {
-        targetId = parseInt(id.replace("exam-", ""), 10);
-        isExam = true;
-        identified = true;
-      } else if (id.startsWith("baitap-")) {
-        targetId = parseInt(id.replace("baitap-", ""), 10);
-        isExam = false;
-        identified = true;
-      }
-    }
-
-    if (!identified) {
-      const examCheck = await pool.request()
-        .input("id", targetId)
-        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
-      if (examCheck.recordset.length > 0) {
-        isExam = true;
-      }
-    }
-
-    if (isExam) {
-      await pool.request()
-        .input("id", targetId)
-        .query("DELETE FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id");
-    } else {
-      await pool.request()
-        .input("id", targetId)
-        .query("DELETE FROM BAITAP WHERE MaBaiTap = @id");
-    }
-
-    res.json({ message: "Xóa thành công" });
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
 
 /* ===== GIẢNG VIÊN ===== */
 app.get("/giangvien/:maNguoiDung", async (req, res) => {
@@ -3206,32 +3117,6 @@ app.get("/qtv/baitap", async (req, res) => {
   } catch (err) { res.status(500).send(err.message); }
 });
 
-// Cập nhật trạng thái duyệt bài tập hoặc bài kiểm tra
-app.put("/baitap/:id/status", async (req, res) => {
-  try {
-    const { TrangThai } = req.body;
-    const { id } = req.params;
-    const pool = await poolPromise;
-    
-    if (id.startsWith("exam-")) {
-      const dbId = parseInt(id.replace("exam-", ""));
-      await pool.request()
-        .input("id", dbId)
-        .input("TrangThai", TrangThai)
-        .query(`UPDATE BAIKIEMTRA SET TrangThaiDuyet = @TrangThai WHERE MaBaiKiemTra = @id`);
-      res.json({ message: "Đã cập nhật trạng thái bài kiểm tra" });
-    } else {
-      const dbId = parseInt(id.replace("baitap-", ""));
-      const finalTrangThaiDuyet = TrangThai === "published" ? 'Đã duyệt' : (TrangThai === "rejected" ? 'Từ chối' : 'Chờ duyệt');
-      await pool.request()
-        .input("id", dbId)
-        .input("TrangThai", TrangThai)
-        .input("TrangThaiDuyet", finalTrangThaiDuyet)
-        .query(`UPDATE BAITAP SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiTap = @id`);
-      res.json({ message: "Đã cập nhật trạng thái bài tập" });
-    }
-  } catch (err) { res.status(500).send(err.message); }
-});
 
 // Lấy tất cả điểm bài nộp kèm ngày nộp
 app.get("/baocao/diem-all", async (req, res) => {
