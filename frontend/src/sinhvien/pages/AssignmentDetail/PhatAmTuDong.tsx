@@ -1,7 +1,6 @@
 import React, { useRef, useState } from "react";
 import { FiVolume2, FiMic, FiPlay, FiPause } from "react-icons/fi";
 import "./PhatAmTuDong.css";
-import "./PhatAmTuDong_TuongThich.css";
 
 interface PhatAmTuDongProps {
   q: any;
