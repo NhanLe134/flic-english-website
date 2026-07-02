@@ -4,7 +4,9 @@ import { FiPlay, FiPause, FiSettings, FiRotateCcw } from "react-icons/fi";
 import "./TestExamPage.css";
 
 const BASE = import.meta.env.BASE_URL;
-const API = "http://localhost:5000";
+const API = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : `http://${window.location.hostname}:5000`;
 
 const resolveUrl = (url: string | undefined) => {
   if (!url) return "";
@@ -1186,7 +1188,7 @@ const STATIC_QUESTIONS = {
 export default function TestExamPage() {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isLoggedIn = !!sessionStorage.getItem("user");
 
   const [testData, setTestData] = useState<TestData | null>(null);
@@ -1205,7 +1207,14 @@ export default function TestExamPage() {
   // Submitted results state
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
-  const [scores, setScores] = useState<{ listening: number; reading: number; final: number; level: string } | null>(null);
+  const [scores, setScores] = useState<{
+    listening: number;
+    reading: number;
+    writing?: number | null;
+    speaking?: number | null;
+    final: number;
+    level?: string;
+  } | null>(null);
 
   // Speaking States
   const [speakingPartIdx, setSpeakingPartIdx] = useState(0);
@@ -1256,6 +1265,33 @@ export default function TestExamPage() {
     } catch { /* empty */ }
 
     const testIdNum = parseInt(testId || "1");
+
+    // Tải kết quả thi nếu đang ở chế độ xem kết quả
+    const viewParam = searchParams.get("view");
+    const subIdParam = searchParams.get("submissionId");
+    if (viewParam === "results" && subIdParam) {
+      const fetchAPI = window.location.hostname === "localhost"
+        ? "http://localhost:5000"
+        : `http://${window.location.hostname}:5000`;
+      
+      fetch(`${fetchAPI}/dethi/submissions`)
+        .then(res => res.json())
+        .then(subs => {
+          const match = subs.find((s: any) => s.id === Number(subIdParam));
+          if (match) {
+            setIsSubmitted(true);
+            luotThiCodeRef.current = match.id;
+            setScores({
+              listening: match.diemNghe,
+              reading: match.diemDoc,
+              writing: match.diemViet,
+              speaking: match.diemNoi,
+              final: match.diemTong !== null ? match.diemTong : (match.diemNghe + match.diemDoc) / 2
+            });
+          }
+        })
+        .catch(err => console.error("Error fetching submission details:", err));
+    }
 
     // Nếu là đề thi tĩnh (1, 2, 3) dùng trực tiếp STATIC_QUESTIONS
     if (testIdNum === 1 || testIdNum === 2 || testIdNum === 3) {
@@ -1344,7 +1380,7 @@ export default function TestExamPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [testId]);
+  }, [testId, searchParams]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -1444,7 +1480,6 @@ export default function TestExamPage() {
           const ext = recorder.mimeType.includes("mp4") ? "mp4" : "webm";
           formData.append("file", audioBlob, `speaking-part-${partIndex + 1}-${Date.now()}.${ext}`);
           
-          const API = "http://localhost:5000";
           const response = await fetch(`${API}/upload`, {
             method: "POST",
             body: formData
@@ -1859,8 +1894,6 @@ export default function TestExamPage() {
       const u = JSON.parse(sessionStorage.getItem("user") || "{}");
       const maNguoiDung = u.MaNguoiDung;
 
-      const API = "http://localhost:5000";
-
       // 5. Gửi request nộp bài lên backend
       const res = await fetch(`${API}/dethi/submit`, {
         method: "POST",
@@ -1997,15 +2030,25 @@ export default function TestExamPage() {
                 </div>
                 <div className="results-row action-row-res">
                   <span className="results-label">Điểm viết</span>
-                  <span className="results-status-right">Chưa chấm</span>
+                  {scores.writing !== null && scores.writing !== undefined ? (
+                    <span className="results-value highlight-score">{scores.writing}</span>
+                  ) : (
+                    <span className="results-status-right">Chưa chấm</span>
+                  )}
                 </div>
                 <div className="results-row action-row-res">
                   <span className="results-label">Điểm nói</span>
-                  <span className="results-status-right">Chưa chấm</span>
+                  {scores.speaking !== null && scores.speaking !== undefined ? (
+                    <span className="results-value highlight-score">{scores.speaking}</span>
+                  ) : (
+                    <span className="results-status-right">Chưa chấm</span>
+                  )}
                 </div>
                 <div className="results-row">
                   <span className="results-label">Điểm bài thi</span>
-                  <span className="results-value highlight-score">{scores.final}</span>
+                  <span className="results-value highlight-score">
+                    {typeof scores.final === "number" ? scores.final.toFixed(1) : scores.final}
+                  </span>
                 </div>
 
 
