@@ -185,18 +185,14 @@ td {
   transition: background-color 0.15s ease;
 }
 
-/* ROW & CELL HOVER WITH PREMIUM LIGHT BLUE */
+/* ROW HOVER WITH PREMIUM LIGHT BLUE */
 tr.lrp-row:hover td {
   background-color: #f0f7ff !important;
 }
 
-tr.lrp-row td:hover {
-  background-color: #e0f2fe !important;
-}
-
-/* Details sub-rows cell hover */
-tr:not(.lrp-row) td:hover {
-  background-color: #f1f5f9 !important;
+/* Details sub-rows row hover */
+tr:not(.lrp-row):hover td {
+  background-color: #f0f7ff !important;
 }
 
 .lrp-code-cell {

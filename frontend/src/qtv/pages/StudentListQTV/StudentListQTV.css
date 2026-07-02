@@ -365,11 +365,7 @@
 }
 
 .slqtv-table-wrapper tr:hover td {
-  background-color: #f8fafc !important;
-}
-
-.slqtv-table-wrapper tr td:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #f0f7ff !important;
 }
 
 .slqtv-code-cell {

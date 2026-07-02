@@ -1311,7 +1311,7 @@ app.get("/tailieu/:buoiHocId", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("buoiHocId", req.params.buoiHocId)
-      .query(`SELECT MaTaiLieu, TieuDe, MoTa, NgayCapNhat FROM TAILIEU WHERE MaBuoiHoc = @buoiHocId ORDER BY NgayCapNhat DESC`);
+      .query(`SELECT MaTaiLieu, TieuDe, MoTa, NoiDung, FileUrl, NgayCapNhat FROM TAILIEU WHERE MaBuoiHoc = @buoiHocId ORDER BY NgayCapNhat DESC`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
