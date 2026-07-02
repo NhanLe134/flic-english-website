@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
+import { hasPermission } from "../../utils/permission";
 
 interface LessonManagementProps {
   buoiHocIdProp?: string;
@@ -130,15 +131,19 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <FiSearch size={16} />
           </button>
         </form>
-        <button
-          className="add-btn-reuse"
-          onClick={openReuseModal}
-        >
-          <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn BG có sẵn
-        </button>
-        <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
-          <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm BG mới
-        </button>
+        {hasPermission("LECTURE_CREATE") && (
+          <>
+            <button
+              className="add-btn-reuse"
+              onClick={openReuseModal}
+            >
+              <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn BG có sẵn
+            </button>
+            <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
+              <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm BG mới
+            </button>
+          </>
+        )}
       </div>
 
       {/* TABLE */}
