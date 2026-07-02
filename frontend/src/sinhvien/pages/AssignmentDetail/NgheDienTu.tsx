@@ -2,7 +2,6 @@ import React from "react";
 import { FiVolume2 } from "react-icons/fi";
 import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
 import "./NgheDienTu.css";
-import "./NgheDienTu_TuongThich.css";
 
 // Dinh nghia interface props cua component
 interface NgheDienTuProps {

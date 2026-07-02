@@ -2,7 +2,6 @@ import React from "react";
 import { FiEdit3 } from "react-icons/fi";
 import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
 import "./NgheChepChinhTa.css";
-import "./NgheChepChinhTa_TuongThich.css";
 
 interface NgheChepChinhTaProps {
   q: any;

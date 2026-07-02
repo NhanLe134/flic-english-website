@@ -1353,6 +1353,7 @@ function ChiTietBaiTap() {
           isExam={isExam}
           examStarted={examStarted}
           API={API}
+          isReview={isReview}
         />
       );
     }
