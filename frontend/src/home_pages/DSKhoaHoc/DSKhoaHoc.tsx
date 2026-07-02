@@ -1,5 +1,5 @@
-import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 import "./DSKhoaHoc.css";
 import "./DSKhoaHoc_TuongThich.css"; // Import file css tuong thich rieng
 import { useState, useEffect } from "react";
@@ -35,7 +35,7 @@ const DSKhoaHoc = () => {
 
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
 
       <div className="courses-page-wrapper">
         <div className="courses-container">

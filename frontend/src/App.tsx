@@ -7,7 +7,7 @@ import CoursesPageHome from "./home_pages/DSKhoaHoc/DSKhoaHoc"
 import CoursesCategoryPage from "./home_pages/CoursesCategoryPage/CoursesCategoryPage"
 import CourseDetailHome from "./home_pages/CourseDetailHome/CourseDetailHome"
 import RegisterSuccess from "./home_pages/RegisterSuccess/RegisterSuccess"
-import AuthModal from "./components/AuthModal"
+import PopupXacThuc from "./components/PopupXacThuc/PopupXacThuc"
 import QuanLyKhoaHoc from "./giangvien_qtv_shared/QuanLyKhoaHoc/QuanLyKhoaHoc"
 import ResetSuccess from "./home_pages/ResetSuccess/ResetSuccess"
 import CourseDetail from "./giangvien_qtv_shared/CourseDetail/CourseDetail"
@@ -76,13 +76,13 @@ import HocThuSV from "./sinhvien/pages/HocThuSV"
 import TestThuSV from "./sinhvien/pages/TestThuSV"
 import TestExamPage from "./sinhvien/pages/TestExamPage"
 import ClassDetailTrial from "./sinhvien/pages/ClassDetail/ClassDetailTrial"
-import NavbarAuto from "./components/NavbarAuto"
-import Footer from "./components/Footer"
+import NavTuDong from "./components/NavTuDong/NavTuDong"
+import Footer from "./components/Footer/Footer"
 
 const ClassDetailTrialPublic = () => {
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
       <div style={{ padding: "0", minHeight: "80vh", background: "#f8fafc" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <ClassDetailTrial />
@@ -222,7 +222,7 @@ function App() {
           <Route path="/essay-detail" element={<EssayDetail />} />
         </Route>
       </Routes>
-      <AuthModal />
+      <PopupXacThuc />
     </BrowserRouter>
   )
 }

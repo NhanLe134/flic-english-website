@@ -1,8 +1,8 @@
-﻿import "./Header.css";
-import { useAvatar } from "../context/AvatarContext";
+import "./HeaderGiangVien.css";
+import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
 
-const Header = () => {
+const HeaderGiangVien = () => {
   const { avatar, handleUpload } = useAvatar();
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
 
@@ -39,4 +39,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default HeaderGiangVien;

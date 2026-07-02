@@ -1,5 +1,5 @@
 import "./Register.css";
-import Navbar from "../../components/Navbar";
+import Nav from "../../components/Nav/Nav";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -328,7 +328,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
 
   return (
     <div>
-      <Navbar />
+      <Nav />
       <div className="register-page">
         {cardContent}
       </div>
