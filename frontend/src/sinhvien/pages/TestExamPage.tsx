@@ -1953,18 +1953,6 @@ export default function TestExamPage() {
     });
   };
 
-  const handleReset = () => {
-    setAnswers({});
-    setWritingAnswers({});
-    setDoneParts({});
-    setDoneSkills({});
-    setIsSubmitted(false);
-    setScores(null);
-    setSkill("listening");
-    setPartIdx(0);
-    setTimeLeft(testData ? testData.kyNang.listening.thoiGian : 0);
-  };
-
   const onAnswer = (qId: number, val: string) => {
     setAnswers(p => ({ ...p, [skill]: { ...(p[skill] || {}), [qId]: val } }));
   };
