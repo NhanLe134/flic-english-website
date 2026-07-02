@@ -2,6 +2,7 @@ import "./DocumentManagement.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
+import { hasPermission } from "../../utils/permission";
 
 interface DocumentManagementProps {
   buoiHocIdProp?: string;
@@ -159,15 +160,19 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
             <FiSearch size={16} />
           </button>
         </form>
-        <button
-          className="add-btn-reuse"
-          onClick={openReuseModal}
-        >
-          <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn tài liệu có sẵn
-        </button>
-        <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
-          <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm tài liệu
-        </button>
+        {(hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
+          <>
+            <button
+              className="add-btn-reuse"
+              onClick={openReuseModal}
+            >
+              <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn tài liệu có sẵn
+            </button>
+            <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
+              <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm tài liệu
+            </button>
+          </>
+        )}
       </div>
 
       {/* LIST */}

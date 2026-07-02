@@ -1,9 +1,0 @@
-Line 29: interface SpeakingPart { soPhan: number; tieuDe: string; moTa: string; audioUrl: string; noiDung: string; thoiGianNoi: number; imageUrl?: string; imageName?: string; }
-Line 36:     speaking: { thoiGian: number; parts: SpeakingPart[] };
-Line 39: type Skill = "listening" | "reading" | "writing" | "speaking";
-Line 289: // ---- SPEAKING SECTION ----
-Line 292: function SpeakingSection({
-Line 295:   speakingPartIdx,
-Line 296:   speakingPhase,
-Line 297:   speakingCountdown,
-Line 300:   parts: SpeakingPart[];

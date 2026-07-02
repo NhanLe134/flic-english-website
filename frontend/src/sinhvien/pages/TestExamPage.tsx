@@ -1219,7 +1219,7 @@ export default function TestExamPage() {
   // Speaking States
   const [speakingPartIdx, setSpeakingPartIdx] = useState(0);
   const [speakingPhase, setSpeakingPhase] = useState<SpeakPhase>("initial_prep");
-  const [speakingCountdown, setSpeakingCountdown] = useState(3);
+  const [speakingCountdown, setSpeakingCountdown] = useState(60);
   const [speakingBlobs, setSpeakingBlobs] = useState<Record<number, Blob>>({});
   const [speakingUrls, setSpeakingUrls] = useState<Record<number, string>>({});
 
@@ -1608,7 +1608,7 @@ export default function TestExamPage() {
           
           if (next === "speaking") {
             setSpeakingPhase("initial_prep");
-            setSpeakingCountdown(3);
+            setSpeakingCountdown(60);
             setSpeakingPartIdx(0);
           }
         }
@@ -1629,7 +1629,7 @@ export default function TestExamPage() {
             if (nextTimeLeft <= 0) {
               setSpeakingPhase("saved");
               stopRecordingAndUpload(speakingPartIdx);
-              setSpeakingCountdown(3);
+              setSpeakingCountdown(60);
             }
             
             return nextTimeLeft;
@@ -1743,7 +1743,7 @@ export default function TestExamPage() {
       setTimeLeft(testData!.kyNang[next].thoiGian);
       if (next === "speaking") {
         setSpeakingPhase("initial_prep");
-        setSpeakingCountdown(3);
+        setSpeakingCountdown(60);
         setSpeakingPartIdx(0);
       }
     }
@@ -1953,18 +1953,6 @@ export default function TestExamPage() {
     });
   };
 
-  const handleReset = () => {
-    setAnswers({});
-    setWritingAnswers({});
-    setDoneParts({});
-    setDoneSkills({});
-    setIsSubmitted(false);
-    setScores(null);
-    setSkill("listening");
-    setPartIdx(0);
-    setTimeLeft(testData ? testData.kyNang.listening.thoiGian : 0);
-  };
-
   const onAnswer = (qId: number, val: string) => {
     setAnswers(p => ({ ...p, [skill]: { ...(p[skill] || {}), [qId]: val } }));
   };
@@ -2053,8 +2041,7 @@ export default function TestExamPage() {
 
 
                 <div className="results-card-footer">
-                  <button className="btn-res-footer-action blue-fill" onClick={() => { setReviewMode(true); setIsSubmitted(false); }}>Xem lại bài thi</button>
-                  <button className="btn-res-footer-action outline-fill" onClick={handleReset}>Thi lại</button>
+                  <button className="btn-res-footer-action blue-fill" style={{ width: "100%" }} onClick={() => { setReviewMode(true); setIsSubmitted(false); }}>Xem lại bài thi</button>
                 </div>
               </div>
             </div>

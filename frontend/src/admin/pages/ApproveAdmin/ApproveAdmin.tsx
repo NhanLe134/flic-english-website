@@ -1,6 +1,7 @@
-﻿import "./ApproveAdmin.css";
+import "./ApproveAdmin.css";
 import React, { useState, useEffect, useRef } from "react";
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiUsers } from "react-icons/fi";
+import { formatScheduleOnlyDays } from "../../../utils/schedule";
 
 const API = "http://localhost:5000";
 
@@ -1094,7 +1095,7 @@ export default function ApproveAdmin() {
                                         }}
                                       >
                                         <div className="class-item-name">{cls.name}</div>
-                                        <div className="class-item-schedule">{cls.schedule}</div>
+                                        <div className="class-item-schedule">{formatScheduleOnlyDays(cls.schedule)}</div>
                                         <div className="class-item-students">
                                           <FiUsers className="class-row-icon" />
                                           <span>{cls.students}</span>

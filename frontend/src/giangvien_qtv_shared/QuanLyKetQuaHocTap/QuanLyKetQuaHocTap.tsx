@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 import "./QuanLyKetQuaHocTap.css";
 
 const QuanLyKetQuaHocTap = () => {
@@ -60,7 +61,7 @@ const QuanLyKetQuaHocTap = () => {
 
                 <div className="class-info">
                   <span className="class-info-label">Lịch học:</span>
-                  <p>{c.LichHoc || "Chưa có lịch"}</p>
+                  <p>{formatScheduleOnlyDays(c.LichHoc) || "Chưa có lịch"}</p>
                 </div>
                 <div className="class-info">
                   <span className="class-info-label">Sĩ số:</span>

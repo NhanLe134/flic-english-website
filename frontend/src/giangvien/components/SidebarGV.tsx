@@ -3,6 +3,7 @@ import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut, FiFileText } from "react-icons/fi";
 import "./SidebarGV.css";
+import { hasPermission } from "../../utils/permission";
 
 const menuItems = [
   { label: "Quản lý giảng dạy",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
@@ -75,6 +76,22 @@ const Sidebar = () => {
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
 
+  const allowedMenuItems = menuItems.filter(item => {
+    if (item.path === "/quan-ly-khoa-hoc") {
+      return hasPermission("LECTURE_CREATE") || hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE") || hasPermission("EXTRA_PRACTICE_CREATE") || hasPermission("DOCUMENT_CREATE_PENDING");
+    }
+    if (item.path === "/quan-ly-de-thi") {
+      return hasPermission("QUIZ_CREATE");
+    }
+    if (item.path === "/danh-sach-hoc-vien") {
+      return hasPermission("SUBMISSION_VIEW") || hasPermission("STUDENT_GRADE");
+    }
+    if (item.path === "/quan-ly-ket-qua") {
+      return hasPermission("GRADEBOOK_VIEW_CLASS") || hasPermission("GRADEBOOK_VIEW_ALL");
+    }
+    return true;
+  });
+
   useEffect(() => {
     const userStr = sessionStorage.getItem("user");
     if (!userStr) return;
@@ -120,7 +137,7 @@ const Sidebar = () => {
       </div>
 
       <ul className="sidebar-menu">
-        {menuItems.map((item) => (
+        {allowedMenuItems.map((item) => (
           <li
             key={item.path}
             onClick={() => {

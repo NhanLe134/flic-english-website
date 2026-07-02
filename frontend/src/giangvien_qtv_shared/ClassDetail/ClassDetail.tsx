@@ -1,10 +1,12 @@
 import "./ClassDetail.css";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiCalendar, FiArrowLeft, FiEye, FiTrash2, FiSearch } from "react-icons/fi";
 import { FaClock, FaBook } from "react-icons/fa"; // Đã bỏ FaChalkboardTeacher và FaUsers
 import LessonManagement from "../LessonManagement/LessonManagement";
 import DocumentManagement from "../DocumentManagement/DocumentManagement";
+import { hasPermission } from "../../utils/permission";
 
 type ActiveTab = "exercises" | "lectures" | "documents";
 
@@ -154,7 +156,7 @@ const ClassDetail = () => {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Lịch học</span>
-                <span className="cd-meta-value">{lesson.LichHoc}</span>
+                <span className="cd-meta-value">{formatScheduleOnlyDays(lesson.LichHoc)}</span>
               </div>
             </div>
 
@@ -263,23 +265,27 @@ const ClassDetail = () => {
               <option value="practice">Bài LTT</option>
             </select>
 
-            <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
-              + Tạo BT/KT
-            </button>
+            {(hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE")) && (
+              <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
+                + Tạo BT/KT
+              </button>
+            )}
 
-            <button
-              className="ep-add-btn"
-              onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
-              style={{
-                background: "#fff",
-                color: "#F95800",
-                border: "1.5px solid #F95800",
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
-            >
-              + Tạo bài LTT
-            </button>
+            {hasPermission("EXTRA_PRACTICE_CREATE") && (
+              <button
+                className="ep-add-btn"
+                onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
+                style={{
+                  background: "#fff",
+                  color: "#F95800",
+                  border: "1.5px solid #F95800",
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
+              >
+                + Tạo bài LTT
+              </button>
+            )}
 
             <div className="ep-total-box">
               <p>Tổng số bài tập</p>
@@ -425,37 +431,49 @@ const ClassDetail = () => {
                     >
                       <FiEye size={16} />
                     </button>
-                    <button
-                      onClick={() => {
-                        setSelectedId(Number(ex.MaBaiTap));
-                        setShowDeleteModal(true);
-                      }}
-                      style={{
-                        background: "#fee2e2",
-                        border: "1px solid #fecaca",
-                        color: "#ef4444",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        transition: "all 0.2s",
-                        flexShrink: 0
-                      }}
-                      title="Xóa bài tập"
-                      onMouseOver={e => {
-                        e.currentTarget.style.background = "#fca5a5";
-                        e.currentTarget.style.color = "#b91c1c";
-                      }}
-                      onMouseOut={e => {
-                        e.currentTarget.style.background = "#fee2e2";
-                        e.currentTarget.style.color = "#ef4444";
-                      }}
-                    >
-                      <FiTrash2 size={15} />
-                    </button>
+                    {(() => {
+                      const isPractice = ex.TrangThai === "practice";
+                      const isExam = ex.IsExam === 1 || ex.Type === "exam";
+                      const canDelete = isPractice 
+                        ? hasPermission("EXTRA_PRACTICE_CREATE")
+                        : (isExam ? hasPermission("QUIZ_CREATE") : hasPermission("BAITAP_CREATE"));
+                      
+                      if (!canDelete) return null;
+
+                      return (
+                        <button
+                          onClick={() => {
+                            setSelectedId(Number(ex.MaBaiTap));
+                            setShowDeleteModal(true);
+                          }}
+                          style={{
+                            background: "#fee2e2",
+                            border: "1px solid #fecaca",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            transition: "all 0.2s",
+                            flexShrink: 0
+                          }}
+                          title="Xóa bài tập"
+                          onMouseOver={e => {
+                            e.currentTarget.style.background = "#fca5a5";
+                            e.currentTarget.style.color = "#b91c1c";
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.background = "#fee2e2";
+                            e.currentTarget.style.color = "#ef4444";
+                          }}
+                        >
+                          <FiTrash2 size={15} />
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
