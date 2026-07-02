@@ -9,8 +9,8 @@ const AddDocument = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
-  const [loai, setLoai] = useState("Video");
+  const [loai, setLoai] = useState("Tệp");
+  const [linkUrl, setLinkUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -42,14 +42,13 @@ const AddDocument = () => {
 
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
     const user = JSON.parse(userStr || "{}");
-    const isTeacher = user.VaiTro === "Giảng Viên";
-    const status = isTeacher ? "pending" : "published";
+    const status = "published";
 
     try {
       setUploading(true);
       let fileUrl = "";
 
-      if (selectedFile) {
+      if (loai === "Tệp" && selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
@@ -59,6 +58,8 @@ const AddDocument = () => {
         });
         const uploadData = await uploadRes.json();
         fileUrl = uploadData.url || "";
+      } else if (loai === "Link" && linkUrl) {
+        fileUrl = linkUrl;
       }
 
       await fetch("http://localhost:5000/tailieu", {
@@ -67,7 +68,7 @@ const AddDocument = () => {
         body: JSON.stringify({
           TieuDe: title,
           MoTa: description || "Tài liệu mới",
-          NoiDung: content,
+          NoiDung: "",
           FileUrl: fileUrl,
           MaBuoiHoc: Number(buoiHocId),
           TrangThai: status,
@@ -75,7 +76,7 @@ const AddDocument = () => {
         })
       });
 
-      setSuccessMessage(isTeacher ? "Đã gửi yêu cầu duyệt tài liệu đến QTV" : "Thêm tài liệu thành công");
+      setSuccessMessage("Tạo tài liệu thành công");
       setShowSuccess(true);
       setTimeout(() => navigate(-1), 1500);
 
@@ -105,17 +106,9 @@ const AddDocument = () => {
 
         <label>Loại nội dung *</label>
         <select value={loai} onChange={(e) => setLoai(e.target.value)}>
-          <option>Video</option>
-          <option>PDF</option>
-          <option>Link</option>
+          <option value="Tệp">Tệp</option>
+          <option value="Link">Link</option>
         </select>
-
-        <label>Nội dung</label>
-        <textarea
-          placeholder="Mô tả nội dung bài học..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
 
         <label>Mô tả tài liệu</label>
         <textarea
@@ -124,40 +117,50 @@ const AddDocument = () => {
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <label>Tải tập tin</label>
-        <div
-          className={`upload-box ${isDragging ? "dragging" : ""}`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={handleFileChange}
-          />
-          {selectedFile ? (
-            <div className="upload-selected">
-              <span>📄</span>
-              <span className="upload-filename">{selectedFile.name}</span>
-              <span
-                className="upload-remove"
-                onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
-              >✕</span>
-            </div>
-          ) : (
-            <>
-              <div className="upload-icon">⬆️</div>
-              <p>Kéo thả hoặc nhấn để chọn file</p>
-              <span className="upload-hint">PDF, DOC, DOCX, PNG, JPG</span>
-            </>
-          )}
-        </div>
+        {loai === "Tệp" && (
+          <>
+            <label>Tải tập tin</label>
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+            {selectedFile ? (
+              <div className="upload-selected" style={{ marginBottom: "16px" }} onClick={() => fileInputRef.current?.click()}>
+                <span className="upload-filename">{selectedFile.name}</span>
+                <span
+                  className="upload-remove"
+                  onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                >✕</span>
+              </div>
+            ) : (
+              <div
+                className={`upload-box ${isDragging ? "dragging" : ""}`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="upload-icon">⬆️</div>
+                <p>Kéo thả hoặc nhấn để chọn file</p>
+                <span className="upload-hint">PDF, DOC, DOCX, PNG, JPG</span>
+              </div>
+            )}
+          </>
+        )}
 
-        <label>Hoặc liên kết (YouTube / Drive / Link trực tiếp)</label>
-        <input type="text" placeholder="https://..." />
+        {loai === "Link" && (
+          <>
+            <label>Liên kết (YouTube / Drive / Link trực tiếp)</label>
+            <input 
+              type="text" 
+              placeholder="https://..." 
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+            />
+          </>
+        )}
 
         <div className="save-row">
           <button className="save-btn" onClick={handleSave} disabled={uploading}>

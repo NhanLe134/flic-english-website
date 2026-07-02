@@ -314,7 +314,7 @@ svg:active {
 
 
 .row:hover {
-  background: #fdf8f3;
+  background: #f0f7ff;
 }
 
 
@@ -605,9 +605,6 @@ svg:active {
 .clickableCell {
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.15s ease;
-}
-.clickableCell:hover {
-  background-color: #fdf2e9 !important;
 }
 
 /* EXPORT MODAL */
