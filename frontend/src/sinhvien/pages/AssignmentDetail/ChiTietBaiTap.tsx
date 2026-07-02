@@ -655,11 +655,26 @@ function ChiTietBaiTap() {
       .then(([exData, lopData, nopData]) => {
         setExercise({ ...exData, Type: mapDangBaiToType(exData.Type) });
         setLopInfo(lopData);
-        const myNop = Array.isArray(nopData)
-          ? nopData.find((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung)
-          : null;
+        const queryParams = new URLSearchParams(location.search);
+        const urlSubmissionId = queryParams.get("submissionId");
+        
+        let myNop = null;
+        if (urlSubmissionId && Array.isArray(nopData)) {
+          myNop = nopData.find((b: any) => String(b.MaBaiNop) === String(urlSubmissionId));
+        }
+        
+        if (!myNop && Array.isArray(nopData)) {
+          const studentNops = nopData.filter((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung);
+          if (studentNops.length > 0) {
+            // Sắp xếp giảm dần theo SoLanLamBai để lấy lượt làm mới nhất làm mặc định
+            studentNops.sort((a, b) => (b.SoLanLamBai || 0) - (a.SoLanLamBai || 0));
+            myNop = studentNops[0];
+          }
+        }
+        
         setBaiNop(myNop || null);
-        if (myNop) {
+        
+        if (myNop && isReview) {
           setSubmitted(true);
           try {
             const contentText = myNop.NoiDung || "";

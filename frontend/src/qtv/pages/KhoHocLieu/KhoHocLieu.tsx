@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./KhoHocLieu.module.css";
-import { FiSearch, FiEye, FiTrash2, FiAlertTriangle, FiBookOpen, FiPlayCircle, FiFolder, FiPackage, FiArrowLeft } from "react-icons/fi";
+import { FiSearch, FiEye, FiTrash2, FiAlertTriangle, FiArrowLeft } from "react-icons/fi";
 
 const API = "http://localhost:5000";
 
@@ -215,7 +215,7 @@ const KhoHocLieu = () => {
         <button onClick={() => navigate("/QTV/khoahoc")} className={styles.backBtn}>
           <FiArrowLeft /> Quay lại Khóa học
         </button>
-        <h1><FiPackage style={{ marginRight: '8px', color: '#000080', verticalAlign: 'middle' }} /> Kho học liệu tổng hợp</h1>
+        <h1> Kho học liệu tổng hợp</h1>
         
       </div>
 
@@ -225,19 +225,19 @@ const KhoHocLieu = () => {
           className={`${styles.tabBtn} ${activeTab === "baigiang" ? styles.tabBtnActive : ""}`}
           onClick={() => setActiveTab("baigiang")}
         >
-          <FiPlayCircle style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Bài giảng 
+           Bài giảng 
         </button>
         <button
           className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
           onClick={() => setActiveTab("baitap")}
         >
-          <FiBookOpen style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Bài tập & Kiểm tra 
+           Bài tập & Kiểm tra 
         </button>
         <button
           className={`${styles.tabBtn} ${activeTab === "tailieu" ? styles.tabBtnActive : ""}`}
           onClick={() => setActiveTab("tailieu")}
         >
-          <FiFolder style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Tài liệu 
+           Tài liệu 
         </button>
       </div>
 

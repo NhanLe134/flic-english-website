@@ -1222,19 +1222,21 @@ function BaiGiangSV() {
               </div>
 
               {/* Bước 2: Minitest */}
-              <div className={`ld2-timeline-item ${
-                progress.DaXemVideo === 0 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
-              }`}>
-                <div className="ld2-timeline-bullet">
-                  {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo === 0 ? <FiLock /> : "2"}
+              {minitestQuestions && minitestQuestions.length > 0 && (
+                <div className={`ld2-timeline-item ${
+                  progress.DaXemVideo === 0 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
+                }`}>
+                  <div className="ld2-timeline-bullet">
+                    {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo === 0 ? <FiLock /> : "2"}
+                  </div>
+                  <div className="ld2-timeline-content">
+                    <span className="ld2-timeline-label">Hoàn thành Minitest</span>
+                    <span className="ld2-timeline-desc">
+                      {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo === 0 ? "Đang khóa" : "Chờ thực hiện"}
+                    </span>
+                  </div>
                 </div>
-                <div className="ld2-timeline-content">
-                  <span className="ld2-timeline-label">Hoàn thành Minitest</span>
-                  <span className="ld2-timeline-desc">
-                    {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo === 0 ? "Đang khóa" : "Chờ thực hiện"}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

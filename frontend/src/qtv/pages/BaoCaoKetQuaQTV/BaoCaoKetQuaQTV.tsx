@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, Fragment } from "react"
 import styles from "./BaoCaoKetQuaQTV.module.css"
 import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
 
 const API = 'http://localhost:5000'
 
@@ -64,6 +66,8 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedStudents, setExpandedStudents] = useState<Set<number>>(new Set())
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const toggleExpandStudent = (id: number) => {
     setExpandedStudents(prev => {
@@ -150,20 +154,6 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     return allBuoiNumbers;
   }, [allLessons, filterLop])
 
-  const getBuoiAvg = (hv: HocVien, buoiNum: number) => {
-    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
-    if (buoiExs.length === 0) return null
-
-    const scores = buoiExs
-      .map(ex => hv.rawScores[ex.MaBaiTap])
-      .filter((s): s is number => s !== null && typeof s === 'number')
-
-    if (scores.length === 0) return null
-
-    const avg = scores.reduce((a, b) => a + b, 0) / scores.length
-    return Math.round(avg * 10) / 10
-  }
-
   const getBuoiStatusOrAvg = (hv: HocVien, buoiNum: number) => {
     const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
     if (buoiExs.length === 0) return { status: "none", val: null }
@@ -249,23 +239,130 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : "—"
 
+  const handleExportExcel = (mode: "summary" | "detail") => {
+    if (filtered.length === 0) {
+      alert("Không có học viên nào để xuất!");
+      return;
+    }
 
+    let headers: string[] = [];
+    let rows: Record<string, any>[] = [];
 
-  const handleExportCSV = () => {
-    const headers = ["Họ và tên", "Mã HV", "Trạng thái", ...uniqueBuois.map(b => `Buổi ${b}`)]
-    const rows = filtered.map(h => [
-      h.hoTen, h.maHV, h.trangThai,
-      ...uniqueBuois.map(b => {
-        const avg = getBuoiAvg(h, b)
-        return avg !== null ? avg : "Chưa nộp"
-      })
-    ])
-    const csv  = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n")
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement("a"); a.href = url; a.download = "baocao_ketqua.csv"; a.click()
-    URL.revokeObjectURL(url)
-  }
+    if (mode === "summary") {
+      headers = [
+        "Mã học viên",
+        "Họ tên",
+        "Lớp/khóa",
+        "Khóa học",
+        "Trạng thái",
+        ...uniqueBuois.map(b => `Buổi ${b}`),
+        "Điểm trung bình"
+      ];
+
+      rows = filtered.map(h => {
+        const rowData: Record<string, any> = {
+          "Mã học viên": h.maHV,
+          "Họ tên": h.hoTen,
+          "Lớp/khóa": h.lopKhoaHoc || "—",
+          "Khóa học": h.tenKhoa || "—",
+          "Trạng thái": h.trangThai || "—",
+        };
+        uniqueBuois.forEach(b => {
+          const res = getBuoiStatusOrAvg(h, b);
+          rowData[`Buổi ${b}`] = res.status === "graded" ? res.val : res.status === "pending" ? "Cần chấm" : "Chưa nộp";
+        });
+        rowData["Điểm trung bình"] = h.diemTB !== null ? h.diemTB : "—";
+        return rowData;
+      });
+    } else {
+      // mode === "detail"
+      headers = [
+        "Mã học viên",
+        "Họ tên",
+        "Lớp/khóa",
+        "Khóa học",
+        "Trạng thái"
+      ];
+
+      const courseName = filtered[0]?.tenKhoa || "";
+      uniqueBuois.forEach(b => {
+        const exsInBuoi = exercisesByBuoi[b] || [];
+        exsInBuoi.forEach(ex => {
+          headers.push(`${ex.TenBai}\n${courseName}`);
+        });
+        headers.push(`Buổi ${b}`);
+      });
+
+      headers.push("Điểm trung bình");
+
+      rows = filtered.map(h => {
+        const rowData: Record<string, any> = {
+          "Mã học viên": h.maHV,
+          "Họ tên": h.hoTen,
+          "Lớp/khóa": h.lopKhoaHoc || "—",
+          "Khóa học": h.tenKhoa || "—",
+          "Trạng thái": h.trangThai || "—",
+        };
+
+        uniqueBuois.forEach(b => {
+          const exsInBuoi = exercisesByBuoi[b] || [];
+          exsInBuoi.forEach(ex => {
+            const colHeader = `${ex.TenBai}\n${h.tenKhoa || ""}`;
+            const scoreVal = h.rawScores[ex.MaBaiTap];
+            if (scoreVal !== null && typeof scoreVal === 'number') {
+              rowData[colHeader] = scoreVal;
+            } else if (scoreVal === 'Cần chấm') {
+              rowData[colHeader] = "Cần chấm";
+            } else {
+              rowData[colHeader] = "Chưa nộp";
+            }
+          });
+
+          const res = getBuoiStatusOrAvg(h, b);
+          rowData[`Buổi ${b}`] = res.status === "graded" ? res.val : res.status === "pending" ? "Cần chấm" : "Chưa nộp";
+        });
+
+        rowData["Điểm trung bình"] = h.diemTB !== null ? h.diemTB : "—";
+        return rowData;
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng điểm");
+
+    // Dynamic column widths
+    const colWidths: { wch: number }[] = [];
+    if (mode === "summary") {
+      colWidths.push(
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
+        ...uniqueBuois.map(() => ({ wch: 15 })),
+        { wch: 18 }
+      );
+    } else {
+      colWidths.push(
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 15 }
+      );
+      uniqueBuois.forEach(b => {
+        const exsInBuoi = exercisesByBuoi[b] || [];
+        exsInBuoi.forEach(() => {
+          colWidths.push({ wch: 30 });
+        });
+        colWidths.push({ wch: 15 });
+      });
+      colWidths.push({ wch: 18 });
+    }
+    worksheet["!cols"] = colWidths;
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    
+    const filePrefix = mode === "summary" ? "BangDiem_TongQuan" : "BangDiem_ChiTiet";
+    saveAs(blob, `${filePrefix}_${filterLop || "Lop"}_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xlsx`);
+
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
 
   return (
     <div className={styles.page}>
@@ -277,8 +374,8 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
           <p className={styles.subtitle}>Xem và xuất điểm bài tập của từng học viên theo lớp học</p>
         </div>
         {showCsvButton && (
-          <button className={styles.exportBtn} onClick={handleExportCSV}>
-            ⬇ Xuất CSV
+          <button className={styles.exportBtn} onClick={() => setShowExportModal(true)}>
+            ⬇ Xuất Excel
           </button>
         )}
       </div>
@@ -524,6 +621,60 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
         )}
       </div>
 
+      {showExportModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowExportModal(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ padding: '16px 20px' }}>
+              <h2>Chọn chế độ xuất Excel</h2>
+              <button className={styles.modalClose} onClick={() => setShowExportModal(false)}>&times;</button>
+            </div>
+            <div className={styles.modalBody} style={{ padding: '20px' }}>
+              <div className={styles.exportOptions} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  className={styles.exportOptionBtn}
+                  onClick={() => {
+                    setShowExportModal(false);
+                    handleExportExcel("summary");
+                  }}
+                >
+                  Chế độ 1: Xuất tổng quan
+                </button>
+                <button 
+                  className={`${styles.exportOptionBtn} ${styles.highlight}`}
+                  onClick={() => {
+                    setShowExportModal(false);
+                    handleExportExcel("detail");
+                  }}
+                >
+                  Chế độ 2: Xuất chi tiết toàn bộ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center",
+          alignItems: "center", zIndex: 1100
+        }}>
+          <div style={{
+            background: "white", padding: "40px 60px", borderRadius: "16px",
+            textAlign: "center", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)"
+          }}>
+            <div style={{
+              width: "60px", height: "60px", borderRadius: "50%",
+              border: "3px solid #2ecc71", display: "flex", justifyContent: "center",
+              alignItems: "center", margin: "0 auto 15px"
+            }}>
+              <span style={{ fontSize: 28, color: "#2ecc71" }}>✔</span>
+            </div>
+            <p style={{ margin: 0, fontWeight: 600, color: "#333" }}>Tải file báo cáo thành công</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
