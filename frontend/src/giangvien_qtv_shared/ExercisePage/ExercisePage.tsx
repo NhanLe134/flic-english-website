@@ -1,5 +1,6 @@
 import "./ExercisePage.css";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiCalendar, FiTrash2, FiEye } from "react-icons/fi";
 import { FaChalkboardTeacher, FaClock, FaUsers, FaBook } from "react-icons/fa";
@@ -36,7 +37,7 @@ const ExercisePage = () => {
         // Lấy thông tin lớp (LichHoc)
         const lopRes = await fetch(`http://localhost:5000/classes/${maLopHoc}/info`);
         const lopData = await lopRes.json();
-        setLichHoc(lopData.LichHoc || "—");
+        setLichHoc(formatScheduleOnlyDays(lopData.LichHoc) || "—");
 
         // Lấy tên giảng viên
         const userStr = sessionStorage.getItem("user");

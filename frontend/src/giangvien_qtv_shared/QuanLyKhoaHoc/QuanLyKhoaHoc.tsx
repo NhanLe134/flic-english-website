@@ -1,6 +1,7 @@
 import "./QuanLyKhoaHoc.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 
 
 interface ClassItem {
@@ -32,7 +33,7 @@ const QuanLyKhoaHoc = () => {
           id: c.MaLopHoc,
           name: c.TenLop,
           code: `CT-${c.MaLopHoc}`,
-          schedule: c.LichHoc || '—',
+          schedule: formatScheduleOnlyDays(c.LichHoc) || '—',
           courseName: c.TenKhoaHoc || '',
           students: c.SoLuongHocVien || 0,
           progress: c.TienDo || 0

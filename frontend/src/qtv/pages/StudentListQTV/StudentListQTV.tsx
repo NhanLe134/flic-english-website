@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../../utils/schedule";
 import { FiUsers, FiBook, FiClock, FiSearch, FiArrowLeft, FiDownload, FiUser } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -87,7 +88,7 @@ const StudentListQTV: React.FC = () => {
                   uniqueClasses[cl.MaLopHoc] = {
                     id: cl.MaLopHoc,
                     name: cl.TenLop,
-                    schedule: cl.LichHoc || "—",
+                    schedule: formatScheduleOnlyDays(cl.LichHoc) || "—",
                     studentsCount: cl.SoLuongHocVien || 0,
                     progress: cl.TienDo || 0,
                     lessonCount: cl.SoBuoiHoc || 0,

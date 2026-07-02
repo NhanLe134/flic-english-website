@@ -1,5 +1,6 @@
 // CoursePageQTV.tsx – Cấu trúc UI cũ + Kết nối DB + Phân công nhiều GV
 import React, { useState, useEffect, useMemo } from 'react'
+import { formatScheduleOnlyDays } from '../../../utils/schedule'
 import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -1161,7 +1162,7 @@ export default function CoursePageQTV() {
                                   <span className={styles.classExpandChevron}>{expandedClass === cl.id ? '▲' : '▼'}</span>
                                   <div className={styles.classBlockInfo}>
                                     <span className={styles.classBlockName}>{cl.name}</span>
-                                    <span className={styles.classBlockMeta}>{cl.schedule}{cl.tenGiangVien && cl.tenGiangVien !== '—' ? ` · ${cl.tenGiangVien}` : ''}</span>
+                                    <span className={styles.classBlockMeta}>{formatScheduleOnlyDays(cl.schedule)}{cl.tenGiangVien && cl.tenGiangVien !== '—' ? ` · ${cl.tenGiangVien}` : ''}</span>
                                   </div>
                                   <span className={styles.classBlockCount}>{cl.lessonCount} buổi</span>
 
@@ -1574,7 +1575,7 @@ export default function CoursePageQTV() {
             <div className={styles.modalTop}>
               <div>
                 <h3>{detailClass.name}</h3>
-                <div className={styles.modalSub}>{detailCourse.title} · {detailClass.schedule}{detailClass.tenGiangVien && detailClass.tenGiangVien !== '—' ? ` · GV: ${detailClass.tenGiangVien}` : ''}</div>
+                <div className={styles.modalSub}>{detailCourse.title} · {formatScheduleOnlyDays(detailClass.schedule)}{detailClass.tenGiangVien && detailClass.tenGiangVien !== '—' ? ` · GV: ${detailClass.tenGiangVien}` : ''}</div>
               </div>
               <button className={styles.modalClose} onClick={closeDetail}>×</button>
             </div>
@@ -2026,7 +2027,7 @@ export default function CoursePageQTV() {
                 <select value={assignClassId} onChange={e => setAssignClassId(Number(e.target.value))}>
                   <option value="">-- Chọn lớp --</option>
                   {(classesMap[selectedReg.courseId] || []).map(cl => (
-                    <option key={cl.id} value={cl.id}>{cl.name} — {cl.schedule} — {cl.students} học viên</option>
+                    <option key={cl.id} value={cl.id}>{cl.name} — {formatScheduleOnlyDays(cl.schedule)} — {cl.students} học viên</option>
                   ))}
                 </select>
               </div>

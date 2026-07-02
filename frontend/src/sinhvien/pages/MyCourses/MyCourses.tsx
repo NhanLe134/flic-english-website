@@ -1,6 +1,7 @@
 import "./MyCourses.css";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../../utils/schedule";
 import {
   FaCalendarAlt,
   FaUsers,
@@ -356,7 +357,7 @@ function MyCourses() {
                         {c.LichHoc && (
                           <span>
                             <FaCalendarAlt className="mc-icon" />
-                            Lịch học: {c.LichHoc}
+                            Lịch học: {formatScheduleOnlyDays(c.LichHoc)}
                           </span>
                         )}
                         <span>

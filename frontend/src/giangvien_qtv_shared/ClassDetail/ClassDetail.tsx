@@ -1,5 +1,6 @@
 import "./ClassDetail.css";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiCalendar, FiArrowLeft, FiEye, FiTrash2, FiSearch } from "react-icons/fi";
 import { FaClock, FaBook } from "react-icons/fa"; // Đã bỏ FaChalkboardTeacher và FaUsers
@@ -155,7 +156,7 @@ const ClassDetail = () => {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Lịch học</span>
-                <span className="cd-meta-value">{lesson.LichHoc}</span>
+                <span className="cd-meta-value">{formatScheduleOnlyDays(lesson.LichHoc)}</span>
               </div>
             </div>
 

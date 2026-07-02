@@ -1,6 +1,7 @@
 import "./CourseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 import {
   FiBookOpen,
   FiUsers,
@@ -156,7 +157,7 @@ const CourseDetail = () => {
                   <span className="cd-code-tag">{item.code}</span>
                 </div>
                 <h3>{item.name}</h3>
-                <p className="cd-schedule">{(item.schedule || '—').replace(/,?\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}/g, '')}</p>
+                <p className="cd-schedule">{formatScheduleOnlyDays(item.schedule)}</p>
                 <p className="cd-students">{item.students} Học viên</p>
                 <button
                   className="cd-detail-btn"

@@ -2,6 +2,7 @@ import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../../utils/schedule";
 import {
   FaCalendarAlt,
   FaUsers,
@@ -370,7 +371,7 @@ export default function ClassDetailSV() {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Lịch học</span>
-                <span className="cd-meta-value">{info.LichHoc || "Chưa cập nhật"}</span>
+                <span className="cd-meta-value">{formatScheduleOnlyDays(info.LichHoc) || "Chưa cập nhật"}</span>
               </div>
             </div>
 
