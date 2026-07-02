@@ -818,6 +818,7 @@
   border-radius: 20px;
   width: 740px;
   max-width: 90vw;
+  height: auto;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -826,12 +827,13 @@
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modal-header-section {
+.course-form-modal .modal-header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 12px 24px;
   border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
 }
 
 .modal-header-section h3 {
@@ -860,7 +862,7 @@
 }
 
 /* FORM SCROLL BODY */
-.modal-scrollable-body {
+.course-form-modal .modal-scrollable-body {
   padding: 24px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -868,6 +870,25 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: none;
+}
+
+.course-form-modal .modal-scrollable-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.course-form-modal .modal-scrollable-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.course-form-modal .modal-scrollable-body::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 130, 32, 0.35);
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.course-form-modal .modal-scrollable-body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(245, 130, 32, 0.7);
 }
 
 .form-section-title {
@@ -921,6 +942,7 @@
   transition: border-color 0.2s;
   font-family: inherit;
 }
+
 .form-field-group select {
   padding-right: 36px;
   appearance: none;
@@ -1117,12 +1139,13 @@
 }
 
 /* MODAL FOOTER */
-.modal-footer-section {
+.course-form-modal .modal-footer-section {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 24px;
+  padding: 12px 24px;
   border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
 }
 
 .footer-cancel-btn {
