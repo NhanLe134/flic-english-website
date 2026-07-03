@@ -24,7 +24,23 @@ function formatStudentId(maSVInt) {
   return "SV" + String(maSVInt).padStart(8, '0');
 }
 
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const allowedOrigins = ["http://localhost:5173", "http://14.225.192.252:8082"];
+    const isLocal = origin.startsWith("http://localhost:") || 
+                    origin.startsWith("http://127.0.0.1:") ||
+                    /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+                    /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+                    /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin);
+    if (allowedOrigins.includes(origin) || isLocal) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -5236,7 +5252,7 @@ const initDb = async () => {
 
 let server;
 initDb().then(() => {
-  server = app.listen(5000, () => console.log("Server running on port 5000"))
+  server = app.listen(5000, '0.0.0.0', () => console.log("Server running on port 5000"))
 })
 
 const gracefulShutdown = async (signal) => {

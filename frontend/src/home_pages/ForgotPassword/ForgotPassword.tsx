@@ -2,7 +2,7 @@ import "./ForgotPassword.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface ForgotPasswordProps {
   isModal?: boolean;

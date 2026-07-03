@@ -5,7 +5,7 @@ import "./TestExamPage.css";
 
 const BASE = import.meta.env.BASE_URL;
 const API = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
+  ? "http://14.225.192.252:5000"
   : `http://${window.location.hostname}:5000`;
 
 const resolveUrl = (url: string | undefined) => {
@@ -1271,7 +1271,7 @@ export default function TestExamPage() {
     const subIdParam = searchParams.get("submissionId");
     if (viewParam === "results" && subIdParam) {
       const fetchAPI = window.location.hostname === "localhost"
-        ? "http://localhost:5000"
+        ? "http://14.225.192.252:5000"
         : `http://${window.location.hostname}:5000`;
       
       fetch(`${fetchAPI}/dethi/submissions`)

@@ -66,7 +66,7 @@ const LessonList = () => {
   };
 
   const fetchClassInfo = () => {
-    fetch(`http://localhost:5000/classes/${id}/info`)
+    fetch(`http://14.225.192.252:5000/classes/${id}/info`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -82,7 +82,7 @@ const LessonList = () => {
       "Tất cả tài liệu, bài giảng, và bài tập liên kết với buổi này sẽ bị ảnh hưởng.",
       async () => {
         try {
-          const res = await fetch(`http://localhost:5000/qtv/buoihoc/${lessonId}`, {
+          const res = await fetch(`http://14.225.192.252:5000/qtv/buoihoc/${lessonId}`, {
             method: "DELETE"
           });
           if (res.ok) {
@@ -100,7 +100,7 @@ const LessonList = () => {
 
   const handleMarkActiveLesson = async (lessonId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/classes/${id}/active-buoihoc`, {
+      const res = await fetch(`http://14.225.192.252:5000/classes/${id}/active-buoihoc`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activeBuoiHocId: lessonId })
@@ -126,7 +126,7 @@ const LessonList = () => {
       return;
     }
     try {
-      const res = await fetch("http://localhost:5000/qtv/buoihoc", {
+      const res = await fetch("http://14.225.192.252:5000/qtv/buoihoc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,7 +148,7 @@ const LessonList = () => {
           order: 1
         });
         // Re-fetch lessons list
-        fetch(`http://localhost:5000/classes/${id}/buoihoc`)
+        fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
           .then(r => r.json())
           .then(data => setLessons(data))
           .catch(err => console.log(err));
@@ -173,7 +173,7 @@ const LessonList = () => {
   };
 
   useEffect(() => {
-    fetch(`http://localhost:5000/classes/${id}/buoihoc`)
+    fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));

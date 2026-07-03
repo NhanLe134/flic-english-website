@@ -6,7 +6,7 @@ import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
 const userIcon = import.meta.env.BASE_URL + "user.png";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 export default function StudentNavbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);

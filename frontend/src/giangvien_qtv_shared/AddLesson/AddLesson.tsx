@@ -184,7 +184,7 @@ const AddLesson: React.FC = () => {
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const uploadRes = await fetch("http://localhost:5000/upload", {
+        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
           method: "POST",
           body: formData
         });
@@ -212,7 +212,7 @@ const AddLesson: React.FC = () => {
         IsFree: isFree ? 1 : 0
       };
 
-      const res = await fetch("http://localhost:5000/baigiang", {
+      const res = await fetch("http://14.225.192.252:5000/baigiang", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLesson)

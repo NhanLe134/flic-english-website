@@ -31,6 +31,7 @@ interface ExamSection {
 }
 
 
+/*
 const mapDangBaiToType = (db: string): string => {
   if (db === "Nghe audio trắc nghiệm") return "listening-mcq";
   if (db === "Hình ảnh chọn đáp án") return "listening-image";
@@ -47,6 +48,7 @@ const mapDangBaiToType = (db: string): string => {
   if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
   return "multiple";
 };
+*/
 
 const cleanSectionTitle = (title: string) => {
   if (!title) return "";
@@ -203,6 +205,7 @@ const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children 
   );
 };
 
+/*
 const getSkillFromDangBai = (db: string): string => {
   if (["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"].includes(db)) return "Nghe";
   if (["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"].includes(db)) return "Noi";
@@ -210,6 +213,7 @@ const getSkillFromDangBai = (db: string): string => {
   if (["Sắp xếp từ thành câu", "Trắc nghiệm", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"].includes(db)) return "Viet";
   return "Nghe";
 };
+*/
 
 const TaoBaiTap = () => {
   const navigate = useNavigate();
@@ -239,10 +243,10 @@ const TaoBaiTap = () => {
   }>({ show: false, title: "", message: "" });
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
-  const [type, setType] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
+  const [type] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
   
-  const [kyNang, setKyNang] = useState(isMiniTest ? "Viet" : "Nghe");
-  const [dangBai, setDangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
+  const [kyNang] = useState(isMiniTest ? "Viet" : "Nghe");
+  const [dangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
   const [isFree, setIsFree] = useState(false);
   const [isExam, setIsExam] = useState(false);
   const [deadline, setDeadline] = useState("");
@@ -504,7 +508,7 @@ const TaoBaiTap = () => {
 
   useEffect(() => {
     if (!maBaiHocParam) return;
-    fetch(`http://localhost:5000/baigiang/detail/${maBaiHocParam}`)
+    fetch(`http://14.225.192.252:5000/baigiang/detail/${maBaiHocParam}`)
       .then(res => res.json())
       .then(data => {
         setLecture(data);
@@ -515,7 +519,7 @@ const TaoBaiTap = () => {
       .catch(err => console.log("Lỗi tải thông tin bài giảng:", err));
 
     if (isMiniTest) {
-      fetch(`http://localhost:5000/minitest/baigiang/${maBaiHocParam}`)
+      fetch(`http://14.225.192.252:5000/minitest/baigiang/${maBaiHocParam}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.CauHoi) {
@@ -536,7 +540,7 @@ const TaoBaiTap = () => {
   /* ===== LOAD LESSON ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
@@ -558,7 +562,7 @@ const TaoBaiTap = () => {
   useEffect(() => {
     // Fetch all existing exercises for cloning
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
-    let url = "http://localhost:5000/exercises/list/all";
+    let url = "http://14.225.192.252:5000/exercises/list/all";
     if (userStr) {
       const user = JSON.parse(userStr);
       if ((user.VaiTro || "").toLowerCase().trim() === "giảng viên" && user.MaNguoiDung) {
@@ -573,7 +577,7 @@ const TaoBaiTap = () => {
 
   const handleReuseExercise = async (exerciseId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/exercises/${exerciseId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: Number(id) })
@@ -1270,7 +1274,7 @@ const TaoBaiTap = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://localhost:5000/upload", {
+    const res = await fetch("http://14.225.192.252:5000/upload", {
       method: "POST",
       body: formData
     });
@@ -1279,6 +1283,7 @@ const TaoBaiTap = () => {
     return data.url || "";
   };
 
+  /*
   const handleDangBaiChange = (db: string) => {
     setDangBai(db);
     const targetType = mapDangBaiToType(db);
@@ -1302,6 +1307,7 @@ const TaoBaiTap = () => {
       }
     ]);
   };
+  */
 
   const addQuestionItem = () => {
     setQuestions([
@@ -1895,7 +1901,7 @@ const TaoBaiTap = () => {
       }
 
       if (isMiniTest) {
-        const res = await fetch("http://localhost:5000/minitest/create", {
+        const res = await fetch("http://14.225.192.252:5000/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1920,7 +1926,7 @@ const TaoBaiTap = () => {
         return;
       }
 
-      const res = await fetch("http://localhost:5000/baitap/create", {
+      const res = await fetch("http://14.225.192.252:5000/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3893,7 +3899,7 @@ const TaoBaiTap = () => {
                 {commonAudioUrl && (
                   <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
                     <p style={{ color: "green", fontSize: 13, fontWeight: "bold", margin: 0 }}>✓ Đã tải file nghe chung:</p>
-                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://localhost:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
+                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://14.225.192.252:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
                     <button
                       type="button"
                       onClick={() => setCommonAudioUrl("")}
@@ -4333,9 +4339,38 @@ const TaoBaiTap = () => {
                     />
                     {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
 
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", marginTop: 10, display: "block" }}>Câu hỏi (Tùy chọn)</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Nhập câu hỏi (ví dụ: Look at the picture and select the best answer)..."
+                      value={q.question || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "question", e.target.value)}
+                    />
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", marginTop: 10, display: "block" }}>Các phương án trả lời (Tùy chọn)</label>
+                    {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                      <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
+                        <span style={{ fontWeight: "bold", width: 20 }}>{lbl}.</span>
+                        <input
+                          type="text"
+                          placeholder={`Nhập nội dung lựa chọn ${lbl} (để trống nếu chỉ hiển thị chữ ${lbl})`}
+                          className="exercise-content"
+                          style={{ margin: 0 }}
+                          value={(q.answers || [])[aIdx] || ""}
+                          onChange={e => {
+                            const copyAnswers = [...(q.answers || [])];
+                            copyAnswers[aIdx] = e.target.value;
+                            updateQuestionItemField(qIndex, "answers", copyAnswers);
+                          }}
+                        />
+                      </div>
+                    ))}
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Đáp án đúng</label>
                     <select
                       className="exercise-type"
-                      style={{ width: "100%" }}
+                      style={{ width: "100%", marginTop: 4 }}
                       value={q.correct}
                       onChange={e => updateQuestionItemField(qIndex, "correct", e.target.value)}
                     >
@@ -4344,6 +4379,15 @@ const TaoBaiTap = () => {
                       <option value="C">Đáp án đúng: C</option>
                       <option value="D">Đáp án đúng: D</option>
                     </select>
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Giải thích tại sao chọn đáp án này..."
+                      value={q.explanation || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "explanation", e.target.value)}
+                    />
                   </div>
                 )}
 

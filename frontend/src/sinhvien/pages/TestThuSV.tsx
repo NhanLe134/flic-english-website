@@ -62,7 +62,7 @@ export default function TestThuSV() {
     if ((location.state as any)?.submitted) setSubmitted(true);
     
     const API = window.location.hostname === "localhost"
-      ? "http://localhost:5000"
+      ? "http://14.225.192.252:5000"
       : `http://${window.location.hostname}:5000`;
     setLoading(true);
 

@@ -4,7 +4,7 @@ import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
 import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
 
-const API = 'http://localhost:5000'
+const API = 'http://14.225.192.252:5000'
 
 interface ExerciseHeader {
   MaBaiTap: number

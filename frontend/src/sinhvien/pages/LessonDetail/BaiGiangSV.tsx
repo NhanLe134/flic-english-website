@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiSettings, FiMaximize, FiMinimize, FiCheckCircle, FiLock, FiXCircle, FiFileText } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const unescapeMarkdown = (str: string) => {
   return str

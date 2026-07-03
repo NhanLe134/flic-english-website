@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "../../../home_pages/DSKhoaHoc/DSKhoaHoc.css";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const getCourseImage = (name: string) => {
   const lower = name.toLowerCase();

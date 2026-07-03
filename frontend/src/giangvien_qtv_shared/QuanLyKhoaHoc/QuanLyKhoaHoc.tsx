@@ -26,7 +26,7 @@ const QuanLyKhoaHoc = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://localhost:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
         const mappedClasses = data.map((c: any) => ({

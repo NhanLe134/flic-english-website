@@ -23,7 +23,7 @@ import { NoiTu } from "./NoiTu";
 import { TimLoiSai } from "./TimLoiSai";
 import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface MCQuestion {
   question: string;
@@ -1059,6 +1059,8 @@ function ChiTietBaiTap() {
     }
 
     if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
+      const isFlatMC = questionType === "listening-image" || questionType === "writing-tense-mcq";
+      const hasSubQuestions = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
       return (
         <div>
           {q.audioUrl && !hideAudio && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
@@ -1067,7 +1069,7 @@ function ChiTietBaiTap() {
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {q.subQuestions && q.subQuestions.length > 0 ? (
+          {hasSubQuestions ? (
             q.subQuestions.map((sub: any, subIdx: number) => (
               <div key={subIdx} style={{ marginTop: subIdx > 0 ? 20 : 0 }}>
                 {renderMCQBlock(sub, subIdx, String(qIdx), getGlobalSubIdx(qIdx, subIdx))}
