@@ -433,3 +433,28 @@ div.exercise-content.rich-editable:focus {
   border-color: #F95800;
   box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.12);
 }
+
+/* ── MISTAKE SEGMENTS (Dạng bài Tìm lỗi sai) ── */
+.mistake-segment {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  padding: 0 2px;
+  margin: 0 4px;
+  color: #000000;              /* Màu đen mặc định */
+  border-bottom: 2px solid #000000; /* Gạch chân màu đen */
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.mistake-segment:hover {
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.mistake-segment.selected {
+  color: #f58220;              /* Chuyển sang màu cam thương hiệu */
+  border-bottom: 2.5px solid #f58220; /* Gạch chân cam */
+  font-weight: 700;
+  background-color: #fdf8f3;   /* Nền cam nhạt nổi bật */
+}

@@ -198,8 +198,8 @@ export default function DuyetBaiQTV() {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className={styles.searchWrap}>
+        {/* Search bar & Tab Filters */}
+        <div className={styles.filterRow}>
           <div className={styles.searchBox}>
             <input
               value={search}
@@ -210,37 +210,37 @@ export default function DuyetBaiQTV() {
               <FiSearch />
             </button>
           </div>
-        </div>
 
-        {/* Tab Buttons */}
-        <div className={styles.tabContainer}>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "baigiang" ? styles.tabBtnActive : ""}`}
-            onClick={() => {
-              setActiveTab("baigiang");
-              setFilterStatus("Tất cả");
-            }}
-          >
-            Bài giảng
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
-            onClick={() => {
-              setActiveTab("baitap");
-              setFilterStatus("Tất cả");
-            }}
-          >
-            Bài tập / Bài kiểm tra
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "dethi" ? styles.tabBtnActive : ""}`}
-            onClick={() => {
-              setActiveTab("dethi");
-              setFilterStatus("Tất cả");
-            }}
-          >
-            Đề thi thử
-          </button>
+          {/* Tab Buttons */}
+          <div className={styles.tabContainer}>
+            <button
+              className={`${styles.tabBtn} ${activeTab === "baigiang" ? styles.tabBtnActive : ""}`}
+              onClick={() => {
+                setActiveTab("baigiang");
+                setFilterStatus("Tất cả");
+              }}
+            >
+              Bài giảng
+            </button>
+            <button
+              className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
+              onClick={() => {
+                setActiveTab("baitap");
+                setFilterStatus("Tất cả");
+              }}
+            >
+              Bài tập / Bài kiểm tra
+            </button>
+            <button
+              className={`${styles.tabBtn} ${activeTab === "dethi" ? styles.tabBtnActive : ""}`}
+              onClick={() => {
+                setActiveTab("dethi");
+                setFilterStatus("Tất cả");
+              }}
+            >
+              Đề thi thử
+            </button>
+          </div>
         </div>
 
         {/* Table Card */}
@@ -276,7 +276,6 @@ export default function DuyetBaiQTV() {
                   <th>GIÁO VIÊN</th>
                   <th>LOẠI</th>
                   <th>TRẠNG THÁI DUYỆT</th>
-                  <th>CẤP ĐỘ</th>
                   <th>NGÀY GỬI</th>
                 </tr>
               </thead>
@@ -312,7 +311,7 @@ export default function DuyetBaiQTV() {
                           {getStatusLabel(item.TrangThaiDuyet || item.TrangThai)}
                         </span>
                       </td>
-                      <td>{item.CapDo || "—"}</td>
+                    
                       <td>
                         {item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate
                           ? new Date(item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate).toLocaleDateString("vi-VN")

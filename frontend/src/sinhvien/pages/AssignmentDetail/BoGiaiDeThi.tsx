@@ -9,6 +9,7 @@ import { NgheDienTu } from "./NgheDienTu";
 import { PhatAmTuDong } from "./PhatAmTuDong";
 import { SapXepTu } from "./SapXepTu";
 import { SapXepCau } from "./SapXepCau";
+import { TimLoiSai } from "./TimLoiSai";
 
 interface BoGiaiDeThiProps {
   exercise: any;
@@ -42,6 +43,7 @@ interface BoGiaiDeThiProps {
   startRecording: (idx: number | string) => Promise<void>;
   stopRecording: (idx: number | string) => void;
   API: string;
+  isReview?: boolean;
 }
 
 const renderReadingPassage = (text: string) => {
@@ -116,6 +118,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   startRecording,
   stopRecording,
   API,
+  isReview = false,
 }) => {
 
   const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
@@ -153,6 +156,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             isOverdue={false}
             isExam={true}
             examStarted={examStarted}
+            isReview={isReview}
           />
         </div>
       );
@@ -183,6 +187,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             isOverdue={false}
             isExam={true}
             examStarted={examStarted}
+            isReview={isReview}
           />
         </div>
       );
@@ -204,6 +209,27 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             isExam={true}
             examStarted={examStarted}
             API={API}
+            isReview={isReview}
+          />
+        </div>
+      );
+    }
+
+    if (secType === "writing-find-mistakes") {
+      return (
+        <div key={qIdx} style={{ marginBottom: 20 }}>
+          <TimLoiSai
+            q={q}
+            qIdx={qIdx}
+            subIdxPrefix={`${sIdx}`}
+            mcAnswers={mcAnswers}
+            setMcAnswers={setMcAnswers}
+            essayAnswers={essayAnswers}
+            setEssayAnswers={setEssayAnswers}
+            submitted={submitted}
+            isOverdue={!examStarted || examEnded}
+            isExam={true}
+            examStarted={examStarted}
           />
         </div>
       );

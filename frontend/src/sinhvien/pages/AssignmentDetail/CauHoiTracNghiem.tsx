@@ -13,6 +13,7 @@ interface CauHoiTracNghiemProps {
   isExam: boolean;
   examStarted: boolean;
   isReview?: boolean; // Che do xem lai bai tap da nop
+  displayIdx?: number;
 }
 
 export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
@@ -26,6 +27,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
   isExam,
   examStarted,
   isReview = false,
+  displayIdx,
 }) => {
   // Khoa de lay cau tra loi da chon cua sinh vien
   const key = subIdxPrefix !== undefined ? `${subIdxPrefix}_${qIdx}` : qIdx;
@@ -41,20 +43,17 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
     
   // Kiem tra cau tra loi dung/sai
   const isCorrect = (submitted || isReview) && chosen === q.correct;
-  const isWrong = (submitted || isReview) && chosen && chosen !== q.correct;
 
   return (
     <div
       key={qIdx}
-      className={`ad-mcq-question-box ${
-        (submitted || isReview) ? (isCorrect ? "correct-box" : isWrong ? "wrong-box" : "") : ""
-      }`}
+      className="ad-mcq-question-box"
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* McqQuestionCircleBadge: Hien thi so thu tu cau hoi dang vong tron mau xanh lam chu dao */}
           <div className="mcq-question-circle-badge">
-            {qIdx + 1}
+            {displayIdx !== undefined ? displayIdx : qIdx + 1}
           </div>
           <p style={{ margin: 0, fontWeight: 700, color: "#1e3a8a", fontSize: 16 }}>
             {q.question}
@@ -149,9 +148,9 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
           <p className="correct-ans" style={{ margin: "4px 0", color: "#16a34a", fontWeight: "600" }}>
             Đáp án đúng: {q.correct}
           </p>
-          {q.explanation && (
+          {(q.explanation || q.Explanation) && (
             <p className="exp-text" style={{ margin: "4px 0", color: "#475569" }}>
-              <strong>Giải thích:</strong> {q.explanation}
+              <strong>Giải thích:</strong> {q.explanation || q.Explanation}
             </p>
           )}
         </div>

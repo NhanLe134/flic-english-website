@@ -1072,7 +1072,7 @@ app.post("/baigiang", async (req, res) => {
       }
     }
 
-    await pool.request()
+    const result = await pool.request()
       .input("TieuDe", TieuDe)
       .input("NoiDung", NoiDung || "")
       .input("FileUrl", FileUrl || "")
@@ -1085,8 +1085,10 @@ app.post("/baigiang", async (req, res) => {
       .input("MaBuoiHoc", MaBuoiHoc)
       .input("IsFree", IsFree !== undefined ? IsFree : 0)
       .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc, IsFree) 
+              OUTPUT INSERTED.MaBaiHoc
               VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc, @IsFree)`);
-    res.json({ message: "Thêm bài giảng thành công" });
+    const newMaBaiHoc = result.recordset[0].MaBaiHoc;
+    res.json({ message: "Thêm bài giảng thành công", MaBaiHoc: newMaBaiHoc });
   } catch (err) { res.status(500).send(err.message); }
 });
 

@@ -51,9 +51,7 @@ function AssignmentSuccess() {
             className="as-btn-outline"
             onClick={() => {
               if (maLopHoc && lessonId) {
-                const targetUrl = maBaiTap
-                  ? `/MyCourses/${maLopHoc}/${lessonId}/${tabKey}/${maBaiTap}`
-                  : `/MyCourses/${maLopHoc}/${lessonId}/${tabKey}`;
+                const targetUrl = `/MyCourses/${maLopHoc}/${lessonId}/${tabKey}`;
                 navigate(targetUrl);
               } else if (maLopHoc) {
                 navigate(`/MyCourses/${maLopHoc}`);
@@ -66,7 +64,19 @@ function AssignmentSuccess() {
           </button>
           <button
             className="as-btn-fill"
-            onClick={() => maBaiTap ? navigate(`/baitap/${maBaiTap}`, { state: { maLopHoc } }) : navigate("/MyCourses")}
+            onClick={() => {
+              if (maLopHoc && lessonId && maBaiTap) {
+                navigate(`/MyCourses/${maLopHoc}/${lessonId}/${tabKey}/${maBaiTap}?mode=review`, {
+                  state: { maLopHoc, justSubmittedAnswers: location.state?.justSubmittedAnswers, diem: location.state?.diem }
+                });
+              } else if (maBaiTap) {
+                navigate(`/baitap/${maBaiTap}?mode=review`, {
+                  state: { maLopHoc, justSubmittedAnswers: location.state?.justSubmittedAnswers, diem: location.state?.diem }
+                });
+              } else {
+                navigate("/MyCourses");
+              }
+            }}
           >
             Xem lại
           </button>

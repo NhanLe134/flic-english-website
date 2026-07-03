@@ -13,7 +13,7 @@ import ResetSuccess from "./home_pages/ResetSuccess/ResetSuccess"
 import CourseDetail from "./giangvien_qtv_shared/CourseDetail/CourseDetail"
 import LessonList from "./giangvien_qtv_shared/LessonList/LessonList"
 import ClassDetail from "./giangvien_qtv_shared/ClassDetail/ClassDetail"
-import CreateExercise from "./giangvien_qtv_shared/CreateExercise/CreateExercise"
+import TaoBaiTap from "./giangvien_qtv_shared/TaoBaiTap/TaoBaiTap"
 import ExerciseDetail from "./giangvien_qtv_shared/ExerciseDetail/ExerciseDetail"
 import LessonManagement from "./giangvien_qtv_shared/LessonManagement/LessonManagement"
 import LessonDetail from "./giangvien_qtv_shared/LessonDetail/LessonDetail"
@@ -135,7 +135,7 @@ function App() {
           <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
           <Route path="/lessonlist/:id" element={<LessonList />} />
           <Route path="/class/:id" element={<ClassDetail />} />
-          <Route path="/create-exercise/:id" element={<CreateExercise />} />
+          <Route path="/create-exercise/:id" element={<TaoBaiTap />} />
           <Route path="/baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
           <Route path="/danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="/cham-bai/:maBaiNop" element={<ChamBaiPage />} />
@@ -187,7 +187,7 @@ function App() {
           <Route path="baocao" element={<BaoCaoKetQuaQTV />} />
           <Route path="hocvien" element={<StudentListQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
-          <Route path="create-exercise/:id" element={<CreateExercise />} />
+          <Route path="create-exercise/:id" element={<TaoBaiTap />} />
           <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
           <Route path="bai-giang/:id" element={<LessonDetail />} />
@@ -218,6 +218,9 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/baitap/:id" element={<ChiTietBaiTap />} />
           <Route path="/assignment-success" element={<AssignmentSuccess />} />
+          <Route path="/MyCourses/:classId/:lessonId/bt/:id/assignment-success" element={<AssignmentSuccess />} />
+          <Route path="/MyCourses/:classId/:lessonId/lt/:id/assignment-success" element={<AssignmentSuccess />} />
+          <Route path="/baitap/:id/assignment-success" element={<AssignmentSuccess />} />
           <Route path="/quiz-detail" element={<QuizDetail />} />
           <Route path="/essay-detail" element={<EssayDetail />} />
         </Route>
