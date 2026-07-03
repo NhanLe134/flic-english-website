@@ -346,7 +346,8 @@ const ExerciseDetail = () => {
               editQuestions.map((q, qi) => {
                 const isAudioOnlyMC = exType === "listening-image" || exType === "listening-mcq";
                 const hasAnswers = q.answers && q.answers.some(a => a && a.trim() !== "");
-                const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+                const isFlatMC = exType === "listening-image" || exType === "writing-tense-mcq";
+                const hasSubQuestions = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
                 return (
                   <div key={qi} style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
                     {/* Parent prompt / context (if any) */}

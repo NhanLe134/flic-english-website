@@ -1041,6 +1041,8 @@ function ChiTietBaiTap() {
     }
 
     if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
+      const isFlatMC = questionType === "listening-image" || questionType === "writing-tense-mcq";
+      const hasSubQuestions = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
       return (
         <div>
           {q.audioUrl && !hideAudio && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
@@ -1049,7 +1051,27 @@ function ChiTietBaiTap() {
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx)}
+          {hasSubQuestions ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {q.subQuestions.map((sub: any, subIdx: number) => (
+                <CauHoiTracNghiem
+                  key={subIdx}
+                  q={sub}
+                  qIdx={subIdx}
+                  subIdxPrefix={`${qIdx}`}
+                  mcAnswers={mcAnswers}
+                  setMcAnswers={setMcAnswers}
+                  submitted={submitted}
+                  isOverdue={isOverdue}
+                  isExam={isExam}
+                  examStarted={examStarted}
+                  isReview={isReview}
+                />
+              ))}
+            </div>
+          ) : (
+            renderMCQBlock(q, qIdx)
+          )}
         </div>
       );
     }

@@ -389,8 +389,8 @@ const ChamBaiPage = () => {
                   {(sec.type === "listening-image" || sec.type === "writing-tense-mcq" || sec.type === "multiple") && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
-                        const qSub = sec.questions?.[qIdx] || {};
-                        const hasSubQ = q.subQuestions && q.subQuestions.length > 0;
+                        const isFlatMC = sec.type === "listening-image" || sec.type === "writing-tense-mcq";
+                        const hasSubQ = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
                         return (
                           <div key={qIdx} style={{ marginTop: 10, borderBottom: "1px dashed #e0d8cc", paddingBottom: 15 }}>
                             {sec.type === "listening-image" && q.imageUrl && (
@@ -615,6 +615,7 @@ const ChamBaiPage = () => {
             {parsedSubmission.questions.map((q: any, qIdx: number) => {
               const exerciseQuestion = questionsList[qIdx] || {};
               const questionType = q.type || "";
+              const isFlatMC = questionType === "listening-image" || questionType === "writing-tense-mcq";
 
               return (
                 <div key={qIdx} style={{ border: "1.5px solid #e0d8cc", borderRadius: 10, padding: 16, marginBottom: 20, background: "#fafafa" }}>
@@ -631,7 +632,7 @@ const ChamBaiPage = () => {
                           {exerciseQuestion.prompt}
                         </div>
                       )}
-                      {exerciseQuestion.subQuestions && exerciseQuestion.subQuestions.length > 0 ? (
+                      {(!isFlatMC && exerciseQuestion.subQuestions && exerciseQuestion.subQuestions.length > 0) ? (
                         exerciseQuestion.subQuestions.map((sub: any, subIdx: number) => {
                           const subAns = q.subQuestions?.[subIdx]?.chosen || "";
                           return renderMCQBlockGrading(sub, subIdx, subAns);
