@@ -102,6 +102,7 @@ const toggleDayInSchedule = (day: string, currentSchedule: string) => {
   return formatSchedule(newDays);
 };
 
+/*
 const parseSchedule = (schedule: string) => {
   const daySchedules: Record<string, { startTime: string; endTime: string }> = {};
   const selectedDays: string[] = [];
@@ -228,6 +229,7 @@ const parseSchedule = (schedule: string) => {
     daySchedules
   };
 };
+*/
 
 const serializeSchedule = (
   selectedDaysStr: string,
@@ -328,7 +330,7 @@ export default function CoursePageQTV() {
   const [courses, setCourses]     = useState<Course[]>([])
   const [giaoViens, setGiaoViens] = useState<GiaoVien[]>([])
   const [search, setSearch]       = useState('')
-  const [levelFilter, setLevel]   = useState('')
+  const [levelFilter]   = useState('')
   const [loading, setLoading]     = useState(true)
   const [toast, setToast]         = useState('')
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null)
@@ -1218,6 +1220,7 @@ export default function CoursePageQTV() {
   }
 
   // Trích xuất các cấp độ duy nhất từ danh sách khóa học thực tế (tách theo dấu phẩy)
+  /*
   const uniqueLevels = useMemo(() => {
     const levelsSet = new Set<string>();
     courses.forEach(c => {
@@ -1232,6 +1235,7 @@ export default function CoursePageQTV() {
     });
     return Array.from(levelsSet).sort((a, b) => a.localeCompare(b));
   }, [courses]);
+  */
 
   const filtered = courses.filter(c =>
     (!search || c.title.toLowerCase().includes(search.toLowerCase())) &&

@@ -390,6 +390,7 @@ const ChamBaiPage = () => {
                   {(sec.type === "listening-image" || sec.type === "writing-tense-mcq" || sec.type === "multiple") && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
+                        const qSub = sec.questions?.[qIdx] || {};
                         const isFlatMC = sec.type === "listening-image" || sec.type === "writing-tense-mcq";
                         const hasSubQ = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
                         return (

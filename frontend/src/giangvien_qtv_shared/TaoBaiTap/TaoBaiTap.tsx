@@ -31,6 +31,7 @@ interface ExamSection {
 }
 
 
+/*
 const mapDangBaiToType = (db: string): string => {
   if (db === "Nghe audio trắc nghiệm") return "listening-mcq";
   if (db === "Hình ảnh chọn đáp án") return "listening-image";
@@ -47,6 +48,7 @@ const mapDangBaiToType = (db: string): string => {
   if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
   return "multiple";
 };
+*/
 
 const cleanSectionTitle = (title: string) => {
   if (!title) return "";
@@ -203,6 +205,7 @@ const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children 
   );
 };
 
+/*
 const getSkillFromDangBai = (db: string): string => {
   if (["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"].includes(db)) return "Nghe";
   if (["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"].includes(db)) return "Noi";
@@ -210,6 +213,7 @@ const getSkillFromDangBai = (db: string): string => {
   if (["Sắp xếp từ thành câu", "Trắc nghiệm", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"].includes(db)) return "Viet";
   return "Nghe";
 };
+*/
 
 const TaoBaiTap = () => {
   const navigate = useNavigate();
@@ -239,10 +243,10 @@ const TaoBaiTap = () => {
   }>({ show: false, title: "", message: "" });
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
-  const [type, setType] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
+  const [type] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
   
-  const [kyNang, setKyNang] = useState(isMiniTest ? "Viet" : "Nghe");
-  const [dangBai, setDangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
+  const [kyNang] = useState(isMiniTest ? "Viet" : "Nghe");
+  const [dangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
   const [isFree, setIsFree] = useState(false);
   const [isExam, setIsExam] = useState(false);
   const [deadline, setDeadline] = useState("");
@@ -1279,6 +1283,7 @@ const TaoBaiTap = () => {
     return data.url || "";
   };
 
+  /*
   const handleDangBaiChange = (db: string) => {
     setDangBai(db);
     const targetType = mapDangBaiToType(db);
@@ -1302,6 +1307,7 @@ const TaoBaiTap = () => {
       }
     ]);
   };
+  */
 
   const addQuestionItem = () => {
     setQuestions([
