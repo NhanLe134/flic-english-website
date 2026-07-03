@@ -1,4 +1,4 @@
-import "./CreateExercise.css";
+import "./TaoBaiTap.css";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -41,6 +41,7 @@ const mapDangBaiToType = (db: string): string => {
   if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
   if (db === "Bài tập từ vựng" || db === "Nối từ") return "reading-vocab-mcq";
   if (db === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (db === "Tìm lỗi sai") return "writing-find-mistakes";
   if (db === "Trắc nghiệm xác định thì" || db === "Trắc nghiệm") return "writing-tense-mcq";
   if (db === "Viết đoạn văn ngắn") return "writing-essay";
   if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
@@ -122,6 +123,8 @@ const getQuestionSummary = (q: any, type: string) => {
   if (type === "listening-mcq") {
     text = q.prompt || (q.subQuestions?.[0]?.question);
   } else if (type === "writing-tense-mcq") {
+    text = q.question;
+  } else if (type === "writing-find-mistakes") {
     text = q.question;
   } else if (type === "reading-vocab-mcq") {
     const pairs = q.vocabPairs || [];
@@ -208,7 +211,7 @@ const getSkillFromDangBai = (db: string): string => {
   return "Nghe";
 };
 
-const CreateExercise = () => {
+const TaoBaiTap = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -538,6 +541,15 @@ const CreateExercise = () => {
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
   }, [id]);
+
+  useEffect(() => {
+    // Tự động điều chỉnh chiều cao của toàn bộ textarea tự co giãn
+    const textareas = document.querySelectorAll(".auto-resize-textarea");
+    textareas.forEach((ta: any) => {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    });
+  }, [questions, examSections]);
 
   const [activeTab, setActiveTab] = useState<"create" | "reuse">("create");
   const [allExistingEx, setAllExistingEx] = useState<any[]>([]);
@@ -1245,7 +1257,6 @@ const CreateExercise = () => {
     ]);
   };
 
-  /* ===== QUESTION ACTIONS FOR REGULAR MODE ===== */
   const addQuestionItem = () => {
     setQuestions([
       ...questions,
@@ -1261,6 +1272,7 @@ const CreateExercise = () => {
         vocabPairs: [{ word: "", meaning: "" }],
         fillInAnswers: [],
         sentences: ["", "", "", "", "", ""],
+        correctSentence: "",
         subQuestions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
       }
     ]);
@@ -1330,7 +1342,7 @@ const CreateExercise = () => {
     const allTypes = [
       "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in",
       "speaking-pronounce", "speaking-topic", "reading-split", "reading-vocab-mcq",
-      "writing-order-words", "writing-tense-mcq", "writing-essay", "writing-order-sentences"
+      "writing-order-words", "writing-tense-mcq", "writing-find-mistakes", "writing-essay", "writing-order-sentences"
     ];
     const existingTypes = examSections.map(s => s.type);
     const defaultType = allTypes.find(t => !existingTypes.includes(t)) || "listening-mcq";
@@ -1714,6 +1726,7 @@ const CreateExercise = () => {
       vocabPairs: [{ word: "", meaning: "" }],
       fillInAnswers: [],
       sentences: [""],
+      correctSentence: "",
       subQuestions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
     });
     setExamSections(copy);
@@ -2049,7 +2062,7 @@ const CreateExercise = () => {
         /* EXERCISE EDITOR */
         <div className="exercise-editor">
           {/* NÚT QUÉT FILE CÂU HỎI */}
-          {["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
+          {["multiple", "listening-mcq", "writing-tense-mcq", "writing-find-mistakes", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
             <div style={{
               background: "#f8fafc",
               border: "1px dashed #cbd5e1",
@@ -2253,6 +2266,7 @@ const CreateExercise = () => {
               <optgroup label="Kỹ năng Viết (Writing)">
                 <option value="Sắp xếp từ thành câu">Sắp xếp từ thành câu</option>
                 <option value="Trắc nghiệm">Trắc nghiệm</option>
+                <option value="Tìm lỗi sai">Tìm lỗi sai</option>
                 <option value="Viết đoạn văn ngắn">Viết đoạn văn ngắn</option>
                 <option value="Sắp xếp câu thành đoạn văn">Sắp xếp câu thành đoạn văn</option>
               </optgroup>
@@ -2694,6 +2708,7 @@ const CreateExercise = () => {
                       <option value="reading-vocab-mcq">Đọc: Nối từ</option>
                       <option value="writing-order-words">Viết: Sắp xếp từ thành câu</option>
                       <option value="writing-tense-mcq">Viết: Trắc nghiệm</option>
+                      <option value="writing-find-mistakes">Viết: Tìm lỗi sai</option>
                       <option value="writing-essay">Viết: Viết đoạn văn ngắn</option>
                       <option value="writing-order-sentences">Viết: Sắp xếp câu thành đoạn văn</option>
                     </select>
@@ -2701,7 +2716,7 @@ const CreateExercise = () => {
                 </div>
 
                 {/* NÚT QUÉT FILE CÂU HỎI CHO PHẦN THI */}
-                {["multiple", "listening-mcq", "writing-tense-mcq", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(sec.type) ? (
+                {["multiple", "listening-mcq", "writing-tense-mcq", "writing-find-mistakes", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(sec.type) ? (
                   <div style={{
                     background: "#f8fafc",
                     border: "1px dashed #cbd5e1",
@@ -3056,6 +3071,101 @@ const CreateExercise = () => {
                       </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi trắc nghiệm</button>
+                  </div>
+                )}
+
+                {/* ── EXAM FIND AND CORRECT MISTAKES (writing-find-mistakes / Tìm lỗi sai) ── */}
+                {sec.type === "writing-find-mistakes" && (
+                  <div>
+                    {sec.questions?.map((q, qIdx) => (
+                      <QuestionCard
+                        key={qIdx}
+                        secIdx={secIdx}
+                        qIdx={qIdx}
+                        sec={sec}
+                        q={q}
+                        onRemove={() => removeQuestionFromSection(secIdx, qIdx)}
+                        isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
+                        onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
+                      >
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu văn gốc (Dùng dấu cách kép để phân đoạn câu)</label>
+                        <textarea
+                          className="exercise-content"
+                          style={{ width: "100%", padding: "10px", minHeight: "60px", fontFamily: "inherit" }}
+                          placeholder="VD: By the time  you  will arrive  I'll have already left."
+                          value={q.question || ""}
+                          onChange={e => {
+                            const val = e.target.value;
+                            updateQuestionInSection(secIdx, qIdx, "question", val);
+                            const segments = val.split("  ").map((s: string) => s.trim()).filter(Boolean);
+                            updateQuestionInSection(secIdx, qIdx, "answers", segments);
+                          }}
+                        />
+
+                        <div style={{ marginTop: 10, padding: 12, background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                          <label style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", display: "block", marginBottom: 6 }}>
+                            Xem trước và chọn cụm từ chứa lỗi sai:
+                          </label>
+                          {(() => {
+                            const segments = (q.question || "").split("  ").map((s: string) => s.trim()).filter(Boolean);
+                            if (segments.length > 0) {
+                              return (
+                                <div className="find-mistake-sentence-preview" style={{ fontSize: "16px", lineHeight: "2.2", color: "#1e293b", background: "#ffffff", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                                  {segments.map((text: string, sIdx: number) => {
+                                    const isSelected = q.correct === text;
+                                    return (
+                                      <span
+                                        key={sIdx}
+                                        className={`mistake-segment ${isSelected ? "selected" : ""}`}
+                                        onClick={() => {
+                                          updateQuestionInSection(secIdx, qIdx, "correct", text);
+                                        }}
+                                      >
+                                        {text}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            }
+                            return (
+                              <p style={{ fontStyle: "italic", fontSize: 13, color: "#64748b", margin: 0 }}>
+                                (Nhập câu văn ở trên để xem trước phân đoạn)
+                              </p>
+                            );
+                          })()}
+                        </div>
+
+                        <div style={{ marginTop: 10 }}>
+                          <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Cụm từ sửa lại cho đúng <span style={{ color: "red" }}>*</span></label>
+                          <input
+                            type="text"
+                            className="exercise-content"
+                            placeholder="VD: arrive"
+                            value={q.correctSentence || ""}
+                            onChange={e => updateQuestionInSection(secIdx, qIdx, "correctSentence", e.target.value)}
+                          />
+                        </div>
+
+                        <div style={{ marginTop: 10 }}>
+                          <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Giải thích đáp án (tùy chọn)</label>
+                          <textarea
+                            className="exercise-content auto-resize-textarea"
+                            style={{ width: "100%", padding: "10px", minHeight: "44px", fontFamily: "inherit", resize: "none", overflowY: "hidden" }}
+                            placeholder="Giải thích tại sao cụm từ này sai và cách dùng đúng..."
+                            value={q.explanation || ""}
+                            onChange={e => {
+                              const val = e.target.value;
+                              updateQuestionInSection(secIdx, qIdx, "explanation", val);
+                              e.target.style.height = "auto";
+                              e.target.style.height = e.target.scrollHeight + "px";
+                            }}
+                            rows={1}
+                          />
+                        </div>
+                      </QuestionCard>
+                    ))}
+                    <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi tìm lỗi sai</button>
                   </div>
                 )}
 
@@ -3854,6 +3964,86 @@ const CreateExercise = () => {
                     />
                   </div>
                 )}
+                {/* ── FIND AND CORRECT MISTAKES (writing-find-mistakes / Tìm lỗi sai) ── */}
+                {type === "writing-find-mistakes" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu văn gốc (Dùng dấu cách kép để phân đoạn câu)</label>
+                    <textarea
+                      className="exercise-content"
+                      style={{ width: "100%", padding: "10px", minHeight: "60px", fontFamily: "inherit" }}
+                      placeholder="VD: By the time  you  will arrive  I'll have already left."
+                      value={q.question || ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        updateQuestionItemField(qIndex, "question", val);
+                        const segments = val.split("  ").map((s: string) => s.trim()).filter(Boolean);
+                        updateQuestionItemField(qIndex, "answers", segments);
+                      }}
+                    />
+
+                    <div style={{ marginTop: 10, padding: 12, background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                      <label style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", display: "block", marginBottom: 6 }}>
+                        Xem trước và chọn cụm từ chứa lỗi sai:
+                      </label>
+                      {(() => {
+                        const segments = (q.question || "").split("  ").map((s: string) => s.trim()).filter(Boolean);
+                        if (segments.length > 0) {
+                          return (
+                            <div className="find-mistake-sentence-preview" style={{ fontSize: "16px", lineHeight: "2.2", color: "#1e293b", background: "#ffffff", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                              {segments.map((text: string, sIdx: number) => {
+                                const isSelected = q.correct === text;
+                                return (
+                                  <span
+                                    key={sIdx}
+                                    className={`mistake-segment ${isSelected ? "selected" : ""}`}
+                                    onClick={() => {
+                                      updateQuestionItemField(qIndex, "correct", text);
+                                    }}
+                                  >
+                                    {text}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          );
+                        }
+                        return (
+                          <p style={{ fontStyle: "italic", fontSize: 13, color: "#64748b", margin: 0 }}>
+                            (Nhập câu văn ở trên để xem trước phân đoạn)
+                          </p>
+                        );
+                      })()}
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Cụm từ sửa lại cho đúng <span style={{ color: "red" }}>*</span></label>
+                      <input
+                        type="text"
+                        className="exercise-content"
+                        placeholder="VD: arrive"
+                        value={q.correctSentence || ""}
+                        onChange={e => updateQuestionItemField(qIndex, "correctSentence", e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Giải thích đáp án (tùy chọn)</label>
+                      <textarea
+                        className="exercise-content auto-resize-textarea"
+                        style={{ width: "100%", padding: "10px", minHeight: "44px", fontFamily: "inherit", resize: "none", overflowY: "hidden" }}
+                        placeholder="Giải thích tại sao cụm từ này sai và cách dùng đúng..."
+                        value={q.explanation || ""}
+                        onChange={e => {
+                          const val = e.target.value;
+                          updateQuestionItemField(qIndex, "explanation", val);
+                          e.target.style.height = "auto";
+                          e.target.style.height = e.target.scrollHeight + "px";
+                        }}
+                        rows={1}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* ── LISTENING MCQ & TENSE MCQ & VOCAB MCQ ── */}
                 {(type === "listening-mcq" || type === "multiple") && (
@@ -4583,5 +4773,5 @@ const CreateExercise = () => {
   );
 };
 
-export default CreateExercise;
+export default TaoBaiTap;
 

@@ -20,6 +20,7 @@ import { SapXepCau } from "./SapXepCau";
 import { VietDoanVan } from "./VietDoanVan";
 import { BoGiaiDeThi } from "./BoGiaiDeThi";
 import { NoiTu } from "./NoiTu";
+import { TimLoiSai } from "./TimLoiSai";
 import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
 const API = "http://localhost:5000";
@@ -82,6 +83,7 @@ const mapDangBaiToType = (db: string): string => {
   if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
   if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "reading-vocab-mcq";
   if (dbClean === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (dbClean === "Tìm lỗi sai") return "writing-find-mistakes";
   if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "writing-tense-mcq";
   if (dbClean === "Viết đoạn văn ngắn") return "writing-essay";
   if (dbClean === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
@@ -280,65 +282,8 @@ function ChiTietBaiTap() {
   const questionPages = useMemo(() => {
     if (isExam) return []; // Exams use their own sections tabs
     if (questionsList.length === 0) return [];
-
-    const pages: any[][] = [];
-    let currentAudioGroup: any[] = [];
-    let currentAudioUrl: string | null = null;
-    let currentSimpleGroup: any[] = [];
-
-    questionsList.forEach((q) => {
-      // 1. Reading split passage has its own page
-      if ((exercise?.Type || "").toLowerCase() === "reading-split" || q.subQuestions) {
-        if (currentAudioGroup.length > 0) {
-          pages.push(currentAudioGroup);
-          currentAudioGroup = [];
-          currentAudioUrl = null;
-        }
-        if (currentSimpleGroup.length > 0) {
-          pages.push(currentSimpleGroup);
-          currentSimpleGroup = [];
-        }
-        pages.push([q]);
-        return;
-      }
-
-      // 2. Questions sharing the same audio Url
-      if (q.audioUrl) {
-        if (currentSimpleGroup.length > 0) {
-          pages.push(currentSimpleGroup);
-          currentSimpleGroup = [];
-        }
-
-        if (currentAudioUrl && q.audioUrl === currentAudioUrl) {
-          currentAudioGroup.push(q);
-        } else {
-          if (currentAudioGroup.length > 0) {
-            pages.push(currentAudioGroup);
-          }
-          currentAudioGroup = [q];
-          currentAudioUrl = q.audioUrl;
-        }
-        return;
-      }
-
-      // 3. Simple questions with no audio or reading-split
-      if (currentAudioGroup.length > 0) {
-        pages.push(currentAudioGroup);
-        currentAudioGroup = [];
-        currentAudioUrl = null;
-      }
-      currentSimpleGroup.push(q);
-    });
-
-    if (currentAudioGroup.length > 0) {
-      pages.push(currentAudioGroup);
-    }
-    if (currentSimpleGroup.length > 0) {
-      pages.push(currentSimpleGroup);
-    }
-
-    return pages;
-  }, [questionsList, isExam, exercise]);
+    return [questionsList];
+  }, [questionsList, isExam]);
 
   // Load prior submission and metadata
   useEffect(() => {
@@ -359,7 +304,16 @@ function ChiTietBaiTap() {
         const urlSubmissionId = queryParams.get("submissionId");
         
         let myNop = null;
-        if (urlSubmissionId && Array.isArray(nopData)) {
+        if (location.state?.justSubmittedAnswers) {
+          myNop = {
+            NoiDung: typeof location.state.justSubmittedAnswers === "string"
+              ? location.state.justSubmittedAnswers
+              : JSON.stringify(location.state.justSubmittedAnswers),
+            Diem: location.state.diem
+          };
+        }
+
+        if (!myNop && urlSubmissionId && Array.isArray(nopData)) {
           myNop = nopData.find((b: any) => String(b.MaBaiNop) === String(urlSubmissionId));
         }
         
@@ -699,6 +653,20 @@ function ChiTietBaiTap() {
                     qResult.chosenAnswer = ans;
                     qResult.correctAnswer = q.correct;
                     qResult.score = ans === q.correct ? 10 : 0;
+                  } else if (sec.type === "writing-find-mistakes") {
+                    const ans = mcAnswers[key] || "";
+                    const typedCorrection = (essayAnswers[key] || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                    const correctCorrection = (q.correctSentence || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                    qResult.chosenAnswer = ans;
+                    qResult.correctAnswer = q.correct;
+                    qResult.essayText = essayAnswers[key] || "";
+                    qResult.correctText = q.correctSentence;
+                    const isMistakeCorrect = ans === q.correct;
+                    const isCorrectionCorrect = typedCorrection === correctCorrection;
+                    let qScore = 0;
+                    if (isMistakeCorrect) qScore += 5;
+                    if (isCorrectionCorrect) qScore += 5;
+                    qResult.score = qScore;
                   }
 
                   return qResult;
@@ -765,6 +733,17 @@ function ChiTietBaiTap() {
                 const ans = mcAnswers[key] || "";
                 if (ans === q.correct) totalExamPoints += 10;
                 examGradableQuestions++;
+              } else if (sec.type === "writing-find-mistakes") {
+                const ans = mcAnswers[key] || "";
+                const typedCorrection = (essayAnswers[key] || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                const correctCorrection = (q.correctSentence || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+                const isMistakeCorrect = ans === q.correct;
+                const isCorrectionCorrect = typedCorrection === correctCorrection;
+                let qScore = 0;
+                if (isMistakeCorrect) qScore += 5;
+                if (isCorrectionCorrect) qScore += 5;
+                totalExamPoints += qScore;
+                examGradableQuestions++;
               }
             });
           }
@@ -786,7 +765,7 @@ function ChiTietBaiTap() {
           })
         });
 
-        navigate("/assignment-success", {
+        navigate(location.pathname + "/assignment-success", {
           state: {
             title: exercise?.Title,
             maLopHoc: maLopHoc,
@@ -794,7 +773,8 @@ function ChiTietBaiTap() {
             loai: "Exam",
             maBaiTap: id,
             lessonId: lessonId,
-            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt'
+            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt',
+            justSubmittedAnswers: submissionData
           }
         });
 
@@ -828,6 +808,20 @@ function ChiTietBaiTap() {
               qResult.chosenAnswer = ans;
               qResult.correctAnswer = q.correct;
               qResult.score = ans === q.correct ? 10 : 0;
+            } else if (questionType === "writing-find-mistakes") {
+              const ans = mcAnswers[qIdx] || "";
+              const typedCorrection = (essayAnswers[qIdx] || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+              const correctCorrection = (q.correctSentence || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+              qResult.chosenAnswer = ans;
+              qResult.correctAnswer = q.correct;
+              qResult.essayText = essayAnswers[qIdx] || "";
+              qResult.correctText = q.correctSentence;
+              const isMistakeCorrect = ans === q.correct;
+              const isCorrectionCorrect = typedCorrection === correctCorrection;
+              let qScore = 0;
+              if (isMistakeCorrect) qScore += 5;
+              if (isCorrectionCorrect) qScore += 5;
+              qResult.score = qScore;
             } else if (questionType === "listening-image") {
               const ans = mcAnswers[qIdx] || "";
               qResult.chosenAnswer = ans;
@@ -929,7 +923,7 @@ function ChiTietBaiTap() {
           })
         });
 
-        navigate("/assignment-success", {
+        navigate(location.pathname + "/assignment-success", {
           state: {
             title: exercise?.Title,
             maLopHoc: maLopHoc,
@@ -937,7 +931,8 @@ function ChiTietBaiTap() {
             loai: exercise?.Type || "Bài tập",
             maBaiTap: id,
             lessonId: lessonId,
-            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt'
+            tabKey: location.pathname.includes('/bt/') ? 'bt' : 'lt',
+            justSubmittedAnswers: submissionData
           }
         });
       }
@@ -998,8 +993,21 @@ function ChiTietBaiTap() {
     );
   }
 
+  const getGlobalSubIdx = (parentIdx: number, subIdx: number) => {
+    let count = 0;
+    for (let i = 0; i < parentIdx; i++) {
+      const parentQ = questionsList[i];
+      if (parentQ.subQuestions && parentQ.subQuestions.length > 0) {
+        count += parentQ.subQuestions.length;
+      } else {
+        count += 1;
+      }
+    }
+    return count + subIdx + 1;
+  };
+
   // RENDER QUESTION SUB-COMPONENTS
-  const renderMCQBlock = (q: any, qIdx: number, subIdxPrefix?: string) => {
+  const renderMCQBlock = (q: any, qIdx: number, subIdxPrefix?: string, displayIdx?: number) => {
     return (
       <CauHoiTracNghiem
         q={q}
@@ -1012,6 +1020,7 @@ function ChiTietBaiTap() {
         isExam={isExam}
         examStarted={examStarted}
         isReview={isReview}
+        displayIdx={displayIdx}
       />
     );
   };
@@ -1035,7 +1044,7 @@ function ChiTietBaiTap() {
       return (
         <div>
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx)}
+          {renderMCQBlock(q, qIdx, undefined, getGlobalSubIdx(qIdx, 0))}
         </div>
       );
     }
@@ -1049,7 +1058,15 @@ function ChiTietBaiTap() {
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {renderMCQBlock(q, qIdx)}
+          {q.subQuestions && q.subQuestions.length > 0 ? (
+            q.subQuestions.map((sub: any, subIdx: number) => (
+              <div key={subIdx} style={{ marginTop: subIdx > 0 ? 20 : 0 }}>
+                {renderMCQBlock(sub, subIdx, String(qIdx), getGlobalSubIdx(qIdx, subIdx))}
+              </div>
+            ))
+          ) : (
+            renderMCQBlock(q, qIdx, undefined, getGlobalSubIdx(qIdx, 0))
+          )}
         </div>
       );
     }
@@ -1186,6 +1203,24 @@ function ChiTietBaiTap() {
       );
     }
 
+    if (questionType === "writing-find-mistakes") {
+      return (
+        <TimLoiSai
+          q={q}
+          qIdx={qIdx}
+          mcAnswers={mcAnswers}
+          setMcAnswers={setMcAnswers}
+          essayAnswers={essayAnswers}
+          setEssayAnswers={setEssayAnswers}
+          submitted={submitted}
+          isOverdue={isOverdue}
+          isExam={isExam}
+          examStarted={examStarted}
+          isReview={isReview}
+        />
+      );
+    }
+
     if (questionType === "reading-split") {
       return (
         <div className="flic-asgn-reading-split-container">
@@ -1214,6 +1249,7 @@ function ChiTietBaiTap() {
                 isExam={isExam}
                 examStarted={examStarted}
                 isReview={isReview}
+                displayIdx={getGlobalSubIdx(qIdx, subIdx)}
               />
             ))}
           </div>
@@ -1338,7 +1374,7 @@ function ChiTietBaiTap() {
       {/* SUBMISSION STATE BANNER */}
       {submitted && baiNop && (
         <div className="ad-banner ad-banner-submitted">
-          <p className="status-title">✅ You have submitted this assignment</p>
+          <p className="status-title">You have submitted this assignment</p>
           {baiNop.Diem !== null && baiNop.Diem !== undefined ? (
             <p className="score-info">
               Your grade: <strong>{baiNop.Diem}/10</strong>
@@ -1398,6 +1434,7 @@ function ChiTietBaiTap() {
               startRecording={startRecording}
               stopRecording={stopRecording}
               API={API}
+              isReview={isReview}
             />
           )}
         </div>
@@ -1435,16 +1472,45 @@ function ChiTietBaiTap() {
 
             const alreadyHasGlobalAudio = exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "listening-mcq";
 
+            const isFindMistakes = (exercise?.Type || "").toLowerCase() === "writing-find-mistakes";
+
             return (
               <div key={pIdx} className="ad-page-container">
-                {page.map((q) => {
-                  const originalIdx = questionsList.indexOf(q);
-                  return (
-                    <div key={originalIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
-                      {renderCurrentQuestionBlock(q, originalIdx, alreadyHasGlobalAudio)}
+                {isFindMistakes ? (
+                  <div className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: "24px 28px", borderRadius: 12, marginBottom: 20 }}>
+                    {/* Tiêu đề đề bài hiển thị 1 lần trên cùng */}
+                    <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "15px", marginBottom: "20px" }}>
+                      <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "18px", fontWeight: 700 }}>
+                        Find and correct the mistake in the following sentences:
+                      </h4>
                     </div>
-                  );
-                })}
+                    {/* Render các câu hỏi nằm trực tiếp dưới tiêu đề không phân khung */}
+                    {page.map((q, idx) => {
+                      const originalIdx = questionsList.indexOf(q);
+                      return (
+                        <div 
+                          key={originalIdx} 
+                          style={{ 
+                            borderBottom: idx < page.length - 1 ? "1px dashed #cbd5e1" : "none", 
+                            paddingBottom: idx < page.length - 1 ? "24px" : "0", 
+                            marginBottom: idx < page.length - 1 ? "24px" : "0" 
+                          }}
+                        >
+                          {renderCurrentQuestionBlock(q, originalIdx, alreadyHasGlobalAudio)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  page.map((q) => {
+                    const originalIdx = questionsList.indexOf(q);
+                    return (
+                      <div key={originalIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
+                        {renderCurrentQuestionBlock(q, originalIdx, alreadyHasGlobalAudio)}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             );
           })}

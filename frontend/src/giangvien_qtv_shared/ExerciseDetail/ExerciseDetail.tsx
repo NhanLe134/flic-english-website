@@ -18,6 +18,7 @@ const mapDangBaiToType = (db: string): string => {
   if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
   if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "reading-vocab-mcq";
   if (dbClean === "Sắp xếp từ thành câu") return "writing-order-words";
+  if (dbClean === "Tìm lỗi sai") return "writing-find-mistakes";
   if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "writing-tense-mcq";
   if (dbClean === "Viết đoạn văn ngắn") return "writing-essay";
   if (dbClean === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";

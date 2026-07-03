@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { formatScheduleOnlyDays } from "../../../utils/schedule";
-import { FiUsers, FiBook, FiClock, FiSearch, FiArrowLeft, FiDownload, FiUser } from "react-icons/fi";
+import { FiSearch, FiDownload } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "./StudentListQTV.css";
@@ -43,11 +43,13 @@ const StudentListQTV: React.FC = () => {
 
   // State
   const [classes, setClasses] = useState<LopHoc[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
   
-  // Selected class & students
+  // Selected class, course, & students
   const [selectedClass, setSelectedClass] = useState<LopHoc | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | string>("");
+  const [selectedClassId, setSelectedClassId] = useState<number | string>("");
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
@@ -76,6 +78,7 @@ const StudentListQTV: React.FC = () => {
         setLoading(true);
         // 1. Fetch courses
         const coursesRes = await fetch(`${API}/admin/khoahoc`).then(r => r.json());
+        setCourses(coursesRes);
 
         // 2. Fetch classes for each course in parallel
         const classesPromises = coursesRes.map((c: any) => 
@@ -103,7 +106,18 @@ const StudentListQTV: React.FC = () => {
         );
 
         const allCourseClasses = await Promise.all(classesPromises);
-        setClasses(allCourseClasses.flat());
+        const flatClasses = allCourseClasses.flat();
+        setClasses(flatClasses);
+
+        if (flatClasses.length > 0) {
+          // Sort classes by ID descending to find the latest
+          const sorted = [...flatClasses].sort((a, b) => b.id - a.id);
+          const latestClass = sorted[0];
+          setSelectedClass(latestClass);
+          setSelectedCourseId(latestClass.courseId);
+          setSelectedClassId(latestClass.id);
+          handleSelectClass(latestClass);
+        }
       } catch (err) {
         console.error("Lỗi khi tải danh sách lớp học:", err);
       } finally {
@@ -137,6 +151,30 @@ const StudentListQTV: React.FC = () => {
         setStudents([]);
       })
       .finally(() => setLoadingStudents(false));
+  };
+
+  // Handle dropdown filters
+  const handleCourseChange = (courseId: number) => {
+    setSelectedCourseId(courseId);
+    const courseClasses = classes.filter(c => c.courseId === courseId);
+    if (courseClasses.length > 0) {
+      // Pick the first class of this course as default
+      const firstClass = courseClasses[0];
+      setSelectedClassId(firstClass.id);
+      handleSelectClass(firstClass);
+    } else {
+      setSelectedClass(null);
+      setSelectedClassId("");
+      setStudents([]);
+    }
+  };
+
+  const handleClassChange = (classId: number) => {
+    setSelectedClassId(classId);
+    const cls = classes.find(c => c.id === classId);
+    if (cls) {
+      handleSelectClass(cls);
+    }
   };
 
   // View individual student details
@@ -220,12 +258,6 @@ const StudentListQTV: React.FC = () => {
 
     triggerSuccessPopup("Xuất Excel thành công");
   };
-
-  // Filter classes based on search query
-  const filteredClasses = classes.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.courseName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   // Filter students based on search query
   const filteredStudents = students.filter(s => 
@@ -319,188 +351,150 @@ const StudentListQTV: React.FC = () => {
       )}
 
       {/* MAIN LAYOUT */}
-      {!selectedClass ? (
-        /* VIEW 1: CLASS LIST */
-        <div>
-          <div className="slqtv-header">
-            <div className="slqtv-header-text">
-              <h1>Danh Sách Lớp Học & Học Viên</h1>
-              <p>Quản lý và tra cứu thông tin học viên của tất cả các lớp tại trung tâm</p>
+      <div>
+        <div className="slqtv-header">
+          <div className="slqtv-header-text">
+            <h1>Danh Sách Học Viên</h1>
+            <p>Quản lý và tra cứu thông tin học viên của các lớp tại trung tâm</p>
+          </div>
+          
+          <div className="slqtv-stats">
+            <div className="slqtv-stat-card">
+              <span className="slqtv-stat-num">{classes.length}</span>
+              <span className="slqtv-stat-name">Tổng lớp học</span>
             </div>
-            
-            <div className="slqtv-stats">
-              <div className="slqtv-stat-card">
-                <span className="slqtv-stat-num">{classes.length}</span>
-                <span className="slqtv-stat-name">Tổng lớp học</span>
+            <div className="slqtv-stat-card">
+              <span className="slqtv-stat-num">{classes.reduce((acc, c) => acc + c.studentsCount, 0)}</span>
+              <span className="slqtv-stat-name">Tổng lượt học viên</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: "0 32px 32px 32px" }}>
+          {/* Search bar & Filters */}
+          <div className="slqtv-filters-row-new">
+            <div className="slqtv-search-wrapper-new">
+              <FiSearch className="slqtv-search-icon" />
+              <input
+                type="text"
+                placeholder="Tìm tên, mã học viên..."
+                value={studentSearchQuery}
+                onChange={e => setStudentSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="slqtv-selectors-group">
+              <div className="slqtv-select-wrapper">
+                <span className="slqtv-select-label">Khóa:</span>
+                <select
+                  value={selectedCourseId}
+                  onChange={(e) => handleCourseChange(Number(e.target.value))}
+                  className="slqtv-filter-select"
+                >
+                  <option value="" disabled>Chọn khóa học</option>
+                  {courses.map(c => (
+                    <option key={c.MaKhoaHoc} value={c.MaKhoaHoc}>
+                      {c.TenKhoaHoc}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="slqtv-stat-card">
-                <span className="slqtv-stat-num">{classes.reduce((acc, c) => acc + c.studentsCount, 0)}</span>
-                <span className="slqtv-stat-name">Tổng lượt học viên</span>
+
+              <div className="slqtv-select-wrapper">
+                <span className="slqtv-select-label">Lớp:</span>
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => handleClassChange(Number(e.target.value))}
+                  className="slqtv-filter-select"
+                  disabled={!selectedCourseId}
+                >
+                  <option value="" disabled>Chọn lớp học</option>
+                  {classes
+                    .filter(c => c.courseId === selectedCourseId)
+                    .map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                </select>
               </div>
+
+              {selectedClass && (
+                <button className="slqtv-btn-export-new" onClick={handleExportExcel}>
+                  <FiDownload style={{ marginRight: 6, fontSize: 14 }} />
+                  <span>Xuất Excel</span>
+                </button>
+              )}
             </div>
           </div>
 
-          <div style={{ padding: "0 32px 32px 32px" }}>
-            {/* Search bar */}
-            <div className="slqtv-filters">
-              <div className="slqtv-search-wrapper">
-                <FiSearch className="slqtv-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm lớp học, khóa học..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+          <hr className="slqtv-divider-line" />
 
-            {/* Class list grid */}
+          <div className="slqtv-student-list-view">
             {loading ? (
-              <div className="slqtv-loading">Đang tải danh sách lớp học...</div>
-            ) : filteredClasses.length === 0 ? (
-              <div className="slqtv-empty">Không tìm thấy lớp học nào khớp với tìm kiếm.</div>
-            ) : (
-              <div className="slqtv-class-grid">
-                {filteredClasses.map(c => (
-                  <div key={c.id} className="slqtv-class-card">
-                    <div className="slqtv-card-top">
-                      <span className="slqtv-course-tag">{c.courseName}</span>
-                      <h3 className="slqtv-class-name">{c.name}</h3>
-                    </div>
-                    
-                    <div className="slqtv-card-middle">
-                      <div className="slqtv-info-item">
-                        <FiClock className="slqtv-item-icon" />
-                        <span>{c.schedule}</span>
-                      </div>
-                      <div className="slqtv-info-item">
-                        <FiBook className="slqtv-item-icon" />
-                        <span>{c.lessonCount} buổi học</span>
-                      </div>
-                    </div>
+              <div className="slqtv-loading" style={{ padding: "60px 0" }}>Đang tải dữ liệu...</div>
+            ) : selectedClass ? (
+              <>
 
-                    <div className="slqtv-card-bottom">
-                      <div className="slqtv-student-count">
-                        <FiUsers className="slqtv-icon" />
-                        <span>{c.studentsCount} học viên</span>
-                      </div>
-                      
-                      <button className="slqtv-btn-view-students" onClick={() => handleSelectClass(c)}>
-                        Xem danh sách
-                      </button>
-                    </div>
-                  </div>
-                ))}
+
+                {/* Students table */}
+                <div className="slqtv-table-wrapper">
+                  {loadingStudents ? (
+                    <div className="slqtv-loading" style={{ padding: "60px 0" }}>Đang tải danh sách học viên...</div>
+                  ) : filteredStudents.length === 0 ? (
+                    <div className="slqtv-empty" style={{ padding: "60px 0" }}>Lớp chưa có học viên nào ghi danh hoặc không khớp tìm kiếm.</div>
+                  ) : (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th style={{ width: 60, textAlign: "center" }}>STT</th>
+                          <th>Mã học viên</th>
+                          <th>MSSV (Trường)</th>
+                          <th style={{ width: 280 }}>Họ tên</th>
+                          <th>Giới tính</th>
+                          <th>Ngày ghi danh</th>
+                          <th>Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredStudents.map((s, idx) => (
+                          <tr key={s.studentId} onClick={() => handleViewStudentDetails(s.studentId)} style={{ cursor: "pointer" }}>
+                            <td style={{ textAlign: "center", color: "#666", fontWeight: 600 }}>{idx + 1}</td>
+                            <td className="slqtv-code-cell">{s.studentId}</td>
+                            <td className="slqtv-code-cell">{s.MSSV || "—"}</td>
+                            <td>
+                              <span className="slqtv-student-name">{s.HoTen}</span>
+                            </td>
+                            <td>
+                              {s.GioiTinh === "Nam" ? (
+                                <span className="slqtv-gender-badge male">Nam</span>
+                              ) : s.GioiTinh === "Nữ" ? (
+                                <span className="slqtv-gender-badge female">Nữ</span>
+                              ) : (
+                                <span className="slqtv-gender-badge other">—</span>
+                              )}
+                            </td>
+                            <td>{formatDate(s.NgayGhiDanh)}</td>
+                            <td>
+                              <span className={`slqtv-status-badge ${s.TrangThai === "Đang học" ? "active" : ""}`}>
+                                {s.TrangThai}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="slqtv-empty" style={{ padding: "60px 0" }}>
+                Chưa có lớp học nào được chọn hoặc không tìm thấy dữ liệu.
               </div>
             )}
           </div>
         </div>
-      ) : (
-        /* VIEW 2: STUDENTS IN SELECTED CLASS */
-        <div>
-          {/* Header row with back button and class info */}
-          <div style={{ padding: "24px 32px 10px" }}>
-            <div className="slqtv-back-row" style={{ marginBottom: "12px" }}>
-              <button className="slqtv-btn-back" onClick={() => setSelectedClass(null)}>
-                <FiArrowLeft className="slqtv-item-icon" />
-                <span>Quay lại danh sách lớp</span>
-              </button>
-            </div>
-            
-            <div className="slqtv-class-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
-              <div className="slqtv-class-info-main">
-                <span className="slqtv-course-tag">{selectedClass.courseName}</span>
-                <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#000080", margin: "4px 0 2px 0", letterSpacing: "-0.02em" }}>Lớp học: {selectedClass.name}</h2>
-                <p className="slqtv-schedule-info" style={{ margin: 0, fontSize: "12.5px", color: "#64748b", display: "flex", alignItems: "center" }}>
-                  <FiClock style={{ marginRight: 6 }} /> Lịch học: {selectedClass.schedule}
-                </p>
-              </div>
-
-              <button className="slqtv-btn-export" onClick={handleExportExcel}>
-                <FiDownload style={{ marginRight: 8, fontSize: 16 }} />
-                <span>Xuất Excel</span>
-              </button>
-            </div>
-          </div>
-
-          <div style={{ padding: "0 32px 32px 32px" }}>
-            <div className="slqtv-student-list-view">
-              {/* Student Search and Stats */}
-              <div className="slqtv-students-filters-row">
-                <div className="slqtv-search-wrapper" style={{ maxWidth: 360 }}>
-                  <FiSearch className="slqtv-search-icon" />
-                  <input
-                    type="text"
-                    placeholder="Tìm tên, mã học viên, MSSV..."
-                    value={studentSearchQuery}
-                    onChange={e => setStudentSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                <div className="slqtv-students-stats-count">
-                  <span>Tìm thấy <strong>{filteredStudents.length}</strong> học viên</span>
-                </div>
-              </div>
-
-              {/* Students table */}
-              <div className="slqtv-table-wrapper">
-                {loadingStudents ? (
-                  <div className="slqtv-loading" style={{ padding: "60px 0" }}>Đang tải danh sách học viên...</div>
-                ) : filteredStudents.length === 0 ? (
-                  <div className="slqtv-empty" style={{ padding: "60px 0" }}>Lớp chưa có học viên nào ghi danh hoặc không khớp tìm kiếm.</div>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th style={{ width: 60, textAlign: "center" }}>STT</th>
-                        <th>Mã học viên</th>
-                        <th>MSSV (Trường)</th>
-                        <th>Họ tên</th>
-                        <th>Giới tính</th>
-                        <th>Ngày ghi danh</th>
-                        <th>Trạng thái</th>
-                        <th style={{ width: 140, textAlign: "center" }}>Hành động</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStudents.map((s, idx) => (
-                        <tr key={s.studentId}>
-                          <td style={{ textAlign: "center", color: "#666", fontWeight: 600 }}>{idx + 1}</td>
-                          <td className="slqtv-code-cell">{s.studentId}</td>
-                          <td className="slqtv-code-cell">{s.MSSV || "—"}</td>
-                          <td>
-                            <span className="slqtv-student-name">{s.HoTen}</span>
-                          </td>
-                          <td>
-                            {s.GioiTinh === "Nam" ? (
-                              <span className="slqtv-gender-badge male">Nam</span>
-                            ) : s.GioiTinh === "Nữ" ? (
-                              <span className="slqtv-gender-badge female">Nữ</span>
-                            ) : (
-                              <span className="slqtv-gender-badge other">—</span>
-                            )}
-                          </td>
-                          <td>{formatDate(s.NgayGhiDanh)}</td>
-                          <td>
-                            <span className={`slqtv-status-badge ${s.TrangThai === "Đang học" ? "active" : ""}`}>
-                              {s.TrangThai}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: "center" }}>
-                            <button className="slqtv-btn-detail-view" onClick={() => handleViewStudentDetails(s.studentId)}>
-                              <FiUser style={{ marginRight: 4 }} /> Chi tiết
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
