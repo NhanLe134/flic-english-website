@@ -85,6 +85,7 @@ const ChamBaiPage = () => {
 
   const exType = (exercise.Type || "").toLowerCase();
   const isExam = parsedSubmission?.isExam || exType === "exam";
+  const hasSections = !!parsedSubmission?.sections || !!parsedContent?.sections;
 
   // ── Normalize type ─────────────────────────────────────────────────────────
   const normalizedType: string =
@@ -247,7 +248,7 @@ const ChamBaiPage = () => {
         <h3>Bài làm của học viên</h3>
 
         {/* ── CASE 1: TIMED EXAMS (SECTIONS-BASED) ── */}
-        {isExam && parsedSubmission ? (
+        {(isExam || hasSections) && parsedSubmission ? (
           <div>
             {parsedSubmission.sections.map((sec: any, secIdx: number) => {
               const exerciseSection = parsedContent.sections?.[secIdx];
@@ -594,7 +595,7 @@ const ChamBaiPage = () => {
               );
             })}
           </div>
-        ) : !isExam && parsedSubmission ? (
+        ) : !(isExam || hasSections) && parsedSubmission ? (
           /* ── CASE 2: REGULAR MULTIPLE QUESTIONS (JSON LIST) ── */
           <div>
             {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "listening-mcq" && (

@@ -276,7 +276,6 @@ export default function DuyetBaiQTV() {
                   <th>GIÁO VIÊN</th>
                   <th>LOẠI</th>
                   <th>TRẠNG THÁI DUYỆT</th>
-                  <th>CẤP ĐỘ</th>
                   <th>NGÀY GỬI</th>
                 </tr>
               </thead>
@@ -312,7 +311,7 @@ export default function DuyetBaiQTV() {
                           {getStatusLabel(item.TrangThaiDuyet || item.TrangThai)}
                         </span>
                       </td>
-                      <td>{item.CapDo || "—"}</td>
+                    
                       <td>
                         {item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate
                           ? new Date(item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate).toLocaleDateString("vi-VN")

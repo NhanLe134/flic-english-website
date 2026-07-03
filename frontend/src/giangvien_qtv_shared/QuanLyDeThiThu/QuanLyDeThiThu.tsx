@@ -376,7 +376,7 @@ const RichTextEditor = ({
 
 const QuanLyDeThiThu = () => {
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
-  const isQTV = user?.VaiTro === "Quản Trị Nội Dung";
+  const isQTV = user?.VaiTro === "Quản Trị Nội Dung" || window.location.pathname.includes("/QTV/");
 
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -2313,7 +2313,7 @@ D. Visiting friends
             </button>
             <div style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: "12px" }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                Chấm điểm bài thi: {selectedSubmission.hoTen} ({selectedSubmission.maSinhVien})
+                {isQTV ? "Chi tiết bài làm: " : "Chấm điểm bài thi: "}{selectedSubmission.hoTen} ({selectedSubmission.maSinhVien})
               </h2>
               <span style={{ fontSize: "12px", color: "#64748b" }}>
                 Đề thi: {selectedSubmission.tenDeThi} | Ngày nộp: {new Date(selectedSubmission.ngayNop).toLocaleString("vi-VN")}
@@ -2513,15 +2513,17 @@ D. Visiting friends
                     max="10"
                     value={gradeViet}
                     onChange={(e) => setGradeViet(e.target.value)}
-                    placeholder="Nhập điểm viết (0 - 10)..."
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box" }}
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có điểm" : "Nhập điểm viết (0 - 10)..."}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                   <textarea
                     value={feedbackViet}
                     onChange={(e) => setFeedbackViet(e.target.value)}
-                    placeholder="Nhập nhận xét bài viết cho học viên..."
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có nhận xét" : "Nhập nhận xét bài viết cho học viên..."}
                     rows={3}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                 </div>
 
@@ -2542,15 +2544,17 @@ D. Visiting friends
                     max="10"
                     value={gradeNoi}
                     onChange={(e) => setGradeNoi(e.target.value)}
-                    placeholder="Nhập điểm nói (0 - 10)..."
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box" }}
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có điểm" : "Nhập điểm nói (0 - 10)..."}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                   <textarea
                     value={feedbackNoi}
                     onChange={(e) => setFeedbackNoi(e.target.value)}
-                    placeholder="Nhập nhận xét bài nói cho học viên..."
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có nhận xét" : "Nhập nhận xét bài nói cho học viên..."}
                     rows={3}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                 </div>
 
@@ -2566,15 +2570,17 @@ D. Visiting friends
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "20px" }}>
-                <button
-                  onClick={handleSaveGrades}
-                  style={{
-                    background: "#107544", color: "white", border: "none", padding: "12px", borderRadius: "8px",
-                    fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%"
-                  }}
-                >
-                  <FiCheckCircle /> Lưu điểm & Đánh giá
-                </button>
+                {!isQTV && (
+                  <button
+                    onClick={handleSaveGrades}
+                    style={{
+                      background: "#107544", color: "white", border: "none", padding: "12px", borderRadius: "8px",
+                      fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%"
+                    }}
+                  >
+                    <FiCheckCircle /> Lưu điểm & Đánh giá
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedSubmission(null)}
                   style={{
@@ -2600,11 +2606,12 @@ D. Visiting friends
                           s.maSinhVien.toLowerCase().includes(subSearch.toLowerCase()) ||
                           s.tenDeThi.toLowerCase().includes(subSearch.toLowerCase());
       
+      const isPending = s.diemViet === null || s.diemNoi === null;
+      const isGraded = !isPending;
+
       if (isQTV) {
-        return matchSearch;
+        return matchSearch && isGraded;
       } else {
-        const isPending = s.diemViet === null || s.diemNoi === null;
-        const isGraded = !isPending;
         if (subStatusFilter === "pending") return matchSearch && isPending;
         if (subStatusFilter === "graded") return matchSearch && isGraded;
         return matchSearch;
@@ -2764,7 +2771,7 @@ D. Visiting friends
                             fontSize: "11.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
                           }}
                         >
-                          {isPending ? "Chấm bài" : "Xem chi tiết"}
+                          {isQTV ? "Xem chi tiết" : (isPending ? "Chấm bài" : "Xem chi tiết")}
                         </button>
                       </td>
                     </tr>
