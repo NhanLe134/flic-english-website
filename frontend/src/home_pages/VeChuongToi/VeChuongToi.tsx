@@ -1,7 +1,7 @@
 import "./VeChuongToi.css";
 import "./VeChuongToi_TuongThich.css"; // Import file css tuong thich rieng
-import Footer from "../../components/Footer";
-import NavbarAuto from "../../components/NavbarAuto";
+import Footer from "../../components/Footer/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
 import { FiEye, FiTarget, FiAward, FiCheckCircle, FiThumbsUp } from "react-icons/fi";
 
 const cards = [
@@ -56,7 +56,7 @@ const cards = [
 const VeChuongToi = () => {
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
 
       {/* Hero Banner duoc thiet ke tu dong thay doi va fix vua van khung hinh */}
       <div className="about-hero">

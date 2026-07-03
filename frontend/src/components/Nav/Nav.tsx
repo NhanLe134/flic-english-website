@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiBookOpen, FiEdit3 } from "react-icons/fi";
-import "./navbar.css";
-import "./Navbar_TuongThich.css"; // Import file css tuong thich mobile/tablet
+import "./Nav.css";
 
-function Navbar() {
-  const [showTrialDropdown, setShowTrialDropdown] = useState(false); // Them lai state de tracking click tren mobile
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State bat/tat menu mobile
+function Nav() {
+  const [showTrialDropdown, setShowTrialDropdown] = useState(false); // Trạng thái kiểm soát dropdown trên di động
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Trạng thái bật/tắt menu di động
   const location = useLocation();
 
   useEffect(() => {
@@ -31,12 +30,10 @@ function Navbar() {
     location.pathname.startsWith("/coursehome");
   const isTrialActive = location.pathname === "/hoc-thu" || location.pathname === "/test-thu";
 
-  // Ham toggle menu mobile
+  // Hàm chuyển đổi menu di động
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
-
-
 
   return (
     <header className="navbar">
@@ -45,7 +42,7 @@ function Navbar() {
           <img src={`${import.meta.env.BASE_URL}flic_logo_full.png`} alt="FLIC" className="logo-img" />
         </Link>
 
-        {/* Nut Hamburger Trigger cho thiet bi di dong */}
+        {/* Nút Hamburger kích hoạt trên thiết bị di động */}
         <button 
           className={`nav-toggle-btn ${isMobileMenuOpen ? "active" : ""}`} 
           onClick={toggleMobileMenu}
@@ -56,7 +53,7 @@ function Navbar() {
           <span></span>
         </button>
 
-        {/* Them responsive-active class khi menu duoc bat */}
+        {/* Thêm class active khi menu được bật */}
         <ul className={`navv-menu ${isMobileMenuOpen ? "responsive-active" : ""}`}>
           <li>
             <Link to="/" className={isHome ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Trang chủ</Link>
@@ -99,4 +96,4 @@ function Navbar() {
   );
 }
 
-export default Navbar;
+export default Nav;

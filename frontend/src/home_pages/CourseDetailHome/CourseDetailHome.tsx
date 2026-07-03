@@ -1,8 +1,8 @@
 import "./CourseDetailHome.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 
 const API = "http://14.225.192.252:5000";
 
@@ -89,15 +89,15 @@ function CourseDetail() {
   }
 
   if (loading) return (
-    <><NavbarAuto /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Đang tải...</div><Footer /></>
+    <><NavTuDong /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Đang tải...</div><Footer /></>
   )
   if (!course) return (
-    <><NavbarAuto /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Không tìm thấy khóa học.</div><Footer /></>
+    <><NavTuDong /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Không tìm thấy khóa học.</div><Footer /></>
   )
 
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
       <div className="toeic-page">
         <nav className="toeic-breadcrumb">
           <Link to="/">Trang chủ</Link>

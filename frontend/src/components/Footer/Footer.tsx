@@ -1,10 +1,10 @@
-import "./cta-footer.css"
-import { FiFacebook, FiYoutube, FiMessageSquare, FiMapPin, FiPhone, FiMail } from "react-icons/fi"
+import "./Footer.css";
+import { FiFacebook, FiYoutube, FiMessageSquare, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
 
 export default function Footer() {
   // Ẩn footer khi đã đăng nhập
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}")
-  if (user?.MaNguoiDung) return null
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  if (user?.MaNguoiDung) return null;
 
   return (
     <footer className="footer">
@@ -31,7 +31,8 @@ export default function Footer() {
               </a>
             </div>
           </div>
-          {/* Cột 3 */}
+          
+          {/* Cột 2 */}
           <div>
             <h4>THÔNG TIN LIÊN HỆ</h4>
             <ul className="contact-info">
@@ -59,5 +60,5 @@ export default function Footer() {
 
       </div>
     </footer>
-  )
+  );
 }

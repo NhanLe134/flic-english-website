@@ -1,39 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ================= CTA SECTION ================= */
-.cta-section {
-  background: linear-gradient(90deg, #3d7d44 0%, #e9be47 100%);
-  padding: 40px 20px;
-  text-align: center;
-  color: white;
-}
-
-.cta-container {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.cta-section h2 {
-  font-family: 'Inter', sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.3;
-  margin: 0 0 36px;
-  letter-spacing: -0.5px;
-  color: white;
-}
-
-.cta-desc {
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
-  font-style: italic;
-  line-height: 1.6;
-  max-width: 720px;
-  margin: 0 auto;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-/* ================= FOOTER SECTION ================= */
+/* ================= PHẦN CHÂN TRANG (FOOTER) ================= */
 .footer {
   background: #265A2F;
   color: #ffffff;
@@ -55,7 +22,7 @@
   margin-bottom: 24px;
 }
 
-/* Titles - orange/yellow */
+/* Tiêu đề cột */
 .footer h3 {
   font-family: 'Inter', sans-serif;
   color: #e9be47;
@@ -109,7 +76,7 @@
   color: #e9be47;
 }
 
-/* Contact Info list items (with icons) */
+/* Liên hệ có icon */
 .contact-info li {
   display: flex;
   align-items: center;
@@ -127,7 +94,7 @@
   flex-shrink: 0;
 }
 
-/* Social links (with circles) */
+/* Mạng xã hội */
 .socials {
   margin-top: 16px;
   display: flex;
@@ -155,7 +122,7 @@
   color: #e9be47;
 }
 
-/* Divider & Bottom copyright info */
+/* Bản quyền */
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   padding-top: 16px;
@@ -171,7 +138,7 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* RESPONSIVE */
+/* Hỗ trợ tương thích responsive */
 @media (max-width: 768px) {
   .footer-grid {
     grid-template-columns: 1fr;

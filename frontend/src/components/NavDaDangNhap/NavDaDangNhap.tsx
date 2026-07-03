@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
-import "./NavbarLogin.css";
-import "./NavbarLogin_TuongThich.css"; // Import file css tuong thich mobile/tablet
+import "./NavDaDangNhap.css";
 
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
 const userImg = import.meta.env.BASE_URL + "user.png";
 
-function NavbarLogin() {
+function NavDaDangNhap() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showTrialDropdown, setShowTrialDropdown] = useState(false); // Them lai state de tracking click mobile
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State bat/tat menu mobile
+  const [showTrialDropdown, setShowTrialDropdown] = useState(false); // Trạng thái kiểm soát dropdown trên di động
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Trạng thái bật/tắt menu di động
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,21 +42,18 @@ function NavbarLogin() {
     navigate("/login");
   };
 
-  // Ham toggle menu mobile
+  // Hàm chuyển đổi menu di động
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-
-
   return (
     <nav className="navbar-login">
-
       <div className="nav-logo" onClick={() => setIsMobileMenuOpen(false)}>
         <Link to="/"><img src={logo} alt="FLIC logo" /></Link>
       </div>
 
-      {/* Nut Hamburger Trigger cho thiet bi di dong */}
+      {/* Nút Hamburger kích hoạt trên thiết bị di động */}
       <button 
         className={`nav-toggle-btn ${isMobileMenuOpen ? "active" : ""}`} 
         onClick={toggleMobileMenu}
@@ -68,7 +64,7 @@ function NavbarLogin() {
         <span></span>
       </button>
 
-      {/* Them responsive-active class khi menu mobile duoc bat */}
+      {/* Thêm class active khi menu di động được bật */}
       <ul className={`nav-menu ${isMobileMenuOpen ? "responsive-active" : ""}`}>
         <li><Link to="/" className={isActive("/") ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Trang chủ</Link></li>
         <li><Link to="/about" className={isActive("/about") ? "active" : ""} onClick={() => setIsMobileMenuOpen(false)}>Về Chúng Tôi</Link></li>
@@ -98,7 +94,7 @@ function NavbarLogin() {
         </li>
       </ul>
 
-      {/* User box với dropdown */}
+      {/* Khu vực tài khoản người dùng với menu thả xuống */}
       <div className="user-box" onClick={() => setShowUserMenu(!showUserMenu)}
         style={{ position: "relative", cursor: "pointer" }}>
         <img src={userImg} alt="user avatar" />
@@ -121,11 +117,11 @@ function NavbarLogin() {
                 e.stopPropagation();
                 setShowUserMenu(false);
                 setIsMobileMenuOpen(false);
-                setShowLogoutModal(true); // ← mở modal thay vì logout thẳng
+                setShowLogoutModal(true); // Mở hộp thoại xác nhận đăng xuất
               }}
               style={{
                 padding: "10px 16px", fontSize: 14, color: "#c62828",
-                cursor: "pointer", borderTop: "1px solid #f0f0f0"
+                cursor: "pointer", borderTop: "1px solid #f0e4d4"
               }}
             >
               🚪 Đăng xuất
@@ -134,7 +130,7 @@ function NavbarLogin() {
         )}
       </div>
 
-      {/* MODAL XÁC NHẬN ĐĂNG XUẤT */}
+      {/* HỘP THOẠI XÁC NHẬN ĐĂNG XUẤT */}
       {showLogoutModal && (
         <div
           className="logout-modal-backdrop"
@@ -168,9 +164,8 @@ function NavbarLogin() {
           </div>
         </div>
       )}
-
     </nav>
   );
 }
 
-export default NavbarLogin;
+export default NavDaDangNhap;

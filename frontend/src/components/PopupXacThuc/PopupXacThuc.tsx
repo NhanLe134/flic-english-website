@@ -1,11 +1,11 @@
 import { useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
-import Login from "../home_pages/Login/Login";
-import Register from "../home_pages/Register/Register";
-import ForgotPassword from "../home_pages/ForgotPassword/ForgotPassword";
-import "./authModal.css";
+import Login from "../../home_pages/Login/Login";
+import Register from "../../home_pages/Register/Register";
+import ForgotPassword from "../../home_pages/ForgotPassword/ForgotPassword";
+import "./PopupXacThuc.css";
 
-const AuthModal = () => {
+const PopupXacThuc = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const authType = searchParams.get("auth");
 
@@ -33,10 +33,10 @@ const AuthModal = () => {
 
   return (
     <div className="auth-modal-backdrop" onClick={handleClose}>
-      {/* Wrapper card co relative de nut close dinh dung goc card */}
+      {/* Wrapper card có relative để nút close dính đúng góc card */}
       <div className="auth-modal-card-wrapper" onClick={(e) => e.stopPropagation()}>
         
-        {/* Khoi Header co dinh chua ca tieu de va nut close X - can giua chieu doc va thang hang ngang */}
+        {/* Khối Header cố định chứa cả tiêu đề và nút close X - căn giữa chiều dọc và thẳng hàng ngang */}
         <div className="auth-modal-header">
           <h2 className="auth-modal-header-title">
             {authType === "login" && "Đăng nhập"}
@@ -53,7 +53,7 @@ const AuthModal = () => {
           </button>
         </div>
 
-        {/* Khoi Body co cuon scroll tu dong ben duoi */}
+        {/* Khối Body có cuộn scroll tự động bên dưới */}
         <div className="auth-modal-body">
           {authType === "login" && (
             <Login isModal={true} onClose={handleClose} />
@@ -71,4 +71,4 @@ const AuthModal = () => {
   );
 };
 
-export default AuthModal;
+export default PopupXacThuc;

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 import TestThuSV from "../../sinhvien/pages/TestThuSV";
 
 const TestThuPublic = () => {
@@ -20,7 +20,7 @@ const TestThuPublic = () => {
 
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
       <div style={{ padding: "0", minHeight: "80vh", background: "#f8fafc" }}>
         <TestThuSV />
       </div>

@@ -1,5 +1,5 @@
-import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 import "./CoursesCategoryPage.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -151,7 +151,7 @@ const CoursesCategoryPage = () => {
 
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
 
       <div className="cat-page-wrapper">
         <div className="cat-container">

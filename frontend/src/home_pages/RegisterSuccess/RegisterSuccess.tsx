@@ -1,6 +1,6 @@
 import "./RegisterSuccess.css";
 import { Link, useLocation } from "react-router-dom";
-import Navbar from "../../components/Navbar";
+import Nav from "../../components/Nav/Nav";
 
 function RegisterSuccess() {
   const location = useLocation();
@@ -8,7 +8,7 @@ function RegisterSuccess() {
 
   return (
     <>
-      <Navbar />
+      <Nav />
 
       <div className="rs-page">
         {/* Breadcrumb */}
