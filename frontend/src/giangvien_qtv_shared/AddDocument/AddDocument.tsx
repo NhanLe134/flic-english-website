@@ -52,7 +52,7 @@ const AddDocument = () => {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        const uploadRes = await fetch("http://localhost:5000/upload", {
+        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
           method: "POST",
           body: formData
         });
@@ -62,7 +62,7 @@ const AddDocument = () => {
         fileUrl = linkUrl;
       }
 
-      await fetch("http://localhost:5000/tailieu", {
+      await fetch("http://14.225.192.252:5000/tailieu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

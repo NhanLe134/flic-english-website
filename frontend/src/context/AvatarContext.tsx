@@ -19,7 +19,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       const user = JSON.parse(userStr);
       const path = user.AnhDaiDien;
       if (!path) return null;
-      return path.startsWith("http") ? path : `http://localhost:5000${path}`;
+      return path.startsWith("http") ? path : `http://14.225.192.252:5000${path}`;
     }
     return null;
   });
@@ -37,7 +37,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const uploadRes = await fetch("http://localhost:5000/upload", {
+      const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
         method: "POST",
         body: formData
       });
@@ -45,7 +45,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
 
       const uploadData = await uploadRes.json();
       const relativeUrl = uploadData.url; // e.g. /uploads/filename.png
-      const absoluteUrl = `http://localhost:5000${relativeUrl}`;
+      const absoluteUrl = `http://14.225.192.252:5000${relativeUrl}`;
 
       // 2. Cập nhật state và sessionStorage
       setAvatar(absoluteUrl);
@@ -53,7 +53,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       sessionStorage.setItem("user", JSON.stringify(user));
 
       // 3. Lưu link relative URL vào database cột AnhDaiDien
-      await fetch(`http://localhost:5000/users/${user.MaNguoiDung}/anh-dai-dien`, {
+      await fetch(`http://14.225.192.252:5000/users/${user.MaNguoiDung}/anh-dai-dien`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ AnhDaiDien: relativeUrl })

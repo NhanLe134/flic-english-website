@@ -63,7 +63,7 @@ const LessonResultPage = () => {
     }
 
     // Verify lecturer permission
-    fetch(`http://localhost:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(classes => {
         const hasAccess = Array.isArray(classes) && classes.some((c: any) => Number(c.MaLopHoc) === Number(id));
@@ -76,11 +76,11 @@ const LessonResultPage = () => {
 
         // Fetch class data
         Promise.all([
-          fetch(`http://localhost:5000/classes/${id}/info`).then(r => r.json()),
-          fetch(`http://localhost:5000/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
-          fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
-          fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
-          fetch(`http://localhost:5000/classes/${id}/buoihoc`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/classes/${id}/info`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/baocao/baitap-headers`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/baocao/diem-all`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`).then(r => r.json()),
         ])
           .then(([info, sinhVienList, headers, grades, lessonsList]) => {
             setClassInfo(info);

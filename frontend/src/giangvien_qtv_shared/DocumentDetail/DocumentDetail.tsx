@@ -2,7 +2,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const DocumentDetail: React.FC = () => {
   const navigate = useNavigate();

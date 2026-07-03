@@ -13,7 +13,7 @@ const Header = () => {
     const user = JSON.parse(userStr);
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://localhost:5000/giangvien/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => setTeacherInfo(data))
       .catch(err => console.log(err));

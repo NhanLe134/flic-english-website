@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./KhoHocLieu.module.css";
 import { FiSearch, FiEye, FiTrash2, FiAlertTriangle, FiArrowLeft } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 type ActiveTab = "baigiang" | "baitap" | "tailieu";
 
@@ -75,9 +75,9 @@ const KhoHocLieu = () => {
 
   const handleViewDocumentDetail = (doc: any) => {
     const fileUrl = doc.FileUrl
-      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://localhost:5000${doc.FileUrl}`)
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://14.225.192.252:5000${doc.FileUrl}`)
       : doc.NoiDung?.includes("File: /uploads/")
-      ? `http://localhost:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      ? `http://14.225.192.252:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
       : null;
 
     if (fileUrl) {

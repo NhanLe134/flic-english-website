@@ -5,7 +5,7 @@ import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-const API = 'http://localhost:5000'
+const API = 'http://14.225.192.252:5000'
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
 const DAYS_OF_WEEK = [
   { label: 'T2', value: 'Thứ 2' },

@@ -22,7 +22,7 @@ import { BoGiaiDeThi } from "./BoGiaiDeThi";
 import { NoiTu } from "./NoiTu";
 import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface MCQuestion {
   question: string;

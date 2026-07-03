@@ -457,7 +457,7 @@ const QuanLyDeThiThu = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
+      const res = await fetch(`http://14.225.192.252:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -485,7 +485,7 @@ const QuanLyDeThiThu = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://localhost:5000/upload", {
+    const res = await fetch("http://14.225.192.252:5000/upload", {
       method: "POST",
       body: formData
     });
@@ -497,7 +497,7 @@ const QuanLyDeThiThu = () => {
   const getMediaUrl = (url?: string) => {
     if (!url) return "";
     if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
-    return `http://localhost:5000${url}`;
+    return `http://14.225.192.252:5000${url}`;
   };
 
   // Modals & Active objects
@@ -567,7 +567,7 @@ const QuanLyDeThiThu = () => {
 
   const loadTests = async () => {
     try {
-      const res = await fetch("http://localhost:5000/dethi");
+      const res = await fetch("http://14.225.192.252:5000/dethi");
       if (res.ok) {
         const data = await res.json();
         const mappedTests = data.map((t: any) => ({
@@ -615,7 +615,7 @@ const QuanLyDeThiThu = () => {
 
   const loadSubmissions = async () => {
     try {
-      const res = await fetch("http://localhost:5000/dethi/submissions");
+      const res = await fetch("http://14.225.192.252:5000/dethi/submissions");
       if (res.ok) {
         const data = await res.json();
         setSubmissions(data);
@@ -746,7 +746,7 @@ const QuanLyDeThiThu = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/dethi", {
+      const res = await fetch("http://14.225.192.252:5000/dethi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData)
@@ -1245,13 +1245,13 @@ D. Visiting friends
     try {
       let response;
       if (isNew) {
-        response = await fetch("http://localhost:5000/dethi", {
+        response = await fetch("http://14.225.192.252:5000/dethi", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
         });
       } else {
-        response = await fetch(`http://localhost:5000/dethi/${editingTest.MaBaiTest}`, {
+        response = await fetch(`http://14.225.192.252:5000/dethi/${editingTest.MaBaiTest}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
@@ -3188,7 +3188,7 @@ D. Visiting friends
                     const isNew = testIdToDelete > 1000000000000;
                     if (!isNew) {
                       try {
-                        const res = await fetch(`http://localhost:5000/dethi/${testIdToDelete}`, {
+                        const res = await fetch(`http://14.225.192.252:5000/dethi/${testIdToDelete}`, {
                           method: "DELETE"
                         });
                         if (res.ok) {
