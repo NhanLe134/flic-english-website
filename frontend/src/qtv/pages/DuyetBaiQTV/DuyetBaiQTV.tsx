@@ -3,7 +3,7 @@ import styles from "./DuyetBaiQTV.module.css";
 import { FiSearch, FiEye } from "react-icons/fi";
 import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const getMediaUrl = (url: string) => {
   if (!url) return "";
@@ -206,7 +206,7 @@ export default function DuyetBaiQTV() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm theo tiêu đề, giáo viên..."
+              placeholder="Tìm kiếm theo tiêu đề, người tạo..."
             />
             <button className={styles.searchBtn}>
               <FiSearch />
@@ -250,7 +250,7 @@ export default function DuyetBaiQTV() {
           <div className={styles.tableHeader}>
             <div>
               <h3>Danh sách nội dung chờ duyệt</h3>
-              <p>Kiểm tra và phê duyệt bài đăng, khóa học do giáo viên gửi</p>
+              <p>Kiểm tra và phê duyệt bài đăng, khóa học do người tạo gửi</p>
             </div>
             
             {/* Filter pills */}
@@ -275,10 +275,9 @@ export default function DuyetBaiQTV() {
               <thead>
                 <tr>
                   <th>TIÊU ĐỀ</th>
-                  <th>GIÁO VIÊN</th>
+                  <th>NGƯỜI TẠO</th>
                   <th>LOẠI</th>
                   <th>TRẠNG THÁI DUYỆT</th>
-                  <th>CẤP ĐỘ</th>
                   <th>NGÀY GỬI</th>
                 </tr>
               </thead>
@@ -314,7 +313,7 @@ export default function DuyetBaiQTV() {
                           {getStatusLabel(item.TrangThaiDuyet || item.TrangThai)}
                         </span>
                       </td>
-                      <td>{item.CapDo || "—"}</td>
+                    
                       <td>
                         {item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate
                           ? new Date(item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate).toLocaleDateString("vi-VN")

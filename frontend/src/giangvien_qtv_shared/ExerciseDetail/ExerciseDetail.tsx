@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 
 interface Pair { left: string; right: string; }
 interface MCQuestion { question: string; options: { label: string; text: string }[]; correct: string; audioUrl?: string; imageUrl?: string; }
-interface Question { question: string; answers: string[]; correct: string; audioUrl?: string; imageUrl?: string; }
+interface Question {
+  question: string;
+  answers: string[];
+  correct: string;
+  audioUrl?: string;
+  imageUrl?: string;
+  prompt?: string;
+  subQuestions?: any[];
+}
 
 const mapDangBaiToType = (db: string): string => {
   if (!db) return "multiple";
@@ -103,7 +111,7 @@ const ExerciseDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/baitap/${id}`)
+    fetch(`http://14.225.192.252:5000/baitap/${id}`)
       .then(r => r.json())
       .then(data => {
         if (data && data.Type) {
@@ -154,14 +162,38 @@ const ExerciseDetail = () => {
 
     // MC questions
     if (isMC && exercise.Questions) {
-      const mcQs = parseMCQuestions(exercise.Questions);
-      setEditQuestions(mcQs.map(q => ({
-        question: q.question,
-        answers: ["A","B","C","D"].map(l => q.options.find(o => o.label === l)?.text || ""),
-        correct: q.correct,
-        audioUrl: q.audioUrl || "",
-        imageUrl: q.imageUrl || "",
-      })));
+      if (exercise.Questions.trim().startsWith("[")) {
+        try {
+          const parsed = JSON.parse(exercise.Questions);
+          if (Array.isArray(parsed)) {
+            setEditQuestions(parsed.map((q: any) => ({
+              question: q.question || "",
+              answers: q.answers || [],
+              correct: q.correct || "A",
+              audioUrl: q.audioUrl || "",
+              imageUrl: q.imageUrl || "",
+              prompt: q.prompt || "",
+              subQuestions: q.subQuestions || []
+            })));
+          } else {
+            setEditQuestions([]);
+          }
+        } catch (e) {
+          console.error("Failed to parse MCQuestions JSON", e);
+          setEditQuestions([]);
+        }
+      } else {
+        const mcQs = parseMCQuestions(exercise.Questions);
+        setEditQuestions(mcQs.map(q => ({
+          question: q.question,
+          answers: ["A","B","C","D"].map(l => q.options.find(o => o.label === l)?.text || ""),
+          correct: q.correct,
+          audioUrl: q.audioUrl || "",
+          imageUrl: q.imageUrl || "",
+          prompt: "",
+          subQuestions: []
+        })));
+      }
     } else {
       setEditQuestions([]);
     }
@@ -266,7 +298,7 @@ const ExerciseDetail = () => {
         {exercise.AudioUrl && (
           <div style={{ padding: "12px", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd" }}>
             <label style={{ fontWeight: 600, fontSize: "13px", color: "#0369a1", display: "block", marginBottom: "6px" }}>File nghe chung cho phần này</label>
-            <audio src={exercise.AudioUrl.startsWith("http") || exercise.AudioUrl.startsWith("/uploads") ? (exercise.AudioUrl.startsWith("http") ? exercise.AudioUrl : `http://localhost:5000${exercise.AudioUrl}`) : `http://localhost:5000/uploads/${exercise.AudioUrl}`} controls style={{ width: "100%", height: "35px" }} />
+            <audio src={exercise.AudioUrl.startsWith("http") || exercise.AudioUrl.startsWith("/uploads") ? (exercise.AudioUrl.startsWith("http") ? exercise.AudioUrl : `http://14.225.192.252:5000${exercise.AudioUrl}`) : `http://14.225.192.252:5000/uploads/${exercise.AudioUrl}`} controls style={{ width: "100%", height: "35px" }} />
           </div>
         )}
 
@@ -312,34 +344,87 @@ const ExerciseDetail = () => {
                 (Không có câu hỏi trắc nghiệm nào trong bài tập này)
               </p>
             ) : (
-              editQuestions.map((q, qi) => (
-                <div key={qi} style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-                  <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b", marginBottom: "8px" }}>
-                    Câu {qi + 1}: {q.question || "(Chưa nhập câu hỏi)"}
-                  </div>
-                  {q.audioUrl && (
-                    <div style={{ marginBottom: "8px" }}>
-                      <audio src={q.audioUrl.startsWith("http") || q.audioUrl.startsWith("/uploads") ? (q.audioUrl.startsWith("http") ? q.audioUrl : `http://localhost:5000${q.audioUrl}`) : `http://localhost:5000/uploads/${q.audioUrl}`} controls style={{ width: "100%", height: "32px" }} />
-                    </div>
-                  )}
-                  {q.imageUrl && (
-                    <div style={{ marginBottom: "8px" }}>
-                      <img src={q.imageUrl.startsWith("http") || q.imageUrl.startsWith("/uploads") ? (q.imageUrl.startsWith("http") ? q.imageUrl : `http://localhost:5000${q.imageUrl}`) : `http://localhost:5000/uploads/${q.imageUrl}`} alt="Question visual" style={{ maxHeight: "150px", borderRadius: "6px", border: "1px solid #e2e8f0" }} />
-                    </div>
-                  )}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "6px" }}>
-                    {["A","B","C","D"].map((label, ai) => {
-                      const isCorrect = q.correct === label;
-                      return (
-                        <div key={label} style={{ fontSize: "12.5px", color: isCorrect ? "#107544" : "#475569", fontWeight: isCorrect ? 600 : 400, display: "flex", gap: "4px" }}>
-                          <span style={{ color: isCorrect ? "#107544" : "#94a3b8" }}>{label}.</span>
-                          <span>{q.answers[ai] || "(Trống)"}</span>
+              editQuestions.map((q, qi) => {
+                const isAudioOnlyMC = exType === "listening-image" || exType === "listening-mcq";
+                const hasAnswers = q.answers && q.answers.some(a => a && a.trim() !== "");
+                const isFlatMC = exType === "listening-image" || exType === "writing-tense-mcq";
+                const hasSubQuestions = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
+                return (
+                  <div key={qi} style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                    {/* Parent prompt / context (if any) */}
+                    {q.prompt && (
+                      <div style={{ background: "#fff3e0", padding: "10px", borderRadius: "8px", marginBottom: "10px", fontSize: "13px", fontWeight: "600" }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
+                    )}
+
+                    {/* Question audio / image (if any) */}
+                    {q.audioUrl && (
+                      <div style={{ marginBottom: "8px" }}>
+                        <audio src={q.audioUrl.startsWith("http") || q.audioUrl.startsWith("/uploads") ? (q.audioUrl.startsWith("http") ? q.audioUrl : `http://14.225.192.252:5000${q.audioUrl}`) : `http://14.225.192.252:5000/uploads/${q.audioUrl}`} controls style={{ width: "100%", height: "32px" }} />
+                      </div>
+                    )}
+                    {q.imageUrl && (
+                      <div style={{ marginBottom: "8px" }}>
+                        <img src={q.imageUrl.startsWith("http") || q.imageUrl.startsWith("/uploads") ? (q.imageUrl.startsWith("http") ? q.imageUrl : `http://14.225.192.252:5000${q.imageUrl}`) : `http://14.225.192.252:5000/uploads/${q.imageUrl}`} alt="Question visual" style={{ maxHeight: "150px", borderRadius: "6px", border: "1px solid #e2e8f0" }} />
+                      </div>
+                    )}
+
+                    {/* Render subquestions if present */}
+                    {hasSubQuestions ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+                        {q.subQuestions!.map((sub: any, subIdx: number) => {
+                          const hasSubAnswers = sub.answers && sub.answers.some((a: string) => a && a.trim() !== "");
+                          return (
+                            <div key={subIdx} style={{ background: "#ffffff", padding: "12px", border: "1px solid #cbd5e1", borderLeft: "4px solid #000080", borderRadius: "8px" }}>
+                              <div style={{ fontWeight: 600, fontSize: "13px", color: "#000080", marginBottom: "6px" }}>
+                                Câu {qi + 1}.{subIdx + 1}: {sub.question || "(Chưa nhập câu hỏi)"}
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "4px" }}>
+                                {["A", "B", "C", "D"].map((lbl) => {
+                                  const isCorrect = sub.correct === lbl;
+                                  const choiceIndex = ["A", "B", "C", "D"].indexOf(lbl);
+                                  return (
+                                    <div key={lbl} style={{ fontSize: "12px", color: isCorrect ? "#107544" : "#475569", fontWeight: isCorrect ? 600 : 400, display: "flex", gap: "4px" }}>
+                                      <span style={{ color: isCorrect ? "#107544" : "#94a3b8" }}>{lbl}.</span>
+                                      {(!isAudioOnlyMC || hasSubAnswers) ? (
+                                        <span>{sub.answers?.[choiceIndex] || "(Trống)"}</span>
+                                      ) : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {sub.explanation && (
+                                <div style={{ fontSize: "11.5px", color: "#64748b", fontStyle: "italic", marginTop: "6px", background: "#f8fafc", padding: "6px 8px", borderRadius: "4px" }}>
+                                  Giải thích: {sub.explanation}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* Flat/Standard question layout */
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: "13.5px", color: "#1e293b", marginBottom: "8px" }}>
+                          Câu {qi + 1}{q.question ? `: ${q.question}` : (isAudioOnlyMC ? "" : " : (Chưa nhập câu hỏi)")}
                         </div>
-                      );
-                    })}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "6px" }}>
+                          {["A","B","C","D"].map((label, ai) => {
+                            const isCorrect = q.correct === label;
+                            return (
+                              <div key={label} style={{ fontSize: "12.5px", color: isCorrect ? "#107544" : "#475569", fontWeight: isCorrect ? 600 : 400, display: "flex", gap: "4px" }}>
+                                <span style={{ color: isCorrect ? "#107544" : "#94a3b8" }}>{label}.</span>
+                                {(!isAudioOnlyMC || hasAnswers) ? (
+                                  <span>{q.answers[ai] || "(Trống)"}</span>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -463,7 +548,7 @@ const ExerciseDetail = () => {
                     <h4 style={{ color: "#0f172a", fontSize: "14px", fontWeight: 700, margin: "0 0 8px 0" }}>Nhóm bài đọc {gi + 1}</h4>
                     {group.imageUrl && (
                       <div style={{ marginBottom: "10px" }}>
-                        <img src={group.imageUrl.startsWith("http") || group.imageUrl.startsWith("/uploads") ? (group.imageUrl.startsWith("http") ? group.imageUrl : `http://localhost:5000${group.imageUrl}`) : `http://localhost:5000/uploads/${group.imageUrl}`} alt="Passage visual" style={{ maxHeight: "200px", borderRadius: "8px" }} />
+                        <img src={group.imageUrl.startsWith("http") || group.imageUrl.startsWith("/uploads") ? (group.imageUrl.startsWith("http") ? group.imageUrl : `http://14.225.192.252:5000${group.imageUrl}`) : `http://14.225.192.252:5000/uploads/${group.imageUrl}`} alt="Passage visual" style={{ maxHeight: "200px", borderRadius: "8px" }} />
                       </div>
                     )}
                     <div style={{ fontSize: "13px", color: "#334155", lineHeight: "1.6", whiteSpace: "pre-wrap", background: "#ffffff", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>

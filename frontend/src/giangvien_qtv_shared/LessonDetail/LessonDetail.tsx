@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import { FiArrowLeft, FiFileText, FiEdit, FiTrash2 } from "react-icons/fi";
 import "./LessonDetail.css";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const LessonDetail: React.FC = () => {
   const navigate = useNavigate();

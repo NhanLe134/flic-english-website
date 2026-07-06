@@ -2,7 +2,7 @@ import "./ChamBaiPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const ChamBaiPage = () => {
   const navigate = useNavigate();
@@ -17,13 +17,13 @@ const ChamBaiPage = () => {
 
   useEffect(() => {
     if (!maBaiNop) return;
-    fetch(`http://localhost:5000/bainop/${maBaiNop}`)
+    fetch(`http://14.225.192.252:5000/bainop/${maBaiNop}`)
       .then(res => res.json())
       .then(data => {
         setBaiNop(data);
         if (data.Diem !== null && data.Diem !== undefined) setDiem(data.Diem.toString());
         if (data.NhanXet) setNhanXet(data.NhanXet);
-        return fetch(`http://localhost:5000/baitap/${data.MaBaiTap}`);
+        return fetch(`http://14.225.192.252:5000/baitap/${data.MaBaiTap}`);
       })
       .then(res => res.json())
       .then(data => setExercise(data))
@@ -36,7 +36,7 @@ const ChamBaiPage = () => {
     if (isNaN(diemSo) || diemSo < 0 || diemSo > 10) { alert("Điểm phải từ 0 đến 10"); return; }
     setLoading(true);
     try {
-      await fetch(`http://localhost:5000/bainop/${maBaiNop}/cham`, {
+      await fetch(`http://14.225.192.252:5000/bainop/${maBaiNop}/cham`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Diem: diemSo, NhanXet: nhanXet })
@@ -85,6 +85,7 @@ const ChamBaiPage = () => {
 
   const exType = (exercise.Type || "").toLowerCase();
   const isExam = parsedSubmission?.isExam || exType === "exam";
+  const hasSections = !!parsedSubmission?.sections || !!parsedContent?.sections;
 
   // ── Normalize type ─────────────────────────────────────────────────────────
   const normalizedType: string =
@@ -247,7 +248,7 @@ const ChamBaiPage = () => {
         <h3>Bài làm của học viên</h3>
 
         {/* ── CASE 1: TIMED EXAMS (SECTIONS-BASED) ── */}
-        {isExam && parsedSubmission ? (
+        {(isExam || hasSections) && parsedSubmission ? (
           <div>
             {parsedSubmission.sections.map((sec: any, secIdx: number) => {
               const exerciseSection = parsedContent.sections?.[secIdx];
@@ -390,7 +391,8 @@ const ChamBaiPage = () => {
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
-                        const hasSubQ = q.subQuestions && q.subQuestions.length > 0;
+                        const isFlatMC = sec.type === "listening-image" || sec.type === "writing-tense-mcq";
+                        const hasSubQ = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
                         return (
                           <div key={qIdx} style={{ marginTop: 10, borderBottom: "1px dashed #e0d8cc", paddingBottom: 15 }}>
                             {sec.type === "listening-image" && q.imageUrl && (
@@ -594,7 +596,7 @@ const ChamBaiPage = () => {
               );
             })}
           </div>
-        ) : !isExam && parsedSubmission ? (
+        ) : !(isExam || hasSections) && parsedSubmission ? (
           /* ── CASE 2: REGULAR MULTIPLE QUESTIONS (JSON LIST) ── */
           <div>
             {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "listening-mcq" && (
@@ -615,6 +617,7 @@ const ChamBaiPage = () => {
             {parsedSubmission.questions.map((q: any, qIdx: number) => {
               const exerciseQuestion = questionsList[qIdx] || {};
               const questionType = q.type || "";
+              const isFlatMC = questionType === "listening-image" || questionType === "writing-tense-mcq";
 
               return (
                 <div key={qIdx} style={{ border: "1.5px solid #e0d8cc", borderRadius: 10, padding: 16, marginBottom: 20, background: "#fafafa" }}>
@@ -631,7 +634,7 @@ const ChamBaiPage = () => {
                           {exerciseQuestion.prompt}
                         </div>
                       )}
-                      {exerciseQuestion.subQuestions && exerciseQuestion.subQuestions.length > 0 ? (
+                      {(!isFlatMC && exerciseQuestion.subQuestions && exerciseQuestion.subQuestions.length > 0) ? (
                         exerciseQuestion.subQuestions.map((sub: any, subIdx: number) => {
                           const subAns = q.subQuestions?.[subIdx]?.chosen || "";
                           return renderMCQBlockGrading(sub, subIdx, subAns);

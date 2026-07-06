@@ -28,7 +28,7 @@ interface Student {
 }
 
 const StudentListQTV: React.FC = () => {
-  const API = "http://localhost:5000";
+  const API = "http://14.225.192.252:5000";
 
   // Helper to format date safely
   const formatDate = (dateStr: any) => {

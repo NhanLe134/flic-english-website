@@ -21,9 +21,9 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 
   const handleViewDocumentDetail = (doc: any) => {
     const fileUrl = doc.FileUrl
-      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://localhost:5000${doc.FileUrl}`)
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://14.225.192.252:5000${doc.FileUrl}`)
       : doc.NoiDung?.includes("File: /uploads/")
-      ? `http://localhost:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      ? `http://14.225.192.252:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
       : null;
 
     if (fileUrl) {
@@ -67,7 +67,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://localhost:5000/tailieu/list/all";
+      let url = "http://14.225.192.252:5000/tailieu/list/all";
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -84,14 +84,14 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 
   const handleReuseDocument = async (docId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/tailieu/${docId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/tailieu/${docId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
         // Refresh documents list
-        const dRes = await fetch(`http://localhost:5000/tailieu/${buoiHocId}`);
+        const dRes = await fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`);
         const dData = await dRes.json();
         setDocuments(dData);
         setShowReuseModal(false);
@@ -107,7 +107,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== LOAD DATA ===== */
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://localhost:5000/tailieu/${buoiHocId}`)
+    fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setDocuments(data))
       .catch(err => console.log(err));
@@ -125,7 +125,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== XÓA ===== */
   const handleConfirmDelete = async () => {
     if (selectedId !== null) {
-      await fetch(`http://localhost:5000/tailieu/${selectedId}`, { method: "DELETE" });
+      await fetch(`http://14.225.192.252:5000/tailieu/${selectedId}`, { method: "DELETE" });
       setDocuments(documents.filter(doc => doc.MaTaiLieu !== selectedId));
     }
     setShowConfirm(false);

@@ -368,3 +368,201 @@
 .backBtn svg {
   font-size: 14px;
 }
+
+/* GROUPED CLASS CARD DESIGN */
+.classCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.classCard:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.classHeader {
+  background: #f8fafc;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.classHeader:hover {
+  background: #f1f5f9;
+}
+
+.classHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.classTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #000080;
+  margin: 0;
+}
+
+.classHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggleIcon {
+  font-size: 18px;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.toggleIconActive {
+  transform: rotate(180deg);
+}
+
+.classContent {
+  padding: 12px 20px 20px 20px;
+}
+
+.sessionBlock {
+  margin-top: 16px;
+  border-left: 3px solid #F95800;
+  padding-left: 16px;
+}
+
+.sessionBlock:first-child {
+  margin-top: 8px;
+}
+
+.sessionTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #000080; /* Cohesive brand color (Navy Blue) */
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sessionItemList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.itemRow:hover {
+  background: #ffffff;
+  border-color: #F95800;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.itemMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemIcon {
+  font-size: 18px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itemDetails {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 13.5px;
+  font-weight: 600; /* Clear, legible weight */
+  color: #1e293b; /* Readable dark slate */
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemSubtitle {
+  font-size: 11px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 16px;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.actionBtnViewText {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #F95800;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.actionBtnViewText:hover {
+  background: #fff3eb;
+  border-color: #F95800;
+}
+
+.actionBtnDeleteText {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.actionBtnDeleteText:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+

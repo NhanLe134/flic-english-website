@@ -5,7 +5,7 @@ import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
 import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap"
 
-const API = 'http://localhost:5000'
+const API = 'http://14.225.192.252:5000'
 
 interface ExerciseHeader {
   MaBaiTap: number

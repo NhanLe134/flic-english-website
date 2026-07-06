@@ -25,7 +25,7 @@ const ClassDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (data) => {
         setLesson(data);
@@ -36,7 +36,7 @@ const ClassDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => {
         console.log("ClassDetail exercises fetched:", data);
@@ -49,7 +49,7 @@ const ClassDetail = () => {
 
   const handleToggleOpen = async (maBaiTap: number) => {
     try {
-      const res = await fetch("http://localhost:5000/baitap/toggle-open", {
+      const res = await fetch("http://14.225.192.252:5000/baitap/toggle-open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBaiTap: maBaiTap })
@@ -83,7 +83,7 @@ const ClassDetail = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `http://localhost:5000/baitap/${selectedId}`;
+      const url = `http://14.225.192.252:5000/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
@@ -298,7 +298,7 @@ const ClassDetail = () => {
           ) : (
             <div className="lesson-card-grid">
               {filteredExercises.map((ex: any) => (
-                <div key={ex.MaBaiTap} className="lesson-content-card">
+                <div key={ex.MaBaiTap} className="lesson-content-card" style={{ height: '260px', display: 'flex', flexDirection: 'column' }}>
                   <div className="lesson-content-head">
                     <h4>{ex.Title}</h4>
                     {ex.TrangThai !== "practice" && (
@@ -402,7 +402,7 @@ const ClassDetail = () => {
                     {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}
                   </span>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                     <button
                       onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
                       style={{

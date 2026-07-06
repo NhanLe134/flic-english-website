@@ -31,6 +31,7 @@ interface ExamSection {
 }
 
 
+/*
 const mapDangBaiToType = (db: string): string => {
   if (db === "Nghe audio trắc nghiệm") return "listening-mcq";
   if (db === "Hình ảnh chọn đáp án") return "listening-image";
@@ -47,6 +48,7 @@ const mapDangBaiToType = (db: string): string => {
   if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
   return "multiple";
 };
+*/
 
 const cleanSectionTitle = (title: string) => {
   if (!title) return "";
@@ -188,7 +190,7 @@ const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children 
               style={{ padding: "3px 8px", fontSize: 11, background: "#fee2e2", border: "1px solid #fecaca", color: "#ef4444", borderRadius: "4px", cursor: "pointer", margin: 0 }}
               onClick={onRemove}
             >
-              ✕ Xóa
+              Xóa
             </button>
           )}
         </div>
@@ -203,6 +205,7 @@ const QuestionCard = ({ qIdx, sec, q, onRemove, isCollapsed, onToggle, children 
   );
 };
 
+/*
 const getSkillFromDangBai = (db: string): string => {
   if (["Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"].includes(db)) return "Nghe";
   if (["Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)"].includes(db)) return "Noi";
@@ -210,6 +213,7 @@ const getSkillFromDangBai = (db: string): string => {
   if (["Sắp xếp từ thành câu", "Trắc nghiệm", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"].includes(db)) return "Viet";
   return "Nghe";
 };
+*/
 
 const TaoBaiTap = () => {
   const navigate = useNavigate();
@@ -239,10 +243,10 @@ const TaoBaiTap = () => {
   }>({ show: false, title: "", message: "" });
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
-  const [type, setType] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
+  const [type] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
   
-  const [kyNang, setKyNang] = useState(isMiniTest ? "Viet" : "Nghe");
-  const [dangBai, setDangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
+  const [kyNang] = useState(isMiniTest ? "Viet" : "Nghe");
+  const [dangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
   const [isFree, setIsFree] = useState(false);
   const [isExam, setIsExam] = useState(false);
   const [deadline, setDeadline] = useState("");
@@ -504,7 +508,7 @@ const TaoBaiTap = () => {
 
   useEffect(() => {
     if (!maBaiHocParam) return;
-    fetch(`http://localhost:5000/baigiang/detail/${maBaiHocParam}`)
+    fetch(`http://14.225.192.252:5000/baigiang/detail/${maBaiHocParam}`)
       .then(res => res.json())
       .then(data => {
         setLecture(data);
@@ -515,7 +519,7 @@ const TaoBaiTap = () => {
       .catch(err => console.log("Lỗi tải thông tin bài giảng:", err));
 
     if (isMiniTest) {
-      fetch(`http://localhost:5000/minitest/baigiang/${maBaiHocParam}`)
+      fetch(`http://14.225.192.252:5000/minitest/baigiang/${maBaiHocParam}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.CauHoi) {
@@ -536,7 +540,7 @@ const TaoBaiTap = () => {
   /* ===== LOAD LESSON ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
@@ -558,7 +562,7 @@ const TaoBaiTap = () => {
   useEffect(() => {
     // Fetch all existing exercises for cloning
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
-    let url = "http://localhost:5000/exercises/list/all";
+    let url = "http://14.225.192.252:5000/exercises/list/all";
     if (userStr) {
       const user = JSON.parse(userStr);
       if ((user.VaiTro || "").toLowerCase().trim() === "giảng viên" && user.MaNguoiDung) {
@@ -573,7 +577,7 @@ const TaoBaiTap = () => {
 
   const handleReuseExercise = async (exerciseId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/exercises/${exerciseId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: Number(id) })
@@ -898,6 +902,75 @@ const TaoBaiTap = () => {
       return;
     }
 
+    // Dạng Tìm lỗi sai (writing-find-mistakes)
+    if (targetType === "writing-find-mistakes") {
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
+      const parsed: any[] = [];
+
+      for (const block of qBlocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) continue;
+
+        let questionText = "";
+        let incorrectSegment = "";
+        let correctSeg = "";
+        let explanation = "";
+
+        for (let line of lines) {
+          if (/^(Từ sai|Lỗi sai|Incorrect|Wrong)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            incorrectSegment = line.match(/^(Từ sai|Lỗi sai|Incorrect|Wrong)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else if (/^(Sửa lại|Corrected|Right|Correct)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            correctSeg = line.match(/^(Sửa lại|Corrected|Right|Correct)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else {
+            if (!incorrectSegment && !correctSeg && !explanation) {
+              if (questionText) questionText += "\n";
+              questionText += line;
+            } else {
+              if (explanation) {
+                explanation += "\n" + line;
+              }
+            }
+          }
+        }
+
+        questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+        const segments = questionText.split("  ").map((s: string) => s.trim()).filter(Boolean);
+
+        parsed.push({
+          question: questionText,
+          answers: segments,
+          correct: incorrectSegment,
+          correctSentence: correctSeg,
+          explanation: explanation,
+          audioUrl: "",
+          imageUrl: "",
+          text: "",
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""]
+        });
+      }
+
+      if (parsed.length > 0) {
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = parsed;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsed.length} câu tìm lỗi sai!`);
+        } else {
+          setQuestions(parsed);
+          alert(`Đã quét thành công ${parsed.length} câu tìm lỗi sai!`);
+        }
+      } else {
+        alert("Không thể phân tích câu hỏi tìm lỗi sai nào. Vui lòng kiểm tra lại định dạng file.");
+      }
+      return;
+    }
+
     // 3. Dạng trắc nghiệm phẳng (writing-tense-mcq)
     if (targetType === "writing-tense-mcq") {
       const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
@@ -973,19 +1046,29 @@ const TaoBaiTap = () => {
     // 4. Dạng Nghe chép chính tả (listening-dictation) & Luyện phát âm (speaking-pronounce)
     if (targetType === "listening-dictation" || targetType === "speaking-pronounce") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const parsed = lines.map(line => ({
-        question: "",
-        answers: ["", "", "", ""],
-        correct: "A",
-        explanation: "",
-        audioUrl: "",
-        imageUrl: "",
-        text: line,
-        prompt: "",
-        vocabPairs: [{ word: "", meaning: "" }],
-        fillInAnswers: [],
-        sentences: [""]
-      }));
+      const parsed: any[] = [];
+      for (const line of lines) {
+        if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+          const exp = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          if (parsed.length > 0) {
+            parsed[parsed.length - 1].explanation = exp;
+          }
+          continue;
+        }
+        parsed.push({
+          question: "",
+          answers: ["", "", "", ""],
+          correct: "A",
+          explanation: "",
+          audioUrl: "",
+          imageUrl: "",
+          text: line,
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""]
+        });
+      }
 
       if (parsed.length > 0) {
         if (secIdx !== undefined) {
@@ -1008,40 +1091,55 @@ const TaoBaiTap = () => {
       const parsedParagraphs: any[] = [];
       const rawBlocks = text.split(/\[(?:Đoạn văn|Paragraph|Đoạn|Passage)\]/i).map(b => b.trim()).filter(Boolean);
 
+      const processBlockLines = (lines: string[]) => {
+        const sentences: string[] = [];
+        let explanation = "";
+        for (const line of lines) {
+          if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else {
+            sentences.push(line);
+          }
+        }
+        return { sentences, explanation };
+      };
+
       if (rawBlocks.length > 0 && (text.toLowerCase().includes("[đoạn văn]") || text.toLowerCase().includes("[paragraph]") || text.toLowerCase().includes("[đoạn]") || text.toLowerCase().includes("[passage]"))) {
         for (const block of rawBlocks) {
           const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
           if (lines.length > 0) {
+            const { sentences, explanation } = processBlockLines(lines);
             parsedParagraphs.push({
               question: "",
               answers: ["", "", "", ""],
               correct: "A",
-              explanation: "",
+              explanation,
               audioUrl: "",
               imageUrl: "",
               text: "",
               prompt: "",
               vocabPairs: [{ word: "", meaning: "" }],
               fillInAnswers: [],
-              sentences: lines
+              sentences
             });
           }
         }
       } else {
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         if (lines.length > 0) {
+          const { sentences, explanation } = processBlockLines(lines);
           parsedParagraphs.push({
             question: "",
             answers: ["", "", "", ""],
             correct: "A",
-            explanation: "",
+            explanation,
             audioUrl: "",
             imageUrl: "",
             text: "",
             prompt: "",
             vocabPairs: [{ word: "", meaning: "" }],
             fillInAnswers: [],
-            sentences: lines
+            sentences
           });
         }
       }
@@ -1066,15 +1164,24 @@ const TaoBaiTap = () => {
     if (targetType === "writing-order-words") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const parsed: any[] = [];
-      for (let i = 0; i < lines.length; i += 2) {
+      let i = 0;
+      while (i < lines.length) {
         const promptLine = lines[i] || "";
         const correctLine = lines[i + 1] || "";
         if (correctLine) {
+          let explanation = "";
+          let nextIdx = i + 2;
+          if (lines[nextIdx] && /^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(lines[nextIdx])) {
+            explanation = lines[nextIdx].match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+            i += 3;
+          } else {
+            i += 2;
+          }
           parsed.push({
             question: "",
             answers: ["", "", "", ""],
             correct: "A",
-            explanation: "",
+            explanation: explanation,
             audioUrl: "",
             imageUrl: "",
             text: promptLine,
@@ -1084,6 +1191,8 @@ const TaoBaiTap = () => {
             fillInAnswers: [],
             sentences: [""]
           });
+        } else {
+          i += 1;
         }
       }
 
@@ -1132,20 +1241,25 @@ const TaoBaiTap = () => {
 
       const parsedQuestions = blocks.map(block => {
         const fillInAnswers: string[] = [];
+        let explanation = "";
         const ansLines = block.answersText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         for (const line of ansLines) {
-          const m = line.match(/^\d+\s*[\.\:\-]?\s*(.*)/);
-          if (m) {
-            fillInAnswers.push(m[1].trim());
+          if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
           } else {
-            fillInAnswers.push(line);
+            const m = line.match(/^\d+\s*[\.\:\-]?\s*(.*)/);
+            if (m) {
+              fillInAnswers.push(m[1].trim());
+            } else {
+              fillInAnswers.push(line);
+            }
           }
         }
         return {
           question: "",
           answers: ["", "", "", ""],
           correct: "A",
-          explanation: "",
+          explanation: explanation,
           audioUrl: "",
           imageUrl: "",
           text: block.passage,
@@ -1177,7 +1291,12 @@ const TaoBaiTap = () => {
     if (targetType === "reading-vocab-mcq") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const vocabPairs: { word: string; meaning: string }[] = [];
+      let explanation = "";
       for (const line of lines) {
+        if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+          explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          continue;
+        }
         const parts = line.split(/\s*(?:-|:|->)\s*/);
         if (parts.length >= 2) {
           vocabPairs.push({
@@ -1192,7 +1311,7 @@ const TaoBaiTap = () => {
           question: "",
           answers: ["", "", "", ""],
           correct: "A",
-          explanation: "",
+          explanation: explanation,
           audioUrl: "",
           imageUrl: "",
           text: "",
@@ -1224,7 +1343,7 @@ const TaoBaiTap = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://localhost:5000/upload", {
+    const res = await fetch("http://14.225.192.252:5000/upload", {
       method: "POST",
       body: formData
     });
@@ -1233,6 +1352,7 @@ const TaoBaiTap = () => {
     return data.url || "";
   };
 
+  /*
   const handleDangBaiChange = (db: string) => {
     setDangBai(db);
     const targetType = mapDangBaiToType(db);
@@ -1256,6 +1376,7 @@ const TaoBaiTap = () => {
       }
     ]);
   };
+  */
 
   const addQuestionItem = () => {
     setQuestions([
@@ -1346,16 +1467,21 @@ const TaoBaiTap = () => {
     ];
     const existingTypes = examSections.map(s => s.type);
     const defaultType = allTypes.find(t => !existingTypes.includes(t)) || "listening-mcq";
+    const newIdx = examSections.length;
 
     setExamSections([
       ...examSections,
       {
         type: defaultType,
-        title: `Phần ${examSections.length + 1}`,
+        title: `Phần ${newIdx + 1}`,
         audioUrl: "",
         questions: defaultType === "writing-essay" ? [] : (defaultType === "speaking-topic" ? [{ prompt: "", imageUrl: "", audioUrl: "", question: "", answers: [], correct: "" }] : [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }])
       }
     ]);
+    setTimeout(() => {
+      const el = document.getElementById(`exam-section-card-${newIdx}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const applyPreset = (presetType: "toeic2" | "toeic4" | "vstep4") => {
@@ -1814,21 +1940,23 @@ const TaoBaiTap = () => {
       let questionsStr = "";
       let mainAudioUrl = "";
 
-      if (isExam) {
+      if (isExam || !isMiniTest) {
         // Compile entire structure into Content
         const examContent = {
-          isExam: true,
-          duration: examDuration,
-          startTime: openingMode === "scheduled" ? examStartTime : null,
+          isExam: isExam,
+          duration: isExam ? examDuration : null,
+          startTime: isExam && openingMode === "scheduled" ? examStartTime : null,
           deadline: deadline || null,
-          openingMode: openingMode,
-          isOpened: openingMode === "manual" ? false : true,
+          openingMode: isExam ? openingMode : null,
+          isOpened: isExam ? (openingMode === "manual" ? false : true) : true,
           sections: examSections
         };
         contentStr = JSON.stringify(examContent);
         questionsStr = ""; 
+        const firstAudioSec = examSections.find(s => s.audioUrl);
+        mainAudioUrl = firstAudioSec ? firstAudioSec.audioUrl || "" : "";
       } else {
-        // Regular exercise
+        // Regular exercise (Minitest only)
         const contentMeta = {
           deadline: deadline || null,
           description: questions[0]?.question || "",
@@ -1842,7 +1970,7 @@ const TaoBaiTap = () => {
       }
 
       if (isMiniTest) {
-        const res = await fetch("http://localhost:5000/minitest/create", {
+        const res = await fetch("http://14.225.192.252:5000/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1867,7 +1995,7 @@ const TaoBaiTap = () => {
         return;
       }
 
-      const res = await fetch("http://localhost:5000/baitap/create", {
+      const res = await fetch("http://14.225.192.252:5000/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1884,8 +2012,8 @@ const TaoBaiTap = () => {
           IsFree:      isFree ? 1 : 0,
           IsExam:      isExam ? 1 : 0,
           TrangThai:   status,
-          KyNang:      kyNang,
-          DangBai:     dangBai,
+          KyNang:      (isExam || !isMiniTest) ? "Tổng hợp" : kyNang,
+          DangBai:     (isExam || !isMiniTest) ? "Tổng hợp" : dangBai,
           MaGiangVien: user.MaNguoiDung || null
         })
       });
@@ -2062,7 +2190,7 @@ const TaoBaiTap = () => {
         /* EXERCISE EDITOR */
         <div className="exercise-editor">
           {/* NÚT QUÉT FILE CÂU HỎI */}
-          {["multiple", "listening-mcq", "writing-tense-mcq", "writing-find-mistakes", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
+          {isMiniTest ? (["multiple", "listening-mcq", "writing-tense-mcq", "writing-find-mistakes", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
             <div style={{
               background: "#f8fafc",
               border: "1px dashed #cbd5e1",
@@ -2212,10 +2340,10 @@ const TaoBaiTap = () => {
             }}>
               <h4 style={{ margin: "0 0 5px 0", color: "#777", fontSize: "15px" }}>Quét câu hỏi từ file</h4>
               <p style={{ margin: 0, fontSize: "12px", color: "#888" }}>
-                ⚠️ Dạng bài tập <strong>{dangBai}</strong> yêu cầu thiết lập thủ công các tệp đa phương tiện (ảnh/ghi âm) hoặc đề bài tự luận trực tiếp trên giao diện và không hỗ trợ tính năng quét từ file Word.
+                Dạng bài tập <strong>{dangBai}</strong> yêu cầu thiết lập thủ công các tệp đa phương tiện (ảnh/ghi âm) hoặc đề bài tự luận trực tiếp trên giao diện và không hỗ trợ tính năng quét từ file Word.
               </p>
             </div>
-          )}
+          )) : null}
 
           <input
             className="exercise-title"
@@ -2232,59 +2360,23 @@ const TaoBaiTap = () => {
             </p>
           )}
 
-        {/* Global Settings Grid */}
-        {!isMiniTest && (
-          <div style={{ marginBottom: 15 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Dạng bài tập</label>
-            <select
-              className="exercise-type"
-              style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-              value={dangBai}
-              disabled={isExam}
-              onChange={(e) => {
-                const selectedFormat = e.target.value;
-                setDangBai(selectedFormat);
-                const skill = getSkillFromDangBai(selectedFormat);
-                setKyNang(skill);
-                handleDangBaiChange(selectedFormat);
-              }}
-            >
-              <optgroup label="Kỹ năng Nghe (Listening)">
-                <option value="Nghe audio trắc nghiệm">Nghe audio trắc nghiệm</option>
-                <option value="Hình ảnh chọn đáp án">Hình ảnh chọn đáp án</option>
-                <option value="Nghe chép chính tả">Nghe chép chính tả</option>
-                <option value="Điền từ vào đoạn văn">Điền từ vào đoạn văn</option>
-              </optgroup>
-              <optgroup label="Kỹ năng Nói (Speaking)">
-                <option value="Luyện phát âm (check phát âm tự động)">Luyện phát âm (check phát âm tự động)</option>
-                <option value="Nói theo chủ đề (ghi âm nộp GV)">Nói theo chủ đề (ghi âm nộp GV)</option>
-              </optgroup>
-              <optgroup label="Kỹ năng Đọc (Reading)">
-                <option value="Trắc nghiệm đọc hiểu (chia đôi màn hình)">Trắc nghiệm đọc hiểu (chia đôi màn hình)</option>
-                <option value="Nối từ">Nối từ</option>
-              </optgroup>
-              <optgroup label="Kỹ năng Viết (Writing)">
-                <option value="Sắp xếp từ thành câu">Sắp xếp từ thành câu</option>
-                <option value="Trắc nghiệm">Trắc nghiệm</option>
-                <option value="Tìm lỗi sai">Tìm lỗi sai</option>
-                <option value="Viết đoạn văn ngắn">Viết đoạn văn ngắn</option>
-                <option value="Sắp xếp câu thành đoạn văn">Sắp xếp câu thành đoạn văn</option>
-              </optgroup>
-            </select>
-          </div>
-        )}
+
 
         {!isMiniTest && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Hạn nộp bài (Deadline)</label>
-              <input
-                type="datetime-local"
-                className="exercise-type"
-                style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-              />
+              {(!isExam || (isExam && openingMode === "scheduled")) && (
+                <>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Hạn nộp bài (Deadline)</label>
+                  <input
+                    type="datetime-local"
+                    className="exercise-type"
+                    style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+                    value={deadline}
+                    onChange={e => setDeadline(e.target.value)}
+                  />
+                </>
+              )}
             </div>
             <div style={{ display: "flex", gap: "40px", alignItems: "center", paddingTop: "24px", paddingLeft: "10px" }}>
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -2297,21 +2389,23 @@ const TaoBaiTap = () => {
                 <span style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}>Học thử miễn phí</span>
               </label>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={isExam}
-                  onChange={(e) => setIsExam(e.target.checked)}
-                  style={{ width: 16, height: 16, accentColor: "#F95800", cursor: "pointer" }}
-                />
-                <span style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}>Đặt làm bài kiểm tra</span>
-              </label>
+              {!isPractice && (
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={isExam}
+                    onChange={(e) => setIsExam(e.target.checked)}
+                    style={{ width: 16, height: 16, accentColor: "#F95800", cursor: "pointer" }}
+                  />
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}>Đặt làm bài kiểm tra</span>
+                </label>
+              )}
             </div>
           </div>
         )}
 
         {/* ────────────────── EXAM BUILDER SECTION ────────────────── */}
-        {isExam ? (
+        {(isExam || !isMiniTest) ? (
           <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "24px", alignItems: "start", borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
             {/* LEFT SIDEBAR (STICKY OUTLINE PANEL & CONFIGS) */}
             <div style={{
@@ -2328,138 +2422,150 @@ const TaoBaiTap = () => {
               flexDirection: "column",
               gap: "20px"
             }}>
-              <div>
-                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>⚙️ Cấu hình đề thi</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Hình thức mở đề</label>
-                    <select
-                      className="exercise-type"
-                      style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
-                      value={openingMode}
-                      onChange={e => setOpeningMode(e.target.value as any)}
-                    >
-                      <option value="scheduled">Tự động mở theo lịch</option>
-                      <option value="manual">Đóng/Mở thủ công</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Thời lượng (phút)</label>
-                    <input
-                      type="number"
-                      className="exercise-type"
-                      style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
-                      value={examDuration}
-                      onChange={e => setExamDuration(Number(e.target.value))}
-                    />
-                  </div>
-                  {openingMode === "scheduled" && (
+              {isExam && (
+                <div>
+                  <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>Cấu hình đề thi</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                     <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Thời gian bắt đầu</label>
-                      <input
-                        type="datetime-local"
+                      <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Hình thức mở đề</label>
+                      <select
                         className="exercise-type"
                         style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
-                        value={examStartTime}
-                        onChange={e => setExamStartTime(e.target.value)}
+                        value={openingMode}
+                        onChange={e => {
+                          const val = e.target.value as any;
+                          setOpeningMode(val);
+                          if (val === "manual") {
+                            setDeadline("");
+                          }
+                        }}
+                      >
+                        <option value="scheduled">Tự động mở theo lịch</option>
+                        <option value="manual">Đóng/Mở thủ công</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Thời lượng (phút)</label>
+                      <input
+                        type="number"
+                        className="exercise-type"
+                        style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
+                        value={examDuration}
+                        onChange={e => setExamDuration(Number(e.target.value))}
                       />
                     </div>
-                  )}
+                    {openingMode === "scheduled" && (
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Thời gian bắt đầu</label>
+                        <input
+                          type="datetime-local"
+                          className="exercise-type"
+                          style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
+                          value={examStartTime}
+                          onChange={e => setExamStartTime(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {isExam && (
+                <div>
+                  <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>Cấu trúc đề mẫu</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("toeic2")}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: "12px",
+                        background: "#f8fafc",
+                        border: "1.5px solid #cbd5e1",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        color: "#475569",
+                        textAlign: "left",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#F95800";
+                        e.currentTarget.style.color = "#F95800";
+                        e.currentTarget.style.background = "#fff4ec";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#cbd5e1";
+                        e.currentTarget.style.color = "#475569";
+                        e.currentTarget.style.background = "#f8fafc";
+                      }}
+                    >
+                      TOEIC 2 Kỹ năng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("toeic4")}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: "12px",
+                        background: "#f8fafc",
+                        border: "1.5px solid #cbd5e1",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        color: "#475569",
+                        textAlign: "left",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#F95800";
+                        e.currentTarget.style.color = "#F95800";
+                        e.currentTarget.style.background = "#fff4ec";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#cbd5e1";
+                        e.currentTarget.style.color = "#475569";
+                        e.currentTarget.style.background = "#f8fafc";
+                      }}
+                    >
+                      TOEIC 4 Kỹ năng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("vstep4")}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: "12px",
+                        background: "#f8fafc",
+                        border: "1.5px solid #cbd5e1",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        color: "#475569",
+                        textAlign: "left",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#F95800";
+                        e.currentTarget.style.color = "#F95800";
+                        e.currentTarget.style.background = "#fff4ec";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#cbd5e1";
+                        e.currentTarget.style.color = "#475569";
+                        e.currentTarget.style.background = "#f8fafc";
+                      }}
+                    >
+                      VSTEP 4 Kỹ năng
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div>
-                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>Cấu trúc đề mẫu</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => applyPreset("toeic2")}
-                    style={{
-                      padding: "8px 12px",
-                      fontSize: "12px",
-                      background: "#f8fafc",
-                      border: "1.5px solid #cbd5e1",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      color: "#475569",
-                      textAlign: "left",
-                      transition: "all 0.2s"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#F95800";
-                      e.currentTarget.style.color = "#F95800";
-                      e.currentTarget.style.background = "#fff4ec";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#cbd5e1";
-                      e.currentTarget.style.color = "#475569";
-                      e.currentTarget.style.background = "#f8fafc";
-                    }}
-                  >
-                    🎯 TOEIC 2 Kỹ năng
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyPreset("toeic4")}
-                    style={{
-                      padding: "8px 12px",
-                      fontSize: "12px",
-                      background: "#f8fafc",
-                      border: "1.5px solid #cbd5e1",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      color: "#475569",
-                      textAlign: "left",
-                      transition: "all 0.2s"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#F95800";
-                      e.currentTarget.style.color = "#F95800";
-                      e.currentTarget.style.background = "#fff4ec";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#cbd5e1";
-                      e.currentTarget.style.color = "#475569";
-                      e.currentTarget.style.background = "#f8fafc";
-                    }}
-                  >
-                    🎯 TOEIC 4 Kỹ năng
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyPreset("vstep4")}
-                    style={{
-                      padding: "8px 12px",
-                      fontSize: "12px",
-                      background: "#f8fafc",
-                      border: "1.5px solid #cbd5e1",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      color: "#475569",
-                      textAlign: "left",
-                      transition: "all 0.2s"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#F95800";
-                      e.currentTarget.style.color = "#F95800";
-                      e.currentTarget.style.background = "#fff4ec";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#cbd5e1";
-                      e.currentTarget.style.color = "#475569";
-                      e.currentTarget.style.background = "#f8fafc";
-                    }}
-                  >
-                    🎓 VSTEP 4 Kỹ năng
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>🗺️ Sơ đồ đề thi</h3>
+                <h3 style={{ color: "#000080", fontSize: "16px", fontWeight: 700, margin: "0 0 12px 0", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "8px" }}>
+                  {isExam ? "Sơ đồ đề thi" : (isPractice ? "Sơ đồ bài luyện tập" : "Sơ đồ bài tập")}
+                </h3>
                 
                 <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                   <button
@@ -2538,7 +2644,7 @@ const TaoBaiTap = () => {
                     gap: "6px"
                   }}
                 >
-                  ➕ Thêm Phần Bài Thi
+                  {isExam ? "Thêm Phần Bài Thi" : "Thêm phần mới"}
                 </button>
               </div>
             </div>
@@ -2605,7 +2711,7 @@ const TaoBaiTap = () => {
                             });
                           }}
                         >
-                          ✕ Xóa phần
+                          Xóa phần
                         </button>
                       </div>
                     </div>
@@ -2751,13 +2857,15 @@ const TaoBaiTap = () => {
                         `B. Registration\n` +
                         `C. Examination\n` +
                         `D. Dormitory\n` +
-                        `Đáp án đúng: B\n\n` +
+                        `Đáp án đúng: B\n` +
+                        `Giải thích: Học viên cần giúp đăng ký môn học (tùy chọn)\n\n` +
                         `Câu 2: When is the deadline?\n` +
                         `A. Today\n` +
                         `B. Tomorrow\n` +
                         `C. Friday\n` +
                         `D. Next week\n` +
-                        `Đáp án đúng: C\n\n` +
+                        `Đáp án đúng: C\n` +
+                        `Giải thích: Hạn cuối nộp bài là vào thứ 6 (tùy chọn)\n\n` +
                         `[Nhóm 2]\n` +
                         `Ngữ cảnh: Announcement in the railway station. (tùy chọn)\n` +
                         `Câu 3: Why is the train delayed?\n` +
@@ -2765,7 +2873,19 @@ const TaoBaiTap = () => {
                         `B. Technical issues\n` +
                         `C. Late arrival\n` +
                         `D. Track maintenance\n` +
-                        `Đáp án đúng: B`
+                        `Đáp án đúng: B\n` +
+                        `Giải thích: Tàu hoãn do sự cố kỹ thuật đường ray (tùy chọn)`
+                      ) : sec.type === "writing-find-mistakes" ? (
+                        `Mẫu file Tìm lỗi sai:\n` +
+                        `Lưu ý: Dùng 2 khoảng trắng liên tiếp (dấu cách kép) để phân tách các đoạn từ trong câu văn gốc.\n\n` +
+                        `Câu 1: By the time  you  will arrive  I'll have already left.\n` +
+                        `Từ sai: will arrive\n` +
+                        `Sửa lại: arrive\n` +
+                        `Giải thích: Thì tương lai đơn không dùng sau liên từ chỉ thời gian "by the time" (tùy chọn)\n\n` +
+                        `Câu 2: Neither  of the boys  are  present.\n` +
+                        `Từ sai: are\n` +
+                        `Sửa lại: is\n` +
+                        `Giải thích: Chủ ngữ "Neither of..." đi với động từ số ít (tùy chọn)`
                       ) : sec.type === "writing-tense-mcq" ? (
                         `Mẫu file Trắc nghiệm MCQ:\n` +
                         `Câu 1: She _______ English for 5 years.\n` +
@@ -2777,10 +2897,11 @@ const TaoBaiTap = () => {
                         `Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hiện tại (tùy chọn)`
                       ) : sec.type === "reading-vocab-mcq" ? (
                         `Mẫu file Bài tập từ vựng nối từ:\n` +
-                        `Mỗi dòng là một cặp từ cách nhau bởi dấu gạch ngang (1 bên từ tiếng Anh - 1 bên diễn giải nghĩa cũng bằng tiếng Anh). Ví dụ:\n` +
+                        `Mỗi dòng là một cặp từ cách nhau bởi dấu gạch ngang (1 bên từ tiếng Anh - 1 bên diễn giải nghĩa cũng bằng tiếng Anh). Có thể thêm dòng giải thích ở cuối cùng. Ví dụ:\n` +
                         `cat - a small domesticated carnivorous mammal with soft fur\n` +
                         `dog - a common domesticated carnivorous mammal that typically has a long snout\n` +
-                        `apple - a round fruit with red, green, or yellow skin and crisp white flesh`
+                        `apple - a round fruit with red, green, or yellow skin and crisp white flesh\n` +
+                        `Giải thích: Luyện tập từ vựng về động vật và trái cây (tùy chọn)`
                       ) : sec.type === "reading-split" ? (
                         `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều bài đọc liên tiếp):\n` +
                         `[Bài đọc]\n` +
@@ -2791,7 +2912,8 @@ const TaoBaiTap = () => {
                         `B. Science\n` +
                         `C. Capital cities\n` +
                         `D. Sports\n` +
-                        `Đáp án đúng: C\n\n` +
+                        `Đáp án đúng: C\n` +
+                        `Giải thích: Đoạn văn chủ yếu nói về các thành phố lớn (tùy chọn)\n\n` +
                         `[Bài đọc]\n` +
                         `This is the second reading passage text...\n\n` +
                         `[Câu hỏi]\n` +
@@ -2800,21 +2922,27 @@ const TaoBaiTap = () => {
                         `B. Options B\n` +
                         `C. Options C\n` +
                         `D. Options D\n` +
-                        `Đáp án đúng: A`
+                        `Đáp án đúng: A\n` +
+                        `Giải thích: Đoạn 2 nói về phát kiến khoa học (tùy chọn)`
                       ) : sec.type === "listening-dictation" ? (
                         `Mẫu file Nghe chép chính tả:\n` +
-                        `Mỗi dòng trong file là một câu trả lời chính xác. Ví dụ:\n` +
+                        `Mỗi dòng trong file là một câu trả lời chính xác, theo sau có thể là 1 dòng giải thích. Ví dụ:\n` +
                         `Hello, welcome to our class.\n` +
-                        `I am learning English today.`
+                        `Giải thích: Chào mừng học viên đến lớp học (tùy chọn)\n` +
+                        `I am learning English today.\n` +
+                        `Giải thích: Luyện tập câu giao tiếp cơ bản (tùy chọn)`
                       ) : sec.type === "speaking-pronounce" ? (
                         `Mẫu file Luyện phát âm:\n` +
-                        `Mỗi dòng là một từ hoặc câu mẫu. Ví dụ:\n` +
+                        `Mỗi dòng là một từ hoặc câu mẫu, theo sau có thể là 1 dòng hướng dẫn phát âm. Ví dụ:\n` +
                         `Hello, beautiful world!\n` +
+                        `Giải thích: Chú ý phát âm chuẩn âm đầu và trọng âm câu (tùy chọn)\n` +
                         `English pronunciation`
                       ) : sec.type === "writing-order-words" ? (
                         `Mẫu file Sắp xếp từ:\n` +
+                        `Viết tiếng Việt ở dòng lẻ, câu tiếng Anh ở dòng chẵn, theo sau có thể là 1 dòng giải thích. Ví dụ:\n` +
                         `Tôi thích học tiếng Anh.\n` +
                         `I like learning English.\n` +
+                        `Giải thích: Like đi kèm danh động từ V-ing (tùy chọn)\n` +
                         `Thời tiết hôm nay rất đẹp.\n` +
                         `The weather is very nice today.`
                       ) : sec.type === "writing-order-sentences" ? (
@@ -2822,7 +2950,8 @@ const TaoBaiTap = () => {
                         `[Đoạn văn]\n` +
                         `First, download the app.\n` +
                         `Second, create your account.\n` +
-                        `Finally, start practicing.\n\n` +
+                        `Finally, start practicing.\n` +
+                        `Giải thích: Các bước bắt đầu sử dụng phần mềm học tiếng Anh (tùy chọn)\n\n` +
                         `[Đoạn văn]\n` +
                         `The first step is parsing the text.\n` +
                         `The second step is displaying the output.\n` +
@@ -2833,7 +2962,8 @@ const TaoBaiTap = () => {
                         `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
                         `[Đáp án]\n` +
                         `1. supermarket\n` +
-                        `2. apples\n\n` +
+                        `2. apples\n` +
+                        `Giải thích: Trạng ngữ chỉ thời gian quá khứ đơn (tùy chọn)\n\n` +
                         `* Hỗ trợ tạo nhiều câu/đoạn bằng cách viết nhiều cặp [Đoạn văn] và [Đáp án] nối tiếp nhau.`
                       ) : ""}
                     </div>
@@ -2855,7 +2985,7 @@ const TaoBaiTap = () => {
                   }}>
                     <h5 style={{ margin: "0 0 5px 0", color: "#777", fontSize: "14px" }}>Quét câu hỏi cho Phần {secIdx + 1}</h5>
                     <p style={{ margin: 0, fontSize: "11px", color: "#888" }}>
-                      ⚠️ Dạng phần thi <strong>{sec.type}</strong> không hỗ trợ quét từ file Word. Vui lòng thiết lập thủ công.
+                      Dạng phần thi <strong>{sec.type}</strong> không hỗ trợ quét từ file Word. Vui lòng thiết lập thủ công.
                     </p>
                   </div>
                 )}
@@ -2865,7 +2995,7 @@ const TaoBaiTap = () => {
                   <div>
                     {sec.type === "listening-mcq" && (
                       <div style={{ marginBottom: 15 }}>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 File nghe chung cho phần này (Tùy chọn)</label>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>File nghe chung cho phần này (Tùy chọn)</label>
                         <input
                           type="file"
                           accept="audio/*"
@@ -3271,6 +3401,14 @@ const TaoBaiTap = () => {
                         >
                           + Thêm cặp từ vựng
                         </button>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
                       </QuestionCard>
                     ))}
                   </div>
@@ -3326,6 +3464,14 @@ const TaoBaiTap = () => {
                           <option value="C">Đáp án đúng: C</option>
                           <option value="D">Đáp án đúng: D</option>
                         </select>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
                       </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi hình ảnh</button>
@@ -3345,7 +3491,7 @@ const TaoBaiTap = () => {
                         isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
                         onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
                       >
-                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Audio nghe</label>
                         <input
                           type="file"
                           accept="audio/*"
@@ -3356,7 +3502,7 @@ const TaoBaiTap = () => {
                           }}
                           style={{ display: "block", marginTop: 5, marginBottom: 10 }}
                         />
-                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>Đã tải audio: {q.audioUrl}</p>}
 
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Nội dung văn bản đúng</label>
                         <input
@@ -3365,6 +3511,14 @@ const TaoBaiTap = () => {
                           placeholder="Nhập văn bản đáp án đúng..."
                           value={q.text || ""}
                           onChange={e => updateQuestionInSection(secIdx, qIdx, "text", e.target.value)}
+                        />
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
                         />
                       </QuestionCard>
                     ))}
@@ -3385,7 +3539,7 @@ const TaoBaiTap = () => {
                         isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
                         onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
                       >
-                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Audio nghe</label>
                         <input
                           type="file"
                           accept="audio/*"
@@ -3396,7 +3550,7 @@ const TaoBaiTap = () => {
                           }}
                           style={{ display: "block", marginTop: 5, marginBottom: 10 }}
                         />
-                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>Đã tải audio: {q.audioUrl}</p>}
 
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đoạn văn (Dùng [1], [2]... để tạo ô trống)</label>
                         <RichTextarea
@@ -3440,6 +3594,14 @@ const TaoBaiTap = () => {
                             ))}
                           </div>
                         )}
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
                       </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu hỏi điền từ</button>
@@ -3478,10 +3640,11 @@ const TaoBaiTap = () => {
                           <option value="Đọc từ theo âm">Đọc từ theo âm (Word)</option>
                           <option value="Đọc theo câu">Đọc theo câu (Sentence)</option>
                         </select>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án / Hướng dẫn học viên (tùy chọn)</label>
                         <input
                           type="text"
                           className="exercise-content"
-                          placeholder="Hướng dẫn học viên (tùy chọn)"
+                          placeholder="Nhập giải thích hoặc hướng dẫn..."
                           value={q.explanation || ""}
                           onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
                         />
@@ -3519,6 +3682,14 @@ const TaoBaiTap = () => {
                           placeholder="The cat is sleeping on the bed"
                           value={q.correctSentence || ""}
                           onChange={e => updateQuestionInSection(secIdx, qIdx, "correctSentence", e.target.value)}
+                        />
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
                         />
                       </QuestionCard>
                     ))}
@@ -3587,6 +3758,14 @@ const TaoBaiTap = () => {
                             setExamSections(copy);
                           }}
                         >+ Thêm câu tiếp theo</button>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                        <input
+                          type="text"
+                          className="exercise-content"
+                          placeholder="Giải thích đáp án..."
+                          value={q.explanation || ""}
+                          onChange={e => updateQuestionInSection(secIdx, qIdx, "explanation", e.target.value)}
+                        />
                       </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm câu sắp xếp câu</button>
@@ -3733,7 +3912,7 @@ const TaoBaiTap = () => {
                         />
                         {q.imageUrl && <img src={q.imageUrl} alt="Topic hint" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
 
-                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>🎵 Audio đề bài (Tùy chọn)</label>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Audio đề bài (Tùy chọn)</label>
                         <input
                           type="file"
                           accept="audio/*"
@@ -3744,7 +3923,7 @@ const TaoBaiTap = () => {
                           }}
                           style={{ display: "block", marginTop: 5 }}
                         />
-                        {q.audioUrl && <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+                        {q.audioUrl && <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>Đã tải audio: {q.audioUrl}</p>}
                       </QuestionCard>
                     ))}
                     <button type="button" className="add-content" style={{ marginTop: 10, padding: 8 }} onClick={() => addQuestionToSection(secIdx)}>+ Thêm chủ đề nói</button>
@@ -3753,7 +3932,7 @@ const TaoBaiTap = () => {
 
                 {sec.type === "writing-essay" && (
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>✍️ Đề bài viết luận</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài viết luận</label>
                     <RichTextarea
                       className="exercise-content"
                       rows={4}
@@ -3787,7 +3966,7 @@ const TaoBaiTap = () => {
                 padding: "20px",
                 marginBottom: "20px"
               }}>
-                <h4 style={{ color: "#000080", marginTop: 0, marginBottom: 8, fontSize: "15px", fontWeight: 600 }}>🎵 File nghe chung cho toàn bộ bài tập (Tùy chọn)</h4>
+                <h4 style={{ color: "#000080", marginTop: 0, marginBottom: 8, fontSize: "15px", fontWeight: 600 }}>File nghe chung cho toàn bộ bài tập (Tùy chọn)</h4>
                 <p style={{ color: "#777", fontSize: "12px", marginTop: 0, marginBottom: 12 }}>
                   * Nếu tải lên file nghe chung ở đây, các câu hỏi sẽ dùng chung audio này. Học viên sẽ nghe từ trình phát chung ở đầu bài.
                   Nếu không tải ở đây, bạn có thể tải audio riêng cho từng câu hỏi phía dưới.
@@ -3810,7 +3989,7 @@ const TaoBaiTap = () => {
                 {commonAudioUrl && (
                   <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
                     <p style={{ color: "green", fontSize: 13, fontWeight: "bold", margin: 0 }}>✓ Đã tải file nghe chung:</p>
-                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://localhost:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
+                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://14.225.192.252:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
                     <button
                       type="button"
                       onClick={() => setCommonAudioUrl("")}
@@ -3836,7 +4015,7 @@ const TaoBaiTap = () => {
                 <div className="question-block-header">
                   <h4 style={{ fontSize: 15 }}>Câu {qIndex + 1}</h4>
                   {questions.length > 1 && (
-                    <button className="remove-btn" onClick={() => removeQuestionItem(qIndex)}>✕ Xóa câu này</button>
+                    <button className="remove-btn" onClick={() => removeQuestionItem(qIndex)}>Xóa câu này</button>
                   )}
                 </div>
 
@@ -3896,7 +4075,7 @@ const TaoBaiTap = () => {
                     />
                     {q.imageUrl && <img src={q.imageUrl} alt="Topic hint" style={{ maxHeight: 120, display: "block", marginTop: 8 }} />}
 
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>🎵 Audio đề bài (Tùy chọn)</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Audio đề bài (Tùy chọn)</label>
                     <input
                       type="file"
                       accept="audio/*"
@@ -3907,7 +4086,7 @@ const TaoBaiTap = () => {
                       }}
                       style={{ display: "block", marginTop: 5 }}
                     />
-                    {q.audioUrl && <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>✓ Đã tải audio: {q.audioUrl}</p>}
+                    {q.audioUrl && <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>Đã tải audio: {q.audioUrl}</p>}
                   </div>
                 )}
 
@@ -4063,9 +4242,9 @@ const TaoBaiTap = () => {
                           style={{ display: "block", marginTop: 5 }}
                         />
                         {commonAudioUrl ? (
-                          <p style={{ color: "#F95800", fontSize: 12, marginTop: 5 }}>⚠️ Đang dùng file nghe chung ở đầu bài tập</p>
+                          <p style={{ color: "#F95800", fontSize: 12, marginTop: 5 }}>Đang dùng file nghe chung ở đầu bài tập</p>
                         ) : q.audioUrl ? (
-                          <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>✓ Đã tải: {q.audioUrl}</p>
+                          <p style={{ color: "green", fontSize: 12, marginTop: 5 }}>Đã tải: {q.audioUrl}</p>
                         ) : null}
                       </div>
                     )}
@@ -4250,9 +4429,38 @@ const TaoBaiTap = () => {
                     />
                     {q.audioUrl && <p style={{ color: "green", fontSize: 12 }}>✓ Đã tải audio: {q.audioUrl}</p>}
 
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", marginTop: 10, display: "block" }}>Câu hỏi (Tùy chọn)</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Nhập câu hỏi (ví dụ: Look at the picture and select the best answer)..."
+                      value={q.question || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "question", e.target.value)}
+                    />
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", marginTop: 10, display: "block" }}>Các phương án trả lời (Tùy chọn)</label>
+                    {["A", "B", "C", "D"].map((lbl, aIdx) => (
+                      <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
+                        <span style={{ fontWeight: "bold", width: 20 }}>{lbl}.</span>
+                        <input
+                          type="text"
+                          placeholder={`Nhập nội dung lựa chọn ${lbl} (để trống nếu chỉ hiển thị chữ ${lbl})`}
+                          className="exercise-content"
+                          style={{ margin: 0 }}
+                          value={(q.answers || [])[aIdx] || ""}
+                          onChange={e => {
+                            const copyAnswers = [...(q.answers || [])];
+                            copyAnswers[aIdx] = e.target.value;
+                            updateQuestionItemField(qIndex, "answers", copyAnswers);
+                          }}
+                        />
+                      </div>
+                    ))}
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Đáp án đúng</label>
                     <select
                       className="exercise-type"
-                      style={{ width: "100%" }}
+                      style={{ width: "100%", marginTop: 4 }}
                       value={q.correct}
                       onChange={e => updateQuestionItemField(qIndex, "correct", e.target.value)}
                     >
@@ -4261,6 +4469,15 @@ const TaoBaiTap = () => {
                       <option value="C">Đáp án đúng: C</option>
                       <option value="D">Đáp án đúng: D</option>
                     </select>
+
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginTop: 10 }}>Giải thích đáp án (tùy chọn)</label>
+                    <input
+                      type="text"
+                      className="exercise-content"
+                      placeholder="Giải thích tại sao chọn đáp án này..."
+                      value={q.explanation || ""}
+                      onChange={e => updateQuestionItemField(qIndex, "explanation", e.target.value)}
+                    />
                   </div>
                 )}
 

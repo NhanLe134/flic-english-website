@@ -62,7 +62,11 @@ export const NgheChonAnh: React.FC<NgheChonAnhProps> = ({
         {/* Cot ben phai: Hien thi hop cau hoi trac nghiem lua chon (A, B, C, D) */}
         <div className="ad-listening-image-right">
           <CauHoiTracNghiem
-            q={{ question: "", correct: q.correct || "A", answers: ["A", "B", "C", "D"] }}
+            q={{
+              question: q.question || "",
+              correct: q.correct || "A",
+              answers: q.answers && q.answers.some((a: string) => a && a.trim() !== "") ? q.answers : ["A", "B", "C", "D"]
+            }}
             qIdx={qIdx}
             subIdxPrefix={subIdxPrefix}
             mcAnswers={mcAnswers}

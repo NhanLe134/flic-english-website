@@ -23,7 +23,7 @@ import { NoiTu } from "./NoiTu";
 import { TimLoiSai } from "./TimLoiSai";
 import { calcDictationScore, calcSpeechScore, parseQuestionsList } from "./hoTroBaiTap";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface MCQuestion {
   question: string;
@@ -290,18 +290,19 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
 
   // Check if Exam
   const isExam = !!parsedContent.isExam || exercise?.Type === "exam";
+  const hasSections = !!parsedContent.sections && parsedContent.sections.length > 0;
 
   // Build/Parse Questions List
   const questionsList = useMemo(() => {
-    return parseQuestionsList(exercise, isExam, parsedContent);
-  }, [exercise, isExam, parsedContent]);
+    return parseQuestionsList(exercise, isExam || hasSections, parsedContent);
+  }, [exercise, isExam, hasSections, parsedContent]);
 
   // Group questions into pages:
   // - Questions of the same reading-split passage go on the same page.
   // - Questions sharing the same audioUrl go on the same page.
   // - General/Simple questions with no audio or passage are grouped together on a single page.
   const questionPages = useMemo(() => {
-    if (isExam) return []; // Exams use their own sections tabs
+    if (isExam || hasSections) return []; // Exams use their own sections tabs
     if (questionsList.length === 0) return [];
     return [questionsList];
   }, [questionsList, isExam]);
@@ -370,7 +371,7 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
             const contentText = myNop.NoiDung || "";
             if (contentText.startsWith("{") || contentText.startsWith("[")) {
               const subObj = JSON.parse(contentText);
-              if (subObj.isExam) {
+              if (subObj.isExam || subObj.sections) {
                 // Populate exam responses
                 const loadedAnswers: Record<string | number, string> = {};
                 const loadedEssay: Record<string | number, string> = {};
@@ -453,7 +454,7 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
       });
     }
     // Shuffling for exam sections
-    if (isExam && parsedContent.sections && !submitted) {
+    if ((isExam || hasSections) && parsedContent.sections && !submitted) {
       parsedContent.sections.forEach((sec: any, sIdx: number) => {
         if (sec.questions) {
           sec.questions.forEach((q: any, qIdx: number) => {
@@ -480,7 +481,15 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
         }
       });
     }
-  }, [questionsList, parsedContent, submitted, exercise, isExam]);
+  }, [questionsList, parsedContent, submitted, exercise, isExam, hasSections]);
+
+  // Initialize examStarted/examEnded for non-exam sectioned exercises/practices
+  useEffect(() => {
+    if (hasSections && !isExam) {
+      setExamStarted(true);
+      setExamEnded(false);
+    }
+  }, [hasSections, isExam]);
 
   // Exam Start/Countdown ticks
   useEffect(() => {
@@ -610,9 +619,9 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
     try {
       let submissionData: any = {};
 
-      if (isExam) {
+      if (isExam || hasSections) {
         // Build JSON structure for exam nộp bài
-        submissionData.isExam = true;
+        submissionData.isExam = isExam;
         submissionData.sections = await Promise.all(
           parsedContent.sections.map(async (sec: any, secIdx: number) => {
             const sectionResponse: any = {
@@ -1086,6 +1095,8 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
     }
 
     if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
+      const isFlatMC = questionType === "listening-image" || questionType === "writing-tense-mcq";
+      const hasSubQuestions = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
       return (
         <div>
           {q.audioUrl && !hideAudio && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
@@ -1094,7 +1105,7 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
             </div>
           )}
           {q.imageUrl && <img src={`${API}${q.imageUrl}`} alt="Question visual cue" style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }} />}
-          {q.subQuestions && q.subQuestions.length > 0 ? (
+          {hasSubQuestions ? (
             q.subQuestions.map((sub: any, subIdx: number) => (
               <div key={subIdx} style={{ marginTop: subIdx > 0 ? 20 : 0 }}>
                 {renderMCQBlock(sub, subIdx, String(qIdx), getGlobalSubIdx(qIdx, subIdx))}
@@ -1425,7 +1436,7 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
       )}
 
       {/* ────────────────── EXAM SOLVER INTERFACE ────────────────── */}
-      {isExam ? (
+      {(isExam || hasSections) ? (
         <div>
           {timeToExamStart !== null ? (
             <div className="ad-exam-waiting">

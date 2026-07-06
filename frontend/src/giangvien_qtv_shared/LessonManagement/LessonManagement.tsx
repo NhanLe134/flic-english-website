@@ -27,7 +27,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://localhost:5000/baigiang/list/all";
+      let url = "http://14.225.192.252:5000/baigiang/list/all";
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -44,14 +44,14 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   const handleReuseLecture = async (lectureId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/baigiang/${lectureId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/baigiang/${lectureId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
         // Refresh lessons list
-        const lRes = await fetch(`http://localhost:5000/baigiang/${buoiHocId}`);
+        const lRes = await fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`);
         const lData = await lRes.json();
         setLessons(lData);
         setShowReuseModal(false);
@@ -66,7 +66,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://localhost:5000/baigiang/${buoiHocId}`)
+    fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
@@ -80,7 +80,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   const confirmDelete = async () => {
     if (selectedId !== null) {
       try {
-        const res = await fetch(`http://localhost:5000/baigiang/${selectedId}`, {
+        const res = await fetch(`http://14.225.192.252:5000/baigiang/${selectedId}`, {
           method: "DELETE"
         });
         if (res.ok) {

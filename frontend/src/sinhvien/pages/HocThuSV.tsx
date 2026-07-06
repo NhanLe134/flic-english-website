@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import "./MyCourses/MyCourses.css"; // Reuse styling directly
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 export default function HocThuSV() {
   const navigate = useNavigate();

@@ -66,7 +66,7 @@ const LessonList = () => {
   };
 
   const fetchClassInfo = () => {
-    fetch(`http://localhost:5000/classes/${id}/info`)
+    fetch(`http://14.225.192.252:5000/classes/${id}/info`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -82,7 +82,7 @@ const LessonList = () => {
       "Tất cả tài liệu, bài giảng, và bài tập liên kết với buổi này sẽ bị ảnh hưởng.",
       async () => {
         try {
-          const res = await fetch(`http://localhost:5000/qtv/buoihoc/${lessonId}`, {
+          const res = await fetch(`http://14.225.192.252:5000/qtv/buoihoc/${lessonId}`, {
             method: "DELETE"
           });
           if (res.ok) {
@@ -100,7 +100,7 @@ const LessonList = () => {
 
   const handleMarkActiveLesson = async (lessonId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/classes/${id}/active-buoihoc`, {
+      const res = await fetch(`http://14.225.192.252:5000/classes/${id}/active-buoihoc`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activeBuoiHocId: lessonId })
@@ -126,7 +126,7 @@ const LessonList = () => {
       return;
     }
     try {
-      const res = await fetch("http://localhost:5000/qtv/buoihoc", {
+      const res = await fetch("http://14.225.192.252:5000/qtv/buoihoc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,7 +148,7 @@ const LessonList = () => {
           order: 1
         });
         // Re-fetch lessons list
-        fetch(`http://localhost:5000/classes/${id}/buoihoc`)
+        fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
           .then(r => r.json())
           .then(data => setLessons(data))
           .catch(err => console.log(err));
@@ -173,7 +173,7 @@ const LessonList = () => {
   };
 
   useEffect(() => {
-    fetch(`http://localhost:5000/classes/${id}/buoihoc`)
+    fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
@@ -280,80 +280,94 @@ const LessonList = () => {
 
       {/* LESSON GRID */}
       <div className="lesson-grid">
-        {filteredLessons.map((lesson) => (
-          <div key={lesson.MaBuoiHoc} className="lesson-card">
-            <button
-              type="button"
-              className="lesson-delete-btn"
-              title="Xóa buổi học"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteLesson(lesson.MaBuoiHoc, lesson.TenBuoiHoc);
-              }}
-            >
-              <FiTrash2 />
-            </button>
-            <h3>{lesson.TenBuoiHoc}</h3>
-            <p className="lesson-desc">{lesson.MoTa}</p>
-            <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-              {lesson.MaBuoiHoc === activeBuoiHocId ? (
-                <div style={{
-                  background: "#e8f5e9",
-                  color: "#2e7d32",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  textAlign: "center",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "4px",
-                  border: "1px solid #c8e6c9"
-                }}>
-                  <span>🟢 Buổi đang học</span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleMarkActiveLesson(lesson.MaBuoiHoc)}
-                  style={{
-                    background: "transparent",
-                    color: "#666",
-                    border: "1.5px dashed #ccc",
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    textAlign: "center",
-                    transition: "all 0.2s"
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.color = "#F95800";
-                    e.currentTarget.style.borderColor = "#F95800";
-                    e.currentTarget.style.background = "#fff4ec";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.color = "#666";
-                    e.currentTarget.style.borderColor = "#ccc";
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  Đánh dấu buổi đang học
-                </button>
-              )}
+        {filteredLessons.map((lesson) => {
+          const activeLessonIndex = lessons.findIndex(l => l.MaBuoiHoc === activeBuoiHocId);
+          const currentLessonIndex = lessons.findIndex(l => l.MaBuoiHoc === lesson.MaBuoiHoc);
+          const isOpened = activeLessonIndex !== -1 && currentLessonIndex <= activeLessonIndex;
+
+          return (
+            <div key={lesson.MaBuoiHoc} className="lesson-card">
               <button
-                className="lesson-btn"
-                onClick={() => navigate(`/class/${lesson.MaBuoiHoc}`, {
-                  state: { tenKhoaHoc, tenLop, maLopHoc: id } // ← thêm maLopHoc
-                })}
+                type="button"
+                className="lesson-delete-btn"
+                title="Xóa buổi học"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteLesson(lesson.MaBuoiHoc, lesson.TenBuoiHoc);
+                }}
               >
-                Xem chi tiết
+                <FiTrash2 />
               </button>
+              <h3>{lesson.TenBuoiHoc}</h3>
+              <p className="lesson-desc">{lesson.MoTa}</p>
+              <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {isOpened ? (
+                  <button
+                    type="button"
+                    onClick={() => handleMarkActiveLesson(lesson.MaBuoiHoc)}
+                    style={{
+                      background: "#e8f5e9",
+                      color: "#2e7d32",
+                      border: "1.5px solid #c8e6c9",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.background = "#d0ebd4";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.background = "#e8f5e9";
+                    }}
+                  >
+                    Đã mở
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleMarkActiveLesson(lesson.MaBuoiHoc)}
+                    style={{
+                      background: "transparent",
+                      color: "#666",
+                      border: "1.5px dashed #ccc",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      textAlign: "center",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.color = "#F95800";
+                      e.currentTarget.style.borderColor = "#F95800";
+                      e.currentTarget.style.background = "#fff4ec";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.color = "#666";
+                      e.currentTarget.style.borderColor = "#ccc";
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    Mở buổi
+                  </button>
+                )}
+                <button
+                  className="lesson-btn"
+                  onClick={() => navigate(`/class/${lesson.MaBuoiHoc}`, {
+                    state: { tenKhoaHoc, tenLop, maLopHoc: id }
+                  })}
+                >
+                  Xem chi tiết
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {showAddModal && (
@@ -381,24 +395,7 @@ const LessonList = () => {
                 rows={3} 
               />
             </div>
-            <div className="two-cols">
-              <div className="form-group">
-                <label>📅 Ngày bắt đầu</label>
-                <input 
-                  type="date" 
-                  value={lessonForm.startDate} 
-                  onChange={e => setLessonForm(p => ({...p, startDate: e.target.value}))} 
-                />
-              </div>
-              <div className="form-group">
-                <label>📅 Ngày kết thúc</label>
-                <input 
-                  type="date" 
-                  value={lessonForm.endDate} 
-                  onChange={e => setLessonForm(p => ({...p, endDate: e.target.value}))} 
-                />
-              </div>
-            </div>
+
             <div className="form-group">
               <label>Thứ tự</label>
               <input 

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiUsers } from "react-icons/fi";
 import { formatScheduleOnlyDays } from "../../../utils/schedule";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 
 const DAYS_OF_WEEK = [

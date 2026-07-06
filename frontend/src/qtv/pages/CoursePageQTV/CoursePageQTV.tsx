@@ -5,8 +5,24 @@ import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-const API = 'http://localhost:5000'
+const API = 'http://14.225.192.252:5000'
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
+
+const START_TIME_OPTIONS = [
+  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00"
+];
+
+const END_TIME_OPTIONS = [
+  "07:30", "08:00", "08:30", "09:00", "09:30",
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30",
+  "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"
+];
+
 const DAYS_OF_WEEK = [
   { label: 'T2', value: 'Thứ 2' },
   { label: 'T3', value: 'Thứ 3' },
@@ -85,6 +101,160 @@ const toggleDayInSchedule = (day: string, currentSchedule: string) => {
   }
   return formatSchedule(newDays);
 };
+
+/*
+const parseSchedule = (schedule: string) => {
+  const daySchedules: Record<string, { startTime: string; endTime: string }> = {};
+  const selectedDays: string[] = [];
+
+  if (!schedule || schedule === '—') {
+    return { days: '', daySchedules };
+  }
+
+  const parts = schedule.split('·').map(p => p.trim());
+  let isNewFormat = true;
+  
+  if (parts.length === 0 || parts[0] === '') {
+    isNewFormat = false;
+  } else {
+    for (const part of parts) {
+      const match = part.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (!match) {
+        isNewFormat = false;
+        break;
+      }
+    }
+  }
+
+  if (isNewFormat) {
+    parts.forEach(part => {
+      const match = part.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (match) {
+        const day = match[1].trim();
+        const timeStr = match[2].trim();
+        const times = timeStr.split('-');
+        const startTime = times[0] ? times[0].trim() : '07:00';
+        const endTime = times[1] ? times[1].trim() : '08:30';
+        
+        const matchedDay = DAYS_OF_WEEK.find(d => d.value.toLowerCase() === day.toLowerCase());
+        if (matchedDay) {
+          if (!selectedDays.includes(matchedDay.value)) {
+            selectedDays.push(matchedDay.value);
+          }
+          daySchedules[matchedDay.value] = { startTime, endTime };
+        }
+      }
+    });
+  } else {
+    let daysPart = '';
+    let timePart = '';
+    
+    if (schedule.includes('·')) {
+      const partsOld = schedule.split('·');
+      daysPart = partsOld[0].trim();
+      timePart = partsOld[1] ? partsOld[1].trim() : '';
+    } else if (schedule.includes('-') && (schedule.includes(':') || /^\d{2}/.test(schedule))) {
+      timePart = schedule.trim();
+    } else {
+      daysPart = schedule.trim();
+    }
+
+    let commonStartTime = '07:00';
+    let commonEndTime = '08:30';
+    if (timePart) {
+      const times = timePart.split('-');
+      if (times[0]) commonStartTime = times[0].trim();
+      if (times[1]) commonEndTime = times[1].trim();
+    }
+
+    const extractedDays: string[] = [];
+    
+    if (daysPart.toLowerCase().includes('chủ nhật')) {
+      extractedDays.push('Chủ nhật');
+    }
+    
+    const thuMatch = daysPart.match(/Thứ\s+([^&·\(\)]+)/i);
+    if (thuMatch) {
+      const cleanParts = thuMatch[1].replace(/Thứ/gi, '').split(',').map(s => s.trim());
+      cleanParts.forEach(p => {
+        if (p.includes('&')) {
+          p.split('&').forEach(sp => {
+            const cleanSp = sp.trim();
+            if (cleanSp && !isNaN(Number(cleanSp))) {
+              extractedDays.push(`Thứ ${cleanSp}`);
+            }
+          });
+        } else {
+          if (p && !isNaN(Number(p))) {
+            extractedDays.push(`Thứ ${p}`);
+          }
+        }
+      });
+    }
+    
+    const ampMatch = daysPart.match(/&\s*(\d+)/);
+    if (ampMatch) {
+      const num = ampMatch[1];
+      const dayStr = `Thứ ${num}`;
+      if (!extractedDays.includes(dayStr)) {
+        extractedDays.push(dayStr);
+      }
+    }
+
+    DAYS_OF_WEEK.forEach(d => {
+      if (daysPart.toLowerCase().includes(d.value.toLowerCase()) && !extractedDays.includes(d.value)) {
+        extractedDays.push(d.value);
+      }
+    });
+
+    extractedDays.forEach(day => {
+      const matchedDay = DAYS_OF_WEEK.find(d => d.value.toLowerCase() === day.toLowerCase());
+      if (matchedDay) {
+        if (!selectedDays.includes(matchedDay.value)) {
+          selectedDays.push(matchedDay.value);
+        }
+        daySchedules[matchedDay.value] = { startTime: commonStartTime, endTime: commonEndTime };
+      }
+    });
+  }
+
+  selectedDays.sort((a, b) => {
+    const idxA = DAYS_OF_WEEK.findIndex(d => d.value === a);
+    const idxB = DAYS_OF_WEEK.findIndex(d => d.value === b);
+    return idxA - idxB;
+  });
+
+  return {
+    days: selectedDays.join(', '),
+    daySchedules
+  };
+};
+*/
+
+const serializeSchedule = (
+  selectedDaysStr: string,
+  daySchedules: Record<string, { startTime: string; endTime: string }>
+) => {
+  if (!selectedDaysStr) return '—';
+  
+  const days = selectedDaysStr.split(',').map(d => d.trim()).filter(Boolean);
+  
+  days.sort((a, b) => {
+    const idxA = DAYS_OF_WEEK.findIndex(d => d.value === a);
+    const idxB = DAYS_OF_WEEK.findIndex(d => d.value === b);
+    return idxA - idxB;
+  });
+
+  if (days.length === 0) return '—';
+
+  const scheduleParts = days.map(day => {
+    const sched = daySchedules[day] || { startTime: '07:00', endTime: '08:30' };
+    return `${day} (${sched.startTime}-${sched.endTime})`;
+  });
+
+  return scheduleParts.join(' · ');
+};
+
 const CATS      = ['Cơ bản','Luyện thi','Giao tiếp','Ngữ pháp','Từ vựng','Kỹ năng']
 
 interface GiaoVien     { MaGiangVien: number; MaNguoiDung: number; HoTen: string }
@@ -182,7 +352,7 @@ export default function CoursePageQTV() {
   const [courses, setCourses]     = useState<Course[]>([])
   const [giaoViens, setGiaoViens] = useState<GiaoVien[]>([])
   const [search, setSearch]       = useState('')
-  const [levelFilter, setLevel]   = useState('')
+  const [levelFilter]   = useState('')
   const [loading, setLoading]     = useState(true)
   const [toast, setToast]         = useState('')
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null)
@@ -325,7 +495,7 @@ export default function CoursePageQTV() {
           ThuTu: bgForm.order,
           MaKhoaHoc: detailCourse?.id,
           MaGiangVien: user.MaNguoiDung || 1,
-          MaLesson: activeLessonIdForAsset
+          MaBuoiHoc: activeLessonIdForAsset
         })
       });
       setToast('Đã thêm bài giảng mới!');
@@ -348,7 +518,7 @@ export default function CoursePageQTV() {
           MoTa: docForm.desc,
           NoiDung: docForm.content,
           FileUrl: docForm.fileUrl,
-          MaLesson: activeLessonIdForAsset,
+          MaBuoiHoc: activeLessonIdForAsset,
           TrangThai: 'Đã duyệt'
         })
       });
@@ -365,7 +535,7 @@ export default function CoursePageQTV() {
       const res = await fetch(`${API}/baigiang/${originalBgId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ MaLesson: activeLessonIdForAsset })
+        body: JSON.stringify({ MaBuoiHoc: activeLessonIdForAsset })
       });
       const data = await res.json();
       if (res.ok) {
@@ -386,7 +556,7 @@ export default function CoursePageQTV() {
       const res = await fetch(`${API}/tailieu/${originalDocId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ MaLesson: activeLessonIdForAsset })
+        body: JSON.stringify({ MaBuoiHoc: activeLessonIdForAsset })
       });
       const data = await res.json();
       if (res.ok) {
@@ -446,7 +616,9 @@ export default function CoursePageQTV() {
   const [addingToCourse, setAddingToCourse]   = useState<Course | null>(null)
   const [lForm, setLForm] = useState({
     name: '',
-    schedule: 'Thứ 2 & 4',
+    schedule: '',
+    days: '',
+    daySchedules: {} as Record<string, { startTime: string; endTime: string }>,
     maxStudents: 30,
     maGiangVien: '',
     teachers: {} as Record<number, number>,
@@ -876,8 +1048,10 @@ export default function CoursePageQTV() {
 
   const saveClass = async () => {
     if (!lForm.name.trim()) { alert('Vui lòng nhập tên lớp!'); return }
+    if (!lForm.days) { alert('Vui lòng chọn lịch học (ngày học)!'); return }
     if (!addingToCourse) return
     try {
+      const finalSchedule = serializeSchedule(lForm.days, lForm.daySchedules)
       const res = await fetch(`${API}/courses/${addingToCourse.id}/details`)
       const details = await res.json()
       let maLop = details[0]?.MaLop
@@ -893,7 +1067,7 @@ export default function CoursePageQTV() {
         body: JSON.stringify({
           TenLop: lForm.name,
           MaLop: maLop,
-          LichHoc: lForm.schedule,
+          LichHoc: finalSchedule,
           SoLuongHocVien: null,
           CopyFromClassId: lForm.copyFromClassId ? Number(lForm.copyFromClassId) : null,
           teachers: lForm.teachers // Pass the teachers object!
@@ -901,7 +1075,7 @@ export default function CoursePageQTV() {
       })
       await classResponse.json()
       setToast('Đã tạo lớp học!'); setShowAddClass(false)
-      setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' })
+      setLForm({ name: '', schedule: '', days: '', daySchedules: {}, maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' })
       setClassesMap(prev => { const n = { ...prev }; delete n[addingToCourse.id]; return n })
       loadClassesForCourse(addingToCourse.id)
     } catch { alert('Lỗi khi tạo lớp học') }
@@ -1131,6 +1305,7 @@ export default function CoursePageQTV() {
   }
 
   // Trích xuất các cấp độ duy nhất từ danh sách khóa học thực tế (tách theo dấu phẩy)
+  /*
   const uniqueLevels = useMemo(() => {
     const levelsSet = new Set<string>();
     courses.forEach(c => {
@@ -1145,6 +1320,7 @@ export default function CoursePageQTV() {
     });
     return Array.from(levelsSet).sort((a, b) => a.localeCompare(b));
   }, [courses]);
+  */
 
   const filtered = courses.filter(c =>
     (!search || c.title.toLowerCase().includes(search.toLowerCase())) &&
@@ -1188,10 +1364,6 @@ export default function CoursePageQTV() {
           <div className={styles.tableHeader}>
             <div><h3>Danh sách khóa học</h3><p>Bấm vào số lớp để xem · Bấm "Chi tiết" để ghi danh và lộ trình</p></div>
             <div className={styles.tableToolbar}>
-              <select value={levelFilter} onChange={e => setLevel(e.target.value)}>
-                <option value="">Tất cả cấp độ</option>
-                {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
               <button className={styles.btnRegList} onClick={() => setShowRegModal(true)}>
                 <FiFileText style={{ marginRight: 6 }} /> Đăng ký ({pendingRegs.filter(r => r.status === 'Chờ ghi danh').length})
               </button>
@@ -1205,7 +1377,7 @@ export default function CoursePageQTV() {
               <thead>
                 <tr>
                   <th>TÊN KHÓA HỌC</th>
-                  <th>CẤP ĐỘ</th>
+                  <th>TRÌNH ĐỘ</th>
                   <th>LỚP HỌC</th>
                   <th>NGÀY TẠO</th>
                 </tr>
@@ -1228,6 +1400,7 @@ export default function CoursePageQTV() {
                         </button>
                       </td>
                       <td>{c.created}</td>
+
                     </tr>
                     {expandedCourse === c.id && (
                       <tr>
@@ -1319,7 +1492,7 @@ export default function CoursePageQTV() {
               <input value={cForm.title} onChange={e => setCForm(p => ({...p, title: e.target.value}))} placeholder="VD: TOEIC 650+ Intensive" />
             </div>
             <div className={styles.twoCols}>
-              <div className={styles.formGroup}><label>Cấp độ</label>
+              <div className={styles.formGroup}><label>Trình độ</label>
                 <select value={cForm.level} onChange={e => setCForm(p => ({...p, level: e.target.value}))}>
                   {LEVELS.map(l => <option key={l}>{l}</option>)}
                 </select>
@@ -1515,18 +1688,7 @@ export default function CoursePageQTV() {
                               onChange={e => updateLessonInClass(classIdx, buoiHocIdx, 'desc', e.target.value)}
                               placeholder="Nội dung buổi học..." />
                           </div>
-                          <div className={styles.twoCols}>
-                            <div className={styles.formGroup}>
-                              <label>Ngày bắt đầu</label>
-                              <input type="date" value={lesson.startDate}
-                                onChange={e => updateLessonInClass(classIdx, buoiHocIdx, 'startDate', e.target.value)} />
-                            </div>
-                            <div className={styles.formGroup}>
-                              <label>Ngày kết thúc</label>
-                              <input type="date" value={lesson.endDate}
-                                onChange={e => updateLessonInClass(classIdx, buoiHocIdx, 'endDate', e.target.value)} />
-                            </div>
-                          </div>
+
                         </div>
                       ))}
 
@@ -1539,7 +1701,28 @@ export default function CoursePageQTV() {
                   </div>
                 ))}
 
-                {/* Button "+ Thêm lớp học" đã bị xóa theo yêu cầu */}
+                {editCourse && (
+                  <button
+                    className={styles.btnPrimary}
+                    style={{ marginTop: '12px', fontSize: '13px' }}
+                    onClick={() => {
+                      setAddingToCourse(editCourse);
+                      setLForm({
+                        name: '',
+                        schedule: '',
+                        days: '',
+                        daySchedules: {},
+                        maxStudents: 30,
+                        maGiangVien: '',
+                        teachers: {},
+                        copyFromClassId: ''
+                      });
+                      setShowAddClass(true);
+                    }}
+                  >
+                    + Thêm lớp học
+                  </button>
+                )}
               </>
             )}
 
@@ -1610,28 +1793,87 @@ export default function CoursePageQTV() {
                 ))}
               </select>
             </div>
-            <div className={styles.twoCols}>
-              <div className={styles.formGroup}><label>Lịch học</label>
-                <div className={styles.weekdaySelector}>
-                  {DAYS_OF_WEEK.map(d => {
-                    const isSelected = getSelectedDaysFromSchedule(lForm.schedule).includes(d.value);
-                    return (
-                      <button
-                        key={d.value}
-                        type="button"
-                        className={`${styles.weekdayBtn} ${isSelected ? styles.weekdayBtnActive : ''}`}
-                        onClick={() => {
-                          const newSchedule = toggleDayInSchedule(d.value, lForm.schedule);
-                          setLForm(p => ({ ...p, schedule: newSchedule }));
-                        }}
-                      >
-                        {d.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            <div className={styles.formGroup} style={{ marginTop: '16px' }}>
+              <label style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>Lịch học</label>
+              <div className={styles.weekdaySelector} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                {DAYS_OF_WEEK.map(d => {
+                  const isSelected = lForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
+                  return (
+                    <button
+                      key={d.value}
+                      type="button"
+                      className={`${styles.weekdayBtn} ${isSelected ? styles.weekdayBtnActive : ''}`}
+                      onClick={() => {
+                        const newDays = lForm.days.split(',').map(x => x.trim()).filter(Boolean);
+                        const newDaySchedules = { ...lForm.daySchedules };
+                        if (newDays.includes(d.value)) {
+                          const filteredDays = newDays.filter(day => day !== d.value);
+                          delete newDaySchedules[d.value];
+                          setLForm(p => ({ ...p, days: filteredDays.join(', '), daySchedules: newDaySchedules }));
+                        } else {
+                          newDays.push(d.value);
+                          newDaySchedules[d.value] = { startTime: '07:00', endTime: '08:30' };
+                          setLForm(p => ({ ...p, days: newDays.join(', '), daySchedules: newDaySchedules }));
+                        }
+                      }}
+                    >
+                      {d.label}
+                    </button>
+                  );
+                })}
               </div>
 
+              {lForm.days.split(',').map(x => x.trim()).filter(Boolean).map(day => {
+                const sched = lForm.daySchedules[day] || { startTime: '07:00', endTime: '08:30' };
+                return (
+                  <div key={day} style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ minWidth: '70px', fontWeight: 600, fontSize: '13px', color: '#555' }}>{day}:</span>
+                    <select
+                      value={sched.startTime}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setLForm(p => ({
+                          ...p,
+                          daySchedules: {
+                            ...p.daySchedules,
+                            [day]: { ...sched, startTime: val }
+                          }
+                        }));
+                      }}
+                      style={{ padding: '6px 24px 6px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }}
+                    >
+                      {START_TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <span style={{ fontSize: '13px', color: '#888' }}>đến</span>
+                    <select
+                      value={sched.endTime}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setLForm(p => ({
+                          ...p,
+                          daySchedules: {
+                            ...p.daySchedules,
+                            [day]: { ...sched, endTime: val }
+                          }
+                        }));
+                      }}
+                      style={{ padding: '6px 24px 6px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }}
+                    >
+                      {END_TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+
+              {lForm.days && (
+                <div style={{ fontSize: '12px', color: '#f58220', marginTop: '8px', fontWeight: 500 }}>
+                  Đã chọn: {serializeSchedule(lForm.days, lForm.daySchedules)}
+                </div>
+              )}
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.btnOutline} onClick={() => setShowAddClass(false)}>Hủy</button>
@@ -2021,6 +2263,7 @@ export default function CoursePageQTV() {
             <div className={styles.formGroup}><label>Mô tả</label>
               <textarea value={lessonForm.desc} onChange={e => setLessonForm(p => ({...p, desc: e.target.value}))} placeholder="Nội dung buổi học..." rows={3} />
             </div>
+
             <div className={styles.formGroup}><label>Thứ tự</label>
               <input type="number" min={1} value={lessonForm.order} onChange={e => setLessonForm(p => ({...p, order: Number(e.target.value)}))} />
             </div>
@@ -2058,7 +2301,30 @@ export default function CoursePageQTV() {
                 </div>
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>
-                  <input value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input style={{ flex: 1 }} value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
+                      Tải file
+                      <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await fetch("http://14.225.192.252:5000/upload", {
+                            method: "POST",
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error("Upload failed");
+                          const data = await res.json();
+                          setBgForm(p => ({ ...p, fileUrl: data.url }));
+                          alert("Tải lên file thành công!");
+                        } catch (err) {
+                          alert("Lỗi tải lên file: " + (err as Error).message);
+                        }
+                      }} />
+                    </label>
+                  </div>
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>
@@ -2124,7 +2390,30 @@ export default function CoursePageQTV() {
                 </div>
                 <div className={styles.formGroup}>
                   <label>File đính kèm (URL)</label>
-                  <input value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input style={{ flex: 1 }} value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
+                      Tải file
+                      <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await fetch("http://14.225.192.252:5000/upload", {
+                            method: "POST",
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error("Upload failed");
+                          const data = await res.json();
+                          setDocForm(p => ({ ...p, fileUrl: data.url }));
+                          alert("Tải lên file thành công!");
+                        } catch (err) {
+                          alert("Lỗi tải lên file: " + (err as Error).message);
+                        }
+                      }} />
+                    </label>
+                  </div>
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddDocModal(false)}>Hủy</button>
