@@ -519,3 +519,141 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Custom scrollbar for popup / modal in DuyetBaiQTV */
+.modal::-webkit-scrollbar,
+.modal *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.modal::-webkit-scrollbar-track,
+.modal *::-webkit-scrollbar-track {
+  background: rgba(245, 130, 32, 0.05);
+  border-radius: 4px;
+}
+
+.modal::-webkit-scrollbar-thumb,
+.modal *::-webkit-scrollbar-thumb {
+  background: rgba(245, 130, 32, 0.35);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.modal::-webkit-scrollbar-thumb:hover,
+.modal *::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 130, 32, 0.7);
+}
+
+.previewBtn {
+  background: #fff;
+  border: 1px solid #F95800;
+  color: #F95800;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.previewBtn:hover {
+  background: #F95800;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.15);
+}
+
+.previewModalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: lrpFadeIn 0.2s ease-out;
+}
+
+.previewModalContent {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  animation: lrpSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.previewModalCloseBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f1f5f9;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  transition: all 0.2s;
+}
+
+.previewModalCloseBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+/* Custom scrollbar for preview modal content and its internal scrollable elements */
+.previewModalContent *::-webkit-scrollbar,
+.previewModalContent::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.previewModalContent *::-webkit-scrollbar-track,
+.previewModalContent::-webkit-scrollbar-track {
+  background: rgba(245, 130, 32, 0.05);
+  border-radius: 4px;
+}
+
+.previewModalContent *::-webkit-scrollbar-thumb,
+.previewModalContent::-webkit-scrollbar-thumb {
+  background: rgba(245, 130, 32, 0.35);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.previewModalContent *::-webkit-scrollbar-thumb:hover,
+.previewModalContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 130, 32, 0.7);
+}
+
+@keyframes lrpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lrpSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+

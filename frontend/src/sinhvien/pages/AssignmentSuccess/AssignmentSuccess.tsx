@@ -64,17 +64,36 @@ function AssignmentSuccess() {
           </button>
           <button
             className="as-btn-fill"
-            onClick={() => {
-              if (maLopHoc && lessonId && maBaiTap) {
-                navigate(`/MyCourses/${maLopHoc}/${lessonId}/${tabKey}/${maBaiTap}?mode=review`, {
-                  state: { maLopHoc, justSubmittedAnswers: location.state?.justSubmittedAnswers, diem: location.state?.diem }
-                });
-              } else if (maBaiTap) {
-                navigate(`/baitap/${maBaiTap}?mode=review`, {
-                  state: { maLopHoc, justSubmittedAnswers: location.state?.justSubmittedAnswers, diem: location.state?.diem }
-                });
-              } else {
-                navigate("/MyCourses");
+            onClick={async () => {
+              const confirmReview = window.confirm(
+                "Nếu xem lại đáp án và giải thích, bạn sẽ KHÔNG được thực hiện lại (làm lại) bài tập này nữa. Bạn có chắc chắn muốn xem lại không?"
+              );
+              if (confirmReview) {
+                try {
+                  const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+                  const user = JSON.parse(userStr || "{}");
+                  await fetch(`http://localhost:5000/bainop/xem-giai-thich`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      MaSinhVien: user.MaSinhVien || user.MaNguoiDung,
+                      MaBaiTap: maBaiTap
+                    })
+                  });
+                } catch (e) {
+                  console.error("Error setting review flag:", e);
+                }
+                if (maLopHoc && lessonId && maBaiTap) {
+                  navigate(`/MyCourses/${maLopHoc}/${lessonId}/${tabKey}/${maBaiTap}?mode=review`, {
+                    state: { maLopHoc, justSubmittedAnswers: location.state?.justSubmittedAnswers, diem: location.state?.diem }
+                  });
+                } else if (maBaiTap) {
+                  navigate(`/baitap/${maBaiTap}?mode=review`, {
+                    state: { maLopHoc, justSubmittedAnswers: location.state?.justSubmittedAnswers, diem: location.state?.diem }
+                  });
+                } else {
+                  navigate("/MyCourses");
+                }
               }
             }}
           >

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { formatScheduleOnlyDays } from '../../../utils/schedule'
 import styles from './CoursePageQTV.module.css'
-import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage } from 'react-icons/fi'
+import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const API = 'http://localhost:5000'
@@ -115,6 +115,8 @@ interface LopHoc {
   students: number; progress: number
   maGiangVien: number | null; tenGiangVien: string
   lessonCount: number
+  status: string
+  levelName: string
 }
 
 interface Lesson {
@@ -145,7 +147,7 @@ interface ClassInForm {
   lessons: { title: string; desc: string; startDate: string; endDate: string; order: number }[]
 }
 
-type DetailTab = 'students' | 'roadmap'
+type DetailTab = 'info' | 'roadmap' | 'students'
 
 function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
   useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t) }, [])
@@ -153,6 +155,26 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 }
 
 
+
+const cleanLessonTitle = (title: string) => {
+  if (!title) return '';
+  let cleaned = title.replace(/^Buổi\s+\d+\s*[:-]\s*/i, '');
+  cleaned = cleaned.split(/\s*-\s*Lớp\s+\d+/i)[0];
+  return cleaned.trim();
+};
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr || dateStr === '—') return '—';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  return dateStr;
+};
 
 export default function CoursePageQTV() {
   const navigate = useNavigate()
@@ -164,7 +186,6 @@ export default function CoursePageQTV() {
   const [loading, setLoading]     = useState(true)
   const [toast, setToast]         = useState('')
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null)
-  const [expandedClass, setExpandedClass]   = useState<number | null>(null)
 
   const [classesMap, setClassesMap]   = useState<Record<number, LopHoc[]>>({})
   const [_gvKhoaMap, _setGvKhoaMap]     = useState<Record<number, GiaoVienKhoa[]>>({})
@@ -192,7 +213,7 @@ export default function CoursePageQTV() {
   // Modal chi tiết
   const [detailCourse, setDetailCourse]   = useState<Course | null>(null)
   const [detailClass, setDetailClass]     = useState<LopHoc | null>(null)
-  const [detailTab, setDetailTab]         = useState<DetailTab>('students')
+  const [detailTab, setDetailTab]         = useState<DetailTab>('info')
   const [showDetail, setShowDetail]       = useState(false)
 
   // Ghi danh
@@ -418,7 +439,11 @@ export default function CoursePageQTV() {
 
   // Modal tạo lớp học
   const [showAddClass, setShowAddClass]       = useState(false)
-  const [addingToCourse]   = useState<Course | null>(null)
+  const [isEditingClass, setIsEditingClass]   = useState(false)
+  const [editClassName, setEditClassName]     = useState('')
+  const [editClassSchedule, setEditClassSchedule] = useState('')
+  const [editClassStatus, setEditClassStatus] = useState('')
+  const [addingToCourse, setAddingToCourse]   = useState<Course | null>(null)
   const [lForm, setLForm] = useState({
     name: '',
     schedule: 'Thứ 2 & 4',
@@ -437,7 +462,7 @@ export default function CoursePageQTV() {
   const [assignClassId, setAssignClassId]           = useState<number | ''>('')
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteMessage, setDeleteMessage]     = useState('')
+  const [deleteMessage, setDeleteMessage]     = useState<React.ReactNode>('')
   const [deleteAction, setDeleteAction]       = useState<(() => Promise<void>) | null>(null)
 
   const uniqueRegClasses = useMemo(() => {
@@ -455,7 +480,7 @@ export default function CoursePageQTV() {
   }, [pendingRegs]);
 
   // Helper: mở modal xác nhận xóa
-  const confirmAction = (msg: string, action: () => Promise<void>) => {
+  const confirmAction = (msg: React.ReactNode, action: () => Promise<void>) => {
     setDeleteMessage(msg)
     setDeleteAction(() => action)
     setShowDeleteModal(true)
@@ -579,7 +604,9 @@ export default function CoursePageQTV() {
                   progress: c.TienDo || 0,
                   maGiangVien: null,
                   tenGiangVien: '—',
-                  lessonCount: c.SoBuoiHoc || 0
+                  lessonCount: c.SoBuoiHoc || 0,
+                  status: c.TrangThai || 'Chưa bắt đầu',
+                  levelName: c.TenTrinhDo || '—'
                 };
               }
             });
@@ -628,7 +655,9 @@ export default function CoursePageQTV() {
               id: c.MaLopHoc, name: c.TenLop, schedule: c.LichHoc || '—',
               students: c.SoLuongHocVien || 0, progress: c.TienDo || 0,
               maGiangVien: null, tenGiangVien: '—',
-              lessonCount: c.SoBuoiHoc || 0
+              lessonCount: c.SoBuoiHoc || 0,
+              status: c.TrangThai || 'Chưa bắt đầu',
+              levelName: c.TenTrinhDo || '—'
             }
           }
         })
@@ -833,6 +862,7 @@ export default function CoursePageQTV() {
         if (res.ok) {
           setClassesMap(prev => ({ ...prev, [courseId]: (prev[courseId] || []).filter(cl => cl.id !== classId) }))
           setToast('Đã xóa lớp học!')
+          closeDetail()
         } else {
           const errText = await res.text()
           alert('Lỗi khi xóa lớp học: ' + errText)
@@ -886,11 +916,15 @@ export default function CoursePageQTV() {
   }
 
   const openDetail = (course: Course, cls: LopHoc) => {
-    setDetailCourse(course); setDetailClass(cls); setDetailTab('students')
+    setDetailCourse(course); setDetailClass(cls); setDetailTab('info')
+    setEditClassName(cls.name)
+    setEditClassSchedule(cls.schedule)
+    setEditClassStatus(cls.status)
+    setIsEditingClass(false)
     setShowDetail(true); setShowEnroll(false); setShowAddLesson(false)
     sessionStorage.setItem('lastOpenClassId', String(cls.id));
     sessionStorage.setItem('lastOpenCourseId', String(course.id));
-    sessionStorage.setItem('lastOpenTab', 'students');
+    sessionStorage.setItem('lastOpenTab', 'info');
     setLoadingEnrolled(true)
     fetch(`${API}/lophoc/${cls.id}/sinhvien`).then(r => r.json())
       .then(data => setEnrolledStudents(data.map((s: any) => ({
@@ -907,6 +941,46 @@ export default function CoursePageQTV() {
       })).sort((a: Lesson, b: Lesson) => a.order - b.order)))
       .catch(() => setLessons([]))
       .finally(() => setLoadingLessons(false))
+  }
+
+  const handleSaveClassEdit = async () => {
+    if (!editClassName.trim()) { alert('Vui lòng nhập tên lớp!'); return }
+    if (!detailClass || !detailCourse) return
+    try {
+      const res = await fetch(`${API}/qtv/lophoc/${detailClass.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          TenLop: editClassName,
+          LichHoc: editClassSchedule,
+          TrangThai: editClassStatus
+        })
+      })
+      if (res.ok) {
+        setToast('Đã cập nhật thông tin lớp học!')
+        const updatedClass = {
+          ...detailClass,
+          name: editClassName,
+          schedule: editClassSchedule,
+          status: editClassStatus
+        }
+        setDetailClass(updatedClass)
+        setIsEditingClass(false)
+        setClassesMap(prev => {
+          const n = { ...prev }
+          if (n[detailCourse.id]) {
+            n[detailCourse.id] = n[detailCourse.id].map(cl => cl.id === detailClass.id ? updatedClass : cl)
+          }
+          return n
+        })
+      } else {
+        const txt = await res.text()
+        alert('Lỗi khi cập nhật lớp học: ' + txt)
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert('Lỗi kết nối: ' + err.message)
+    }
   }
 
   // ── Ghi danh ─────────────────────────────────────────────────────────────────
@@ -993,21 +1067,32 @@ export default function CoursePageQTV() {
   }
 
   const deleteLesson = (buoiHocId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa buổi học này?', async () => {
-      try {
-        const res = await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
-        if (res.ok) {
-          setLessons(prev => prev.filter(l => l.id !== buoiHocId))
-          setToast('Đã xóa buổi học!')
-        } else {
-          const errText = await res.text()
-          alert('Lỗi khi xóa buổi học: ' + errText)
+    const targetLesson = lessons.find(l => l.id === buoiHocId);
+    if (!targetLesson) return;
+    const targetIdx = lessons.findIndex(l => l.id === buoiHocId);
+    const stt = targetIdx !== -1 ? targetIdx + 1 : targetLesson.order;
+    const cleanedTitle = cleanLessonTitle(targetLesson.title);
+
+    confirmAction(
+      <span>
+        Bạn có chắc chắn muốn xóa <strong>Buổi {stt}: {cleanedTitle}</strong> không?
+      </span>,
+      async () => {
+        try {
+          const res = await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
+          if (res.ok) {
+            setLessons(prev => prev.filter(l => l.id !== buoiHocId))
+            setToast('Đã xóa buổi học!')
+          } else {
+            const errText = await res.text()
+            alert('Lỗi khi xóa buổi học: ' + errText)
+          }
+        } catch (err: any) {
+          console.error(err)
+          alert('Lỗi kết nối khi xóa buổi học: ' + err.message)
         }
-      } catch (err: any) {
-        console.error(err)
-        alert('Lỗi kết nối khi xóa buổi học: ' + err.message)
       }
-    })
+    )
   }
 
   // ── Pending regs ──────────────────────────────────────────────────────────────
@@ -1123,12 +1208,11 @@ export default function CoursePageQTV() {
                   <th>CẤP ĐỘ</th>
                   <th>LỚP HỌC</th>
                   <th>NGÀY TẠO</th>
-                  <th>THAO TÁC</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={5} className={styles.empty}>Không có khóa học nào</td></tr>
+                  <tr><td colSpan={4} className={styles.empty}>Không có khóa học nào</td></tr>
                 ) : filtered.map(c => (
                   <React.Fragment key={c.id}>
                     <tr>
@@ -1144,81 +1228,70 @@ export default function CoursePageQTV() {
                         </button>
                       </td>
                       <td>{c.created}</td>
-                      <td>
-                        <div className={styles.actionBtns}>
-                          {/* Button Thêm lớp học đã bị xóa theo yêu cầu */}
-                        </div>
-                      </td>
                     </tr>
                     {expandedCourse === c.id && (
                       <tr>
-                        <td colSpan={5} className={styles.expandedCell}>
-                          {(classesMap[c.id] || []).length === 0 ? (
-                            <div className={styles.expandEmpty}>Chưa có lớp học nào.</div>
-                          ) : (
-                            (classesMap[c.id] || []).map(cl => (
-                              <div key={cl.id} className={styles.classBlock}>
-                                <div className={styles.classBlockHeader} onClick={() => setExpandedClass(expandedClass === cl.id ? null : cl.id)} style={{ cursor:'pointer' }}>
-                                  <span className={styles.classExpandChevron}>{expandedClass === cl.id ? '▲' : '▼'}</span>
-                                  <div className={styles.classBlockInfo}>
-                                    <span className={styles.classBlockName}>{cl.name}</span>
-                                    <span className={styles.classBlockMeta}>{formatScheduleOnlyDays(cl.schedule)}{cl.tenGiangVien && cl.tenGiangVien !== '—' ? ` · ${cl.tenGiangVien}` : ''}</span>
-                                  </div>
-                                  <span className={styles.classBlockCount}>{cl.lessonCount} buổi</span>
+                        <td colSpan={4} className={styles.expandedCell}>
+                          <div style={{ padding: '20px 24px', border: '1.5px solid #cbd5e1', borderRadius: '12px', background: '#ffffff', margin: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 8px' }}>
+                              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#000080', textTransform: 'uppercase', letterSpacing: '0.05em' }}>DANH SÁCH LỚP HỌC</h4>
+                              <button 
+                                style={{
+                                  background: '#F95800',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '8px 16px',
+                                  borderRadius: '8px',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                                onClick={() => {
+                                  setAddingToCourse(c);
+                                  setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' });
+                                  setShowAddClass(true);
+                                }}
+                              >
+                                <FiPlus size={16} /> Thêm lớp mới
+                              </button>
+                            </div>
 
-                                  <div onClick={e => e.stopPropagation()} style={{ marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 260 }}>
-                                    {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
-                                      const isRequired = c[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
-                                      if (!isRequired) return null;
-                                      const skillId = getSkillId(skill);
-                                      const assigned = classTeachersMap[cl.id]?.[skillId];
-                                      return (
-                                        <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: '#ffffff', padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
-                                          <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>{skill}:</span>
-                                          {assigned && assigned.maGiangVien ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                              <span style={{ fontSize: 11, fontWeight: 500, color: '#1e293b' }}>{assigned.tenGiangVien}</span>
-                                              <button 
-                                                className={styles.btnOutline} 
-                                                style={{ fontSize: 10, padding: '1px 4px', height: 'auto', border: '1px solid #e87722', color: '#e87722' }}
-                                                onClick={() => assignTeacherForSkill(cl.id, skillId, 0)}
-                                              >
-                                                Xóa
-                                              </button>
-                                            </div>
-                                          ) : (
-                                            <select 
-                                              value="" 
-                                              style={{ fontSize: 11, padding: '2px 20px 2px 4px', borderRadius: 4, border: '1px solid #cbd5e1', minWidth: 120, height: 'auto' }}
-                                              onChange={e => { if (e.target.value) assignTeacherForSkill(cl.id, skillId, Number(e.target.value)) }}
-                                              disabled={!giaoViens.length}
-                                            >
-                                              <option value="">{giaoViens.length ? '— Chọn GV —' : 'Không có GV'}</option>
-                                              {giaoViens.map(gv => (
-                                                <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
-                                              ))}
-                                            </select>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-
-                                  <div className={styles.actionBtns} onClick={e => e.stopPropagation()}>
-                                    <button className={styles.btnPrimary} onClick={() => openDetail(c, cl)}>Chi tiết</button>
-                                    <button className={styles.btnDanger} onClick={() => deleteClass(c.id, cl.id)}>Xóa</button>
-                                  </div>
+                            {(classesMap[c.id] || []).length === 0 ? (
+                              <div className={styles.expandEmpty}>Chưa có lớp học nào.</div>
+                            ) : (
+                              <div>
+                                <div className={styles.classTableHeader}>
+                                  <div>Tên lớp học</div>
+                                  <div>Trình độ</div>
+                                  <div>Lịch học</div>
+                                  <div>Sĩ số</div>
+                                  <div style={{ textAlign: 'right' }}>Trạng thái</div>
                                 </div>
-
-                                {expandedClass === cl.id && (
-                                  <div className={styles.buoiHocList}>
-                                    <div className={styles.expandEmpty}>Bấm "Chi tiết" để xem và quản lý buổi học.</div>
+                                {(classesMap[c.id] || []).map(cl => (
+                                  <div key={cl.id} className={styles.classTableRow} onClick={() => openDetail(c, cl)}>
+                                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{cl.name}</div>
+                                    <div style={{ color: '#475569', fontSize: '13px' }}>{cl.levelName}</div>
+                                    <div style={{ color: '#475569', fontSize: '13px' }}>{formatScheduleOnlyDays(cl.schedule)}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '13px' }}>
+                                      <FiUsers size={16} style={{ color: '#64748b' }} /> {cl.students}
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <span style={{ 
+                                        fontWeight: 600, 
+                                        fontSize: '13px',
+                                        color: cl.status === 'Đã hoàn thành' ? '#22c55e' : cl.status === 'Đang diễn ra' ? '#0284c7' : '#f97316' 
+                                      }}>
+                                        {cl.status}
+                                      </span>
+                                    </div>
                                   </div>
-                                )}
+                                ))}
                               </div>
-                            ))
-                          )}
-                          {/* Button "+ Tạo lớp học mới" đã bị xóa theo yêu cầu */}
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )}
@@ -1236,7 +1309,7 @@ export default function CoursePageQTV() {
           <div className={styles.modalXL}>
             <div className={styles.modalTop}>
               <div><h3>{editCourse ? 'Sửa thông tin khóa học' : 'Tạo khóa học mới'}</h3></div>
-              <button className={styles.modalClose} onClick={() => { setShowCourseModal(false); setEditCourse(null) }}>×</button>
+              <button className={styles.modalClose} onClick={() => { setShowCourseModal(false); setEditCourse(null) }}><FiX size={20} /></button>
             </div>
             <p className={styles.modalSub}>Điền đầy đủ thông tin và phân công giáo viên</p>
 
@@ -1485,7 +1558,7 @@ export default function CoursePageQTV() {
           <div className={styles.modal}>
             <div className={styles.modalTop}>
               <div><h3>Tạo lớp học mới</h3><div className={styles.modalSub}>{addingToCourse.title}</div></div>
-              <button className={styles.modalClose} onClick={() => setShowAddClass(false)}>×</button>
+              <button className={styles.modalClose} onClick={() => setShowAddClass(false)}><FiX size={20} /></button>
             </div>
             <div className={styles.formGroup}>
               <label>Tên lớp <span className={styles.req}>*</span></label>
@@ -1577,166 +1650,308 @@ export default function CoursePageQTV() {
                 <h3>{detailClass.name}</h3>
                 <div className={styles.modalSub}>{detailCourse.title} · {formatScheduleOnlyDays(detailClass.schedule)}{detailClass.tenGiangVien && detailClass.tenGiangVien !== '—' ? ` · GV: ${detailClass.tenGiangVien}` : ''}</div>
               </div>
-              <button className={styles.modalClose} onClick={closeDetail}>×</button>
+              <button className={styles.modalClose} onClick={closeDetail}><FiX size={20} /></button>
             </div>
 
 
             <div className={styles.tabs}>
-              <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
-                Học viên ({enrolledStudents.length})
+              <button className={`${styles.tab} ${detailTab === 'info' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('info'); sessionStorage.setItem('lastOpenTab', 'info'); }}>
+                Thông tin
               </button>
               <button className={`${styles.tab} ${detailTab === 'roadmap' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('roadmap'); sessionStorage.setItem('lastOpenTab', 'roadmap'); }}>
                 Lộ trình ({lessons.length})
               </button>
+              <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
+                Học viên ({enrolledStudents.length})
+              </button>
             </div>
 
-            {/* Tab Học viên */}
-            {detailTab === 'students' && (
-              <div className={styles.tabContent}>
-                <div className={styles.tabToolbar}>
-                  <span className={styles.tabInfo}>{enrolledStudents.length}/{detailClass.students} đã ghi danh</span>
-                  <div className={styles.tabToolbarBtns}>
-                    <button className={styles.detailBtnOutline} onClick={() => {
-                      if (enrolledStudents.length === 0) { alert('Chưa có học viên nào để xuất!'); return }
-                      const headers = ['Mã HV','Họ và tên','Giới tính','SĐT','Ngày ghi danh','Trạng thái']
-                      const rows = enrolledStudents.map(s => [s.studentId, s.name, s.gender, s.phone, s.enrollDate, s.status])
-                      const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
-                      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url; a.download = `danhsach_${detailClass?.name.replace(/\s+/g,'_')}.csv`
-                      a.click(); URL.revokeObjectURL(url)
-                      setToast(`Đã xuất ${enrolledStudents.length} học viên!`)
-                    }}>⬇ Xuất danh sách</button>
+            <div className={styles.modalScrollableBody}>
+              {/* Tab Thông tin */}
+              {detailTab === 'info' && (
+                <div className={styles.tabContent}>
+                  <div className={styles.infoTabGrid}>
+                    <div className={styles.infoGroup}>
+                      <label className={styles.infoLabel}>Tên lớp học</label>
+                      {isEditingClass ? (
+                        <input 
+                          value={editClassName} 
+                          onChange={e => setEditClassName(e.target.value)}
+                          className={styles.infoInput}
+                        />
+                      ) : (
+                        <div className={styles.infoValue}>{detailClass.name}</div>
+                      )}
+                    </div>
+                    <div className={styles.infoGroup}>
+                      <label className={styles.infoLabel}>Khóa học</label>
+                      <div className={styles.infoValue}>{detailCourse.title}</div>
+                    </div>
+                    <div className={styles.infoGroup}>
+                      <label className={styles.infoLabel}>Lịch học</label>
+                      {isEditingClass ? (
+                        <input 
+                          value={editClassSchedule} 
+                          onChange={e => setEditClassSchedule(e.target.value)}
+                          className={styles.infoInput}
+                        />
+                      ) : (
+                        <div className={styles.infoValue}>{formatScheduleOnlyDays(detailClass.schedule)}</div>
+                      )}
+                    </div>
+                    <div className={styles.infoGroup}>
+                      <label className={styles.infoLabel}>Trạng thái</label>
+                      {isEditingClass ? (
+                        <select 
+                          value={editClassStatus} 
+                          onChange={e => setEditClassStatus(e.target.value)}
+                          className={styles.infoInput}
+                        >
+                          <option value="Chờ bắt đầu">Chờ bắt đầu</option>
+                          <option value="Đang diễn ra">Đang diễn ra</option>
+                          <option value="Đã hoàn thành">Đã hoàn thành</option>
+                        </select>
+                      ) : (
+                        <div className={styles.infoValue}>{detailClass.status}</div>
+                      )}
+                    </div>
+                    <div className={styles.infoGroup}>
+                      <label className={styles.infoLabel}>Số buổi học</label>
+                      <div className={styles.infoValue}>{lessons.length} buổi học</div>
+                    </div>
+                    <div className={styles.infoGroup}>
+                      <label className={styles.infoLabel}>Sĩ số học viên</label>
+                      <div className={styles.infoValue}>{enrolledStudents.length} học viên</div>
+                    </div>
+                    <div className={styles.infoGroup} style={{ gridColumn: 'span 2' }}>
+                      <label className={styles.infoLabel} style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '6px', marginBottom: '8px' }}>Phân công giáo viên theo kỹ năng</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
+                          const isRequired = detailCourse[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
+                          if (!isRequired) return null;
+                          const skillId = getSkillId(skill);
+                          const assigned = classTeachersMap[detailClass.id]?.[skillId];
+                          
+                          if (isEditingClass) {
+                            return (
+                              <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: '#ffffff', padding: '6px 12px', borderRadius: 6, border: '1px solid #cbd5e1' }}>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>{skill}:</span>
+                                {assigned && assigned.maGiangVien ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: '#1e293b' }}>{assigned.tenGiangVien}</span>
+                                    <button 
+                                      className={styles.btnOutline} 
+                                      style={{ fontSize: 13, padding: '2px 6px', height: 'auto', border: '1px solid #e87722', color: '#e87722', cursor: 'pointer' }}
+                                      onClick={() => assignTeacherForSkill(detailClass.id, skillId, 0)}
+                                    >
+                                      Xóa
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <select 
+                                    value="" 
+                                    style={{ fontSize: 14, padding: '4px 24px 4px 8px', borderRadius: 4, border: '1px solid #cbd5e1', minWidth: 140, height: 'auto', cursor: 'pointer' }}
+                                    onChange={e => { if (e.target.value) assignTeacherForSkill(detailClass.id, skillId, Number(e.target.value)) }}
+                                    disabled={!giaoViens.length}
+                                  >
+                                    <option value="">{giaoViens.length ? '— Chọn GV —' : 'Không có GV'}</option>
+                                    {giaoViens.map(gv => (
+                                      <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            );
+                          }
 
-                
+                          return (
+                            <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: '#f8fafc', padding: '6px 12px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>{skill}:</span>
+                              <span style={{ fontSize: 14, fontWeight: 500, color: assigned && assigned.maGiangVien ? '#1e293b' : '#94a3b8' }}>
+                                {assigned && assigned.maGiangVien ? assigned.tenGiangVien : 'Chưa phân công'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {loadingEnrolled ? (
-                  <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
-                ) : enrolledStudents.length === 0 ? (
-                  <div className={styles.emptyTab}>Chưa có học viên nào.</div>
-                ) : (
-                  <table className={styles.table}>
-                    <thead><tr><th>Mã HV</th><th>Họ và tên</th><th>Giới tính</th><th>SĐT</th><th>Ngày GD</th><th>Trạng thái</th><th></th></tr></thead>
-                    <tbody>
-                      {enrolledStudents.map(s => (
-                        <tr key={s.studentId}>
-                          <td className={styles.monoText}>{s.studentId}</td>
-                          <td className={styles.boldText}>{s.name}</td>
-                          <td>{s.gender}</td><td>{s.phone}</td><td>{s.enrollDate}</td>
-                          <td><span className={`${styles.badge} ${s.status === 'Đang học' ? styles.badgeGreen : styles.badgeGray}`}>{s.status}</span></td>
-                          <td><button className={styles.detailBtnDanger} onClick={() => removeEnrolled(s.studentId)}>Hủy GD</button></td>
+              )}
+
+              {/* Tab Học viên */}
+              {detailTab === 'students' && (
+                <div className={styles.tabContent}>
+                  <div className={styles.tabToolbar}>
+                    <span className={styles.tabInfo}>{enrolledStudents.length}/{detailClass.students} đã ghi danh</span>
+                    <div className={styles.tabToolbarBtns}>
+                      <button className={styles.detailBtnOutline} onClick={() => {
+                        if (enrolledStudents.length === 0) { alert('Chưa có học viên nào để xuất!'); return }
+                        const headers = ['Mã HV','Họ và tên','Giới tính','SĐT','Ngày ghi danh','Trạng thái']
+                        const rows = enrolledStudents.map(s => [s.studentId, s.name, s.gender, s.phone, s.enrollDate, s.status])
+                        const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+                        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url; a.download = `danhsach_${detailClass?.name.replace(/\s+/g,'_')}.csv`
+                        a.click(); URL.revokeObjectURL(url)
+                        setToast(`Đã xuất ${enrolledStudents.length} học viên!`)
+                      }}>⬇ Xuất danh sách</button>
+                    </div>
+                  </div>
+                  {loadingEnrolled ? (
+                    <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
+                  ) : enrolledStudents.length === 0 ? (
+                    <div className={styles.emptyTab}>Chưa có học viên nào.</div>
+                  ) : (
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ width: '100px' }}>Mã HV</th>
+                          <th>Họ và tên</th>
+                          <th style={{ width: '100px' }}>Giới tính</th>
+                          <th style={{ width: '130px' }}>Ngày GD</th>
+                          <th style={{ width: '130px' }}>Trạng thái</th>
+                          <th style={{ width: '90px' }}></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-
-            {/* Tab Lộ trình */}
-            {detailTab === 'roadmap' && (
-              <div className={styles.tabContent}>
-                <div className={styles.tabToolbar}>
-                  <span className={styles.tabInfo}>{lessons.length} buổi học trong lộ trình</span>
-                  <button className={styles.detailBtnPrimary} onClick={() => {
-                    setLessonForm({ title:'', desc:'', startDate:'', endDate:'', order: lessons.length + 1 })
-                    setShowAddLesson(true)
-                  }}>+ Thêm buổi học</button>
+                      </thead>
+                      <tbody>
+                        {enrolledStudents.map(s => (
+                          <tr key={s.studentId}>
+                            <td>{s.studentId}</td>
+                            <td>{s.name}</td>
+                            <td>{s.gender}</td>
+                            <td>{formatDate(s.enrollDate)}</td>
+                            <td><span className={`${styles.badge} ${s.status === 'Đang học' ? styles.badgeGreen : styles.badgeGray}`}>{s.status}</span></td>
+                            <td><button className={styles.detailBtnDanger} onClick={() => removeEnrolled(s.studentId)}>Hủy GD</button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
-                {loadingLessons ? (
-                  <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
-                ) : lessons.length === 0 ? (
-                  <div className={styles.emptyTab}>Chưa có lộ trình. Nhấn "Thêm buổi học" để xây dựng.</div>
-                ) : (
-                  <div className={styles.roadmapList}>
-                    {lessons.map((l, idx) => {
-                      const assets = lessonAssets[l.id] || { lectures: [], exercises: [], documents: [] };
-                      return (
-                        <div key={l.id} className={styles.roadmapItem} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                              <div className={styles.roadmapNum}>{idx + 1}</div>
-                              <div className={styles.roadmapInfo}>
-                                <div className={styles.roadmapTitle}>{l.title}</div>
-                                {l.desc && <div className={styles.roadmapDesc}>{l.desc}</div>}
-                                <div className={styles.roadmapMeta}>
-                                  {l.startDate && <span className={styles.durationText}>{new Date(l.startDate).toLocaleDateString('vi-VN')}</span>}
-                                  {l.endDate && <span className={styles.durationText}> → {new Date(l.endDate).toLocaleDateString('vi-VN')}</span>}
-                                </div>
-                              </div>
-                            </div>
-                            <div className={styles.actionBtns}>
-                              <button className={styles.btnDanger} onClick={() => deleteLesson(l.id)}>Xóa buổi</button>
-                            </div>
-                          </div>
+              )}
 
-                          {/* Assets container */}
-                          <div style={{ marginTop: '12px', paddingLeft: '48px', borderLeft: '2px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {/* Lectures list */}
-                            {assets.lectures.length > 0 && (
-                              <div>
-                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#f58220' }}>🎥 Bài giảng:</span>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                                  {assets.lectures.map((bg: any) => (
-                                    <div key={bg.MaBaiHoc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                                      <span style={{ fontSize: '13px', color: '#334155' }}>{bg.TieuDe} <span style={{ fontSize: '11px', color: '#64748b' }}>({bg.LoaiBaiHoc} · {bg.ThoiLuong})</span></span>
-                                      <button className={styles.detailBtnDanger} style={{ fontSize: '11px', padding: '2px 6px', height: 'auto', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444' }} onClick={() => deleteRoadmapLecture(bg.MaBaiHoc, l.id)}>Xóa</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Exercises list */}
-                            {assets.exercises.length > 0 && (
-                              <div>
-                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#0284c7' }}>📝 Bài tập & Kiểm tra:</span>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                                  {assets.exercises.map((ex: any) => (
-                                    <div key={ex.MaExercise} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0f9ff', padding: '6px 10px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
-                                      <span style={{ fontSize: '13px', color: '#0369a1' }}>{ex.Title} <span style={{ fontSize: '11px', color: '#0284c7' }}>({ex.Type})</span></span>
-                                      <button className={styles.detailBtnDanger} style={{ fontSize: '11px', padding: '2px 6px', height: 'auto', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444' }} onClick={() => deleteRoadmapExercise(ex.MaExercise, l.id)}>Xóa</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Documents list */}
-                            {assets.documents.length > 0 && (
-                              <div>
-                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a' }}>📂 Tài liệu:</span>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                                  {assets.documents.map((doc: any) => (
-                                    <div key={doc.MaTaiLieu} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', padding: '6px 10px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
-                                      <span style={{ fontSize: '13px', color: '#15803d' }}>{doc.TieuDe}</span>
-                                      <button className={styles.detailBtnDanger} style={{ fontSize: '11px', padding: '2px 6px', height: 'auto', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444' }} onClick={() => deleteRoadmapDoc(doc.MaTaiLieu, l.id)}>Xóa</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Add Buttons */}
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                              <button className={styles.detailBtnOutline} style={{ fontSize: '11px', padding: '4px 10px', borderColor: '#f58220', color: '#f58220', cursor: 'pointer', background: 'white' }} onClick={() => openAddLecture(l.id)}>+ Bài giảng</button>
-                              <button className={styles.detailBtnOutline} style={{ fontSize: '11px', padding: '4px 10px', borderColor: '#0284c7', color: '#0284c7', cursor: 'pointer', background: 'white' }} onClick={() => openAddExercise(l.id)}>+ Bài tập</button>
-                              <button className={styles.detailBtnOutline} style={{ fontSize: '11px', padding: '4px 10px', borderColor: '#16a34a', color: '#16a34a', cursor: 'pointer', background: 'white' }} onClick={() => openAddDoc(l.id)}>+ Tài liệu</button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+              {/* Tab Lộ trình */}
+              {detailTab === 'roadmap' && (
+                <div className={styles.tabContent}>
+                  <div className={styles.tabToolbar}>
+                    <span className={styles.tabInfo}>{lessons.length} buổi học trong lộ trình</span>
+                    <button className={styles.detailBtnPrimary} onClick={() => {
+                      const maxOrder = lessons.reduce((max, l) => l.order > max ? l.order : max, 0);
+                      setLessonForm({ title:'', desc:'', startDate:'', endDate:'', order: maxOrder + 1 })
+                      setShowAddLesson(true)
+                    }}>+ Thêm buổi học</button>
                   </div>
+                  {loadingLessons ? (
+                    <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
+                  ) : lessons.length === 0 ? (
+                    <div className={styles.emptyTab}>Chưa có lộ trình. Nhấn "Thêm buổi học" để xây dựng.</div>
+                  ) : (
+                    <table className={styles.roadmapTable}>
+                      <thead>
+                        <tr>
+                          <th>Buổi</th>
+                          <th>Nội dung buổi học</th>
+                          <th>Mô tả</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lessons.map((l, idx) => {
+                          const assets = lessonAssets[l.id] || { lectures: [], exercises: [], documents: [] };
+                          return (
+                            <tr key={l.id}>
+                              <td className={styles.sessionCol}>Buổi {idx + 1}</td>
+                              <td className={styles.contentCol}>
+                                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '8px', fontSize: '14px' }}>
+                                  {cleanLessonTitle(l.title)}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  {/* Lectures */}
+                                  {assets.lectures.map((bg: any) => (
+                                    <div key={bg.MaBaiHoc} className={`${styles.assetItemRow} ${styles.lecture}`}>
+                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={bg.TieuDe}>🎥 {bg.TieuDe}</span>
+                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapLecture(bg.MaBaiHoc, l.id)} title="Xóa bài giảng"><FiX size={14} /></button>
+                                    </div>
+                                  ))}
+                                  {/* Exercises */}
+                                  {assets.exercises.map((ex: any) => (
+                                    <div key={ex.MaExercise} className={`${styles.assetItemRow} ${styles.exercise}`}>
+                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={ex.Title}>📝 {ex.Title}</span>
+                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapExercise(ex.MaExercise, l.id)} title="Xóa bài tập"><FiX size={14} /></button>
+                                    </div>
+                                  ))}
+                                  {/* Documents */}
+                                  {assets.documents.map((doc: any) => (
+                                    <div key={doc.MaTaiLieu} className={`${styles.assetItemRow} ${styles.doc}`}>
+                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={doc.TieuDe}>📂 {doc.TieuDe}</span>
+                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapDoc(doc.MaTaiLieu, l.id)} title="Xóa tài liệu"><FiX size={14} /></button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className={styles.roadmapActionsContainer} style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#f58220', color: '#f58220' }} onClick={() => openAddLecture(l.id)}>+ Bài giảng</button>
+                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#0284c7', color: '#0284c7' }} onClick={() => openAddExercise(l.id)}>+ Bài tập</button>
+                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#16a34a', color: '#16a34a' }} onClick={() => openAddDoc(l.id)}>+ Tài liệu</button>
+                                  <button className={styles.roadmapDeleteBtn} onClick={() => deleteLesson(l.id)}>Xóa buổi</button>
+                                </div>
+                              </td>
+                              <td className={styles.assetsCol}>
+                                <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                                  {l.desc || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa có mô tả</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {detailTab === 'info' && (
+              <div className={styles.modalFooter} style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                {isEditingClass ? (
+                  <>
+                    <button 
+                      className={styles.detailBtnOutline} 
+                      onClick={() => { setIsEditingClass(false); setEditClassName(detailClass.name); setEditClassSchedule(detailClass.schedule); setEditClassStatus(detailClass.status); }}
+                      style={{ minWidth: '120px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      Hủy
+                    </button>
+                    <button 
+                      className={styles.detailBtnPrimary} 
+                      onClick={handleSaveClassEdit} 
+                      style={{ minWidth: '120px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000080', borderColor: '#000080', color: 'white', cursor: 'pointer' }}
+                    >
+                      Lưu
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      className={styles.detailBtnDanger} 
+                      onClick={() => {
+                        deleteClass(detailCourse.id, detailClass.id);
+                      }}
+                      style={{ minWidth: '120px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ef4444', borderColor: '#ef4444', color: 'white', cursor: 'pointer' }}
+                    >
+                      Xóa lớp
+                    </button>
+                    <button 
+                      className={styles.detailBtnPrimary} 
+                      onClick={() => setIsEditingClass(true)} 
+                      style={{ minWidth: '120px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000080', borderColor: '#000080', color: 'white', cursor: 'pointer' }}
+                    >
+                      Chỉnh sửa
+                    </button>
+                  </>
                 )}
               </div>
             )}
-
-            <div className={styles.modalFooter}>
-              <button className={styles.detailBtnOutline} onClick={closeDetail}>Đóng</button>
-            </div>
           </div>
         </div>
       )}
@@ -1747,7 +1962,7 @@ export default function CoursePageQTV() {
           <div className={styles.enrollModal}>
             <div className={styles.modalTop}>
               <div><h3>Ghi danh sinh viên</h3><div className={styles.modalSub}>Lớp: {detailClass.name} · {detailCourse?.title}</div></div>
-              <button className={styles.modalClose} onClick={() => { setShowEnroll(false); setSelectedIds(new Set()) }}>×</button>
+              <button className={styles.modalClose} onClick={() => { setShowEnroll(false); setSelectedIds(new Set()) }}><FiX size={20} /></button>
             </div>
             <div className={styles.enrollSearchRow}>
               <input value={enrollSearch} onChange={e => setEnrollSearch(e.target.value)} placeholder="Tìm theo tên hoặc mã sinh viên..." className={styles.enrollSearchInput} />
@@ -1797,7 +2012,7 @@ export default function CoursePageQTV() {
           <div className={styles.modal}>
             <div className={styles.modalTop}>
               <h3>Thêm buổi học vào lộ trình</h3>
-              <button className={styles.modalClose} onClick={() => setShowAddLesson(false)}>×</button>
+              <button className={styles.modalClose} onClick={() => setShowAddLesson(false)}><FiX size={20} /></button>
             </div>
             <p className={styles.modalSub}>Lớp: {detailClass.name} · {detailCourse?.title}</p>
             <div className={styles.formGroup}><label>Tên buổi học <span className={styles.req}>*</span></label>
@@ -1805,14 +2020,6 @@ export default function CoursePageQTV() {
             </div>
             <div className={styles.formGroup}><label>Mô tả</label>
               <textarea value={lessonForm.desc} onChange={e => setLessonForm(p => ({...p, desc: e.target.value}))} placeholder="Nội dung buổi học..." rows={3} />
-            </div>
-            <div className={styles.twoCols}>
-              <div className={styles.formGroup}><label>📅 Ngày bắt đầu</label>
-                <input type="date" value={lessonForm.startDate} onChange={e => setLessonForm(p => ({...p, startDate: e.target.value}))} />
-              </div>
-              <div className={styles.formGroup}><label>📅 Ngày kết thúc</label>
-                <input type="date" value={lessonForm.endDate} onChange={e => setLessonForm(p => ({...p, endDate: e.target.value}))} />
-              </div>
             </div>
             <div className={styles.formGroup}><label>Thứ tự</label>
               <input type="number" min={1} value={lessonForm.order} onChange={e => setLessonForm(p => ({...p, order: Number(e.target.value)}))} />
@@ -1831,7 +2038,7 @@ export default function CoursePageQTV() {
           <div className={styles.modal} style={{ maxWidth: '600px' }}>
             <div className={styles.modalTop}>
               <h3>Thêm bài giảng</h3>
-              <button className={styles.modalClose} onClick={() => setShowAddLectureModal(false)}>×</button>
+              <button className={styles.modalClose} onClick={() => setShowAddLectureModal(false)}><FiX size={20} /></button>
             </div>
             
             <div className={styles.tabs} style={{ marginBottom: '16px' }}>
@@ -1893,7 +2100,7 @@ export default function CoursePageQTV() {
           <div className={styles.modal} style={{ maxWidth: '600px' }}>
             <div className={styles.modalTop}>
               <h3>Thêm tài liệu</h3>
-              <button className={styles.modalClose} onClick={() => setShowAddDocModal(false)}>×</button>
+              <button className={styles.modalClose} onClick={() => setShowAddDocModal(false)}><FiX size={20} /></button>
             </div>
             
             <div className={styles.tabs} style={{ marginBottom: '16px' }}>
@@ -1958,7 +2165,7 @@ export default function CoursePageQTV() {
           <div className={styles.regModal}>
             <div className={styles.modalTop}>
               <div><h3>Danh sách ghi danh đăng ký lớp</h3><div className={styles.modalSub}>Sinh viên đã đăng ký – chờ ghi danh vào lớp</div></div>
-              <button className={styles.modalClose} onClick={() => setShowRegModal(false)}>×</button>
+              <button className={styles.modalClose} onClick={() => setShowRegModal(false)}><FiX size={20} /></button>
             </div>
             <div className={styles.regFilterRow}>
               <select value={regClassFilter} onChange={e => setRegClassFilter(e.target.value)} className={styles.regSelect}>
@@ -2012,7 +2219,7 @@ export default function CoursePageQTV() {
           <div className={styles.modal}>
             <div className={styles.modalTop}>
               <div><h3>Ghi danh vào lớp học</h3><div className={styles.modalSub}>Chọn lớp phù hợp</div></div>
-              <button className={styles.modalClose} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}>×</button>
+              <button className={styles.modalClose} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}><FiX size={20} /></button>
             </div>
             <div className={styles.assignStudentInfo}>
               <div className={styles.assignRow}><span className={styles.assignLabel}>Họ và tên</span><span className={styles.boldText}>{selectedReg.name}</span></div>
@@ -2055,7 +2262,7 @@ export default function CoursePageQTV() {
           <div
             style={{
               background: '#ffffff', padding: '32px 40px', borderRadius: 16,
-              width: '90%', maxWidth: 480, textAlign: 'center',
+              width: '90%', maxWidth: 320, textAlign: 'center',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
             }}
             onClick={e => e.stopPropagation()}

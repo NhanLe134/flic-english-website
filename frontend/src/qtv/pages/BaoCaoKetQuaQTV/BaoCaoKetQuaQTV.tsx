@@ -3,6 +3,7 @@ import styles from "./BaoCaoKetQuaQTV.module.css"
 import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
 import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap"
 
 const API = 'http://localhost:5000'
 
@@ -68,6 +69,21 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const [expandedStudents, setExpandedStudents] = useState<Set<number>>(new Set())
   const [showExportModal, setShowExportModal] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [selectedReview, setSelectedReview] = useState<{
+    studentId: number
+    exerciseId: number
+    classId: number
+  } | null>(null)
+
+  const handleOpenReview = (studentId: number, exerciseId: number, className: string) => {
+    const foundLesson = allLessons.find(l => l.TenLop === className && l.MaLopHoc);
+    const classId = foundLesson ? foundLesson.MaLopHoc || 0 : 0;
+    setSelectedReview({ studentId, exerciseId, classId })
+  }
+
+  const handleCloseReview = () => {
+    setSelectedReview(null)
+  }
 
   const toggleExpandStudent = (id: number) => {
     setExpandedStudents(prev => {
@@ -238,6 +254,9 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const diemTBchung = diemTBs.length > 0
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : "—"
+
+  const isAnyExpanded = expandedStudents.size > 0;
+  const buoiColWidth = isAnyExpanded ? '240px' : '120px';
 
   const handleExportExcel = (mode: "summary" | "detail") => {
     if (filtered.length === 0) {
@@ -452,17 +471,16 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}></th>
-                  <th>MÃ SINH VIÊN</th>
-                  <th>HỌ TÊN</th>
-                  <th>LỚP/KHÓA</th>
-                  <th>TRẠNG THÁI</th>
+                  <th style={{ width: '40px', minWidth: '40px', maxWidth: '40px', padding: '0 8px', textAlign: 'center', boxSizing: 'border-box' }}></th>
+                  <th style={{ width: '120px', minWidth: '120px', maxWidth: '120px', boxSizing: 'border-box' }}>MÃ SINH VIÊN</th>
+                  <th style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>HỌ TÊN</th>
+                  <th style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>TRẠNG THÁI</th>
                   {uniqueBuois.map(b => {
                     const classLessons = allLessons.filter(l => l.TenLop === filterLop)
                     const lessonForBuoi = classLessons.find(l => l.ThuTu === b)
                     const isActive = lessonForBuoi && classLessons[0]?.ActiveBuoiHocId === lessonForBuoi.MaBuoiHoc
                     return (
-                      <th key={b}>
+                      <th key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                           <span>BUỔI {b}</span>
                           {isActive && (
@@ -472,7 +490,8 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                       </th>
                     )
                   })}
-                  <th>ĐIỂM TB</th>
+                  <th style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}>ĐIỂM TB</th>
+                  <th></th> {/* Dummy column to absorb extra space and prevent column stretching */}
                 </tr>
               </thead>
               <tbody>
@@ -494,20 +513,16 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                           onClick={() => toggleExpandStudent(hv.id)}
                           style={{ cursor: 'pointer' }}
                         >
-                          <td style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}>
+                          <td style={{ width: '40px', minWidth: '40px', maxWidth: '40px', padding: '0 8px', textAlign: 'center', boxSizing: 'border-box' }}>
                             <span style={{ fontSize: '10px', color: '#666', display: 'inline-block', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>
                               ▶
                             </span>
                           </td>
-                          <td className={styles.maHV}>{hv.maHV}</td>
-                          <td>
-                            <p className={styles.tenHV}>{hv.hoTen}</p>
+                          <td className={styles.maHV} style={{ width: '120px', minWidth: '120px', maxWidth: '120px', boxSizing: 'border-box' }}>{hv.maHV}</td>
+                          <td style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>
+                            <p className={styles.tenHV} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{hv.hoTen}</p>
                           </td>
-                          <td>
-                            <p className={styles.tenLop}>{hv.lopKhoaHoc}</p>
-                            <p className={styles.subInfo}>{hv.tenKhoa}</p>
-                          </td>
-                          <td>
+                          <td style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>
                             <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
                               {hv.trangThai}
                             </span>
@@ -517,16 +532,16 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                             const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
                             if (hvActiveThuTu === null || b > hvActiveThuTu) {
-                              return <td key={b} className={styles.emptyVal}>—</td>
+                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>—</td>
                             }
 
                             const res = getBuoiStatusOrAvg(hv, b)
                             const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
                             if (!hasExs) {
-                              return <td key={b} className={styles.emptyVal}>—</td>
+                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>—</td>
                             }
                             return (
-                              <td key={b}>
+                              <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
                                 {res.status === "graded" ? (
                                   <span className={`${styles.diemBadge} ${diemColor(res.val as number)}`}>{res.val}</span>
                                 ) : res.status === "pending" ? (
@@ -537,7 +552,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                               </td>
                             )
                           })}
-                          <td>
+                          <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}>
                             {hv.diemTB !== null ? (
                               <span className={`${styles.diemBadge} ${diemColor(hv.diemTB)}`} style={{ fontWeight: 700 }}>
                                 {hv.diemTB}
@@ -546,45 +561,64 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                               <span className={styles.chuaNop}>—</span>
                             )}
                           </td>
+                          <td></td> {/* Dummy column */}
                         </tr>
                         {isExpanded && (
                           maxExCount > 0 ? (
                             Array.from({ length: maxExCount }).map((_, i) => (
                               <tr key={`sub-${hv.id}-${i}`} style={{ background: '#fbfbfb' }}>
-                                <td colSpan={5}></td>
+                                <td colSpan={4}></td>
                                 {uniqueBuois.map(b => {
                                   const exList = exercisesByBuoi[b] || []
                                   const ex = exList[i]
-                                  if (!ex) return <td key={b}></td>
+                                  if (!ex) return <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}></td>
 
                                   const scoreVal = hv.rawScores[ex.MaBaiTap]
+                                  const wasSubmitted = scoreVal !== null && scoreVal !== undefined;
                                   return (
-                                    <td key={b} style={{ padding: '6px 8px', borderBottom: '1px solid #f3f4f6' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                          <span style={{ fontWeight: 600, fontSize: '12.5px', color: '#1e293b' }}>{ex.TenBai}</span>
-                                          <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>{hv.tenKhoa}</span>
+                                    <td 
+                                      key={b} 
+                                      onClick={() => {
+                                        if (wasSubmitted) {
+                                          handleOpenReview(hv.id, ex.MaBaiTap, hv.lopKhoaHoc);
+                                        }
+                                      }}
+                                      style={{ 
+                                        padding: '6px 8px', 
+                                        borderBottom: '1px solid #f3f4f6', 
+                                        width: buoiColWidth, 
+                                        minWidth: buoiColWidth, 
+                                        maxWidth: buoiColWidth, 
+                                        boxSizing: 'border-box',
+                                        cursor: wasSubmitted ? 'pointer' : 'default'
+                                      }}
+                                      className={wasSubmitted ? styles.subRowCell : undefined}
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', width: '100%', overflow: 'hidden' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, flex: 1 }}>
+                                          <span style={{ fontWeight: 600, fontSize: '12px', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }} title={ex.TenBai}>{ex.TenBai}</span>
                                         </div>
-                                        <div>
+                                        <div style={{ flexShrink: 0 }}>
                                           {scoreVal !== null && typeof scoreVal === 'number' ? (
                                             <span className={`${styles.diemBadgeMini} ${diemColor(scoreVal)}`}>{scoreVal}</span>
                                           ) : scoreVal === 'Cần chấm' ? (
                                             <span className={styles.diemBadgeMini} style={{ background: '#ffe6cc', color: '#d35400', fontSize: '11px', fontWeight: 600 }}>Cần chấm</span>
                                           ) : (
-                                            <span className={styles.chuaNopMini}>Chưa nộp</span>
+                                            <span className={styles.chuaNopMini}>Chưa</span>
                                           )}
                                         </div>
                                       </div>
                                     </td>
                                   )
                                 })}
-                                <td></td>
+                                <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}></td>
+                                <td></td> {/* Dummy column */}
                               </tr>
                             ))
                           ) : (
                             <tr style={{ background: '#fbfbfb' }}>
-                              <td colSpan={5}></td>
-                              <td colSpan={uniqueBuois.length + 1} style={{ textAlign: 'center', color: '#bbb', fontSize: '12.5px', padding: '12px' }}>
+                              <td colSpan={4}></td>
+                              <td colSpan={uniqueBuois.length + 2} style={{ textAlign: 'center', color: '#bbb', fontSize: '12.5px', padding: '12px' }}>
                                 Không có bài tập nào.
                               </td>
                             </tr>
@@ -672,6 +706,25 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
               <span style={{ fontSize: 28, color: "#2ecc71" }}>✔</span>
             </div>
             <p style={{ margin: 0, fontWeight: 600, color: "#333" }}>Tải file báo cáo thành công</p>
+          </div>
+        </div>
+      )}
+
+      {selectedReview && (
+        <div className={styles.reviewModalBackdrop} onClick={handleCloseReview}>
+          <div className={styles.reviewModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.reviewModalCloseBtn} onClick={handleCloseReview} title="Đóng">
+              &times;
+            </button>
+            <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+              <ChiTietBaiTap 
+                overrideExerciseId={selectedReview.exerciseId}
+                overrideStudentId={selectedReview.studentId}
+                overrideClassId={selectedReview.classId}
+                isModal={true}
+                onClose={handleCloseReview}
+              />
+            </div>
           </div>
         </div>
       )}

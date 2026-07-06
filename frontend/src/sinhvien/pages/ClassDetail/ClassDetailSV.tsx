@@ -798,10 +798,29 @@ export default function ClassDetailSV() {
                             <button
                               className="ld2-review-btn"
                               style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
-                              onClick={() => {
-                                const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                                navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
-                                setSelectedExercise(null);
+                              onClick={async () => {
+                                const confirmReview = window.confirm(
+                                  "Nếu xem lại đáp án và giải thích, bạn sẽ KHÔNG được thực hiện lại (làm lại) bài tập này nữa. Bạn có chắc chắn muốn xem lại không?"
+                                );
+                                if (confirmReview) {
+                                  try {
+                                    const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+                                    const userObj = JSON.parse(userStr || "{}");
+                                    await fetch(`http://localhost:5000/bainop/xem-giai-thich`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        MaSinhVien: userObj.MaSinhVien || userObj.MaNguoiDung,
+                                        MaBaiTap: selectedExercise.MaBaiTap
+                                      })
+                                    });
+                                  } catch (e) {
+                                    console.error("Error setting review flag:", e);
+                                  }
+                                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                                  navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
+                                  setSelectedExercise(null);
+                                }
                               }}
                             >
                               Xem lại
@@ -815,19 +834,53 @@ export default function ClassDetailSV() {
               })()}
             </div>
             
-            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-              <button
-                className="ld2-open-btn"
-                style={{ padding: "10px 20px" }}
-                onClick={() => {
-                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                  navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`);
-                  setSelectedExercise(null);
-                }}
-              >
-                Làm bài
-              </button>
-            </div>
+            {(() => {
+              const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap));
+              const lastSub = exSubs.length > 0 ? exSubs[exSubs.length - 1] : null;
+              const attemptsCount = lastSub ? (lastSub.SoLanLamBai || 1) : 0;
+              const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+
+              const isMaxAttempt = attemptsCount >= 3;
+              const isDisabled = isMaxAttempt || hasReviewed;
+              
+              let buttonText = "Làm bài";
+              let tooltipText = "";
+              if (attemptsCount > 0) {
+                buttonText = "Làm lại";
+              }
+              if (isMaxAttempt) {
+                tooltipText = "Bạn đã đạt giới hạn làm bài (tối đa 3 lần).";
+              } else if (hasReviewed) {
+                tooltipText = "Bạn đã xem giải thích đáp án, không thể làm lại.";
+              }
+
+              return (
+                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", alignItems: "center" }}>
+                  {tooltipText && (
+                    <span style={{ color: "#ef4444", fontSize: "12px", fontWeight: "600" }}>
+                      {tooltipText}
+                    </span>
+                  )}
+                  <button
+                    className="ld2-open-btn"
+                    style={{ 
+                      padding: "10px 20px",
+                      opacity: isDisabled ? 0.5 : 1,
+                      cursor: isDisabled ? "not-allowed" : "pointer",
+                      backgroundColor: isDisabled ? "#cbd5e1" : "#f95800"
+                    }}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                      navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`);
+                      setSelectedExercise(null);
+                    }}
+                  >
+                    {buttonText}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

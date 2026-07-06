@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import styles from "./DuyetBaiQTV.module.css";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiEye } from "react-icons/fi";
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap";
 
 const API = "http://localhost:5000";
 
@@ -36,6 +37,7 @@ export default function DuyetBaiQTV() {
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   const [baiGiangData, setBaiGiangData] = useState<BaiGiangItem[]>([]);
   const [baiTapData, setBaiTapData] = useState<any[]>([]);
@@ -382,24 +384,7 @@ export default function DuyetBaiQTV() {
                       <input type="text" disabled value={selectedItem.Type || "—"} />
                     </div>
                   </div>
-                  <div className={styles.formGroupFull}>
-                    <label>Đề bài / Nội dung</label>
-                    <textarea
-                      disabled
-                      rows={3}
-                      value={selectedItem.Content || "Không có nội dung đề bài."}
-                    />
-                  </div>
-                  {selectedItem.Questions && (
-                    <div className={styles.formGroupFull}>
-                      <label>Câu hỏi / Đáp án</label>
-                      <textarea
-                        disabled
-                        rows={4}
-                        value={selectedItem.Questions}
-                      />
-                    </div>
-                  )}
+
                   {selectedItem.Vocabulary && (
                     <div className={styles.formGroupFull}>
                       <label>Từ vựng đi kèm</label>
@@ -647,6 +632,17 @@ export default function DuyetBaiQTV() {
                   </div>
                 </div>
               )}
+              {selectedItem.MaBaiTap && selectedItem.MaBaiTap.startsWith("baitap-") && (
+                <div className={styles.formGroupFull} style={{ textAlign: "center", margin: "16px 0 8px 0" }}>
+                  <button
+                    type="button"
+                    className={styles.previewBtn}
+                    onClick={() => setShowPreview(true)}
+                  >
+                    <FiEye /> Xem trước bài tập
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className={styles.modalFooter}>
@@ -674,6 +670,28 @@ export default function DuyetBaiQTV() {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════ POPUP XEM TRƯỚC BÀI TẬP ════ */}
+      {showPreview && selectedItem && (
+        <div className={styles.previewModalBackdrop} onClick={() => setShowPreview(false)}>
+          <div className={styles.previewModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.previewModalCloseBtn} onClick={() => setShowPreview(false)} title="Đóng">
+              &times;
+            </button>
+            <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+              <ChiTietBaiTap
+                overrideExerciseId={(() => {
+                  const match = selectedItem.MaBaiTap?.match(/^(baitap|exam)-(\d+)$/);
+                  return match ? parseInt(match[2], 10) : undefined;
+                })()}
+                isModal={true}
+                isPreview={true}
+                onClose={() => setShowPreview(false)}
+              />
             </div>
           </div>
         </div>

@@ -90,17 +90,30 @@ const mapDangBaiToType = (db: string): string => {
   return dbClean;
 };
 
-function ChiTietBaiTap() {
+interface ChiTietBaiTapProps {
+  overrideExerciseId?: number;
+  overrideStudentId?: number;
+  overrideClassId?: number;
+  isModal?: boolean;
+  isPreview?: boolean;
+  onClose?: () => void;
+}
+
+function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId, isModal = false, isPreview = false, onClose }: ChiTietBaiTapProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id, classId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
+  const { id: paramId, classId: paramClassId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
+
+  const id = overrideExerciseId ? String(overrideExerciseId) : paramId;
+  const classId = overrideClassId ? String(overrideClassId) : paramClassId;
   const maLopHoc = classId ? Number(classId) : location.state?.maLopHoc;
 
-  const isReview = new URLSearchParams(location.search).get("mode") === "review";
+  const isReview = isPreview ? false : (isModal ? true : (new URLSearchParams(location.search).get("mode") === "review" || !!(baiNop && (baiNop.DaXemGiaiThich === 1 || (baiNop.SoLanLamBai || 0) >= 3))));
   const [showBackBtn, setShowBackBtn] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
+    if (isModal) return;
     const handleMouseMove = (e: MouseEvent) => {
       if (e.clientX < window.innerWidth / 2 && e.clientY < window.innerHeight / 2) {
         setShowBackBtn(true);
@@ -112,9 +125,13 @@ function ChiTietBaiTap() {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, []);
+  }, [isModal]);
 
   const executeBackNavigation = () => {
+    if (isModal && onClose) {
+      onClose();
+      return;
+    }
     if (location.pathname.includes('/hoc-thu-sv/')) {
       if (classId && lessonId) {
         const isExamTab = location.pathname.includes('/bt/');
@@ -160,6 +177,10 @@ function ChiTietBaiTap() {
   const [lockMessage, setLockMessage] = useState<string>("");
 
   useEffect(() => {
+    if (overrideStudentId) {
+      setMaSinhVien(overrideStudentId);
+      return;
+    }
     if (!maNguoiDung) return;
     fetch(`${API}/students/by-user/${maNguoiDung}`)
       .then(r => r.json())
@@ -174,7 +195,7 @@ function ChiTietBaiTap() {
         console.error("Error fetching student info:", err);
         setMaSinhVien(maNguoiDung);
       });
-  }, [maNguoiDung]);
+  }, [maNguoiDung, overrideStudentId]);
 
   useEffect(() => {
     if (!exercise || !maSinhVien || (user.VaiTro !== "Sinh Viên" && user.VaiTro !== "Học Viên")) return;
@@ -304,31 +325,46 @@ function ChiTietBaiTap() {
         const urlSubmissionId = queryParams.get("submissionId");
         
         let myNop = null;
-        if (location.state?.justSubmittedAnswers) {
-          myNop = {
-            NoiDung: typeof location.state.justSubmittedAnswers === "string"
-              ? location.state.justSubmittedAnswers
-              : JSON.stringify(location.state.justSubmittedAnswers),
-            Diem: location.state.diem
-          };
-        }
+        if (!isPreview) {
+          if (location.state?.justSubmittedAnswers) {
+            myNop = {
+              NoiDung: typeof location.state.justSubmittedAnswers === "string"
+                ? location.state.justSubmittedAnswers
+                : JSON.stringify(location.state.justSubmittedAnswers),
+              Diem: location.state.diem
+            };
+          }
 
-        if (!myNop && urlSubmissionId && Array.isArray(nopData)) {
-          myNop = nopData.find((b: any) => String(b.MaBaiNop) === String(urlSubmissionId));
-        }
-        
-        if (!myNop && Array.isArray(nopData)) {
-          const studentNops = nopData.filter((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung);
-          if (studentNops.length > 0) {
-            // Sắp xếp giảm dần theo SoLanLamBai để lấy lượt làm mới nhất làm mặc định
-            studentNops.sort((a, b) => (b.SoLanLamBai || 0) - (a.SoLanLamBai || 0));
-            myNop = studentNops[0];
+          if (!myNop && urlSubmissionId && Array.isArray(nopData)) {
+            myNop = nopData.find((b: any) => String(b.MaBaiNop) === String(urlSubmissionId));
+          }
+          
+          if (!myNop && Array.isArray(nopData)) {
+            const studentNops = nopData.filter((b: any) => {
+              const rowSVId = b.MaSinhVien && typeof b.MaSinhVien === "string" && b.MaSinhVien.startsWith("SV")
+                ? parseInt(b.MaSinhVien.replace("SV", ""), 10)
+                : Number(b.MaSinhVien);
+              const currentSVId = Number(maSinhVien);
+              const currentNDId = Number(maNguoiDung);
+              return rowSVId === currentSVId || rowSVId === currentNDId || Number(b.MaNguoiDung) === currentNDId;
+            });
+            if (studentNops.length > 0) {
+              // Sắp xếp giảm dần theo SoLanLamBai và MaBaiNop để lấy lượt làm mới nhất làm mặc định
+              studentNops.sort((a, b) => {
+                const aVal = a.SoLanLamBai || 0;
+                const bVal = b.SoLanLamBai || 0;
+                if (bVal !== aVal) return bVal - aVal;
+                return (b.MaBaiNop || 0) - (a.MaBaiNop || 0);
+              });
+              myNop = studentNops[0];
+            }
           }
         }
         
         setBaiNop(myNop || null);
         
-        if (myNop && isReview) {
+        const forceReviewMode = !isPreview && (isReview || !!(myNop && (myNop.DaXemGiaiThich === 1 || (myNop.SoLanLamBai || 0) >= 3)));
+        if (myNop && forceReviewMode) {
           setSubmitted(true);
           try {
             const contentText = myNop.NoiDung || "";
@@ -1475,7 +1511,7 @@ function ChiTietBaiTap() {
             const isFindMistakes = (exercise?.Type || "").toLowerCase() === "writing-find-mistakes";
 
             return (
-              <div key={pIdx} className="ad-page-container">
+              <div key={pIdx} className={`ad-page-container ${isModal ? "ad-page-readonly" : ""}`}>
                 {isFindMistakes ? (
                   <div className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: "24px 28px", borderRadius: 12, marginBottom: 20 }}>
                     {/* Tiêu đề đề bài hiển thị 1 lần trên cùng */}
@@ -1539,7 +1575,7 @@ function ChiTietBaiTap() {
 
       {/* SUBMIT BUTTON FOOTER */}
       <div className="ad-footer">
-        {isReview ? null : submitted ? (
+        {(isReview || isPreview) ? null : submitted ? (
           <button
             className="ad-submit-btn"
             style={{ backgroundColor: "#64748b" }}

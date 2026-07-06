@@ -528,6 +528,7 @@ app.get("/course-detail/:id/classes", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc, l.TrangThai, l.MaLop,
+          kc.TenLop AS TenTrinhDo,
           l.SoLuongHocVien AS SiSoToiDa,
           COALESCE((
             SELECT TOP 1 
@@ -548,7 +549,7 @@ app.get("/course-detail/:id/classes", async (req, res) => {
         LEFT JOIN BUOIHOC ls ON ls.MaLopHoc = l.MaLopHoc
         WHERE kc.MaKhoaHoc = @id
         GROUP BY l.MaLopHoc, l.TenLop, l.LichHoc, l.TrangThai, l.SoLuongHocVien,
-                 l.ActiveBuoiHocId, l.MaLop
+                 l.ActiveBuoiHocId, l.MaLop, kc.TenLop
       `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
@@ -784,12 +785,62 @@ app.get("/qtv/lophoc/:id/giangvien", async (req, res) => {
 // Xóa buổi học
 app.delete("/qtv/buoihoc/:id", async (req, res) => {
   try {
-    const pool = await poolPromise
+    const pool = await poolPromise;
     await pool.request()
       .input("id", req.params.id)
-      .query(`DELETE FROM BUOIHOC WHERE MaBuoiHoc = @id`)
-    res.json({ message: "Đã xóa buổi học" })
-  } catch (err) { res.status(500).send(err.message) }
+      .query(`
+        -- 1. Nullify ActiveBuoiHocId in LOPHOC
+        UPDATE LOPHOC SET ActiveBuoiHocId = NULL WHERE ActiveBuoiHocId = @id;
+
+        -- 2. Delete BINHLUAN
+        DELETE FROM BINHLUAN WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
+
+        -- 3. Delete TIENDOHOCTAP
+        DELETE FROM TIENDOHOCTAP WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
+
+        -- 4. Delete BAINOP
+        DELETE FROM BAINOP WHERE MaBaiTap IN (
+          SELECT MaBaiTap FROM BAITAP WHERE MaBaiHoc IN (
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id
+          )
+        );
+
+        -- 5. Delete BAITAP
+        DELETE FROM BAITAP WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
+
+        -- 6. Delete BAIHOCKHOAHOC
+        DELETE FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id;
+
+        -- 7. Delete TAILIEU
+        DELETE FROM TAILIEU WHERE MaBuoiHoc = @id;
+
+        -- 8. Delete DAPAN
+        DELETE FROM DAPAN WHERE MaCauHoi IN (
+          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id
+          )
+        );
+
+        -- 9. Delete CAUHOI
+        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id
+        );
+
+        -- 10. Delete KETQUABAIKIEMTRA
+        DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id
+        );
+
+        -- 11. Delete BAIKIEMTRA
+        DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc = @id;
+
+        -- 12. Delete BUOIHOC
+        DELETE FROM BUOIHOC WHERE MaBuoiHoc = @id;
+      `);
+    res.json({ message: "Đã xóa buổi học và toàn bộ dữ liệu liên quan" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 })
 app.get("/classes/:id/buoihoc", async (req, res) => {
   try {
@@ -1976,13 +2027,36 @@ app.post("/bainop", async (req, res) => {
 
       res.json({ message: "Nộp bài kiểm tra thành công", attempt: newAttempt });
     } else {
-      // Tính số lần làm bài mới
+      // Tính số lần làm bài mới và xem giải thích
       const countRes = await pool.request()
         .input("MaBaiTap", MaBaiTap)
         .input("MaSinhVien", MaSinhVien)
-        .query(`SELECT ISNULL(MAX(SoLanLamBai), 0) AS MaxAttempt FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
+        .query(`
+          SELECT 
+            ISNULL(MAX(SoLanLamBai), 0) AS MaxAttempt,
+            ISNULL(MAX(DaXemGiaiThich), 0) AS HasReviewed
+          FROM BAINOP 
+          WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien
+        `);
       
-      const newAttempt = countRes.recordset[0].MaxAttempt + 1;
+      const maxAttempt = countRes.recordset[0].MaxAttempt;
+      const hasReviewed = countRes.recordset[0].HasReviewed;
+
+      if (maxAttempt >= 3) {
+        return res.status(400).json({ message: "Bạn đã làm bài tập này tối đa 3 lần!" });
+      }
+
+      if (hasReviewed === 1) {
+        return res.status(400).json({ message: "Bạn đã xem giải thích/đáp án, không thể làm lại bài tập này!" });
+      }
+
+      const newAttempt = maxAttempt + 1;
+
+      // Xóa tất cả các lần làm bài cũ của bài tập này để chỉ lưu lần cuối cùng
+      await pool.request()
+        .input("MaBaiTap", MaBaiTap)
+        .input("MaSinhVien", MaSinhVien)
+        .query(`DELETE FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
 
       await pool.request()
         .input("MaBaiTap", MaBaiTap)
@@ -1992,12 +2066,27 @@ app.post("/bainop", async (req, res) => {
         .input("TrangThai", TrangThai || "Chờ chấm")
         .input("SoLanLamBai", newAttempt)
         .query(`
-          INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai, SoLanLamBai)
-          VALUES (@MaBaiTap, @MaSinhVien, @NoiDung, @Diem, @TrangThai, @SoLanLamBai)
+          INSERT INTO BAINOP (MaBaiTap, MaSinhVien, NoiDung, Diem, TrangThai, SoLanLamBai, DaXemGiaiThich)
+          VALUES (@MaBaiTap, @MaSinhVien, @NoiDung, @Diem, @TrangThai, @SoLanLamBai, 0)
         `);
 
       res.json({ message: "Nộp bài thành công", attempt: newAttempt });
     }
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// Đánh dấu đã xem giải thích/đáp án
+app.put("/bainop/xem-giai-thich", async (req, res) => {
+  try {
+    const { MaSinhVien, MaBaiTap } = req.body;
+    const pool = await poolPromise;
+    await pool.request()
+      .input("MaBaiTap", MaBaiTap)
+      .input("MaSinhVien", MaSinhVien)
+      .query(`UPDATE BAINOP SET DaXemGiaiThich = 1 WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
+    res.json({ message: "Đã đánh dấu đã xem giải thích thành công" });
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -2534,7 +2623,7 @@ app.get("/lophoc/:id/sinhvien", async (req, res) => {
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
-        SELECT sl.MaSinhVien, s.MSSV, n.HoTen, n.GioiTinh,
+        SELECT sl.MaSinhVien, s.MSSV, n.HoTen, s.BietDanh, n.GioiTinh,
                sl.NgayGhiDanh, sl.TrangThai
         FROM SINHVIEN_LOPHOC sl
         JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
@@ -2567,7 +2656,7 @@ app.get("/lophoc/:id/sinhvien/:maNguoiDung", async (req, res) => {
     const result = await pool.request()
       .input("id", req.params.id)
       .query(`
-        SELECT sl.MaSinhVien, s.MSSV, n.HoTen, n.GioiTinh,
+        SELECT sl.MaSinhVien, s.MSSV, n.HoTen, s.BietDanh, n.GioiTinh,
                sl.NgayGhiDanh, sl.TrangThai, s.MaNguoiDung
         FROM SINHVIEN_LOPHOC sl
         JOIN SINHVIEN s ON sl.MaSinhVien = s.MaSinhVien
@@ -3192,6 +3281,7 @@ app.get("/baocao/hocvien", async (req, res) => {
     const diemResult = await pool.request().query(`
       SELECT b.MaSinhVien, b.MaBaiTap, b.Diem
       FROM BAINOP b
+      ORDER BY b.MaBaiNop ASC
     `)
 
     // Gom điểm theo MaSinhVien từ BAINOP
@@ -5225,8 +5315,16 @@ const initDb = async () => {
       BEGIN
           ALTER TABLE dbo.MINITEST ADD TrangThai NVARCHAR(50) NULL;
       END
+
+      IF NOT EXISTS (
+          SELECT * FROM sys.columns 
+          WHERE object_id = OBJECT_ID('dbo.BAINOP') AND name = 'DaXemGiaiThich'
+      )
+      BEGIN
+          ALTER TABLE dbo.BAINOP ADD DaXemGiaiThich INT NOT NULL DEFAULT 0;
+      END
     `)
-    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai checked/added).")
+    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich checked/added).")
   } catch (err) {
     console.error("Database initialization error:", err.message)
   }
