@@ -1424,7 +1424,7 @@ export default function CoursePageQTV() {
                                 }}
                                 onClick={() => {
                                   setAddingToCourse(c);
-                                  setLForm({ name: '', schedule: 'Thứ 2 & 4', maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' });
+                                  setLForm({ name: '', schedule: 'Thứ 2 & 4', days: '', daySchedules: {}, maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' });
                                   setShowAddClass(true);
                                 }}
                               >
