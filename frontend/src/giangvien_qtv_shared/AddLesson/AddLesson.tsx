@@ -226,7 +226,7 @@ const AddLesson: React.FC = () => {
       const createdMaBaiHoc = resData.MaBaiHoc;
 
       if (hasMinitest && createdMaBaiHoc) {
-        const minitestRes = await fetch("http://localhost:5000/minitest/create", {
+        const minitestRes = await fetch("http://14.225.192.252:5000/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -72,7 +72,7 @@ function AssignmentSuccess() {
                 try {
                   const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
                   const user = JSON.parse(userStr || "{}");
-                  await fetch(`http://localhost:5000/bainop/xem-giai-thich`, {
+                  await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

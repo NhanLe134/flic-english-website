@@ -49,6 +49,39 @@ interface Lesson {
   TrangThaiDuyet: string;
 }
 
+const getExerciseDeadline = (ex: any) => {
+  let deadlineStr = "";
+  if (ex.Content) {
+    try {
+      const parsed = typeof ex.Content === "string" ? JSON.parse(ex.Content) : ex.Content;
+      if (parsed && (parsed.deadline || parsed.deadlineDate)) {
+        deadlineStr = parsed.deadline || parsed.deadlineDate;
+      }
+    } catch (e) {
+      console.error("Error parsing content for deadline:", e);
+    }
+  }
+  return deadlineStr;
+};
+
+const formatDeadline = (deadlineStr: string) => {
+  if (!deadlineStr) return "—";
+  const date = new Date(deadlineStr);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+};
+
+const isDeadlineOverdue = (deadlineStr: string) => {
+  if (!deadlineStr) return false;
+  return new Date().getTime() > new Date(deadlineStr).getTime();
+};
+
 export default function ClassDetailSV() {
   const { id, lessonId, tab, itemId } = useParams<{ id: string; lessonId?: string; tab?: string; itemId?: string }>();
   const classId = Number(id);
@@ -296,10 +329,19 @@ export default function ClassDetailSV() {
   const mapTypeToSkillName = (type?: string) => {
     if (!type) return "";
     const t = type.toLowerCase().trim();
-    if (t === "listening" || t === "l" || t === "nghe") return "Listening";
-    if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
-    if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
-    if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+    
+    if (t.includes("listening") || t.includes("nghe") || t.includes("l") || t.includes("hình ảnh chọn đáp án") || t.includes("điền từ vào đoạn văn")) {
+      return "Listening";
+    }
+    if (t.includes("reading") || t.includes("đọc") || t.includes("doc") || t.includes("r") || t.includes("từ vựng") || t.includes("nối từ")) {
+      return "Reading";
+    }
+    if (t.includes("writing") || t.includes("viết") || t.includes("viet") || t.includes("w") || t.includes("sắp xếp") || t.includes("tìm lỗi sai") || t.includes("trắc nghiệm")) {
+      return "Writing";
+    }
+    if (t.includes("speaking") || t.includes("nói") || t.includes("noi") || t.includes("s") || t.includes("phát âm")) {
+      return "Speaking";
+    }
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
@@ -627,7 +669,7 @@ export default function ClassDetailSV() {
                                             <th style={{ textAlign: "center" }}>#</th>
                                             <th>Tên bài luyện tập thêm</th>
                                             <th style={{ textAlign: "center" }}>Phân loại</th>
-                                            <th style={{ textAlign: "center" }}>Ngày tạo</th>
+                                            <th style={{ textAlign: "center" }}>Hạn nộp bài</th>
                                             <th style={{ textAlign: "center" }}>Số lần làm bài</th>
                                             <th style={{ textAlign: "center" }}>Điểm số</th>
                                           </tr>
@@ -654,7 +696,15 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
-                                                <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                                {(() => {
+                                                  const dlStr = getExerciseDeadline(ex);
+                                                  const overdue = isDeadlineOverdue(dlStr);
+                                                  return (
+                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                      {formatDeadline(dlStr)}
+                                                    </td>
+                                                  );
+                                                })()}
                                                 <td style={{ textAlign: "center" }}>{attempts}</td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
                                               </tr>
@@ -682,10 +732,9 @@ export default function ClassDetailSV() {
                                             <th style={{ textAlign: "center" }}>#</th>
                                             <th>Tên bài tập</th>
                                             <th style={{ textAlign: "center" }}>Phân loại</th>
-                                            <th style={{ textAlign: "center" }}>Ngày tạo</th>
+                                            <th style={{ textAlign: "center" }}>Hạn nộp bài</th>
                                             <th style={{ textAlign: "center" }}>Số lần làm bài</th>
                                             <th style={{ textAlign: "center" }}>Điểm số</th>
-                                            <th style={{ textAlign: "center" }}>Hành động</th>
                                           </tr>
                                         </thead>
                                         <tbody>
@@ -710,9 +759,18 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
-                                                <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                                {(() => {
+                                                  const dlStr = getExerciseDeadline(ex);
+                                                  const overdue = isDeadlineOverdue(dlStr);
+                                                  return (
+                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                      {formatDeadline(dlStr)}
+                                                    </td>
+                                                  );
+                                                })()}
                                                 <td style={{ textAlign: "center" }}>{attempts}</td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
+
                                               </tr>
                                             );
                                           })}
@@ -806,7 +864,7 @@ export default function ClassDetailSV() {
                                   try {
                                     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
                                     const userObj = JSON.parse(userStr || "{}");
-                                    await fetch(`http://localhost:5000/bainop/xem-giai-thich`, {
+                                    await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
                                       method: "PUT",
                                       headers: { "Content-Type": "application/json" },
                                       body: JSON.stringify({

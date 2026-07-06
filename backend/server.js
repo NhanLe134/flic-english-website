@@ -933,7 +933,7 @@ app.get("/luyentapthem/buoihoc/:buoiHocId", async (req, res) => {
         SELECT MaLuyenTapThem AS MaBaiTap, Title, Type, 
                CAST(0 AS INT) AS IsExam,
                CreatedDate, N'published' AS TrangThai, N'Đã duyệt' AS TrangThaiDuyet,
-               MaBuoiHoc, CAST(1 AS INT) AS HocThuMienPhi
+               MaBuoiHoc, CAST(1 AS INT) AS HocThuMienPhi, Content
         FROM LUYENTAPTHEM
         WHERE MaBuoiHoc = @buoiHocId
       `);

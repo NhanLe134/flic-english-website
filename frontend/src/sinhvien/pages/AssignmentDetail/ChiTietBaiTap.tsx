@@ -547,13 +547,8 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }, [examSecondsLeft]);
 
-  // Check general exercise deadline
-  const isOverdue = useMemo(() => {
-    if (submitted) return false;
-    const deadlineStr = parsedContent.deadline || parsedContent.deadlineDate;
-    if (!deadlineStr) return false;
-    return new Date().getTime() > new Date(deadlineStr).getTime();
-  }, [parsedContent, submitted]);
+  // Check general exercise deadline (always false to allow student submissions after the deadline)
+  const isOverdue = false;
 
 
 
