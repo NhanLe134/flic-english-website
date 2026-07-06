@@ -1633,18 +1633,7 @@ export default function CoursePageQTV() {
                               onChange={e => updateLessonInClass(classIdx, buoiHocIdx, 'desc', e.target.value)}
                               placeholder="Nội dung buổi học..." />
                           </div>
-                          <div className={styles.twoCols}>
-                            <div className={styles.formGroup}>
-                              <label>Ngày bắt đầu</label>
-                              <input type="date" value={lesson.startDate}
-                                onChange={e => updateLessonInClass(classIdx, buoiHocIdx, 'startDate', e.target.value)} />
-                            </div>
-                            <div className={styles.formGroup}>
-                              <label>Ngày kết thúc</label>
-                              <input type="date" value={lesson.endDate}
-                                onChange={e => updateLessonInClass(classIdx, buoiHocIdx, 'endDate', e.target.value)} />
-                            </div>
-                          </div>
+
                         </div>
                       ))}
 
@@ -2077,14 +2066,7 @@ export default function CoursePageQTV() {
             <div className={styles.formGroup}><label>Mô tả</label>
               <textarea value={lessonForm.desc} onChange={e => setLessonForm(p => ({...p, desc: e.target.value}))} placeholder="Nội dung buổi học..." rows={3} />
             </div>
-            <div className={styles.twoCols}>
-              <div className={styles.formGroup}><label>📅 Ngày bắt đầu</label>
-                <input type="date" value={lessonForm.startDate} onChange={e => setLessonForm(p => ({...p, startDate: e.target.value}))} />
-              </div>
-              <div className={styles.formGroup}><label>📅 Ngày kết thúc</label>
-                <input type="date" value={lessonForm.endDate} onChange={e => setLessonForm(p => ({...p, endDate: e.target.value}))} />
-              </div>
-            </div>
+
             <div className={styles.formGroup}><label>Thứ tự</label>
               <input type="number" min={1} value={lessonForm.order} onChange={e => setLessonForm(p => ({...p, order: Number(e.target.value)}))} />
             </div>

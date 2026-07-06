@@ -204,7 +204,7 @@ export default function DuyetBaiQTV() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm theo tiêu đề, giáo viên..."
+              placeholder="Tìm kiếm theo tiêu đề, người tạo..."
             />
             <button className={styles.searchBtn}>
               <FiSearch />
@@ -248,7 +248,7 @@ export default function DuyetBaiQTV() {
           <div className={styles.tableHeader}>
             <div>
               <h3>Danh sách nội dung chờ duyệt</h3>
-              <p>Kiểm tra và phê duyệt bài đăng, khóa học do giáo viên gửi</p>
+              <p>Kiểm tra và phê duyệt bài đăng, khóa học do người tạo gửi</p>
             </div>
             
             {/* Filter pills */}
@@ -273,7 +273,7 @@ export default function DuyetBaiQTV() {
               <thead>
                 <tr>
                   <th>TIÊU ĐỀ</th>
-                  <th>GIÁO VIÊN</th>
+                  <th>NGƯỜI TẠO</th>
                   <th>LOẠI</th>
                   <th>TRẠNG THÁI DUYỆT</th>
                   <th>NGÀY GỬI</th>
