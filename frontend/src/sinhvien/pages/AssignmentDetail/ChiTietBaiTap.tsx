@@ -396,7 +396,8 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
                       if (q.audioUrl) loadedUrls[key] = q.audioUrl;
                       if (q.fillInAnswers) loadedFillIn[key] = q.fillInAnswers;
                       if (q.spokenText) setSpokenTexts(prev => ({ ...prev, [key]: q.spokenText }));
-                      if (q.speechScore) setSpeechScores(prev => ({ ...prev, [key]: q.speechScore }));
+                      const scoreVal = q.score !== undefined && q.score !== null ? q.score : q.speechScore;
+                      if (scoreVal !== undefined && scoreVal !== null) setSpeechScores(prev => ({ ...prev, [key]: scoreVal }));
                       if (q.sentences) setShuffledSentences(prev => ({ ...prev, [key]: q.sentences }));
                     });
                   }
@@ -418,7 +419,15 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
                   if (q.audioUrl) loadedUrls[idx] = q.audioUrl;
                   if (q.fillInAnswers) loadedFillIn[idx] = q.fillInAnswers;
                   if (q.spokenText) setSpokenTexts(prev => ({ ...prev, [idx]: q.spokenText }));
-                  if (q.speechScore) setSpeechScores(prev => ({ ...prev, [idx]: q.speechScore }));
+                  const scoreVal = q.score !== undefined && q.score !== null ? q.score : q.speechScore;
+                  if (scoreVal !== undefined && scoreVal !== null) setSpeechScores(prev => ({ ...prev, [idx]: scoreVal }));
+                  if (q.subQuestions && Array.isArray(q.subQuestions)) {
+                    q.subQuestions.forEach((sub: any, subIdx: number) => {
+                      if (sub.chosen) {
+                        loadedAnswers[`${idx}_${subIdx}`] = sub.chosen;
+                      }
+                    });
+                  }
                 });
                 setMcAnswers(loadedAnswers);
                 setEssayAnswers(loadedEssay);
@@ -551,6 +560,10 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
   // RECORDING FUNCTIONS
   const startRecording = async (idx: number | string) => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Trình duyệt chặn truy cập microphone trên kết nối HTTP không bảo mật (IP). Vui lòng sử dụng địa chỉ 'localhost' hoặc kết nối HTTPS bảo mật để sử dụng micro!");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -568,8 +581,9 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
       timerRef.current = setInterval(() => {
         setRecordSeconds(prev => ({ ...prev, [idx]: (prev[idx] || 0) + 1 }));
       }, 1000);
-    } catch {
-      alert("Không thể truy cập microphone. Vui lòng cấp quyền!");
+    } catch (err) {
+      console.error(err);
+      alert("Không thể truy cập microphone. Vui lòng nhấp vào biểu tượng ổ khóa hoặc micro ở bên trái thanh địa chỉ trình duyệt, chọn 'Cho phép (Allow)' cho Microphone, sau đó tải lại trang!");
     }
   };
 
@@ -642,9 +656,18 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
               if (recordedBlobs[secIdx]) {
                 const formData = new FormData();
                 formData.append("file", recordedBlobs[secIdx], `exam-speaking-${secIdx}.webm`);
-                const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
-                const upData = await upRes.json();
-                url = upData.url || "";
+                try {
+                  const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
+                  if (!upRes.ok) {
+                    const errMsg = await upRes.text();
+                    throw new Error(`Upload failed with status ${upRes.status}: ${errMsg}`);
+                  }
+                  const upData = await upRes.json();
+                  url = upData.url || "";
+                } catch (uploadError: any) {
+                  console.error("Upload error:", uploadError);
+                  throw new Error("Không thể tải file ghi âm lên máy chủ: " + (uploadError.message || uploadError));
+                }
               }
               sectionResponse.audioUrl = url || recordedUrls[secIdx] || "";
               sectionResponse.note = essayAnswers[secIdx] || "";
@@ -693,7 +716,30 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
                     });
                     qResult.sentences = stdSents;
                     qResult.score = correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
-                  } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
+                  } else if (sec.type === "reading-vocab-mcq") {
+                    if (q.vocabPairs && q.vocabPairs.length > 0) {
+                      const ansStr = mcAnswers[key] || "";
+                      let correctCount = 0;
+                      if (ansStr.includes("|||")) {
+                        correctCount = ansStr.split("|||").filter(Boolean).length;
+                      } else if (ansStr.includes("/")) {
+                        const numerator = Number(ansStr.split("/")[0]);
+                        correctCount = isNaN(numerator) ? 0 : numerator;
+                      } else if (!isNaN(Number(ansStr))) {
+                        correctCount = Number(ansStr);
+                      } else {
+                        correctCount = ansStr.split(",").filter(Boolean).length;
+                      }
+                      qResult.chosenAnswer = ansStr;
+                      qResult.correctAnswer = q.vocabPairs.map((p: any) => p.word).join("|||");
+                      qResult.score = q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
+                    } else {
+                      const ans = mcAnswers[key] || "";
+                      qResult.chosenAnswer = ans;
+                      qResult.correctAnswer = q.correct;
+                      qResult.score = ans === q.correct ? 10 : 0;
+                    }
+                  } else if (sec.type === "writing-tense-mcq") {
                     const ans = mcAnswers[key] || "";
                     qResult.chosenAnswer = ans;
                     qResult.correctAnswer = q.correct;
@@ -774,7 +820,27 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
                 });
                 totalExamPoints += correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
                 examGradableQuestions++;
-              } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
+              } else if (sec.type === "reading-vocab-mcq") {
+                if (q.vocabPairs && q.vocabPairs.length > 0) {
+                  const ansStr = mcAnswers[key] || "";
+                  let correctCount = 0;
+                  if (ansStr.includes("|||")) {
+                    correctCount = ansStr.split("|||").filter(Boolean).length;
+                  } else if (ansStr.includes("/")) {
+                    const numerator = Number(ansStr.split("/")[0]);
+                    correctCount = isNaN(numerator) ? 0 : numerator;
+                  } else if (!isNaN(Number(ansStr))) {
+                    correctCount = Number(ansStr);
+                  } else {
+                    correctCount = ansStr.split(",").filter(Boolean).length;
+                  }
+                  totalExamPoints += q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
+                } else {
+                  const ans = mcAnswers[key] || "";
+                  if (ans === q.correct) totalExamPoints += 10;
+                }
+                examGradableQuestions++;
+              } else if (sec.type === "writing-tense-mcq") {
                 const ans = mcAnswers[key] || "";
                 if (ans === q.correct) totalExamPoints += 10;
                 examGradableQuestions++;
@@ -838,9 +904,20 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
             let qScore = 0;
             if (questionType === "reading-vocab-mcq") {
               if (q.vocabPairs && q.vocabPairs.length > 0) {
-                const correctCount = mcAnswers[qIdx] ? Number(mcAnswers[qIdx]) : 0;
-                qResult.chosenAnswer = `${correctCount}/${q.vocabPairs.length}`;
-                qResult.correctAnswer = `${q.vocabPairs.length}/${q.vocabPairs.length}`;
+                const ansStr = mcAnswers[qIdx] || "";
+                let correctCount = 0;
+                if (ansStr.includes("|||")) {
+                  correctCount = ansStr.split("|||").filter(Boolean).length;
+                } else if (ansStr.includes("/")) {
+                  const numerator = Number(ansStr.split("/")[0]);
+                  correctCount = isNaN(numerator) ? 0 : numerator;
+                } else if (!isNaN(Number(ansStr))) {
+                  correctCount = Number(ansStr);
+                } else {
+                  correctCount = ansStr.split(",").filter(Boolean).length;
+                }
+                qResult.chosenAnswer = ansStr;
+                qResult.correctAnswer = q.vocabPairs.map((p: any) => p.word).join("|||");
                 qResult.score = q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
               } else {
                 const ans = mcAnswers[qIdx] || "";
@@ -849,10 +926,24 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
                 qResult.score = ans === q.correct ? 10 : 0;
               }
             } else if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
-              const ans = mcAnswers[qIdx] || "";
-              qResult.chosenAnswer = ans;
-              qResult.correctAnswer = q.correct;
-              qResult.score = ans === q.correct ? 10 : 0;
+              if (q.subQuestions && q.subQuestions.length > 0) {
+                const subResults: any[] = [];
+                let correctSubCount = 0;
+                q.subQuestions.forEach((sub: any, subIdx: number) => {
+                  const ans = mcAnswers[`${qIdx}_${subIdx}`] || "";
+                  if (ans.trim().toUpperCase() === sub.correct?.trim().toUpperCase()) {
+                    correctSubCount++;
+                  }
+                  subResults.push({ chosen: ans, correct: sub.correct });
+                });
+                qResult.subQuestions = subResults;
+                qResult.score = q.subQuestions.length > 0 ? (correctSubCount / q.subQuestions.length) * 10 : 0;
+              } else {
+                const ans = mcAnswers[qIdx] || "";
+                qResult.chosenAnswer = ans;
+                qResult.correctAnswer = q.correct;
+                qResult.score = ans.trim().toUpperCase() === q.correct?.trim().toUpperCase() ? 10 : 0;
+              }
             } else if (questionType === "writing-find-mistakes") {
               const ans = mcAnswers[qIdx] || "";
               const typedCorrection = (essayAnswers[qIdx] || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -896,9 +987,18 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
               if (recordedBlobs[qIdx]) {
                 const formData = new FormData();
                 formData.append("file", recordedBlobs[qIdx], `speaking-${qIdx}.webm`);
-                const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
-                const upData = await upRes.json();
-                url = upData.url || "";
+                try {
+                  const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
+                  if (!upRes.ok) {
+                    const errMsg = await upRes.text();
+                    throw new Error(`Upload failed with status ${upRes.status}: ${errMsg}`);
+                  }
+                  const upData = await upRes.json();
+                  url = upData.url || "";
+                } catch (uploadError: any) {
+                  console.error("Upload error:", uploadError);
+                  throw new Error("Không thể tải file ghi âm lên máy chủ: " + (uploadError.message || uploadError));
+                }
               }
               qResult.audioUrl = url || recordedUrls[qIdx] || "";
               qResult.essayText = essayAnswers[qIdx] || "";
@@ -982,9 +1082,9 @@ function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId,
         });
       }
 
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Lỗi khi nộp bài!");
+      alert("Lỗi khi nộp bài! Chi tiết: " + (e?.message || JSON.stringify(e)));
     } finally {
       setSubmitting(false);
     }

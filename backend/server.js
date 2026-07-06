@@ -66,10 +66,11 @@ const upload = multer({
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "audio/mpeg", "audio/wav", "audio/mp4", "audio/x-m4a",
-      "video/mp4", "video/webm", "video/ogg", "video/quicktime"
+      "audio/mpeg", "audio/wav", "audio/mp4", "audio/x-m4a", "audio/webm", "audio/ogg", "audio/webm;codecs=opus", "audio/ogg;codecs=opus",
+      "video/mp4", "video/webm", "video/ogg", "video/quicktime",
+      "application/octet-stream"
     ];
-    if (allowed.includes(file.mimetype)) cb(null, true);
+    if (allowed.includes(file.mimetype) || file.mimetype.startsWith("audio/")) cb(null, true);
     else cb(new Error("File không hợp lệ"));
   }
 });

@@ -349,7 +349,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             onClick={() => setActiveSectionIdx(sIdx)}
             className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
           >
-            {sec.title} ({sec.type.replace("-", " ")})
+            {sec.title}
           </button>
         ))}
       </div>
