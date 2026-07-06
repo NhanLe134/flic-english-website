@@ -474,7 +474,7 @@ export default function CoursePageQTV() {
           ThuTu: bgForm.order,
           MaKhoaHoc: detailCourse?.id,
           MaGiangVien: user.MaNguoiDung || 1,
-          MaLesson: activeLessonIdForAsset
+          MaBuoiHoc: activeLessonIdForAsset
         })
       });
       setToast('Đã thêm bài giảng mới!');
@@ -497,7 +497,7 @@ export default function CoursePageQTV() {
           MoTa: docForm.desc,
           NoiDung: docForm.content,
           FileUrl: docForm.fileUrl,
-          MaLesson: activeLessonIdForAsset,
+          MaBuoiHoc: activeLessonIdForAsset,
           TrangThai: 'Đã duyệt'
         })
       });
@@ -514,7 +514,7 @@ export default function CoursePageQTV() {
       const res = await fetch(`${API}/baigiang/${originalBgId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ MaLesson: activeLessonIdForAsset })
+        body: JSON.stringify({ MaBuoiHoc: activeLessonIdForAsset })
       });
       const data = await res.json();
       if (res.ok) {
@@ -535,7 +535,7 @@ export default function CoursePageQTV() {
       const res = await fetch(`${API}/tailieu/${originalDocId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ MaLesson: activeLessonIdForAsset })
+        body: JSON.stringify({ MaBuoiHoc: activeLessonIdForAsset })
       });
       const data = await res.json();
       if (res.ok) {
@@ -2122,7 +2122,30 @@ export default function CoursePageQTV() {
                 </div>
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>
-                  <input value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input style={{ flex: 1 }} value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
+                      Tải file
+                      <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await fetch("http://14.225.192.252:5000/upload", {
+                            method: "POST",
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error("Upload failed");
+                          const data = await res.json();
+                          setBgForm(p => ({ ...p, fileUrl: data.url }));
+                          alert("Tải lên file thành công!");
+                        } catch (err) {
+                          alert("Lỗi tải lên file: " + (err as Error).message);
+                        }
+                      }} />
+                    </label>
+                  </div>
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>
@@ -2188,7 +2211,30 @@ export default function CoursePageQTV() {
                 </div>
                 <div className={styles.formGroup}>
                   <label>File đính kèm (URL)</label>
-                  <input value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input style={{ flex: 1 }} value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
+                      Tải file
+                      <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await fetch("http://14.225.192.252:5000/upload", {
+                            method: "POST",
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error("Upload failed");
+                          const data = await res.json();
+                          setDocForm(p => ({ ...p, fileUrl: data.url }));
+                          alert("Tải lên file thành công!");
+                        } catch (err) {
+                          alert("Lỗi tải lên file: " + (err as Error).message);
+                        }
+                      }} />
+                    </label>
+                  </div>
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddDocModal(false)}>Hủy</button>
