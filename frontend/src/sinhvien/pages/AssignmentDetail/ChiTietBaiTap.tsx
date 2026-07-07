@@ -90,17 +90,30 @@ const mapDangBaiToType = (db: string): string => {
   return dbClean;
 };
 
-function ChiTietBaiTap() {
+interface ChiTietBaiTapProps {
+  overrideExerciseId?: number;
+  overrideStudentId?: number;
+  overrideClassId?: number;
+  isModal?: boolean;
+  isPreview?: boolean;
+  onClose?: () => void;
+}
+
+function ChiTietBaiTap({ overrideExerciseId, overrideStudentId, overrideClassId, isModal = false, isPreview = false, onClose }: ChiTietBaiTapProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id, classId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
+  const { id: paramId, classId: paramClassId, lessonId } = useParams<{ id: string; classId?: string; lessonId?: string }>();
+
+  const id = overrideExerciseId ? String(overrideExerciseId) : paramId;
+  const classId = overrideClassId ? String(overrideClassId) : paramClassId;
   const maLopHoc = classId ? Number(classId) : location.state?.maLopHoc;
 
-  const isReview = new URLSearchParams(location.search).get("mode") === "review";
+  const isReview = isPreview ? false : (isModal ? true : (new URLSearchParams(location.search).get("mode") === "review" || !!(baiNop && (baiNop.DaXemGiaiThich === 1 || (baiNop.SoLanLamBai || 0) >= 3))));
   const [showBackBtn, setShowBackBtn] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
+    if (isModal) return;
     const handleMouseMove = (e: MouseEvent) => {
       if (e.clientX < window.innerWidth / 2 && e.clientY < window.innerHeight / 2) {
         setShowBackBtn(true);
@@ -112,9 +125,13 @@ function ChiTietBaiTap() {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, []);
+  }, [isModal]);
 
   const executeBackNavigation = () => {
+    if (isModal && onClose) {
+      onClose();
+      return;
+    }
     if (location.pathname.includes('/hoc-thu-sv/')) {
       if (classId && lessonId) {
         const isExamTab = location.pathname.includes('/bt/');
@@ -160,6 +177,10 @@ function ChiTietBaiTap() {
   const [lockMessage, setLockMessage] = useState<string>("");
 
   useEffect(() => {
+    if (overrideStudentId) {
+      setMaSinhVien(overrideStudentId);
+      return;
+    }
     if (!maNguoiDung) return;
     fetch(`${API}/students/by-user/${maNguoiDung}`)
       .then(r => r.json())
@@ -174,7 +195,7 @@ function ChiTietBaiTap() {
         console.error("Error fetching student info:", err);
         setMaSinhVien(maNguoiDung);
       });
-  }, [maNguoiDung]);
+  }, [maNguoiDung, overrideStudentId]);
 
   useEffect(() => {
     if (!exercise || !maSinhVien || (user.VaiTro !== "Sinh Viên" && user.VaiTro !== "Học Viên")) return;
@@ -305,31 +326,46 @@ function ChiTietBaiTap() {
         const urlSubmissionId = queryParams.get("submissionId");
         
         let myNop = null;
-        if (location.state?.justSubmittedAnswers) {
-          myNop = {
-            NoiDung: typeof location.state.justSubmittedAnswers === "string"
-              ? location.state.justSubmittedAnswers
-              : JSON.stringify(location.state.justSubmittedAnswers),
-            Diem: location.state.diem
-          };
-        }
+        if (!isPreview) {
+          if (location.state?.justSubmittedAnswers) {
+            myNop = {
+              NoiDung: typeof location.state.justSubmittedAnswers === "string"
+                ? location.state.justSubmittedAnswers
+                : JSON.stringify(location.state.justSubmittedAnswers),
+              Diem: location.state.diem
+            };
+          }
 
-        if (!myNop && urlSubmissionId && Array.isArray(nopData)) {
-          myNop = nopData.find((b: any) => String(b.MaBaiNop) === String(urlSubmissionId));
-        }
-        
-        if (!myNop && Array.isArray(nopData)) {
-          const studentNops = nopData.filter((b: any) => b.MaSinhVien === maSinhVien || b.MaSinhVien === maNguoiDung || b.MaNguoiDung === maNguoiDung);
-          if (studentNops.length > 0) {
-            // Sắp xếp giảm dần theo SoLanLamBai để lấy lượt làm mới nhất làm mặc định
-            studentNops.sort((a, b) => (b.SoLanLamBai || 0) - (a.SoLanLamBai || 0));
-            myNop = studentNops[0];
+          if (!myNop && urlSubmissionId && Array.isArray(nopData)) {
+            myNop = nopData.find((b: any) => String(b.MaBaiNop) === String(urlSubmissionId));
+          }
+          
+          if (!myNop && Array.isArray(nopData)) {
+            const studentNops = nopData.filter((b: any) => {
+              const rowSVId = b.MaSinhVien && typeof b.MaSinhVien === "string" && b.MaSinhVien.startsWith("SV")
+                ? parseInt(b.MaSinhVien.replace("SV", ""), 10)
+                : Number(b.MaSinhVien);
+              const currentSVId = Number(maSinhVien);
+              const currentNDId = Number(maNguoiDung);
+              return rowSVId === currentSVId || rowSVId === currentNDId || Number(b.MaNguoiDung) === currentNDId;
+            });
+            if (studentNops.length > 0) {
+              // Sắp xếp giảm dần theo SoLanLamBai và MaBaiNop để lấy lượt làm mới nhất làm mặc định
+              studentNops.sort((a, b) => {
+                const aVal = a.SoLanLamBai || 0;
+                const bVal = b.SoLanLamBai || 0;
+                if (bVal !== aVal) return bVal - aVal;
+                return (b.MaBaiNop || 0) - (a.MaBaiNop || 0);
+              });
+              myNop = studentNops[0];
+            }
           }
         }
         
         setBaiNop(myNop || null);
         
-        if (myNop && isReview) {
+        const forceReviewMode = !isPreview && (isReview || !!(myNop && (myNop.DaXemGiaiThich === 1 || (myNop.SoLanLamBai || 0) >= 3)));
+        if (myNop && forceReviewMode) {
           setSubmitted(true);
           try {
             const contentText = myNop.NoiDung || "";
@@ -360,7 +396,8 @@ function ChiTietBaiTap() {
                       if (q.audioUrl) loadedUrls[key] = q.audioUrl;
                       if (q.fillInAnswers) loadedFillIn[key] = q.fillInAnswers;
                       if (q.spokenText) setSpokenTexts(prev => ({ ...prev, [key]: q.spokenText }));
-                      if (q.speechScore) setSpeechScores(prev => ({ ...prev, [key]: q.speechScore }));
+                      const scoreVal = q.score !== undefined && q.score !== null ? q.score : q.speechScore;
+                      if (scoreVal !== undefined && scoreVal !== null) setSpeechScores(prev => ({ ...prev, [key]: scoreVal }));
                       if (q.sentences) setShuffledSentences(prev => ({ ...prev, [key]: q.sentences }));
                     });
                   }
@@ -382,7 +419,15 @@ function ChiTietBaiTap() {
                   if (q.audioUrl) loadedUrls[idx] = q.audioUrl;
                   if (q.fillInAnswers) loadedFillIn[idx] = q.fillInAnswers;
                   if (q.spokenText) setSpokenTexts(prev => ({ ...prev, [idx]: q.spokenText }));
-                  if (q.speechScore) setSpeechScores(prev => ({ ...prev, [idx]: q.speechScore }));
+                  const scoreVal = q.score !== undefined && q.score !== null ? q.score : q.speechScore;
+                  if (scoreVal !== undefined && scoreVal !== null) setSpeechScores(prev => ({ ...prev, [idx]: scoreVal }));
+                  if (q.subQuestions && Array.isArray(q.subQuestions)) {
+                    q.subQuestions.forEach((sub: any, subIdx: number) => {
+                      if (sub.chosen) {
+                        loadedAnswers[`${idx}_${subIdx}`] = sub.chosen;
+                      }
+                    });
+                  }
                 });
                 setMcAnswers(loadedAnswers);
                 setEssayAnswers(loadedEssay);
@@ -502,19 +547,18 @@ function ChiTietBaiTap() {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }, [examSecondsLeft]);
 
-  // Check general exercise deadline
-  const isOverdue = useMemo(() => {
-    if (submitted) return false;
-    const deadlineStr = parsedContent.deadline || parsedContent.deadlineDate;
-    if (!deadlineStr) return false;
-    return new Date().getTime() > new Date(deadlineStr).getTime();
-  }, [parsedContent, submitted]);
+  // Check general exercise deadline (always false to allow student submissions after the deadline)
+  const isOverdue = false;
 
 
 
   // RECORDING FUNCTIONS
   const startRecording = async (idx: number | string) => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Trình duyệt chặn truy cập microphone trên kết nối HTTP không bảo mật (IP). Vui lòng sử dụng địa chỉ 'localhost' hoặc kết nối HTTPS bảo mật để sử dụng micro!");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -532,8 +576,9 @@ function ChiTietBaiTap() {
       timerRef.current = setInterval(() => {
         setRecordSeconds(prev => ({ ...prev, [idx]: (prev[idx] || 0) + 1 }));
       }, 1000);
-    } catch {
-      alert("Không thể truy cập microphone. Vui lòng cấp quyền!");
+    } catch (err) {
+      console.error(err);
+      alert("Không thể truy cập microphone. Vui lòng nhấp vào biểu tượng ổ khóa hoặc micro ở bên trái thanh địa chỉ trình duyệt, chọn 'Cho phép (Allow)' cho Microphone, sau đó tải lại trang!");
     }
   };
 
@@ -606,9 +651,18 @@ function ChiTietBaiTap() {
               if (recordedBlobs[secIdx]) {
                 const formData = new FormData();
                 formData.append("file", recordedBlobs[secIdx], `exam-speaking-${secIdx}.webm`);
-                const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
-                const upData = await upRes.json();
-                url = upData.url || "";
+                try {
+                  const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
+                  if (!upRes.ok) {
+                    const errMsg = await upRes.text();
+                    throw new Error(`Upload failed with status ${upRes.status}: ${errMsg}`);
+                  }
+                  const upData = await upRes.json();
+                  url = upData.url || "";
+                } catch (uploadError: any) {
+                  console.error("Upload error:", uploadError);
+                  throw new Error("Không thể tải file ghi âm lên máy chủ: " + (uploadError.message || uploadError));
+                }
               }
               sectionResponse.audioUrl = url || recordedUrls[secIdx] || "";
               sectionResponse.note = essayAnswers[secIdx] || "";
@@ -657,7 +711,30 @@ function ChiTietBaiTap() {
                     });
                     qResult.sentences = stdSents;
                     qResult.score = correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
-                  } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
+                  } else if (sec.type === "reading-vocab-mcq") {
+                    if (q.vocabPairs && q.vocabPairs.length > 0) {
+                      const ansStr = mcAnswers[key] || "";
+                      let correctCount = 0;
+                      if (ansStr.includes("|||")) {
+                        correctCount = ansStr.split("|||").filter(Boolean).length;
+                      } else if (ansStr.includes("/")) {
+                        const numerator = Number(ansStr.split("/")[0]);
+                        correctCount = isNaN(numerator) ? 0 : numerator;
+                      } else if (!isNaN(Number(ansStr))) {
+                        correctCount = Number(ansStr);
+                      } else {
+                        correctCount = ansStr.split(",").filter(Boolean).length;
+                      }
+                      qResult.chosenAnswer = ansStr;
+                      qResult.correctAnswer = q.vocabPairs.map((p: any) => p.word).join("|||");
+                      qResult.score = q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
+                    } else {
+                      const ans = mcAnswers[key] || "";
+                      qResult.chosenAnswer = ans;
+                      qResult.correctAnswer = q.correct;
+                      qResult.score = ans === q.correct ? 10 : 0;
+                    }
+                  } else if (sec.type === "writing-tense-mcq") {
                     const ans = mcAnswers[key] || "";
                     qResult.chosenAnswer = ans;
                     qResult.correctAnswer = q.correct;
@@ -738,7 +815,27 @@ function ChiTietBaiTap() {
                 });
                 totalExamPoints += correctSents.length > 0 ? (placed / correctSents.length) * 10 : 0;
                 examGradableQuestions++;
-              } else if (sec.type === "reading-vocab-mcq" || sec.type === "writing-tense-mcq") {
+              } else if (sec.type === "reading-vocab-mcq") {
+                if (q.vocabPairs && q.vocabPairs.length > 0) {
+                  const ansStr = mcAnswers[key] || "";
+                  let correctCount = 0;
+                  if (ansStr.includes("|||")) {
+                    correctCount = ansStr.split("|||").filter(Boolean).length;
+                  } else if (ansStr.includes("/")) {
+                    const numerator = Number(ansStr.split("/")[0]);
+                    correctCount = isNaN(numerator) ? 0 : numerator;
+                  } else if (!isNaN(Number(ansStr))) {
+                    correctCount = Number(ansStr);
+                  } else {
+                    correctCount = ansStr.split(",").filter(Boolean).length;
+                  }
+                  totalExamPoints += q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
+                } else {
+                  const ans = mcAnswers[key] || "";
+                  if (ans === q.correct) totalExamPoints += 10;
+                }
+                examGradableQuestions++;
+              } else if (sec.type === "writing-tense-mcq") {
                 const ans = mcAnswers[key] || "";
                 if (ans === q.correct) totalExamPoints += 10;
                 examGradableQuestions++;
@@ -802,9 +899,20 @@ function ChiTietBaiTap() {
             let qScore = 0;
             if (questionType === "reading-vocab-mcq") {
               if (q.vocabPairs && q.vocabPairs.length > 0) {
-                const correctCount = mcAnswers[qIdx] ? Number(mcAnswers[qIdx]) : 0;
-                qResult.chosenAnswer = `${correctCount}/${q.vocabPairs.length}`;
-                qResult.correctAnswer = `${q.vocabPairs.length}/${q.vocabPairs.length}`;
+                const ansStr = mcAnswers[qIdx] || "";
+                let correctCount = 0;
+                if (ansStr.includes("|||")) {
+                  correctCount = ansStr.split("|||").filter(Boolean).length;
+                } else if (ansStr.includes("/")) {
+                  const numerator = Number(ansStr.split("/")[0]);
+                  correctCount = isNaN(numerator) ? 0 : numerator;
+                } else if (!isNaN(Number(ansStr))) {
+                  correctCount = Number(ansStr);
+                } else {
+                  correctCount = ansStr.split(",").filter(Boolean).length;
+                }
+                qResult.chosenAnswer = ansStr;
+                qResult.correctAnswer = q.vocabPairs.map((p: any) => p.word).join("|||");
                 qResult.score = q.vocabPairs.length > 0 ? (correctCount / q.vocabPairs.length) * 10 : 0;
               } else {
                 const ans = mcAnswers[qIdx] || "";
@@ -813,10 +921,24 @@ function ChiTietBaiTap() {
                 qResult.score = ans === q.correct ? 10 : 0;
               }
             } else if (questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple") {
-              const ans = mcAnswers[qIdx] || "";
-              qResult.chosenAnswer = ans;
-              qResult.correctAnswer = q.correct;
-              qResult.score = ans === q.correct ? 10 : 0;
+              if (q.subQuestions && q.subQuestions.length > 0) {
+                const subResults: any[] = [];
+                let correctSubCount = 0;
+                q.subQuestions.forEach((sub: any, subIdx: number) => {
+                  const ans = mcAnswers[`${qIdx}_${subIdx}`] || "";
+                  if (ans.trim().toUpperCase() === sub.correct?.trim().toUpperCase()) {
+                    correctSubCount++;
+                  }
+                  subResults.push({ chosen: ans, correct: sub.correct });
+                });
+                qResult.subQuestions = subResults;
+                qResult.score = q.subQuestions.length > 0 ? (correctSubCount / q.subQuestions.length) * 10 : 0;
+              } else {
+                const ans = mcAnswers[qIdx] || "";
+                qResult.chosenAnswer = ans;
+                qResult.correctAnswer = q.correct;
+                qResult.score = ans.trim().toUpperCase() === q.correct?.trim().toUpperCase() ? 10 : 0;
+              }
             } else if (questionType === "writing-find-mistakes") {
               const ans = mcAnswers[qIdx] || "";
               const typedCorrection = (essayAnswers[qIdx] || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -860,9 +982,18 @@ function ChiTietBaiTap() {
               if (recordedBlobs[qIdx]) {
                 const formData = new FormData();
                 formData.append("file", recordedBlobs[qIdx], `speaking-${qIdx}.webm`);
-                const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
-                const upData = await upRes.json();
-                url = upData.url || "";
+                try {
+                  const upRes = await fetch(`${API}/upload`, { method: "POST", body: formData });
+                  if (!upRes.ok) {
+                    const errMsg = await upRes.text();
+                    throw new Error(`Upload failed with status ${upRes.status}: ${errMsg}`);
+                  }
+                  const upData = await upRes.json();
+                  url = upData.url || "";
+                } catch (uploadError: any) {
+                  console.error("Upload error:", uploadError);
+                  throw new Error("Không thể tải file ghi âm lên máy chủ: " + (uploadError.message || uploadError));
+                }
               }
               qResult.audioUrl = url || recordedUrls[qIdx] || "";
               qResult.essayText = essayAnswers[qIdx] || "";
@@ -946,9 +1077,9 @@ function ChiTietBaiTap() {
         });
       }
 
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Lỗi khi nộp bài!");
+      alert("Lỗi khi nộp bài! Chi tiết: " + (e?.message || JSON.stringify(e)));
     } finally {
       setSubmitting(false);
     }
@@ -1486,7 +1617,7 @@ function ChiTietBaiTap() {
             const isFindMistakes = (exercise?.Type || "").toLowerCase() === "writing-find-mistakes";
 
             return (
-              <div key={pIdx} className="ad-page-container">
+              <div key={pIdx} className={`ad-page-container ${isModal ? "ad-page-readonly" : ""}`}>
                 {isFindMistakes ? (
                   <div className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: "24px 28px", borderRadius: 12, marginBottom: 20 }}>
                     {/* Tiêu đề đề bài hiển thị 1 lần trên cùng */}
@@ -1550,7 +1681,7 @@ function ChiTietBaiTap() {
 
       {/* SUBMIT BUTTON FOOTER */}
       <div className="ad-footer">
-        {isReview ? null : submitted ? (
+        {(isReview || isPreview) ? null : submitted ? (
           <button
             className="ad-submit-btn"
             style={{ backgroundColor: "#64748b" }}

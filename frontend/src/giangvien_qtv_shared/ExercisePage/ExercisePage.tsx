@@ -291,7 +291,7 @@ const ExercisePage = () => {
 
         <div className="exercise-grid">
           {filteredExercises.map((ex: any) => (
-            <div key={ex.MaBaiTap} className="exercise-card">
+            <div key={ex.MaBaiTap} className="exercise-card" style={{ height: '250px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1a202c', wordBreak: 'break-word', flex: 1 }}>{ex.Title}</h4>
                 {ex.TrangThai !== 'practice' && (
@@ -367,7 +367,7 @@ const ExercisePage = () => {
                 <FiCalendar size={14} />
                 {ex.CreatedDate && new Date(ex.CreatedDate).toLocaleDateString("vi-VN")}
               </span>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                 <button
                   onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
                   style={{

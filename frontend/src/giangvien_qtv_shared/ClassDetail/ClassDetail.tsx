@@ -298,7 +298,7 @@ const ClassDetail = () => {
           ) : (
             <div className="lesson-card-grid">
               {filteredExercises.map((ex: any) => (
-                <div key={ex.MaBaiTap} className="lesson-content-card">
+                <div key={ex.MaBaiTap} className="lesson-content-card" style={{ height: '260px', display: 'flex', flexDirection: 'column' }}>
                   <div className="lesson-content-head">
                     <h4>{ex.Title}</h4>
                     {ex.TrangThai !== "practice" && (
@@ -402,7 +402,7 @@ const ClassDetail = () => {
                     {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}
                   </span>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                     <button
                       onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
                       style={{

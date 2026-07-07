@@ -58,6 +58,10 @@ export const NoiTheoChuDe: React.FC<NoiTheoChuDeProps> = ({
 
   const startRecording = async (idx: number | string) => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Trình duyệt chặn truy cập microphone trên kết nối HTTP không bảo mật (IP). Vui lòng sử dụng địa chỉ 'localhost' hoặc kết nối HTTPS bảo mật để sử dụng micro!");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -75,8 +79,9 @@ export const NoiTheoChuDe: React.FC<NoiTheoChuDeProps> = ({
       timerRef.current = setInterval(() => {
         setRecordSeconds((prev) => ({ ...prev, [idx]: (prev[idx] || 0) + 1 }));
       }, 1000);
-    } catch {
-      alert("Không thể truy cập microphone. Vui lòng cấp quyền sử dụng microphone trong trình duyệt!");
+    } catch (err) {
+      console.error(err);
+      alert("Không thể truy cập microphone. Vui lòng nhấp vào biểu tượng ổ khóa hoặc micro ở bên trái thanh địa chỉ trình duyệt, chọn 'Cho phép (Allow)' cho Microphone, sau đó tải lại trang!");
     }
   };
 

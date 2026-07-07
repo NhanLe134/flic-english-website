@@ -902,6 +902,75 @@ const TaoBaiTap = () => {
       return;
     }
 
+    // Dạng Tìm lỗi sai (writing-find-mistakes)
+    if (targetType === "writing-find-mistakes") {
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
+      const parsed: any[] = [];
+
+      for (const block of qBlocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) continue;
+
+        let questionText = "";
+        let incorrectSegment = "";
+        let correctSeg = "";
+        let explanation = "";
+
+        for (let line of lines) {
+          if (/^(Từ sai|Lỗi sai|Incorrect|Wrong)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            incorrectSegment = line.match(/^(Từ sai|Lỗi sai|Incorrect|Wrong)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else if (/^(Sửa lại|Corrected|Right|Correct)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            correctSeg = line.match(/^(Sửa lại|Corrected|Right|Correct)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else {
+            if (!incorrectSegment && !correctSeg && !explanation) {
+              if (questionText) questionText += "\n";
+              questionText += line;
+            } else {
+              if (explanation) {
+                explanation += "\n" + line;
+              }
+            }
+          }
+        }
+
+        questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+        const segments = questionText.split("  ").map((s: string) => s.trim()).filter(Boolean);
+
+        parsed.push({
+          question: questionText,
+          answers: segments,
+          correct: incorrectSegment,
+          correctSentence: correctSeg,
+          explanation: explanation,
+          audioUrl: "",
+          imageUrl: "",
+          text: "",
+          prompt: "",
+          vocabPairs: [{ word: "", meaning: "" }],
+          fillInAnswers: [],
+          sentences: [""]
+        });
+      }
+
+      if (parsed.length > 0) {
+        if (secIdx !== undefined) {
+          const copy = [...examSections];
+          copy[secIdx].questions = parsed;
+          setExamSections(copy);
+          alert(`Đã quét và điền thành công Phần ${secIdx + 1} với ${parsed.length} câu tìm lỗi sai!`);
+        } else {
+          setQuestions(parsed);
+          alert(`Đã quét thành công ${parsed.length} câu tìm lỗi sai!`);
+        }
+      } else {
+        alert("Không thể phân tích câu hỏi tìm lỗi sai nào. Vui lòng kiểm tra lại định dạng file.");
+      }
+      return;
+    }
+
     // 3. Dạng trắc nghiệm phẳng (writing-tense-mcq)
     if (targetType === "writing-tense-mcq") {
       const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
@@ -2296,14 +2365,18 @@ const TaoBaiTap = () => {
         {!isMiniTest && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 15 }}>
             <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Hạn nộp bài (Deadline)</label>
-              <input
-                type="datetime-local"
-                className="exercise-type"
-                style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-              />
+              {(!isExam || (isExam && openingMode === "scheduled")) && (
+                <>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Hạn nộp bài (Deadline)</label>
+                  <input
+                    type="datetime-local"
+                    className="exercise-type"
+                    style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+                    value={deadline}
+                    onChange={e => setDeadline(e.target.value)}
+                  />
+                </>
+              )}
             </div>
             <div style={{ display: "flex", gap: "40px", alignItems: "center", paddingTop: "24px", paddingLeft: "10px" }}>
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -2359,7 +2432,13 @@ const TaoBaiTap = () => {
                         className="exercise-type"
                         style={{ width: '100%', marginTop: 0, marginBottom: 0, height: "38px" }}
                         value={openingMode}
-                        onChange={e => setOpeningMode(e.target.value as any)}
+                        onChange={e => {
+                          const val = e.target.value as any;
+                          setOpeningMode(val);
+                          if (val === "manual") {
+                            setDeadline("");
+                          }
+                        }}
                       >
                         <option value="scheduled">Tự động mở theo lịch</option>
                         <option value="manual">Đóng/Mở thủ công</option>
@@ -2796,6 +2875,17 @@ const TaoBaiTap = () => {
                         `D. Track maintenance\n` +
                         `Đáp án đúng: B\n` +
                         `Giải thích: Tàu hoãn do sự cố kỹ thuật đường ray (tùy chọn)`
+                      ) : sec.type === "writing-find-mistakes" ? (
+                        `Mẫu file Tìm lỗi sai:\n` +
+                        `Lưu ý: Dùng 2 khoảng trắng liên tiếp (dấu cách kép) để phân tách các đoạn từ trong câu văn gốc.\n\n` +
+                        `Câu 1: By the time  you  will arrive  I'll have already left.\n` +
+                        `Từ sai: will arrive\n` +
+                        `Sửa lại: arrive\n` +
+                        `Giải thích: Thì tương lai đơn không dùng sau liên từ chỉ thời gian "by the time" (tùy chọn)\n\n` +
+                        `Câu 2: Neither  of the boys  are  present.\n` +
+                        `Từ sai: are\n` +
+                        `Sửa lại: is\n` +
+                        `Giải thích: Chủ ngữ "Neither of..." đi với động từ số ít (tùy chọn)`
                       ) : sec.type === "writing-tense-mcq" ? (
                         `Mẫu file Trắc nghiệm MCQ:\n` +
                         `Câu 1: She _______ English for 5 years.\n` +

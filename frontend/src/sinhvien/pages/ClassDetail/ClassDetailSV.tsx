@@ -49,6 +49,39 @@ interface Lesson {
   TrangThaiDuyet: string;
 }
 
+const getExerciseDeadline = (ex: any) => {
+  let deadlineStr = "";
+  if (ex.Content) {
+    try {
+      const parsed = typeof ex.Content === "string" ? JSON.parse(ex.Content) : ex.Content;
+      if (parsed && (parsed.deadline || parsed.deadlineDate)) {
+        deadlineStr = parsed.deadline || parsed.deadlineDate;
+      }
+    } catch (e) {
+      console.error("Error parsing content for deadline:", e);
+    }
+  }
+  return deadlineStr;
+};
+
+const formatDeadline = (deadlineStr: string) => {
+  if (!deadlineStr) return "—";
+  const date = new Date(deadlineStr);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+};
+
+const isDeadlineOverdue = (deadlineStr: string) => {
+  if (!deadlineStr) return false;
+  return new Date().getTime() > new Date(deadlineStr).getTime();
+};
+
 export default function ClassDetailSV() {
   const { id, lessonId, tab, itemId } = useParams<{ id: string; lessonId?: string; tab?: string; itemId?: string }>();
   const classId = Number(id);
@@ -60,6 +93,8 @@ export default function ClassDetailSV() {
   const [error, setError] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingReview, setPendingReview] = useState<{ sub: any; selectedExercise: any } | null>(null);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
@@ -296,10 +331,19 @@ export default function ClassDetailSV() {
   const mapTypeToSkillName = (type?: string) => {
     if (!type) return "";
     const t = type.toLowerCase().trim();
-    if (t === "listening" || t === "l" || t === "nghe") return "Listening";
-    if (t === "reading" || t === "r" || t === "đọc" || t === "doc") return "Reading";
-    if (t === "writing" || t === "w" || t === "viết" || t === "viet") return "Writing";
-    if (t === "speaking" || t === "s" || t === "nói" || t === "noi") return "Speaking";
+
+    if (t.includes("listening") || t.includes("nghe") || t.includes("l") || t.includes("hình ảnh chọn đáp án") || t.includes("điền từ vào đoạn văn")) {
+      return "Listening";
+    }
+    if (t.includes("reading") || t.includes("đọc") || t.includes("doc") || t.includes("r") || t.includes("từ vựng") || t.includes("nối từ")) {
+      return "Reading";
+    }
+    if (t.includes("writing") || t.includes("viết") || t.includes("viet") || t.includes("w") || t.includes("sắp xếp") || t.includes("tìm lỗi sai") || t.includes("trắc nghiệm")) {
+      return "Writing";
+    }
+    if (t.includes("speaking") || t.includes("nói") || t.includes("noi") || t.includes("s") || t.includes("phát âm")) {
+      return "Speaking";
+    }
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
@@ -627,7 +671,7 @@ export default function ClassDetailSV() {
                                             <th style={{ textAlign: "center" }}>#</th>
                                             <th>Tên bài luyện tập thêm</th>
                                             <th style={{ textAlign: "center" }}>Phân loại</th>
-                                            <th style={{ textAlign: "center" }}>Ngày tạo</th>
+                                            <th style={{ textAlign: "center" }}>Hạn nộp bài</th>
                                             <th style={{ textAlign: "center" }}>Số lần làm bài</th>
                                             <th style={{ textAlign: "center" }}>Điểm số</th>
                                           </tr>
@@ -645,8 +689,8 @@ export default function ClassDetailSV() {
                                               }
                                             }
                                             return (
-                                              <tr 
-                                                key={ex.MaBaiTap} 
+                                              <tr
+                                                key={ex.MaBaiTap}
                                                 id={`ex-${ex.MaBaiTap}`}
                                                 style={{ cursor: "pointer" }}
                                                 onClick={() => setSelectedExercise({ ...ex, activeTab: 'practices', lesson })}
@@ -654,7 +698,15 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
-                                                <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                                {(() => {
+                                                  const dlStr = getExerciseDeadline(ex);
+                                                  const overdue = isDeadlineOverdue(dlStr);
+                                                  return (
+                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                      {formatDeadline(dlStr)}
+                                                    </td>
+                                                  );
+                                                })()}
                                                 <td style={{ textAlign: "center" }}>{attempts}</td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
                                               </tr>
@@ -682,10 +734,9 @@ export default function ClassDetailSV() {
                                             <th style={{ textAlign: "center" }}>#</th>
                                             <th>Tên bài tập</th>
                                             <th style={{ textAlign: "center" }}>Phân loại</th>
-                                            <th style={{ textAlign: "center" }}>Ngày tạo</th>
+                                            <th style={{ textAlign: "center" }}>Hạn nộp bài</th>
                                             <th style={{ textAlign: "center" }}>Số lần làm bài</th>
                                             <th style={{ textAlign: "center" }}>Điểm số</th>
-                                            <th style={{ textAlign: "center" }}>Hành động</th>
                                           </tr>
                                         </thead>
                                         <tbody>
@@ -701,8 +752,8 @@ export default function ClassDetailSV() {
                                               }
                                             }
                                             return (
-                                              <tr 
-                                                key={ex.MaBaiTap} 
+                                              <tr
+                                                key={ex.MaBaiTap}
                                                 id={`ex-${ex.MaBaiTap}`}
                                                 style={{ cursor: "pointer" }}
                                                 onClick={() => setSelectedExercise({ ...ex, activeTab: 'exams', lesson })}
@@ -710,9 +761,18 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
-                                                <td style={{ textAlign: "center" }}>{ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "—"}</td>
+                                                {(() => {
+                                                  const dlStr = getExerciseDeadline(ex);
+                                                  const overdue = isDeadlineOverdue(dlStr);
+                                                  return (
+                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                      {formatDeadline(dlStr)}
+                                                    </td>
+                                                  );
+                                                })()}
                                                 <td style={{ textAlign: "center" }}>{attempts}</td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
+
                                               </tr>
                                             );
                                           })}
@@ -742,8 +802,8 @@ export default function ClassDetailSV() {
       {selectedExercise && (
         <div className="exit-confirm-modal-backdrop" onClick={() => setSelectedExercise(null)}>
           <div className="exit-confirm-modal-card" style={{ maxWidth: "420px", textAlign: "left", position: "relative" }} onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="exit-modal-close-x" 
+            <button
+              className="exit-modal-close-x"
               onClick={() => setSelectedExercise(null)}
               title="Đóng"
             >
@@ -752,7 +812,7 @@ export default function ClassDetailSV() {
             <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "700", color: "#1e3a8a", paddingRight: "24px" }}>
               {selectedExercise.Title}
             </h3>
-            
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
                 <span style={{ color: "#64748b", fontSize: "14px" }}>Phân loại:</span>
@@ -771,7 +831,7 @@ export default function ClassDetailSV() {
               {(() => {
                 const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap))
                   .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
-                
+
                 if (exSubs.length === 0) {
                   return (
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "4px" }}>
@@ -799,9 +859,8 @@ export default function ClassDetailSV() {
                               className="ld2-review-btn"
                               style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
                               onClick={() => {
-                                const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                                navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
-                                setSelectedExercise(null);
+                                setPendingReview({ sub, selectedExercise });
+                                setShowConfirmModal(true);
                               }}
                             >
                               Xem lại
@@ -814,19 +873,117 @@ export default function ClassDetailSV() {
                 );
               })()}
             </div>
-            
-            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+
+            {(() => {
+              const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap));
+              const lastSub = exSubs.length > 0 ? exSubs[exSubs.length - 1] : null;
+              const attemptsCount = lastSub ? (lastSub.SoLanLamBai || 1) : 0;
+              const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+
+              const isMaxAttempt = attemptsCount >= 3;
+              const isDisabled = isMaxAttempt || hasReviewed;
+
+              let buttonText = "Làm bài";
+              let tooltipText = "";
+              if (attemptsCount > 0) {
+                buttonText = "Làm lại";
+              }
+              if (isMaxAttempt) {
+                tooltipText = "Bạn đã đạt giới hạn làm bài (tối đa 3 lần).";
+              } else if (hasReviewed) {
+                tooltipText = "Bạn đã xem giải thích đáp án, không thể làm lại.";
+              }
+
+              return (
+                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", alignItems: "center" }}>
+                  {tooltipText && (
+                    <span style={{ color: "#ef4444", fontSize: "12px", fontWeight: "600" }}>
+                      {tooltipText}
+                    </span>
+                  )}
+                  <button
+                    className="ld2-open-btn"
+                    style={{
+                      padding: "10px 20px",
+                      opacity: isDisabled ? 0.5 : 1,
+                      cursor: isDisabled ? "not-allowed" : "pointer",
+                      backgroundColor: isDisabled ? "#cbd5e1" : "#f95800"
+                    }}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                      navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`);
+                      setSelectedExercise(null);
+                    }}
+                  >
+                    {buttonText}
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {showConfirmModal && (
+        <div className="auth-modal-backdrop confirm-modal-backdrop" onClick={() => {
+          setShowConfirmModal(false);
+          setPendingReview(null);
+        }}>
+          <div className="auth-modal-card-wrapper confirm-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="auth-modal-header">
+              <h2 className="auth-modal-header-title">Xác nhận xem lại</h2>
               <button
-                className="ld2-open-btn"
-                style={{ padding: "10px 20px" }}
+                className="auth-modal-close-btn-new"
                 onClick={() => {
-                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                  navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`);
-                  setSelectedExercise(null);
+                  setShowConfirmModal(false);
+                  setPendingReview(null);
                 }}
+                type="button"
               >
-                Làm bài
+                &times;
               </button>
+            </div>
+            <div className="auth-modal-body confirm-modal-body">
+              <p className="confirm-modal-text">
+                Nếu xem lại đáp án và giải thích, bạn sẽ <strong>KHÔNG</strong> được thực hiện lại (làm lại) bài tập này nữa.
+                <br /><br />
+                Bạn có chắc chắn muốn xem lại không?
+              </p>
+              <div className="confirm-modal-actions">
+                <button className="confirm-btn-cancel" onClick={() => {
+                  setShowConfirmModal(false);
+                  setPendingReview(null);
+                }}>
+                  Hủy
+                </button>
+                <button className="confirm-btn-ok" onClick={async () => {
+                  setShowConfirmModal(false);
+                  if (pendingReview) {
+                    const { sub, selectedExercise: selEx } = pendingReview;
+                    try {
+                      const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+                      const userObj = JSON.parse(userStr || "{}");
+                      await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          MaSinhVien: userObj.MaSinhVien || userObj.MaNguoiDung,
+                          MaBaiTap: selEx.MaBaiTap
+                        })
+                      });
+                    } catch (e) {
+                      console.error("Error setting review flag:", e);
+                    }
+                    const tabKey = selEx.activeTab === 'practices' ? 'lt' : 'bt';
+                    navigate(`/MyCourses/${info?.MaLopHoc}/${selEx.lesson.MaLesson}/${tabKey}/${selEx.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
+                    setSelectedExercise(null);
+                  }
+                  setPendingReview(null);
+                }}>
+                  Đồng ý
+                </button>
+              </div>
             </div>
           </div>
         </div>

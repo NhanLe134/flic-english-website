@@ -1470,3 +1470,17 @@ audio {
 .exit-modal-close-x:hover {
   color: #475569;
 }
+
+/* Read-only styles for assignment detail modal */
+.ad-page-readonly {
+  pointer-events: none !important;
+}
+
+.ad-page-readonly .ad-audio-player,
+.ad-page-readonly audio,
+.ad-page-readonly button,
+.ad-page-readonly [class*="audio-player"],
+.ad-page-readonly [class*="play"],
+.ad-page-readonly [class*="cap-"] {
+  pointer-events: auto !important;
+}

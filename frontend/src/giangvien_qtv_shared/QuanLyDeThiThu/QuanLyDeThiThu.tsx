@@ -1305,8 +1305,7 @@ D. Visiting friends
         className={`cd-wrapper anim-fade-in ${isQTV ? "qtv-compact" : ""}`}
         style={{
           paddingBottom: "60px",
-          maxWidth: isQTV ? "1200px" : "100%",
-          margin: isQTV ? "0 auto" : undefined,
+          maxWidth: "100%",
           boxSizing: "border-box",
           overflowX: "hidden"
         }}
