@@ -1,4 +1,4 @@
-﻿import "./ClassDetailSV.css";
+import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -94,7 +94,7 @@ export default function ClassDetailSV() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingReviewAction, setPendingReviewAction] = useState<(() => void) | null>(null);
+  const [pendingReview, setPendingReview] = useState<{ sub: any; selectedExercise: any } | null>(null);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
@@ -859,25 +859,7 @@ export default function ClassDetailSV() {
                               className="ld2-review-btn"
                               style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
                               onClick={() => {
-                                setPendingReviewAction(() => async () => {
-                                  try {
-                                    const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
-                                    const userObj = JSON.parse(userStr || "{}");
-                                    await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
-                                      method: "PUT",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({
-                                        MaSinhVien: userObj.MaSinhVien || userObj.MaNguoiDung,
-                                        MaBaiTap: selectedExercise.MaBaiTap
-                                      })
-                                    });
-                                  } catch (e) {
-                                    console.error("Error setting review flag:", e);
-                                  }
-                                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                                  navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
-                                  setSelectedExercise(null);
-                                });
+                                setPendingReview({ sub, selectedExercise });
                                 setShowConfirmModal(true);
                               }}
                             >
@@ -946,7 +928,7 @@ export default function ClassDetailSV() {
       {showConfirmModal && (
         <div className="auth-modal-backdrop confirm-modal-backdrop" onClick={() => {
           setShowConfirmModal(false);
-          setPendingReviewAction(null);
+          setPendingReview(null);
         }}>
           <div className="auth-modal-card-wrapper confirm-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="auth-modal-header">
@@ -955,7 +937,7 @@ export default function ClassDetailSV() {
                 className="auth-modal-close-btn-new"
                 onClick={() => {
                   setShowConfirmModal(false);
-                  setPendingReviewAction(null);
+                  setPendingReview(null);
                 }}
                 type="button"
               >
@@ -964,19 +946,40 @@ export default function ClassDetailSV() {
             </div>
             <div className="auth-modal-body confirm-modal-body">
               <p className="confirm-modal-text">
-                Nếu xem lại đáp án và giải thích, <br /> bạn sẽ <strong>KHÔNG</strong> được làm lại bài tập này nữa.
+                Nếu xem lại đáp án và giải thích, bạn sẽ <strong>KHÔNG</strong> được thực hiện lại (làm lại) bài tập này nữa.
+                <br /><br />
+                Bạn có chắc chắn muốn xem lại không?
               </p>
               <div className="confirm-modal-actions">
                 <button className="confirm-btn-cancel" onClick={() => {
                   setShowConfirmModal(false);
-                  setPendingReviewAction(null);
+                  setPendingReview(null);
                 }}>
                   Hủy
                 </button>
-                <button className="confirm-btn-ok" onClick={() => {
+                <button className="confirm-btn-ok" onClick={async () => {
                   setShowConfirmModal(false);
-                  if (pendingReviewAction) pendingReviewAction();
-                  setPendingReviewAction(null);
+                  if (pendingReview) {
+                    const { sub, selectedExercise: selEx } = pendingReview;
+                    try {
+                      const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+                      const userObj = JSON.parse(userStr || "{}");
+                      await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          MaSinhVien: userObj.MaSinhVien || userObj.MaNguoiDung,
+                          MaBaiTap: selEx.MaBaiTap
+                        })
+                      });
+                    } catch (e) {
+                      console.error("Error setting review flag:", e);
+                    }
+                    const tabKey = selEx.activeTab === 'practices' ? 'lt' : 'bt';
+                    navigate(`/MyCourses/${info?.MaLopHoc}/${selEx.lesson.MaLesson}/${tabKey}/${selEx.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
+                    setSelectedExercise(null);
+                  }
+                  setPendingReview(null);
                 }}>
                   Đồng ý
                 </button>
