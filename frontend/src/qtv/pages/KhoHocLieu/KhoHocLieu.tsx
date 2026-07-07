@@ -37,18 +37,18 @@ interface Document {
 
 const mapDangBaiToVi = (type: string): string => {
   const t = (type || "").toLowerCase();
-  if (t === "listening-mcq" || t === "listening") return "Nghe trắc nghiệm";
-  if (t === "listening-image") return "Nghe chọn hình ảnh";
-  if (t === "listening-dictation") return "Nghe chép chính tả";
-  if (t === "listening-fill-in") return "Điền từ đoạn văn";
-  if (t === "speaking-pronounce") return "Luyện phát âm";
-  if (t === "speaking-topic") return "Nói theo chủ đề";
-  if (t === "reading-split") return "Đọc chia đôi màn hình";
-  if (t === "reading-vocab-mcq") return "Bài tập từ vựng";
-  if (t === "writing-order-words") return "Sắp xếp từ";
-  if (t === "writing-tense-mcq") return "Trắc nghiệm ngữ pháp";
-  if (t === "writing-essay") return "Tự luận viết";
-  if (t === "writing-order-sentences") return "Sắp xếp câu";
+  if (t === "Nghe audio trắc nghiệm" || t === "listening") return "Nghe trắc nghiệm";
+  if (t === "Hình ảnh chọn đáp án") return "Nghe chọn hình ảnh";
+  if (t === "Nghe chép chính tả") return "Nghe chép chính tả";
+  if (t === "Điền từ vào đoạn văn") return "Điền từ đoạn văn";
+  if (t === "Luyện phát âm (check phát âm tự động)") return "Luyện phát âm";
+  if (t === "Nói theo chủ đề (ghi âm nộp GV)") return "Nói theo chủ đề";
+  if (t === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "Đọc chia đôi màn hình";
+  if (t === "Nối từ") return "Bài tập từ vựng";
+  if (t === "Sắp xếp từ thành câu") return "Sắp xếp từ";
+  if (t === "Trắc nghiệm") return "Trắc nghiệm ngữ pháp";
+  if (t === "Viết đoạn văn ngắn") return "Tự luận viết";
+  if (t === "Sắp xếp câu thành đoạn văn") return "Sắp xếp câu";
   if (t === "exam") return "Bài kiểm tra";
   return type;
 };

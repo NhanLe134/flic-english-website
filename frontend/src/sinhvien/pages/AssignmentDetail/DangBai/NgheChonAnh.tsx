@@ -1,5 +1,5 @@
 import React from "react";
-import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
+import { CustomAudioPlayer } from "../../../components/CustomAudioPlayer/CustomAudioPlayer";
 import { CauHoiTracNghiem } from "./CauHoiTracNghiem";
 import "./NgheChonAnh.css";
 

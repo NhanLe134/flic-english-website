@@ -3,7 +3,7 @@ import styles from "./BaoCaoKetQuaQTV.module.css"
 import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
 import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
-import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap"
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap"
 
 const API = 'http://14.225.192.252:5000'
 

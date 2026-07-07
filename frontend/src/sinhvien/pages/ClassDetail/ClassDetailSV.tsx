@@ -50,6 +50,7 @@ interface Lesson {
 }
 
 const getExerciseDeadline = (ex: any) => {
+  if (ex.HanNop) return ex.HanNop;
   let deadlineStr = "";
   if (ex.Content) {
     try {

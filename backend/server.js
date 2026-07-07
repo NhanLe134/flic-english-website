@@ -905,7 +905,7 @@ app.get("/baitap/buoihoc/:buoiHocId", async (req, res) => {
         SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                CAST(e.LaBaiKiemTra AS INT) AS IsExam,
                e.NgayTao AS CreatedDate, e.TrangThai, e.TrangThaiDuyet,
-               e.MaBaiHoc, e.HocThuMienPhi, e.NoiDung AS Content
+               e.MaBaiHoc, e.HocThuMienPhi, e.NoiDung AS Content, e.HanNop
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         WHERE bh.MaBuoiHoc = @buoiHocId
@@ -916,7 +916,7 @@ app.get("/baitap/buoihoc/:buoiHocId", async (req, res) => {
                1 AS IsExam,
                NULL AS CreatedDate, k.TrangThai,
                CASE WHEN k.TrangThai = 'published' THEN N'Đã duyệt' WHEN k.TrangThai = 'rejected' THEN N'Từ chối' ELSE N'Chờ duyệt' END AS TrangThaiDuyet,
-               NULL AS MaBaiHoc, 0 AS HocThuMienPhi, k.NoiDung AS Content
+               NULL AS MaBaiHoc, 0 AS HocThuMienPhi, k.NoiDung AS Content, NULL AS HanNop
         FROM BAIKIEMTRA k
         WHERE k.MaBuoiHoc = @buoiHocId
       `);
@@ -2359,6 +2359,16 @@ app.post("/baitap/create", async (req, res) => {
         return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
       }
 
+      let deadlineVal = null;
+      if (Content && typeof Content === "string" && Content.trim().startsWith("{")) {
+        try {
+          const parsed = JSON.parse(Content);
+          deadlineVal = parsed.deadline || parsed.deadlineDate || null;
+        } catch (e) {
+          console.error("Error parsing content for deadline in create:", e);
+        }
+      }
+
       await pool.request()
         .input("TieuDe",        Title)
         .input("DangBai",       DangBai || Type || null)
@@ -2376,11 +2386,12 @@ app.post("/baitap/create", async (req, res) => {
         .input("MaGiangVien",   resolvedMaGiangVien || null)
         .input("FileDinhKem",   FileDinhKem || null)
         .input("MaNguoiDung",   MaGiangVien || null)
+        .input("HanNop",        deadlineVal)
         .query(`
           INSERT INTO BAITAP
-            (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem, MaNguoiDung)
+            (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem, MaNguoiDung, HanNop)
           VALUES
-            (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem, @MaNguoiDung)
+            (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem, @MaNguoiDung, @HanNop)
         `);
 
       res.json({ message: "Thêm bài tập thành công" });
@@ -3928,7 +3939,7 @@ app.get("/classes/:id/baitap", async (req, res) => {
       .query(`
         SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                CAST(e.LaBaiKiemTra AS INT) AS IsExam,
-               bh.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, e.TrangThai
+               bh.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, e.TrangThai, e.NoiDung AS Content, e.HanNop
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         JOIN BUOIHOC l ON bh.MaBuoiHoc = l.MaBuoiHoc
@@ -3938,7 +3949,7 @@ app.get("/classes/:id/baitap", async (req, res) => {
 
         SELECT k.MaBaiKiemTra AS MaBaiTap, k.TenBai AS Title, 'exam' AS Type, 
                1 AS IsExam,
-               k.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, k.TrangThai
+               k.MaBuoiHoc, l.ThuTu AS ThuTuBuoiHoc, k.TrangThai, k.NoiDung AS Content, NULL AS HanNop
         FROM BAIKIEMTRA k
         JOIN BUOIHOC l ON k.MaBuoiHoc = l.MaBuoiHoc
         WHERE l.MaLopHoc = @id AND (k.TrangThai = 'published' OR k.TrangThai = 'Đã duyệt' OR k.TrangThaiDuyet = 'Đã duyệt' OR k.TrangThai IS NULL)
@@ -4662,11 +4673,12 @@ app.post("/exercises/:id/clone", async (req, res) => {
       .input("KyNang", ex.KyNang || "")
       .input("MaGiangVien", ex.MaGiangVien || null)
       .input("FileDinhKem", ex.FileDinhKem || null)
+      .input("HanNop", ex.HanNop || null)
       .query(`
         INSERT INTO BAITAP 
-          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, MaGiangVien, FileDinhKem)
+          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, MaGiangVien, FileDinhKem, HanNop)
         VALUES 
-          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @CreatedDate, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @KyNang, @MaGiangVien, @FileDinhKem)
+          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @CreatedDate, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @KyNang, @MaGiangVien, @FileDinhKem, @HanNop)
       `);
       
     res.json({ message: "Sao chép bài tập thành công" });

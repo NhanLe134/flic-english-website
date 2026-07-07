@@ -90,7 +90,7 @@ const ChamBaiPage = () => {
   // ── Normalize type ─────────────────────────────────────────────────────────
   const normalizedType: string =
     ["writing", "reading", "essay"].includes(exType)     ? "essay"      :
-    ["multiple", "quiz", "trắc nghiệm"].includes(exType) ? "multiple"   :
+    ["Tổng hợp", "quiz", "trắc nghiệm"].includes(exType) ? "Tổng hợp"   :
     ["listening", "nghe"].includes(exType)               ? "listening"  :
     ["matching", "ghép"].includes(exType)                ? "matching"   :
     ["connect", "nối"].includes(exType)                  ? "connect"    :
@@ -99,7 +99,7 @@ const ChamBaiPage = () => {
     ["vocabulary", "từ vựng", "vocab"].includes(exType)  ? "vocabulary" :
     exType;
 
-  const isMultiple  = normalizedType === "multiple";
+  const isMultiple  = normalizedType === "Tổng hợp";
   const isListening = normalizedType === "listening";
   const isMC        = isMultiple || isListening;
 
@@ -262,7 +262,7 @@ const ChamBaiPage = () => {
                     }}
                   />
 
-                  {sec.type === "listening-mcq" && (
+                  {sec.type === "Nghe audio trắc nghiệm" && (
                     <div>
                       {exerciseSection?.audioUrl && (
                         <div style={{ marginBottom: 12 }}>
@@ -299,7 +299,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "reading-split" && (
+                  {sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
                     <div>
                       {exerciseSection?.content && (
                         <div style={{ background: "#fff", border: "1px solid #e0d4c3", borderRadius: 8, padding: 12, marginBottom: 15, maxHeight: 150, overflowY: "auto" }}>
@@ -329,7 +329,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "writing-essay" && (
+                  {sec.type === "Viết đoạn văn ngắn" && (
                     <div>
                       <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
                         <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }} dangerouslySetInnerHTML={{ __html: exerciseSection?.content }} />
@@ -345,7 +345,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "speaking-topic" && (
+                  {sec.type === "Nói theo chủ đề (ghi âm nộp GV)" && (
                     <div>
                       {exerciseSection?.questions && exerciseSection.questions.length > 0 ? (
                         exerciseSection.questions.map((q: any, qIdx: number) => (
@@ -387,18 +387,18 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {(sec.type === "listening-image" || sec.type === "writing-tense-mcq" || sec.type === "multiple") && (
+                  {(sec.type === "Hình ảnh chọn đáp án" || sec.type === "Trắc nghiệm" || sec.type === "Tổng hợp") && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
-                        const isFlatMC = sec.type === "listening-image" || sec.type === "writing-tense-mcq";
+                        const isFlatMC = sec.type === "Hình ảnh chọn đáp án" || sec.type === "Trắc nghiệm";
                         const hasSubQ = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
                         return (
                           <div key={qIdx} style={{ marginTop: 10, borderBottom: "1px dashed #e0d8cc", paddingBottom: 15 }}>
-                            {sec.type === "listening-image" && q.imageUrl && (
+                            {sec.type === "Hình ảnh chọn đáp án" && q.imageUrl && (
                               <img src={`${API}${q.imageUrl}`} alt="Prompt visual" style={{ maxHeight: 120, display: "block", marginBottom: 8 }} />
                             )}
-                            {sec.type === "listening-image" && q.audioUrl && (
+                            {sec.type === "Hình ảnh chọn đáp án" && q.audioUrl && (
                               <audio src={`${API}${q.audioUrl}`} controls style={{ width: "100%", marginBottom: 8 }} />
                             )}
                             {q.prompt && (
@@ -420,7 +420,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "reading-vocab-mcq" && (
+                  {sec.type === "Nối từ" && (
                     <div>
                       {exerciseSection?.questions?.map((_: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
@@ -465,7 +465,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "listening-dictation" && (
+                  {sec.type === "Nghe chép chính tả" && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
@@ -491,7 +491,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "listening-fill-in" && (
+                  {sec.type === "Điền từ vào đoạn văn" && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
@@ -517,7 +517,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "speaking-pronounce" && (
+                  {sec.type === "Luyện phát âm (check phát âm tự động)" && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
@@ -545,7 +545,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "writing-order-words" && (
+                  {sec.type === "Sắp xếp từ thành câu" && (
                     <div>
                       {exerciseSection?.questions?.map((q: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
@@ -572,7 +572,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {sec.type === "writing-order-sentences" && (
+                  {sec.type === "Sắp xếp câu thành đoạn văn" && (
                     <div>
                       {exerciseSection?.questions?.map((_: any, qIdx: number) => {
                         const qSub = sec.questions?.[qIdx] || {};
@@ -599,7 +599,7 @@ const ChamBaiPage = () => {
         ) : !(isExam || hasSections) && parsedSubmission ? (
           /* ── CASE 2: REGULAR MULTIPLE QUESTIONS (JSON LIST) ── */
           <div>
-            {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "listening-mcq" && (
+            {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "Nghe audio trắc nghiệm" && (
               <div style={{
                 background: "#fff",
                 border: "1.5px solid #e0d8cc",
@@ -617,16 +617,16 @@ const ChamBaiPage = () => {
             {parsedSubmission.questions.map((q: any, qIdx: number) => {
               const exerciseQuestion = questionsList[qIdx] || {};
               const questionType = q.type || "";
-              const isFlatMC = questionType === "listening-image" || questionType === "writing-tense-mcq";
+              const isFlatMC = questionType === "Hình ảnh chọn đáp án" || questionType === "Trắc nghiệm";
 
               return (
                 <div key={qIdx} style={{ border: "1.5px solid #e0d8cc", borderRadius: 10, padding: 16, marginBottom: 20, background: "#fafafa" }}>
                   <h4 style={{ color: "#5a3e2b", marginTop: 0, marginBottom: 10 }}>Câu hỏi {qIdx + 1} ({questionType.replace("-", " ")})</h4>
 
                   {/* MCQ / image MCQ rendering */}
-                  {(questionType === "listening-mcq" || questionType === "writing-tense-mcq" || questionType === "multiple" || questionType === "listening-image") && (
+                  {(questionType === "Nghe audio trắc nghiệm" || questionType === "Trắc nghiệm" || questionType === "Tổng hợp" || questionType === "Hình ảnh chọn đáp án") && (
                     <div>
-                      {exerciseQuestion.audioUrl && !(questionType === "listening-mcq" && exercise?.AudioUrl) && (
+                      {exerciseQuestion.audioUrl && !(questionType === "Nghe audio trắc nghiệm" && exercise?.AudioUrl) && (
                         <div style={{ marginBottom: 10 }}><audio controls style={{ width: "100%" }}><source src={`${API}${exerciseQuestion.audioUrl}`} /></audio></div>
                       )}
                       {exerciseQuestion.prompt && (
@@ -645,7 +645,7 @@ const ChamBaiPage = () => {
                     </div>
                   )}
 
-                  {questionType === "reading-vocab-mcq" && (
+                  {questionType === "Nối từ" && (
                     <div style={{ marginTop: 10, background: "#fff", padding: 16, borderRadius: 10, border: "1px solid #e0d8cc" }}>
                       <h5 style={{ color: "#000080", fontSize: 14, fontWeight: 700, margin: "0 0 10px 0" }}>Kết quả bài Nối từ vựng (Anh - Anh diễn giải):</h5>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -683,7 +683,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Dictation */}
-                  {questionType === "listening-dictation" && (
+                  {questionType === "Nghe chép chính tả" && (
                     <div>
                       {exerciseQuestion.audioUrl && (
                         <div style={{ marginBottom: 10 }}><audio controls style={{ width: "100%" }}><source src={`${API}${exerciseQuestion.audioUrl}`} /></audio></div>
@@ -703,7 +703,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Fill in blank */}
-                  {questionType === "listening-fill-in" && (
+                  {questionType === "Điền từ vào đoạn văn" && (
                     <div>
                       {exerciseQuestion.audioUrl && (
                         <div style={{ marginBottom: 10 }}><audio controls style={{ width: "100%" }}><source src={`${API}${exerciseQuestion.audioUrl}`} /></audio></div>
@@ -725,7 +725,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Pronounce speaking */}
-                  {questionType === "speaking-pronounce" && (
+                  {questionType === "Luyện phát âm (check phát âm tự động)" && (
                     <div>
                       <div style={{ background: "#eff6ff", padding: 10, borderRadius: 8, marginBottom: 10 }}>
                         <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8" }}>Đoạn văn mẫu:</p>
@@ -745,7 +745,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Speaking topic */}
-                  {questionType === "speaking-topic" && (
+                  {questionType === "Nói theo chủ đề (ghi âm nộp GV)" && (
                     <div>
                       <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
                         <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{exerciseQuestion.prompt}</p>
@@ -768,7 +768,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Order words */}
-                  {questionType === "writing-order-words" && (
+                  {questionType === "Sắp xếp từ thành câu" && (
                     <div>
                       <div style={{ background: "#fcf9f2", padding: 10, borderRadius: 8, marginBottom: 10 }}>
                         <p style={{ margin: 0, fontSize: 12, color: "#666" }}>Đề bài: {exerciseQuestion.text}</p>
@@ -787,7 +787,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Order sentences */}
-                  {questionType === "writing-order-sentences" && (
+                  {questionType === "Sắp xếp câu thành đoạn văn" && (
                     <div>
                       <div style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 12, borderRadius: 8 }}>
                         <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: "600" }}>Thứ tự câu SV xếp:</p>
@@ -802,7 +802,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Essay */}
-                  {questionType === "writing-essay" && (
+                  {questionType === "Viết đoạn văn ngắn" && (
                     <div>
                       <div style={{ background: "#fff3e0", padding: 10, borderRadius: 8, marginBottom: 10 }}>
                         <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{exerciseQuestion.prompt}</p>
@@ -819,7 +819,7 @@ const ChamBaiPage = () => {
                   )}
 
                   {/* Split screen reading */}
-                  {questionType === "reading-split" && (
+                  {questionType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
                     <div>
                       <div style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 10, borderRadius: 8, maxHeight: 100, overflowY: "auto", marginBottom: 12 }}>
                         <p style={{ margin: 0, fontSize: 13 }}>{exerciseQuestion.text}</p>
