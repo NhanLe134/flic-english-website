@@ -121,6 +121,23 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   isReview = false,
 }) => {
 
+  const getSectionQuestionNumber = (sec: any, qIdx: number, subIdx?: number) => {
+    let count = 1;
+    for (let i = 0; i < qIdx; i++) {
+      const q = sec.questions[i];
+      const isFlatMC = sec.type === "Hình ảnh chọn đáp án" || sec.type === "Trắc nghiệm";
+      if (!isFlatMC && q.subQuestions && q.subQuestions.length > 0) {
+        count += q.subQuestions.length;
+      } else {
+        count += 1;
+      }
+    }
+    if (subIdx !== undefined) {
+      return count + subIdx;
+    }
+    return count;
+  };
+
   const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
     const key = `${sIdx}_${qIdx}`;
 
@@ -163,6 +180,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
     }
 
     if (secType === "Nghe audio trắc nghiệm" || secType === "Trắc nghiệm") {
+      const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           {q.audioUrl && (
@@ -177,18 +195,40 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }}
             />
           )}
-          <CauHoiTracNghiem
-            q={q}
-            qIdx={qIdx}
-            subIdxPrefix={`${sIdx}`}
-            mcAnswers={mcAnswers}
-            setMcAnswers={setMcAnswers}
-            submitted={submitted}
-            isOverdue={false}
-            isExam={true}
-            examStarted={examStarted}
-            isReview={isReview}
-          />
+          {hasSubQuestions ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {q.subQuestions.map((sub: any, subIdx: number) => (
+                <CauHoiTracNghiem
+                  key={subIdx}
+                  q={sub}
+                  qIdx={subIdx}
+                  subIdxPrefix={`${sIdx}_${qIdx}`}
+                  mcAnswers={mcAnswers}
+                  setMcAnswers={setMcAnswers}
+                  submitted={submitted}
+                  isOverdue={false}
+                  isExam={true}
+                  examStarted={examStarted}
+                  isReview={isReview}
+                  displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+                />
+              ))}
+            </div>
+          ) : (
+            <CauHoiTracNghiem
+              q={q}
+              qIdx={qIdx}
+              subIdxPrefix={`${sIdx}`}
+              mcAnswers={mcAnswers}
+              setMcAnswers={setMcAnswers}
+              submitted={submitted}
+              isOverdue={false}
+              isExam={true}
+              examStarted={examStarted}
+              isReview={isReview}
+              displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
+            />
+          )}
         </div>
       );
     }
@@ -321,8 +361,32 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
     }
 
     if (secType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") {
+      const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+      if (hasSubQuestions) {
+        return (
+          <div key={qIdx} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {q.subQuestions.map((sub: any, subIdx: number) => (
+              <CauHoiTracNghiem
+                key={subIdx}
+                q={sub}
+                qIdx={subIdx}
+                subIdxPrefix={`${sIdx}_${qIdx}`}
+                mcAnswers={mcAnswers}
+                setMcAnswers={setMcAnswers}
+                submitted={submitted}
+                isOverdue={false}
+                isExam={true}
+                examStarted={examStarted}
+                isReview={isReview}
+                displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+              />
+            ))}
+          </div>
+        );
+      }
       return (
         <CauHoiTracNghiem
+          key={qIdx}
           q={q}
           qIdx={qIdx}
           subIdxPrefix={`${sIdx}`}
@@ -332,6 +396,8 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
           isOverdue={false}
           isExam={true}
           examStarted={examStarted}
+          isReview={isReview}
+          displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
         />
       );
     }

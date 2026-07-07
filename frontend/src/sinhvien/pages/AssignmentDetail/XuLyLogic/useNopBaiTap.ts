@@ -69,9 +69,15 @@ export function useNopBaiTap(
             };
 
             if (sec.type === "Nghe audio trắc nghiệm" || sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") {
-              const secAns: Record<number, string> = {};
-              sec.questions.forEach((_: any, qIdx: number) => {
-                secAns[qIdx] = mcAnswers[`${secIdx}_${qIdx}`] || "";
+              const secAns: Record<string | number, string> = {};
+              sec.questions.forEach((q: any, qIdx: number) => {
+                if (q.subQuestions && q.subQuestions.length > 0) {
+                  q.subQuestions.forEach((_: any, subIdx: number) => {
+                    secAns[`${qIdx}_${subIdx}`] = mcAnswers[`${secIdx}_${qIdx}_${subIdx}`] || "";
+                  });
+                } else {
+                  secAns[qIdx] = mcAnswers[`${secIdx}_${qIdx}`] || "";
+                }
               });
               sectionResponse.answers = secAns;
             } else if (sec.type === "Viết đoạn văn ngắn") {
@@ -202,9 +208,17 @@ export function useNopBaiTap(
         parsedContent.sections.forEach((sec: any, secIdx: number) => {
           if (sec.type === "Nghe audio trắc nghiệm" || sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") {
             sec.questions.forEach((q: any, qIdx: number) => {
-              const ans = mcAnswers[`${secIdx}_${qIdx}`];
-              if (ans === q.correct) totalExamPoints += 10;
-              examGradableQuestions++;
+              if (q.subQuestions && q.subQuestions.length > 0) {
+                q.subQuestions.forEach((sub: any, subIdx: number) => {
+                  const ans = mcAnswers[`${secIdx}_${qIdx}_${subIdx}`];
+                  if (ans === sub.correct) totalExamPoints += 10;
+                  examGradableQuestions++;
+                });
+              } else {
+                const ans = mcAnswers[`${secIdx}_${qIdx}`];
+                if (ans === q.correct) totalExamPoints += 10;
+                examGradableQuestions++;
+              }
             });
           } else if (sec.type === "Viết đoạn văn ngắn" || sec.type === "Nói theo chủ đề (ghi âm nộp GV)") {
             isFullyAutoGraded = false; // Requires teacher grading

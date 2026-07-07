@@ -615,10 +615,61 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
         -- 1. Xóa phân công giảng viên
         DELETE FROM PHANCONGGIANGVIEN WHERE MaLopHoc = @id;
 
-        -- 2. Xóa ghi danh học viên lớp học
+        -- 2. Xóa phân công kỹ năng
+        DELETE FROM PHANCONG_LOP_KYNANG WHERE MaLopHoc = @id;
+
+        -- 3. Xóa ghi danh học viên lớp học
         DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc = @id;
 
-        -- 3. Xóa bài nộp của học viên trong lớp (bài tập chính)
+        -- 4. Nullify ActiveBuoiHocId in LOPHOC (to break foreign key cycle)
+        UPDATE LOPHOC SET ActiveBuoiHocId = NULL WHERE MaLopHoc = @id;
+
+        -- 5. Xóa TIENDO_MINITEST của các bài học trong các buổi của lớp
+        DELETE FROM TIENDO_MINITEST 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 6. Xóa MINITEST của các bài học trong các buổi của lớp
+        DELETE FROM MINITEST 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 7. Xóa BINHLUAN trong các bài học của lớp
+        DELETE FROM BINHLUAN 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 8. Xóa TIENDOHOCTAP trong các bài học của lớp
+        DELETE FROM TIENDOHOCTAP 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 9. Xóa bài nộp luyện tập thêm (bài tập phụ)
+        DELETE FROM BAINOPTHEM
+        WHERE MaLuyenTapThem IN (
+          SELECT MaLuyenTapThem FROM LUYENTAPTHEM
+          WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id)
+             OR MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id))
+        );
+
+        -- 10. Xóa các bài luyện tập thêm
+        DELETE FROM LUYENTAPTHEM
+        WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id)
+           OR MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id));
+
+        -- 11. Xóa bài nộp của học viên trong lớp (bài tập chính)
         DELETE FROM BAINOP 
         WHERE MaBaiTap IN (
           SELECT MaBaiTap FROM BAITAP 
@@ -629,7 +680,7 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
           )
         );
 
-        -- 4. Xóa bài tập chính
+        -- 12. Xóa bài tập chính
         DELETE FROM BAITAP 
         WHERE MaBaiHoc IN (
           SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc IN (
@@ -637,68 +688,58 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
           )
         );
 
-        -- 5. Xóa bài nộp luyện tập thêm (bài tập phụ)
-        DELETE FROM BAINOPTHEM
-        WHERE MaLuyenTapThem IN (
-          SELECT MaLuyenTapThem FROM LUYENTAPTHEM
-          WHERE MaBuoiHoc IN (
-            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-          )
-        );
-
-        -- 6. Xóa các bài luyện tập thêm
-        DELETE FROM LUYENTAPTHEM
+        -- 13. Xóa các bài học (BAIHOCKHOAHOC)
+        DELETE FROM BAIHOCKHOAHOC
         WHERE MaBuoiHoc IN (
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 7. Xóa tài liệu bài học đính kèm
+        -- 14. Xóa tài liệu bài học đính kèm
         DELETE FROM TAILIEU
         WHERE MaBuoiHoc IN (
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 8. Xóa đáp án bài kiểm tra thuộc buổi học trong lớp
+        -- 15. Xóa đáp án bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM DAPAN WHERE MaCauHoi IN (
           SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
             SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+            ) OR MaLesson IN (
               SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
             )
           )
         );
 
-        -- 9. Xóa câu hỏi bài kiểm tra thuộc buổi học trong lớp
+        -- 16. Xóa câu hỏi bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
           SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
             SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-          )
-        );
-
-        -- 10. Xóa kết quả bài kiểm tra thuộc buổi học trong lớp
-        DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+          ) OR MaLesson IN (
             SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
           )
         );
 
-        -- 11. Xóa bài kiểm tra thuộc buổi học trong lớp
+        -- 17. Xóa kết quả bài kiểm tra thuộc buổi học trong lớp
+        DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          ) OR MaLesson IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
+          )
+        );
+
+        -- 18. Xóa bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-        );
-
-        -- 12. Nullify ActiveBuoiHocId in LOPHOC
-        UPDATE LOPHOC SET ActiveBuoiHocId = NULL WHERE MaLopHoc = @id;
-
-        -- 13. Nullify MaBuoiHoc in BAIHOCKHOAHOC
-        UPDATE BAIHOCKHOAHOC SET MaBuoiHoc = NULL 
-        WHERE MaBuoiHoc IN (
+        ) OR MaLesson IN (
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 14. Xóa các buổi học (BUOIHOC)
+        -- 19. Xóa các buổi học (BUOIHOC)
         DELETE FROM BUOIHOC WHERE MaLopHoc = @id;
 
-        -- 15. Xóa chính lớp học (LOPHOC)
+        -- 20. Xóa chính lớp học (LOPHOC)
         DELETE FROM LOPHOC WHERE MaLopHoc = @id;
       `)
     res.json({ message: "Đã xóa lớp học" })
@@ -810,49 +851,64 @@ app.delete("/qtv/buoihoc/:id", async (req, res) => {
         -- 1. Nullify ActiveBuoiHocId in LOPHOC
         UPDATE LOPHOC SET ActiveBuoiHocId = NULL WHERE ActiveBuoiHocId = @id;
 
-        -- 2. Delete BINHLUAN
+        -- 2. Delete TIENDO_MINITEST
+        DELETE FROM TIENDO_MINITEST WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
+
+        -- 3. Delete MINITEST
+        DELETE FROM MINITEST WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
+
+        -- 4. Delete BINHLUAN
         DELETE FROM BINHLUAN WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
 
-        -- 3. Delete TIENDOHOCTAP
+        -- 5. Delete TIENDOHOCTAP
         DELETE FROM TIENDOHOCTAP WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
 
-        -- 4. Delete BAINOP
+        -- 6. Delete BAINOPTHEM
+        DELETE FROM BAINOPTHEM WHERE MaLuyenTapThem IN (
+          SELECT MaLuyenTapThem FROM LUYENTAPTHEM 
+          WHERE MaBuoiHoc = @id OR MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id)
+        );
+
+        -- 7. Delete LUYENTAPTHEM
+        DELETE FROM LUYENTAPTHEM WHERE MaBuoiHoc = @id OR MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
+
+        -- 8. Delete BAINOP
         DELETE FROM BAINOP WHERE MaBaiTap IN (
           SELECT MaBaiTap FROM BAITAP WHERE MaBaiHoc IN (
             SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id
           )
         );
 
-        -- 5. Delete BAITAP
+        -- 9. Delete BAITAP
         DELETE FROM BAITAP WHERE MaBaiHoc IN (SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id);
 
-        -- 6. Delete BAIHOCKHOAHOC
+        -- 10. Delete BAIHOCKHOAHOC
         DELETE FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @id;
 
-        -- 7. Delete TAILIEU
+        -- 11. Delete TAILIEU
         DELETE FROM TAILIEU WHERE MaBuoiHoc = @id;
 
-        -- 8. Delete DAPAN
+        -- 12. Delete DAPAN
         DELETE FROM DAPAN WHERE MaCauHoi IN (
           SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
-            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id
+            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id OR MaLesson = @id
           )
         );
 
-        -- 9. Delete CAUHOI
+        -- 13. Delete CAUHOI
         DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id OR MaLesson = @id
         );
 
-        -- 10. Delete KETQUABAIKIEMTRA
+        -- 14. Delete KETQUABAIKIEMTRA
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id OR MaLesson = @id
         );
 
-        -- 11. Delete BAIKIEMTRA
-        DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc = @id;
+        -- 15. Delete BAIKIEMTRA
+        DELETE FROM BAIKIEMTRA WHERE MaBuoiHoc = @id OR MaLesson = @id;
 
-        -- 12. Delete BUOIHOC
+        -- 16. Delete BUOIHOC
         DELETE FROM BUOIHOC WHERE MaBuoiHoc = @id;
       `);
     res.json({ message: "Đã xóa buổi học và toàn bộ dữ liệu liên quan" });
@@ -5396,6 +5452,15 @@ const initDb = async () => {
       )
       BEGIN
           ALTER TABLE dbo.BAIKIEMTRA ADD MaNguoiDung INT NULL;
+      END
+
+      -- Cho phép MaGiangVien trong BAIKIEMTRA được NULL khi QTV tạo bài kiểm tra
+      IF EXISTS (
+          SELECT * FROM sys.columns 
+          WHERE object_id = OBJECT_ID('dbo.BAIKIEMTRA') AND name = 'MaGiangVien' AND is_nullable = 0
+      )
+      BEGIN
+          ALTER TABLE dbo.BAIKIEMTRA ALTER COLUMN MaGiangVien INT NULL;
       END
     `)
     console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, and MaNguoiDung columns checked/added).")
