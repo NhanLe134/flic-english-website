@@ -9,6 +9,23 @@ const SidebarQTV = () => {
   const location = useLocation()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
+  const isCourseActive = (path: string) => {
+    const lower = path.toLowerCase();
+    return (
+      lower.startsWith("/qtv/khoahoc") ||
+      lower.startsWith("/qtv/kho-hoc-lieu") ||
+      lower.startsWith("/qtv/class") ||
+      lower.startsWith("/qtv/create-") ||
+      lower.startsWith("/qtv/edit-") ||
+      lower.startsWith("/qtv/add-") ||
+      lower.startsWith("/qtv/lesson") ||
+      lower.startsWith("/qtv/bai-giang") ||
+      lower.startsWith("/qtv/bai-tap") ||
+      lower.startsWith("/qtv/tai-lieu") ||
+      lower.startsWith("/qtv/baitap-detail")
+    );
+  };
+
   const handleLogout = () => {
     sessionStorage.removeItem("user")
     setShowLogoutModal(false)
@@ -34,7 +51,7 @@ const SidebarQTV = () => {
             <NavLink 
               to="/QTV/khoahoc" 
               className={
-                location.pathname === "/QTV/khoahoc" || location.pathname === "/QTV/kho-hoc-lieu" 
+                isCourseActive(location.pathname) 
                   ? styles.active 
                   : ""
               }

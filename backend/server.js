@@ -4558,7 +4558,7 @@ app.get("/exercises/list/all", async (req, res) => {
     let query = `
       SELECT DISTINCT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                       CAST(e.LaBaiKiemTra AS INT) AS IsExam,
-                      e.NgayTao AS CreatedDate, l.TenLop, ls.TenBuoiHoc
+                      e.NgayTao AS CreatedDate, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM BAITAP e
       JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
       JOIN BUOIHOC ls ON bh.MaBuoiHoc = ls.MaBuoiHoc
@@ -4605,7 +4605,7 @@ app.get("/tailieu/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc
+      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM TAILIEU t
       JOIN BUOIHOC ls ON t.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
@@ -4650,7 +4650,7 @@ app.get("/baigiang/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, l.TenLop, ls.TenBuoiHoc
+      SELECT DISTINCT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM BAIHOCKHOAHOC b
       JOIN BUOIHOC ls ON b.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
@@ -4692,7 +4692,7 @@ app.get("/baigiang/list/all", async (req, res) => {
 // Clone bài tập
 app.post("/exercises/:id/clone", async (req, res) => {
   try {
-    const { MaBuoiHoc } = req.body;
+    const { MaBuoiHoc, MaBaiHoc } = req.body;
     if (!MaBuoiHoc) return res.status(400).json({ message: "Thiếu MaBuoiHoc" });
     const pool = await poolPromise;
     
@@ -4707,21 +4707,23 @@ app.post("/exercises/:id/clone", async (req, res) => {
     const ex = orig.recordset[0];
     const today = new Date().toISOString().split('T')[0];
 
-    let targetMaBaiHoc = null;
-    const bhResult = await pool.request()
-      .input("buoiHocId", MaBuoiHoc)
-      .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
-    if (bhResult.recordset.length > 0) {
-      targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-    } else {
-      const insertBh = await pool.request()
+    let targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
+    if (!targetMaBaiHoc) {
+      const bhResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
-        .query(`
-          INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
-          VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
-          SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-        `);
-      targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+      if (bhResult.recordset.length > 0) {
+        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+      } else {
+        const insertBh = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`
+            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
+            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+          `);
+        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+      }
     }
     
     await pool.request()

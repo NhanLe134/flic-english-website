@@ -492,7 +492,7 @@
 /* ── Class table ── */
 .classTableHeader {
   display: grid;
-  grid-template-columns: 3fr 2fr 2fr 1fr 1fr;
+  grid-template-columns: 3fr 1.5fr 2fr 2.5fr 1fr 1.5fr;
   padding: 12px 24px;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
@@ -507,7 +507,7 @@
 
 .classTableRow {
   display: grid;
-  grid-template-columns: 3fr 2fr 2fr 1fr 1fr;
+  grid-template-columns: 3fr 1.5fr 2fr 2.5fr 1fr 1.5fr;
   padding: 16px 24px;
   background: white;
   border: 1px solid #cbd5e1;

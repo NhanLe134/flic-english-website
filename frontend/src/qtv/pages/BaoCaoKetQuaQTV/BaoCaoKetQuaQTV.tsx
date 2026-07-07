@@ -476,16 +476,10 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                   <th style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>HỌ TÊN</th>
                   <th style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>TRẠNG THÁI</th>
                   {uniqueBuois.map(b => {
-                    const classLessons = allLessons.filter(l => l.TenLop === filterLop)
-                    const lessonForBuoi = classLessons.find(l => l.ThuTu === b)
-                    const isActive = lessonForBuoi && classLessons[0]?.ActiveBuoiHocId === lessonForBuoi.MaBuoiHoc
                     return (
                       <th key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                           <span>BUỔI {b}</span>
-                          {isActive && (
-                            <span className={styles.activeBadgeHeader}>Đang học</span>
-                          )}
                         </div>
                       </th>
                     )

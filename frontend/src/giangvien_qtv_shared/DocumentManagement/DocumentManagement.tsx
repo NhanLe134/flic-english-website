@@ -62,6 +62,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [allExistingDocs, setAllExistingDocs] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const openReuseModal = async () => {
     setShowReuseModal(true);
@@ -83,6 +84,8 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   };
 
   const handleReuseDocument = async (docId: number) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
       const res = await fetch(`http://14.225.192.252:5000/tailieu/${docId}/clone`, {
         method: "POST",
@@ -90,6 +93,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
+        alert("Chọn tài liệu thành công!");
         // Refresh documents list
         const dRes = await fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`);
         const dData = await dRes.json();
@@ -101,6 +105,8 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       }
     } catch (err) {
       alert("Lỗi kết nối: " + err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -209,29 +215,43 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
         }} onClick={() => setShowConfirm(false)}>
           <div style={{
-            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
             boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            border: "1px solid #cbd5e1", textAlign: "center"
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
-              Xác nhận xóa tài liệu
-            </h3>
-            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Bạn có chắc chắn muốn xóa tài liệu này không?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => setShowConfirm(false)}
-                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
-              >
-                Xóa
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa tài liệu</span>
+              <button type="button" onClick={() => setShowConfirm(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa tài liệu này không?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -269,12 +289,13 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
                         Lớp: {doc.TenLop || doc.TenBuoiHoc}
                       </span>
                     </div>
-                    <button
+                     <button
                       className="btn-confirm"
-                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7" }}
+                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7", opacity: isProcessing ? 0.6 : 1 }}
+                      disabled={isProcessing}
                       onClick={() => handleReuseDocument(doc.MaTaiLieu)}
                     >
-                      Chọn
+                      {isProcessing ? "Đang xử lý..." : "Chọn"}
                     </button>
                   </div>
                 ))
