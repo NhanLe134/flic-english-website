@@ -5481,16 +5481,18 @@ const initDb = async () => {
       BEGIN
           ALTER TABLE dbo.BUOIHOC ADD TrangThai NVARCHAR(50) NOT NULL DEFAULT N'Chờ mở';
 
-          -- Cập nhật các buổi học cũ đã mở thành 'Đã mở'
-          UPDATE b 
-          SET b.TrangThai = N'Đã mở'
-          FROM dbo.BUOIHOC b
-          INNER JOIN dbo.LOPHOC l ON b.MaLopHoc = l.MaLopHoc
-          WHERE b.ThuTu <= (
-              SELECT active_bh.ThuTu 
-              FROM dbo.BUOIHOC active_bh 
-              WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
-          );
+          -- Chạy lệnh UPDATE dưới dạng SQL động để tránh lỗi biên dịch của SQL Server khi cột TrangThai chưa tồn tại
+          EXEC sp_executesql N'
+              UPDATE b 
+              SET b.TrangThai = N''Đã mở''
+              FROM dbo.BUOIHOC b
+              INNER JOIN dbo.LOPHOC l ON b.MaLopHoc = l.MaLopHoc
+              WHERE b.ThuTu <= (
+                  SELECT active_bh.ThuTu 
+                  FROM dbo.BUOIHOC active_bh 
+                  WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
+              );
+          ';
       END
     `)
     console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, BUOIHOC TrangThai, and MaNguoiDung columns checked/added).")
