@@ -1,15 +1,15 @@
 import React from "react";
 import { FiFileText, FiMic } from "react-icons/fi";
-import { CustomAudioPlayer } from "../../components/CustomAudioPlayer/CustomAudioPlayer";
-import { CauHoiTracNghiem } from "./CauHoiTracNghiem";
-import { NoiTu } from "./NoiTu";
-import { NgheChonAnh } from "./NgheChonAnh";
-import { NgheChepChinhTa } from "./NgheChepChinhTa";
-import { NgheDienTu } from "./NgheDienTu";
-import { PhatAmTuDong } from "./PhatAmTuDong";
-import { SapXepTu } from "./SapXepTu";
-import { SapXepCau } from "./SapXepCau";
-import { TimLoiSai } from "./TimLoiSai";
+import { CustomAudioPlayer } from "../../../components/CustomAudioPlayer/CustomAudioPlayer";
+import { CauHoiTracNghiem } from "../DangBai/CauHoiTracNghiem";
+import { NoiTu } from "../DangBai/NoiTu";
+import { NgheChonAnh } from "../DangBai/NgheChonAnh";
+import { NgheChepChinhTa } from "../DangBai/NgheChepChinhTa";
+import { NgheDienTu } from "../DangBai/NgheDienTu";
+import { PhatAmTuDong } from "../DangBai/PhatAmTuDong";
+import { SapXepTu } from "../DangBai/SapXepTu";
+import { SapXepCau } from "../DangBai/SapXepCau";
+import { TimLoiSai } from "../DangBai/TimLoiSai";
 
 interface BoGiaiDeThiProps {
   exercise: any;
@@ -121,10 +121,27 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   isReview = false,
 }) => {
 
+  const getSectionQuestionNumber = (sec: any, qIdx: number, subIdx?: number) => {
+    let count = 1;
+    for (let i = 0; i < qIdx; i++) {
+      const q = sec.questions[i];
+      const isFlatMC = sec.type === "Hình ảnh chọn đáp án" || sec.type === "Trắc nghiệm";
+      if (!isFlatMC && q.subQuestions && q.subQuestions.length > 0) {
+        count += q.subQuestions.length;
+      } else {
+        count += 1;
+      }
+    }
+    if (subIdx !== undefined) {
+      return count + subIdx;
+    }
+    return count;
+  };
+
   const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
     const key = `${sIdx}_${qIdx}`;
 
-    if (secType === "reading-vocab-mcq") {
+    if (secType === "Nối từ") {
       if (q.vocabPairs && q.vocabPairs.length > 0) {
         return (
           <NoiTu
@@ -162,7 +179,8 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "listening-mcq" || secType === "writing-tense-mcq") {
+    if (secType === "Nghe audio trắc nghiệm" || secType === "Trắc nghiệm") {
+      const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           {q.audioUrl && (
@@ -177,23 +195,45 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               style={{ maxHeight: 200, display: "block", marginBottom: 12, borderRadius: 8 }}
             />
           )}
-          <CauHoiTracNghiem
-            q={q}
-            qIdx={qIdx}
-            subIdxPrefix={`${sIdx}`}
-            mcAnswers={mcAnswers}
-            setMcAnswers={setMcAnswers}
-            submitted={submitted}
-            isOverdue={false}
-            isExam={true}
-            examStarted={examStarted}
-            isReview={isReview}
-          />
+          {hasSubQuestions ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {q.subQuestions.map((sub: any, subIdx: number) => (
+                <CauHoiTracNghiem
+                  key={subIdx}
+                  q={sub}
+                  qIdx={subIdx}
+                  subIdxPrefix={`${sIdx}_${qIdx}`}
+                  mcAnswers={mcAnswers}
+                  setMcAnswers={setMcAnswers}
+                  submitted={submitted}
+                  isOverdue={false}
+                  isExam={true}
+                  examStarted={examStarted}
+                  isReview={isReview}
+                  displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+                />
+              ))}
+            </div>
+          ) : (
+            <CauHoiTracNghiem
+              q={q}
+              qIdx={qIdx}
+              subIdxPrefix={`${sIdx}`}
+              mcAnswers={mcAnswers}
+              setMcAnswers={setMcAnswers}
+              submitted={submitted}
+              isOverdue={false}
+              isExam={true}
+              examStarted={examStarted}
+              isReview={isReview}
+              displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
+            />
+          )}
         </div>
       );
     }
 
-    if (secType === "listening-image") {
+    if (secType === "Hình ảnh chọn đáp án") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <NgheChonAnh
@@ -215,7 +255,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "writing-find-mistakes") {
+    if (secType === "Tìm lỗi sai") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <TimLoiSai
@@ -235,7 +275,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "listening-dictation") {
+    if (secType === "Nghe chép chính tả") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <NgheChepChinhTa
@@ -254,7 +294,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "listening-fill-in") {
+    if (secType === "Điền từ vào đoạn văn") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <NgheDienTu
@@ -270,7 +310,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "speaking-pronounce") {
+    if (secType === "Luyện phát âm (check phát âm tự động)") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <PhatAmTuDong
@@ -289,7 +329,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "writing-order-words") {
+    if (secType === "Sắp xếp từ thành câu") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <SapXepTu
@@ -305,7 +345,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "writing-order-sentences") {
+    if (secType === "Sắp xếp câu thành đoạn văn") {
       return (
         <div key={qIdx} style={{ marginBottom: 20 }}>
           <SapXepCau
@@ -320,9 +360,33 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    if (secType === "reading-split") {
+    if (secType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") {
+      const hasSubQuestions = q.subQuestions && q.subQuestions.length > 0;
+      if (hasSubQuestions) {
+        return (
+          <div key={qIdx} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {q.subQuestions.map((sub: any, subIdx: number) => (
+              <CauHoiTracNghiem
+                key={subIdx}
+                q={sub}
+                qIdx={subIdx}
+                subIdxPrefix={`${sIdx}_${qIdx}`}
+                mcAnswers={mcAnswers}
+                setMcAnswers={setMcAnswers}
+                submitted={submitted}
+                isOverdue={false}
+                isExam={true}
+                examStarted={examStarted}
+                isReview={isReview}
+                displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+              />
+            ))}
+          </div>
+        );
+      }
       return (
         <CauHoiTracNghiem
+          key={qIdx}
           q={q}
           qIdx={qIdx}
           subIdxPrefix={`${sIdx}`}
@@ -332,6 +396,8 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
           isOverdue={false}
           isExam={true}
           examStarted={examStarted}
+          isReview={isReview}
+          displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
         />
       );
     }
@@ -366,7 +432,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
           >
             <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
 
-            {sec.type === "writing-essay" && (
+            {sec.type === "Viết đoạn văn ngắn" && (
               <div>
                 <div style={{ background: "#fff3e0", padding: 12, borderRadius: 8, marginBottom: 12 }}>
                   <p style={{ margin: 0, fontWeight: 700 }}>{sec.content}</p>
@@ -388,7 +454,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               </div>
             )}
 
-            {sec.type === "speaking-topic" && (
+            {sec.type === "Nói theo chủ đề (ghi âm nộp GV)" && (
               <div>
                 <div className="ad-speaking-prompt-box">
                   <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -451,7 +517,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               </div>
             )}
 
-            {sec.type === "reading-split" && (
+            {sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
               <div className="ad-reading-split-container">
                 <div className="ad-reading-passage-panel">
                   <div className="ad-passage-text">
@@ -468,7 +534,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               </div>
             )}
 
-            {sec.type !== "writing-essay" && sec.type !== "speaking-topic" && sec.type !== "reading-split" && (
+            {sec.type !== "Viết đoạn văn ngắn" && sec.type !== "Nói theo chủ đề (ghi âm nộp GV)" && sec.type !== "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
               <div>
                 {sec.audioUrl && (
                   <div style={{ marginBottom: 20 }}>

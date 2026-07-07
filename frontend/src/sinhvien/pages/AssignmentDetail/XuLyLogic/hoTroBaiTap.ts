@@ -68,9 +68,9 @@ export const parseQuestionsList = (exercise: any, isExam: boolean, parsedContent
 
   // Phương án dự phòng cho định dạng văn bản tùy chỉnh cũ
   const exType = (exercise?.Type || "").toLowerCase();
-  const isMultiple = ["multiple", "quiz", "trắc nghiệm", "reading-vocab-mcq", "writing-tense-mcq"].includes(exType);
-  const isListening = ["listening", "nghe", "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in"].includes(exType);
-  const isReadingSplit = exType === "reading-split";
+  const isMultiple = ["Tổng hợp", "quiz", "trắc nghiệm", "Nối từ", "Trắc nghiệm"].includes(exType);
+  const isListening = ["listening", "nghe", "Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn"].includes(exType);
+  const isReadingSplit = exType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)";
 
   if (isMultiple || isListening || isReadingSplit) {
     const raw = exercise.Questions;
@@ -101,25 +101,25 @@ export const parseQuestionsList = (exercise: any, isExam: boolean, parsedContent
   }
 
   // Phương án dự phòng cho một mục dựa trên loại bài tập
-  if (exType === "listening-dictation") {
+  if (exType === "Nghe chép chính tả") {
     return [{ audioUrl: exercise.AudioUrl, text: exercise.Content }];
   }
-  if (exType === "listening-fill-in") {
+  if (exType === "Điền từ vào đoạn văn") {
     return [{ audioUrl: exercise.AudioUrl, text: exercise.Content, fillInAnswers: (exercise.Questions || "").split("|").map((s: string) => s.trim()) }];
   }
-  if (exType === "speaking-pronounce") {
+  if (exType === "Luyện phát âm (check phát âm tự động)") {
     return [{ text: parsedContent?.text || exercise.Content, level: parsedContent?.level || "Đọc theo câu", explanation: exercise.Questions || "" }];
   }
-  if (exType === "speaking-topic") {
+  if (exType === "Nói theo chủ đề (ghi âm nộp GV)") {
     return [{ prompt: parsedContent?.prompt || exercise.Content, imageUrl: parsedContent?.imageUrl || "" }];
   }
-  if (exType === "writing-order-words") {
+  if (exType === "Sắp xếp từ thành câu") {
     return [{ text: exercise.Content, correctSentence: exercise.Questions }];
   }
-  if (exType === "writing-order-sentences") {
+  if (exType === "Sắp xếp câu thành đoạn văn") {
     return [{ sentences: (exercise.Questions || "").split("###").map((s: string) => s.trim()).filter(Boolean) }];
   }
-  if (exType === "writing-essay") {
+  if (exType === "Viết đoạn văn ngắn") {
     return [{ prompt: exercise.Content }];
   }
 

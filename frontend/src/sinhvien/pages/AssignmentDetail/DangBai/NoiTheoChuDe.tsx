@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { FiFileText, FiMic, FiSquare, FiAlertCircle, FiCheck, FiBookOpen } from "react-icons/fi";
 import { FaPlay, FaPause } from "react-icons/fa";
-import "./AssignmentTypes.css";
+import "../KhungHienThi/AssignmentTypes.css";
 
 interface NoiTheoChuDeProps {
   q: any;
