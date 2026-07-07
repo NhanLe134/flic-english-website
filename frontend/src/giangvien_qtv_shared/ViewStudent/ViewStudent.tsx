@@ -18,9 +18,9 @@ const ViewStudent = () => {
 
     const trimmedId = id.trim();
     // Fetch student data
-    const fetchStudent = fetch(`http://localhost:5000/students/${trimmedId}`).then(res => res.json());
+    const fetchStudent = fetch(`http://14.225.192.252:5000/students/${trimmedId}`).then(res => res.json());
     // Fetch courses data
-    const fetchCourses = fetch("http://localhost:5000/khoahoc").then(res => res.json());
+    const fetchCourses = fetch("http://14.225.192.252:5000/khoahoc").then(res => res.json());
 
     Promise.all([fetchStudent, fetchCourses])
       .then(([studentData, coursesData]) => {
@@ -45,7 +45,7 @@ const ViewStudent = () => {
     try {
       setSaving(true);
       const trimmedId = (id || "").trim();
-      const res = await fetch(`http://localhost:5000/students/${trimmedId}`, {
+      const res = await fetch(`http://14.225.192.252:5000/students/${trimmedId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

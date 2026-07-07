@@ -51,6 +51,7 @@ export default function TestThuSV() {
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,8 +61,21 @@ export default function TestThuSV() {
   useEffect(() => {
     if ((location.state as any)?.submitted) setSubmitted(true);
     
-    const API = "http://localhost:5000";
+    const API = window.location.hostname === "localhost"
+      ? "http://14.225.192.252:5000"
+      : `http://${window.location.hostname}:5000`;
     setLoading(true);
+
+    const u = JSON.parse(sessionStorage.getItem("user") || "{}");
+    if (u.HoTen) {
+      fetch(`${API}/dethi/submissions`)
+        .then((res) => res.json())
+        .then((data) => {
+          const studentSubs = data.filter((sub: any) => sub.hoTen === u.HoTen);
+          setSubmissions(studentSubs);
+        })
+        .catch((err) => console.error("Lỗi lấy bài nộp thi thử:", err));
+    }
 
     fetch(`${API}/dethi`)
       .then((res) => {
@@ -132,6 +146,8 @@ export default function TestThuSV() {
     return h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
   };
 
+
+
   return (
     <div className="test-thu-container">
       {/* Breadcrumb */}
@@ -183,12 +199,28 @@ export default function TestThuSV() {
                 </div>
               </div>
 
-              <button
-                onClick={() => navigate(`/test-exam/${test.MaBaiTest}`)}
-                className="test-item-btn"
-              >
-                Vào thi
-              </button>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", marginLeft: 20 }}>
+                {submissions.some(s => s.tenDeThi === test.TieuDe) ? (
+                  <button
+                    onClick={() => {
+                      const sub = submissions.find(s => s.tenDeThi === test.TieuDe);
+                      navigate(`/test-exam/${test.MaBaiTest}?view=results&submissionId=${sub.id}`);
+                    }}
+                    className="test-item-btn results-btn"
+                    style={{ marginLeft: 0 }}
+                  >
+                    Kết quả thi
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate(`/test-exam/${test.MaBaiTest}`)}
+                    className="test-item-btn"
+                    style={{ marginLeft: 0 }}
+                  >
+                    Vào thi
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -1,9 +1,9 @@
-﻿import "./Register.css";
-import Navbar from "../../components/Navbar";
+import "./Register.css";
+import Nav from "../../components/Nav/Nav";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface RegisterProps {
   isModal?: boolean;
@@ -147,7 +147,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
 
   const cardContent = (
     <div className="register-card">
-      <h2 className="register-title">Đăng ký tài khoản</h2>
+      {!isModal && <h2 className="register-title">Đăng ký tài khoản</h2>}
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
@@ -328,7 +328,7 @@ const Register = ({ isModal = false }: RegisterProps) => {
 
   return (
     <div>
-      <Navbar />
+      <Nav />
       <div className="register-page">
         {cardContent}
       </div>

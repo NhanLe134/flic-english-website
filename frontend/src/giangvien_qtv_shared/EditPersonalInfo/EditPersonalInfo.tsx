@@ -27,7 +27,7 @@ const EditPersonalInfo = () => {
     const user = JSON.parse(userStr);
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://localhost:5000/giangvien/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
         setFormData({
@@ -55,7 +55,7 @@ const EditPersonalInfo = () => {
         const formDataUpload = new FormData();
         formDataUpload.append("file", file);
 
-        const uploadRes = await fetch("http://localhost:5000/upload", {
+        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
           method: "POST",
           body: formDataUpload
         });
@@ -80,7 +80,7 @@ const EditPersonalInfo = () => {
     const maNguoiDung = user.MaNguoiDung;
 
     try {
-      await fetch(`http://localhost:5000/giangvien/${maNguoiDung}`, {
+      await fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -101,7 +101,7 @@ const EditPersonalInfo = () => {
       user.AnhDaiDien = formData.avatar;
       sessionStorage.setItem("user", JSON.stringify(user));
       
-      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://localhost:5000${formData.avatar}`) : null;
+      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://14.225.192.252:5000${formData.avatar}`) : null;
       setAvatar(absoluteUrl);
 
       setShowPopup(true);
@@ -117,7 +117,7 @@ const EditPersonalInfo = () => {
     ? formData.HoTen.split(" ").pop()?.charAt(0).toUpperCase()
     : "?";
 
-  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://localhost:5000${formData.avatar}`) : "";
+  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://14.225.192.252:5000${formData.avatar}`) : "";
 
   return (
     <div className="epi-wrapper">

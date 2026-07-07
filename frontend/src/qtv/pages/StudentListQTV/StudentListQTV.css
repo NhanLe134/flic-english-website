@@ -6,8 +6,6 @@
 .slqtv-container {
   padding: 0;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
   font-family: "Segoe UI", Arial, sans-serif;
   color: #334155;
 }
@@ -235,13 +233,10 @@
   background: #000066;
 }
 
-/* STUDENTS LIST VIEW */
 .slqtv-student-list-view {
   background: white;
-  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
 }
 
 .slqtv-back-row {
@@ -333,9 +328,7 @@
 .slqtv-table-wrapper {
   background: white;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
   overflow-x: auto !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   width: 100%;
 }
 
@@ -365,18 +358,12 @@
 }
 
 .slqtv-table-wrapper tr:hover td {
-  background-color: #f8fafc !important;
-}
-
-.slqtv-table-wrapper tr td:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #f0f7ff !important;
 }
 
 .slqtv-code-cell {
   font-weight: 600;
-  font-family: monospace;
-  color: #475569;
-  font-size: 12px;
+  color: #0f172a;
 }
 
 .slqtv-student-name {
@@ -622,4 +609,162 @@
 @keyframes slqtvFadeIn {
   from { opacity: 0; transform: scale(0.96); }
   to   { opacity: 1; transform: scale(1); }
+}
+
+/* NEW FILTERS ROW LAYOUT */
+.slqtv-filters-row-new {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 10px;
+  padding: 12px 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.slqtv-search-wrapper-new {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 10px;
+  height: 36px;
+  flex: 1;
+  min-width: 220px;
+  transition: all 0.2s ease;
+}
+
+.slqtv-search-wrapper-new:focus-within {
+  border-color: #000080;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.08);
+}
+
+.slqtv-search-wrapper-new .slqtv-search-icon {
+  color: #64748b;
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.slqtv-search-wrapper-new input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 13px;
+  color: #334155;
+  height: 100%;
+}
+
+.slqtv-selectors-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.slqtv-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slqtv-select-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.slqtv-filter-select {
+  padding: 0 32px 0 12px;
+  height: 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 12px;
+  color: #334155;
+  outline: none;
+  width: 220px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
+
+.slqtv-filter-select:focus {
+  border-color: #000080;
+  box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.08);
+}
+
+.slqtv-filter-select:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.slqtv-btn-export-new {
+  background: #F95800;
+  color: white;
+  border: none;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  transition: all 0.15s ease;
+}
+
+.slqtv-btn-export-new:hover {
+  background: #e04f00;
+}
+
+/* CLASS DETAIL BAR inside list view */
+.slqtv-class-detail-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.slqtv-class-detail-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.slqtv-class-name-tag {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.slqtv-schedule-tag,
+.slqtv-lessons-tag {
+  font-size: 12.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+}
+
+.slqtv-divider-line {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 8px 0;
 }

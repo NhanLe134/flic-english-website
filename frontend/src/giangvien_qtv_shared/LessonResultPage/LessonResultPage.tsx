@@ -42,6 +42,7 @@ const LessonResultPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [lessons, setLessons] = useState<any[]>([]);
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
@@ -62,7 +63,7 @@ const LessonResultPage = () => {
     }
 
     // Verify lecturer permission
-    fetch(`http://localhost:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(classes => {
         const hasAccess = Array.isArray(classes) && classes.some((c: any) => Number(c.MaLopHoc) === Number(id));
@@ -75,11 +76,11 @@ const LessonResultPage = () => {
 
         // Fetch class data
         Promise.all([
-          fetch(`http://localhost:5000/classes/${id}/info`).then(r => r.json()),
-          fetch(`http://localhost:5000/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
-          fetch(`http://localhost:5000/baocao/baitap-headers`).then(r => r.json()),
-          fetch(`http://localhost:5000/baocao/diem-all`).then(r => r.json()),
-          fetch(`http://localhost:5000/classes/${id}/buoihoc`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/classes/${id}/info`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/baocao/baitap-headers`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/baocao/diem-all`).then(r => r.json()),
+          fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`).then(r => r.json()),
         ])
           .then(([info, sinhVienList, headers, grades, lessonsList]) => {
             setClassInfo(info);
@@ -251,52 +252,125 @@ const LessonResultPage = () => {
     return { status: "chuanop", score: null };
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = (mode: "summary" | "detail") => {
     if (filteredStudents.length === 0) {
       alert("Không có học viên nào để xuất!");
       return;
     }
 
-    const headers = [
-      "Mã học viên",
-      "MSSV (Trường)",
-      "Họ tên",
-      "Lớp/khóa",
-      "Trạng thái",
-      ...uniqueBuois.map(b => `Buổi ${b}`),
-      "Điểm trung bình"
-    ];
+    let headers: string[] = [];
+    let rows: Record<string, any>[] = [];
 
-    const rows = filteredStudents.map(s => {
-      const rowData: Record<string, any> = {
-        "Mã học viên": s.MaSinhVien,
-        "MSSV (Trường)": s.mssv || "—",
-        "Họ tên": s.HoTen,
-        "Lớp/khóa": classInfo?.TenLop || "—",
-        "Trạng thái": s.TrangThai || "—",
-      };
-      uniqueBuois.forEach(b => {
-        const res = getStudentBuoiStatus(s, b);
-        rowData[`Buổi ${b}`] = res.status === "graded" ? res.score : res.status === "pending" ? "Chờ chấm" : "Chưa nộp";
+    if (mode === "summary") {
+      headers = [
+        "Mã học viên",
+        "MSSV (Trường)",
+        "Họ tên",
+        "Lớp/khóa",
+        "Trạng thái",
+        ...uniqueBuois.map(b => `Buổi ${b}`),
+        "Điểm trung bình"
+      ];
+
+      rows = filteredStudents.map(s => {
+        const rowData: Record<string, any> = {
+          "Mã học viên": s.MaSinhVien,
+          "MSSV (Trường)": s.mssv || "—",
+          "Họ tên": s.HoTen,
+          "Lớp/khóa": classInfo?.TenLop || "—",
+          "Trạng thái": s.TrangThai || "—",
+        };
+        uniqueBuois.forEach(b => {
+          const res = getStudentBuoiStatus(s, b);
+          rowData[`Buổi ${b}`] = res.status === "graded" ? res.score : res.status === "pending" ? "Chờ chấm" : "Chưa nộp";
+        });
+        rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
+        return rowData;
       });
-      rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
-      return rowData;
-    });
+    } else {
+      // mode === "detail"
+      headers = [
+        "Mã học viên",
+        "MSSV (Trường)",
+        "Họ tên",
+        "Lớp/khóa",
+        "Trạng thái"
+      ];
+
+      uniqueBuois.forEach(b => {
+        const exsInBuoi = exercisesByBuoi[b] || [];
+        exsInBuoi.forEach(ex => {
+          headers.push(`${ex.TenBai}\n${classInfo?.TenKhoaHoc || ""}`);
+        });
+        headers.push(`Buổi ${b}`);
+      });
+
+      headers.push("Điểm trung bình");
+
+      rows = filteredStudents.map(s => {
+        const rowData: Record<string, any> = {
+          "Mã học viên": s.MaSinhVien,
+          "MSSV (Trường)": s.mssv || "—",
+          "Họ tên": s.HoTen,
+          "Lớp/khóa": classInfo?.TenLop || "—",
+          "Trạng thái": s.TrangThai || "—",
+        };
+
+        uniqueBuois.forEach(b => {
+          const exsInBuoi = exercisesByBuoi[b] || [];
+          exsInBuoi.forEach(ex => {
+            const colHeader = `${ex.TenBai}\n${classInfo?.TenKhoaHoc || ""}`;
+            const scoreObj = s.scores[ex.MaBaiTap];
+            if (scoreObj && scoreObj.Diem !== null) {
+              rowData[colHeader] = scoreObj.Diem;
+            } else if (scoreObj && scoreObj.MaBaiNop !== null) {
+              rowData[colHeader] = "Cần chấm";
+            } else {
+              rowData[colHeader] = "Chưa nộp";
+            }
+          });
+
+          const res = getStudentBuoiStatus(s, b);
+          rowData[`Buổi ${b}`] = res.status === "graded" ? res.score : res.status === "pending" ? "Cần chấm" : "Chưa nộp";
+        });
+
+        rowData["Điểm trung bình"] = s.diemTB !== null ? s.diemTB : "—";
+        return rowData;
+      });
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng điểm");
 
-    const colWidths = [
-      { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
-      ...uniqueBuois.map(() => ({ wch: 15 })),
-      { wch: 18 }
-    ];
+    // Dynamic column widths
+    const colWidths: { wch: number }[] = [];
+    if (mode === "summary") {
+      colWidths.push(
+        { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
+        ...uniqueBuois.map(() => ({ wch: 15 })),
+        { wch: 18 }
+      );
+    } else {
+      colWidths.push(
+        { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 15 }
+      );
+      uniqueBuois.forEach(b => {
+        const exsInBuoi = exercisesByBuoi[b] || [];
+        exsInBuoi.forEach(() => {
+          colWidths.push({ wch: 30 });
+        });
+        colWidths.push({ wch: 15 });
+      });
+      colWidths.push({ wch: 18 });
+    }
     worksheet["!cols"] = colWidths;
 
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `BangDiem_${classInfo?.TenLop || "Lop"}_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xlsx`);
+    
+    const filePrefix = mode === "summary" ? "BangDiem_TongQuan" : "BangDiem_ChiTiet";
+    saveAs(blob, `${filePrefix}_${classInfo?.TenLop || "Lop"}_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xlsx`);
 
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
@@ -378,7 +452,7 @@ const LessonResultPage = () => {
           </button>
         </form>
 
-        <button className="lrp-export-btn" onClick={handleExportExcel}>
+        <button className="lrp-export-btn" onClick={() => setShowExportModal(true)}>
           Xuất Excel
         </button>
       </div>
@@ -559,6 +633,39 @@ const LessonResultPage = () => {
           )
         )}
       </div>
+
+      {showExportModal && (
+        <div className="lrp-modal-overlay" onClick={() => setShowExportModal(false)}>
+          <div className="lrp-modal-content" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="lrp-modal-header" style={{ padding: '16px 20px' }}>
+              <h2>Chọn chế độ xuất Excel</h2>
+              <button className="lrp-modal-close" onClick={() => setShowExportModal(false)}>&times;</button>
+            </div>
+            <div className="lrp-modal-body" style={{ padding: '20px' }}>
+              <div className="lrp-export-options" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  className="lrp-export-option-btn"
+                  onClick={() => {
+                    setShowExportModal(false);
+                    handleExportExcel("summary");
+                  }}
+                >
+                  Chế độ 1: Xuất tổng quan
+                </button>
+                <button 
+                  className="lrp-export-option-btn highlight"
+                  onClick={() => {
+                    setShowExportModal(false);
+                    handleExportExcel("detail");
+                  }}
+                >
+                  Chế độ 2: Xuất chi tiết toàn bộ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSuccess && (
         <div className="lrp-success-overlay">

@@ -75,12 +75,63 @@ interface BaiTest {
   NgayTao: string;
   TrangThai: string; // "published" | "draft"
   kyNang: {
-    listening: { parts: ListeningPart[] };
-    reading: { parts: ReadingPart[] };
-    writing: { parts: WritingPart[] };
-    speaking: { parts: SpeakingPart[] };
+    listening: { thoiGian?: number; parts: ListeningPart[] };
+    reading: { thoiGian?: number; parts: ReadingPart[] };
+    writing: { thoiGian?: number; parts: WritingPart[] };
+    speaking: { thoiGian?: number; parts: SpeakingPart[] };
   };
 }
+
+const ensureSkillTimes = (test: BaiTest): BaiTest => {
+  const updated = { ...test };
+  if (!updated.kyNang.listening) {
+    updated.kyNang.listening = { parts: [] };
+  }
+  if (!updated.kyNang.listening.thoiGian) {
+    updated.kyNang.listening.thoiGian = 45 * 60;
+  }
+  
+  if (!updated.kyNang.reading) {
+    updated.kyNang.reading = { parts: [] };
+  }
+  if (!updated.kyNang.reading.thoiGian) {
+    updated.kyNang.reading.thoiGian = 60 * 60;
+  }
+  
+  if (!updated.kyNang.writing) {
+    updated.kyNang.writing = { parts: [] };
+  }
+  if (!updated.kyNang.writing.thoiGian) {
+    updated.kyNang.writing.thoiGian = 60 * 60;
+  }
+  
+  if (!updated.kyNang.speaking) {
+    updated.kyNang.speaking = { parts: [] };
+  }
+  if (!updated.kyNang.speaking.thoiGian) {
+    if (updated.kyNang.speaking.parts?.[0]?.thoiGianNoi) {
+      updated.kyNang.speaking.thoiGian = updated.kyNang.speaking.parts[0].thoiGianNoi;
+    } else {
+      updated.kyNang.speaking.thoiGian = 12 * 60;
+    }
+  }
+  
+  if (!updated.kyNang.speaking.parts?.[0]) {
+    updated.kyNang.speaking.parts[0] = {
+      soPhan: 1,
+      tieuDe: "Speaking Part 1",
+      moTa: "Speaking Practice",
+      audioUrl: "",
+      noiDung: "",
+      thoiGianChuanBi: 60,
+      thoiGianNoi: updated.kyNang.speaking.thoiGian
+    };
+  } else {
+    updated.kyNang.speaking.parts[0].thoiGianNoi = updated.kyNang.speaking.thoiGian;
+  }
+  
+  return updated;
+};
 
 const DEFAULT_TESTS: BaiTest[] = [
   {
@@ -325,7 +376,7 @@ const RichTextEditor = ({
 
 const QuanLyDeThiThu = () => {
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
-  const isQTV = user?.VaiTro === "Quản Trị Nội Dung";
+  const isQTV = user?.VaiTro === "Quản Trị Nội Dung" || window.location.pathname.includes("/QTV/");
 
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -406,7 +457,7 @@ const QuanLyDeThiThu = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
+      const res = await fetch(`http://14.225.192.252:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -434,7 +485,7 @@ const QuanLyDeThiThu = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://localhost:5000/upload", {
+    const res = await fetch("http://14.225.192.252:5000/upload", {
       method: "POST",
       body: formData
     });
@@ -446,7 +497,7 @@ const QuanLyDeThiThu = () => {
   const getMediaUrl = (url?: string) => {
     if (!url) return "";
     if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
-    return `http://localhost:5000${url}`;
+    return `http://14.225.192.252:5000${url}`;
   };
 
   // Modals & Active objects
@@ -516,7 +567,7 @@ const QuanLyDeThiThu = () => {
 
   const loadTests = async () => {
     try {
-      const res = await fetch("http://localhost:5000/dethi");
+      const res = await fetch("http://14.225.192.252:5000/dethi");
       if (res.ok) {
         const data = await res.json();
         const mappedTests = data.map((t: any) => ({
@@ -564,7 +615,7 @@ const QuanLyDeThiThu = () => {
 
   const loadSubmissions = async () => {
     try {
-      const res = await fetch("http://localhost:5000/dethi/submissions");
+      const res = await fetch("http://14.225.192.252:5000/dethi/submissions");
       if (res.ok) {
         const data = await res.json();
         setSubmissions(data);
@@ -640,30 +691,34 @@ const QuanLyDeThiThu = () => {
       MaBaiTest: Date.now(),
       TieuDe: "",
       MoTa: "",
-      TongThoiGian: 120,
+      TongThoiGian: 177,
       CapDo: "B1",
       LoaiBai: "VSTEP",
       NgayTao: new Date().toISOString(),
       TrangThai: "draft",
       kyNang: {
         listening: {
+          thoiGian: 45 * 60,
           parts: [
             { soPhan: 1, tieuDe: "Listening Part 1", huongDan: "Listen and choose the best answers.", audioUrl: "", cauHois: [] }
           ]
         },
         reading: {
+          thoiGian: 60 * 60,
           parts: [
             { soPhan: 1, tieuDe: "Reading Part 1", huongDan: "Read the passage and choose the best answers.", doanVan: "", cauHois: [] }
           ]
         },
         writing: {
+          thoiGian: 60 * 60,
           parts: [
             { soPhan: 1, tieuDe: "Writing Part 1", huongDan: "You should spend about 20 minutes on this task.", yeuCau: "Email", noiDung: "", soTuToiThieu: 120 }
           ]
         },
         speaking: {
+          thoiGian: 12 * 60,
           parts: [
-            { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 }
+            { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 12 * 60 }
           ]
         }
       }
@@ -691,7 +746,7 @@ const QuanLyDeThiThu = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/dethi", {
+      const res = await fetch("http://14.225.192.252:5000/dethi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData)
@@ -727,7 +782,7 @@ const QuanLyDeThiThu = () => {
   };
 
   const handleOpenEditWorkspace = (test: BaiTest) => {
-    setEditingTest(JSON.parse(JSON.stringify(test)));
+    setEditingTest(ensureSkillTimes(JSON.parse(JSON.stringify(test))));
     setWorkspaceSkill("listening");
     setActivePartIdx(0);
     setImportedQuestions([]);
@@ -1190,13 +1245,13 @@ D. Visiting friends
     try {
       let response;
       if (isNew) {
-        response = await fetch("http://localhost:5000/dethi", {
+        response = await fetch("http://14.225.192.252:5000/dethi", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
         });
       } else {
-        response = await fetch(`http://localhost:5000/dethi/${editingTest.MaBaiTest}`, {
+        response = await fetch(`http://14.225.192.252:5000/dethi/${editingTest.MaBaiTest}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
@@ -1250,8 +1305,7 @@ D. Visiting friends
         className={`cd-wrapper anim-fade-in ${isQTV ? "qtv-compact" : ""}`}
         style={{
           paddingBottom: "60px",
-          maxWidth: isQTV ? "1200px" : "100%",
-          margin: isQTV ? "0 auto" : undefined,
+          maxWidth: "100%",
           boxSizing: "border-box",
           overflowX: "hidden"
         }}
@@ -1308,14 +1362,95 @@ D. Visiting friends
                 />
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", boxSizing: "border-box" }}>
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian (phút)</label>
-                <input
-                  type="number"
-                  value={editingTest.TongThoiGian}
-                  onChange={(e) => setEditingTest({ ...editingTest, TongThoiGian: Number(e.target.value) || 0 })}
-                  style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
-                />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", boxSizing: "border-box" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nghe (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.listening.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.listening.thoiGian = val * 60;
+                      updated.TongThoiGian = val + Math.round((updated.kyNang.reading.thoiGian || 0)/60) + Math.round((updated.kyNang.writing.thoiGian || 0)/60) + Math.round((updated.kyNang.speaking.thoiGian || 0)/60);
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Đọc (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.reading.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.reading.thoiGian = val * 60;
+                      updated.TongThoiGian = Math.round((updated.kyNang.listening.thoiGian || 0)/60) + val + Math.round((updated.kyNang.writing.thoiGian || 0)/60) + Math.round((updated.kyNang.speaking.thoiGian || 0)/60);
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Viết (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.writing.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.writing.thoiGian = val * 60;
+                      updated.TongThoiGian = Math.round((updated.kyNang.listening.thoiGian || 0)/60) + Math.round((updated.kyNang.reading.thoiGian || 0)/60) + val + Math.round((updated.kyNang.speaking.thoiGian || 0)/60);
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nói (phút)</label>
+                  <input
+                    type="number"
+                    value={Math.round((editingTest.kyNang.speaking.thoiGian || 0) / 60)}
+                    onChange={(e) => {
+                      let rawVal = e.target.value;
+                      if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                        rawVal = rawVal.replace(/^0+/, "");
+                        e.target.value = rawVal;
+                      }
+                      const val = Number(rawVal) || 0;
+                      const updated = { ...editingTest };
+                      updated.kyNang.speaking.thoiGian = val * 60;
+                      if (!updated.kyNang.speaking.parts[0]) {
+                        updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: val * 60 };
+                      } else {
+                        updated.kyNang.speaking.parts[0].thoiGianNoi = val * 60;
+                      }
+                      updated.TongThoiGian = Math.round((updated.kyNang.listening.thoiGian || 0)/60) + Math.round((updated.kyNang.reading.thoiGian || 0)/60) + Math.round((updated.kyNang.writing.thoiGian || 0)/60) + val;
+                      setEditingTest(updated);
+                    }}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  />
+                </div>
+              </div>
+              <div style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, marginTop: "4px" }}>
+                Tổng thời gian: {editingTest.TongThoiGian} phút
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "14px", borderTop: "1px solid #f1f5f9", paddingTop: "16px", boxSizing: "border-box" }}>
@@ -1404,7 +1539,12 @@ D. Visiting friends
                             Part {p.soPhan}
                           </button>
                           <button
-                            onClick={() => handleDeletePart("listening", idx)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeletePart("listening", idx);
+                            }}
                             style={{ border: "none", background: "none", display: "flex", alignItems: "center", cursor: "pointer", color: activePartIdx === idx ? "white" : "#ef4444", padding: "2px" }}
                             title="Xóa Part"
                           >
@@ -1433,6 +1573,7 @@ D. Visiting friends
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
                           <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Tải file audio lên (MP3/WAV)</label>
                           <input
+                            key={`listening-audio-input-${activePartIdx}`}
                             type="file"
                             accept="audio/*"
                             onChange={(e) => handleListeningAudioUpload(e, activePartIdx)}
@@ -1456,6 +1597,7 @@ D. Visiting friends
 
                             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                               <input
+                                key={`listening-import-input-${activePartIdx}`}
                                 type="file" accept=".txt,.docx" id={`file-import-listen-${activePartIdx}`} style={{ display: "none" }}
                                 onChange={(e) => handleFileUpload(e, activePartIdx)}
                               />
@@ -1641,7 +1783,12 @@ D. Visiting friends
                             Part {p.soPhan}
                           </button>
                           <button
-                            onClick={() => handleDeletePart("reading", idx)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeletePart("reading", idx);
+                            }}
                             style={{ border: "none", background: "none", display: "flex", alignItems: "center", cursor: "pointer", color: activePartIdx === idx ? "white" : "#ef4444", padding: "2px" }}
                             title="Xóa Part"
                           >
@@ -1689,6 +1836,7 @@ D. Visiting friends
 
                             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                               <input
+                                key={`reading-import-input-${activePartIdx}`}
                                 type="file" accept=".txt,.docx" id={`file-import-read-${activePartIdx}`} style={{ display: "none" }}
                                 onChange={(e) => handleFileUpload(e, activePartIdx)}
                               />
@@ -1874,7 +2022,12 @@ D. Visiting friends
                             Part {p.soPhan}
                           </button>
                           <button
-                            onClick={() => handleDeletePart("writing", idx)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeletePart("writing", idx);
+                            }}
                             style={{ border: "none", background: "none", display: "flex", alignItems: "center", cursor: "pointer", color: activePartIdx === idx ? "white" : "#ef4444", padding: "2px" }}
                             title="Xóa Part"
                           >
@@ -1898,8 +2051,8 @@ D. Visiting friends
                               }}
                               style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", background: "white" }}
                             >
-                              <option value="Email">Email / Thư</option>
-                              <option value="Essay">Essay (Nghị luận)</option>
+                              <option value="Letter">Letter</option>
+                              <option value="Email">Email</option>
                             </select>
                           </div>
 
@@ -1946,19 +2099,6 @@ D. Visiting friends
                           />
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
-                          <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "4px" }}>Yêu cầu / Tiêu chí đánh giá</label>
-                          <RichTextEditor
-                            id={`textarea-write-yeucau-${activePartIdx}`}
-                            value={editingTest.kyNang.writing.parts[activePartIdx].yeuCau}
-                            onChange={(val) => {
-                              const updated = { ...editingTest };
-                              updated.kyNang.writing.parts[activePartIdx].yeuCau = val;
-                              setEditingTest(updated);
-                            }}
-                            minHeight="80px"
-                          />
-                        </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
                           <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "4px" }}>Gợi ý dàn ý (Không bắt buộc)</label>
@@ -2039,45 +2179,113 @@ D. Visiting friends
                     )}
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", boxSizing: "border-box", width: "100%" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Thời gian chuẩn bị (giây)</label>
-                      <input
-                        type="number"
-                        value={editingTest.kyNang.speaking.parts[0]?.thoiGianChuanBi || 60}
-                        onChange={(e) => {
-                          const updated = { ...editingTest };
-                          if (!updated.kyNang.speaking.parts[0]) {
-                            updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
-                          }
-                          updated.kyNang.speaking.parts[0].thoiGianChuanBi = Number(e.target.value) || 0;
-                          setEditingTest(updated);
-                        }}
-                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }}
-                      />
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Thời gian trả lời (giây)</label>
-                      <input
-                        type="number"
-                        value={editingTest.kyNang.speaking.parts[0]?.thoiGianNoi || 180}
-                        onChange={(e) => {
-                          const updated = { ...editingTest };
-                          if (!updated.kyNang.speaking.parts[0]) {
-                            updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: 60, thoiGianNoi: 180 };
-                          }
-                          updated.kyNang.speaking.parts[0].thoiGianNoi = Number(e.target.value) || 0;
-                          setEditingTest(updated);
-                        }}
-                        style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }}
-                      />
-                    </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box", width: "100%" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#64748b" }}>Thời gian chuẩn bị (giây)</label>
+                    <input
+                      type="number"
+                      value={editingTest.kyNang.speaking.parts[0]?.thoiGianChuanBi ?? 60}
+                      onChange={(e) => {
+                        let rawVal = e.target.value;
+                        if (rawVal.length > 1 && rawVal.startsWith("0")) {
+                          rawVal = rawVal.replace(/^0+/, "");
+                          e.target.value = rawVal;
+                        }
+                        const val = Number(rawVal) || 0;
+                        const updated = { ...editingTest };
+                        if (!updated.kyNang.speaking.parts[0]) {
+                          updated.kyNang.speaking.parts[0] = { soPhan: 1, tieuDe: "Speaking Part 1", moTa: "Speaking Practice", audioUrl: "", noiDung: "", thoiGianChuanBi: val, thoiGianNoi: 12 * 60 };
+                        } else {
+                          updated.kyNang.speaking.parts[0].thoiGianChuanBi = val;
+                        }
+                        setEditingTest(updated);
+                      }}
+                      style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px" }}
+                    />
                   </div>
                 </div>
               </div>
             )}
           </div>
+          {/* Custom Exit Confirmation Modal */}
+          {showExitConfirmPopup && (
+            <div style={{
+              position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+            }} onClick={() => setShowExitConfirmPopup(false)}>
+              <div style={{
+                background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+                boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+                border: "1px solid #cbd5e1", textAlign: "center"
+              }} onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+                  Xác nhận rời khỏi thiết kế
+                </h3>
+                <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+                  Bạn có muốn rời khỏi thiết kế đề thi? Các thay đổi chưa lưu sẽ bị mất.
+                </p>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <button
+                    onClick={() => setShowExitConfirmPopup(false)}
+                    style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    onClick={() => {
+                      isExitingRef.current = true;
+                      setShowExitConfirmPopup(false);
+                      setEditingTest(null);
+                      setAddQuestionError("");
+                      setAddAnswersError("");
+                      setTestTitleError("");
+                      window.history.back();
+                    }}
+                    style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+                  >
+                    Rời khỏi
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Custom Delete Part Confirmation Modal */}
+          {showDeletePartConfirmPopup && (
+            <div style={{
+              position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+            }} onClick={() => { setShowDeletePartConfirmPopup(false); setDeletePartInfo(null); }}>
+              <div style={{
+                background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+                boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+                border: "1px solid #cbd5e1", textAlign: "center"
+              }} onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+                  Xác nhận xóa Part
+                </h3>
+                <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+                  Bạn có chắc muốn xóa Part này cùng tất cả nội dung bên trong?
+                </p>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <button
+                    onClick={() => {
+                      setShowDeletePartConfirmPopup(false);
+                      setDeletePartInfo(null);
+                    }}
+                    style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleConfirmDeletePart}
+                    style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+                  >
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -2104,7 +2312,7 @@ D. Visiting friends
             </button>
             <div style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: "12px" }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                Chấm điểm bài thi: {selectedSubmission.hoTen} ({selectedSubmission.maSinhVien})
+                {isQTV ? "Chi tiết bài làm: " : "Chấm điểm bài thi: "}{selectedSubmission.hoTen} ({selectedSubmission.maSinhVien})
               </h2>
               <span style={{ fontSize: "12px", color: "#64748b" }}>
                 Đề thi: {selectedSubmission.tenDeThi} | Ngày nộp: {new Date(selectedSubmission.ngayNop).toLocaleString("vi-VN")}
@@ -2304,15 +2512,17 @@ D. Visiting friends
                     max="10"
                     value={gradeViet}
                     onChange={(e) => setGradeViet(e.target.value)}
-                    placeholder="Nhập điểm viết (0 - 10)..."
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box" }}
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có điểm" : "Nhập điểm viết (0 - 10)..."}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                   <textarea
                     value={feedbackViet}
                     onChange={(e) => setFeedbackViet(e.target.value)}
-                    placeholder="Nhập nhận xét bài viết cho học viên..."
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có nhận xét" : "Nhập nhận xét bài viết cho học viên..."}
                     rows={3}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                 </div>
 
@@ -2333,15 +2543,17 @@ D. Visiting friends
                     max="10"
                     value={gradeNoi}
                     onChange={(e) => setGradeNoi(e.target.value)}
-                    placeholder="Nhập điểm nói (0 - 10)..."
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box" }}
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có điểm" : "Nhập điểm nói (0 - 10)..."}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "13px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                   <textarea
                     value={feedbackNoi}
                     onChange={(e) => setFeedbackNoi(e.target.value)}
-                    placeholder="Nhập nhận xét bài nói cho học viên..."
+                    disabled={isQTV}
+                    placeholder={isQTV ? "Chưa có nhận xét" : "Nhập nhận xét bài nói cho học viên..."}
                     rows={3}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none", fontSize: "12px", resize: "none", marginTop: "6px", boxSizing: "border-box", backgroundColor: isQTV ? "#f1f5f9" : "white" }}
                   />
                 </div>
 
@@ -2357,15 +2569,17 @@ D. Visiting friends
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "20px" }}>
-                <button
-                  onClick={handleSaveGrades}
-                  style={{
-                    background: "#107544", color: "white", border: "none", padding: "12px", borderRadius: "8px",
-                    fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%"
-                  }}
-                >
-                  <FiCheckCircle /> Lưu điểm & Đánh giá
-                </button>
+                {!isQTV && (
+                  <button
+                    onClick={handleSaveGrades}
+                    style={{
+                      background: "#107544", color: "white", border: "none", padding: "12px", borderRadius: "8px",
+                      fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%"
+                    }}
+                  >
+                    <FiCheckCircle /> Lưu điểm & Đánh giá
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedSubmission(null)}
                   style={{
@@ -2391,11 +2605,12 @@ D. Visiting friends
                           s.maSinhVien.toLowerCase().includes(subSearch.toLowerCase()) ||
                           s.tenDeThi.toLowerCase().includes(subSearch.toLowerCase());
       
+      const isPending = s.diemViet === null || s.diemNoi === null;
+      const isGraded = !isPending;
+
       if (isQTV) {
-        return matchSearch;
+        return matchSearch && isGraded;
       } else {
-        const isPending = s.diemViet === null || s.diemNoi === null;
-        const isGraded = !isPending;
         if (subStatusFilter === "pending") return matchSearch && isPending;
         if (subStatusFilter === "graded") return matchSearch && isGraded;
         return matchSearch;
@@ -2555,7 +2770,7 @@ D. Visiting friends
                             fontSize: "11.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
                           }}
                         >
-                          {isPending ? "Chấm bài" : "Xem chi tiết"}
+                          {isQTV ? "Xem chi tiết" : (isPending ? "Chấm bài" : "Xem chi tiết")}
                         </button>
                       </td>
                     </tr>
@@ -2979,7 +3194,7 @@ D. Visiting friends
                     const isNew = testIdToDelete > 1000000000000;
                     if (!isNew) {
                       try {
-                        const res = await fetch(`http://localhost:5000/dethi/${testIdToDelete}`, {
+                        const res = await fetch(`http://14.225.192.252:5000/dethi/${testIdToDelete}`, {
                           method: "DELETE"
                         });
                         if (res.ok) {

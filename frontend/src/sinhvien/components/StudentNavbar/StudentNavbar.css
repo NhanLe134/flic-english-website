@@ -1,5 +1,5 @@
 .student-navbar {
-  background: white;
+  background: white !important;
   padding: 15px 0;
   position: sticky;
   top: 0;
@@ -7,6 +7,8 @@
   font-family: 'Inter', sans-serif;
   border-bottom: 1px solid #eee;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  overflow: visible !important;
+  height: auto !important;
 }
 
 .student-navbar .nav-wrapper {
@@ -39,7 +41,7 @@
 }
 
 .student-navbar .navv-menu a,
-.student-navbar .nav-dropdown-trigger {
+.student-navbar .nav-dropdown-trigger-student {
   text-decoration: none;
   color: #F95800;
   font-family: 'Inter', sans-serif;
@@ -53,9 +55,9 @@
 }
 
 .student-navbar .navv-menu a:hover,
-.student-navbar .nav-dropdown-trigger:hover,
+.student-navbar .nav-dropdown-trigger-student:hover,
 .student-navbar .navv-menu a.active-link,
-.student-navbar .nav-dropdown-trigger.active-link {
+.student-navbar .nav-dropdown-trigger-student.active-link {
   color: #000080; /* Blue FLIC highlight */
 }
 
@@ -101,23 +103,33 @@
 }
 
 /* Dropdown học thử & thi thử chuyên nghiệp (hover bridge) */
-.student-navbar .nav-dropdown {
+.student-navbar .nav-dropdown-wrap-student {
+  position: relative;
+  list-style: none;
+}
+
+.student-navbar .nav-dropdown-student {
   position: absolute;
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  padding-top: 10px; /* Cầu nối trong suốt khi hover */
+  padding-top: 10px;
   background: transparent;
   z-index: 1000;
   border: none;
   box-shadow: none;
+  display: none;
 }
 
-.student-navbar .nav-dropdown::before {
+.student-navbar .nav-dropdown-student.show {
+  display: block !important;
+}
+
+.student-navbar .nav-dropdown-student::before {
   display: none !important;
 }
 
-.student-navbar .nav-dropdown-inner {
+.student-navbar .nav-dropdown-inner-student {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -127,7 +139,7 @@
   animation: studentDropFadeIn 0.2s ease;
 }
 
-.student-navbar .nav-dropdown-inner a {
+.student-navbar .nav-dropdown-inner-student a {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -141,9 +153,17 @@
   transition: background-color 0.15s, color 0.15s;
 }
 
-.student-navbar .nav-dropdown-inner a:hover {
+.student-navbar .nav-dropdown-inner-student a:hover {
   background: #FFF2EB;
   color: #F95800;
+}
+
+.student-navbar .nav-chevron-student {
+  transition: transform 0.2s;
+}
+
+.student-navbar .nav-chevron-student.open {
+  transform: rotate(180deg);
 }
 
 /* Dropdown thông tin user */

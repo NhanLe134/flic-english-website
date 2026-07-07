@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 import HocThuSV from "../../sinhvien/pages/HocThuSV";
 
 const HocThu = () => {
@@ -20,8 +20,8 @@ const HocThu = () => {
 
   return (
     <>
-      <NavbarAuto />
-      <div style={{ padding: "40px 20px", minHeight: "80vh", background: "#f8fafc" }}>
+      <NavTuDong />
+      <div style={{ padding: "0", minHeight: "80vh", background: "#f8fafc" }}>
         <HocThuSV />
       </div>
       <Footer />

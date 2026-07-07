@@ -1,8 +1,8 @@
-﻿import "./Login.css";
+import "./Login.css";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface LoginProps {
   isModal?: boolean;
@@ -80,7 +80,7 @@ const Login = ({ isModal = false }: LoginProps) => {
   const cardContent = (
     <div className="login-card">
       {!isModal && <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC Logo" className="login-logo" />}
-      <h2 className="login-title">Đăng nhập</h2>
+      {!isModal && <h2 className="login-title">Đăng nhập</h2>}
       <div className="form-wrapper">
 
         <label>Tên đăng nhập/Email <span>*</span></label>

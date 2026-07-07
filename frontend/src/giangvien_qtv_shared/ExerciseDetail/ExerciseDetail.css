@@ -143,9 +143,9 @@
 }
 
 .exercise-header h1 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
-  color: #9b3b2c;
+  color: #F95800;
   margin: 0;
 }
 
@@ -327,6 +327,7 @@
   color: white;
   padding: 8px 16px;
   border-radius: 8px;
+  border: none;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;
@@ -335,6 +336,19 @@
 .submissions-btn:hover {
   background: #000080;       
   color: white;             
+}
+
+/* EXERCISE DETAIL SPECIFIC CARD */
+.exercise-detail-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  margin-top: 20px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
 }
 
 @keyframes scaleIn {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./StudentNavbar.css";
 import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
@@ -6,12 +6,13 @@ import { FiChevronDown, FiBookOpen, FiEdit3, FiLogOut } from "react-icons/fi";
 const logo = import.meta.env.BASE_URL + "flic_logo_full.png";
 const userIcon = import.meta.env.BASE_URL + "user.png";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 export default function StudentNavbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showTrialDropdown, setShowTrialDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLLIElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,8 +33,18 @@ export default function StudentNavbar() {
   useEffect(() => {
     syncUserInfo();
     window.addEventListener("avatarChanged", syncUserInfo);
+
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (!document.body.contains(e.target as Node)) return;
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowTrialDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleDocumentClick);
+
     return () => {
       window.removeEventListener("avatarChanged", syncUserInfo);
+      document.removeEventListener("click", handleDocumentClick);
     };
   }, []);
 
@@ -81,26 +92,27 @@ export default function StudentNavbar() {
           </li>
 
           {/* Học thử Dropdown */}
-          <li
-            className="nav-dropdown-wrap"
-            onMouseEnter={() => setShowTrialDropdown(true)}
-            onMouseLeave={() => setShowTrialDropdown(false)}
-          >
-            <span className={`nav-dropdown-trigger ${isActive("/hoc-thu-sv") || isActive("/test-thu-sv") ? "active-link" : ""}`}>
-              Học & thi thử <FiChevronDown className={`nav-chevron ${showTrialDropdown ? "open" : ""}`} />
+          <li className="nav-dropdown-wrap-student" ref={dropdownRef}>
+            <span 
+              className={`nav-dropdown-trigger-student ${isActive("/hoc-thu-sv") || isActive("/test-thu-sv") ? "active-link" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setShowTrialDropdown(!showTrialDropdown);
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              Học & thi thử <FiChevronDown className={`nav-chevron-student ${showTrialDropdown ? "open" : ""}`} />
             </span>
-            {showTrialDropdown && (
-              <div className="nav-dropdown">
-                <div className="nav-dropdown-inner">
-                  <Link to="/hoc-thu-sv" onClick={() => setShowTrialDropdown(false)}>
-                    <FiBookOpen size={16} /> Học thử
-                  </Link>
-                  <Link to="/test-thu-sv" onClick={() => setShowTrialDropdown(false)}>
-                    <FiEdit3 size={16} /> Làm bài test
-                  </Link>
-                </div>
+            <div className={`nav-dropdown-student ${showTrialDropdown ? "show" : ""}`}>
+              <div className="nav-dropdown-inner-student">
+                <Link to="/hoc-thu-sv" onClick={() => setShowTrialDropdown(false)}>
+                  <FiBookOpen size={16} /> Học thử
+                </Link>
+                <Link to="/test-thu-sv" onClick={() => setShowTrialDropdown(false)}>
+                  <FiEdit3 size={16} /> Làm bài test
+                </Link>
               </div>
-            )}
+            </div>
           </li>
 
           <li>

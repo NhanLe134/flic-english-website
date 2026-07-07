@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiSettings, FiMaximize, FiMinimize, FiCheckCircle, FiLock, FiXCircle, FiFileText } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const unescapeMarkdown = (str: string) => {
   return str
@@ -27,6 +27,29 @@ const formatTime = (timeInSeconds: number) => {
   const mins = Math.floor(timeInSeconds / 60);
   const secs = Math.floor(timeInSeconds % 60);
   return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+};
+
+const getMediaType = (url: string | null): "youtube" | "drive" | "video" | "document" | "none" => {
+  if (!url) return "none";
+  const u = url.toLowerCase().trim();
+  if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
+  if (u.includes("drive.google.com")) return "drive";
+  if (/\.(mp4|webm|ogg)$/i.test(u)) return "video";
+  return "document";
+};
+
+const getYouTubeVideoId = (url: string | null): string | null => {
+  if (!url) return null;
+  let videoId = "";
+  if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1]?.split(/[?#]/)[0] || "";
+  } else if (url.includes("youtube.com/watch")) {
+    const searchParams = new URLSearchParams(url.split("?")[1] || "");
+    videoId = searchParams.get("v") || "";
+  } else if (url.includes("youtube.com/embed/")) {
+    videoId = url.split("youtube.com/embed/")[1]?.split(/[?#]/)[0] || "";
+  }
+  return videoId || null;
 };
 
 function BaiGiangSV() {
@@ -69,46 +92,12 @@ function BaiGiangSV() {
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<any>(null);
 
-  // Mock Minitest Data Helper
-  const useMockMinitest = () => {
-    const mockQuestions = [
-      {
-        question: "Theo bài giảng video, quy tắc cơ bản nhất để ghi nhớ từ vựng lâu dài là gì?",
-        answers: [
-          "Lặp lại ngắt quãng (Spaced Repetition) và áp dụng vào ngữ cảnh thực tế",
-          "Học thuộc lòng cả danh sách từ vựng trong một ngày",
-          "Viết đi viết lại từ vựng đó 100 lần",
-          "Chỉ tra nghĩa tiếng Việt mà không cần thực hành đặt câu"
-        ],
-        correct: "A"
-      },
-      {
-        question: "Khi luyện nghe tiếng Anh giao tiếp qua video, bạn nên ưu tiên điều gì trước?",
-        answers: [
-          "Nghe hiểu ý chính và ngữ điệu trước khi đi sâu vào từng từ đơn lẻ",
-          "Ghi chép lại từng từ nghe được và tra từ điển ngay lập tức",
-          "Bật phụ đề tiếng Việt để dịch trực tiếp",
-          "Chỉ nghe những bài cực khó vượt quá trình độ bản thân"
-        ],
-        correct: "A"
-      },
-      {
-        question: "Nút điều chỉnh tốc độ (Playback Speed) hữu ích như thế nào khi luyện nghe?",
-        answers: [
-          "Giúp giảm tốc độ khi gặp đoạn khó nghe và tăng tốc độ để luyện phản xạ nghe nhanh",
-          "Giúp hoàn thành bài học nhanh hơn mà không cần hiểu nội dung",
-          "Chỉ có tác dụng giải trí, không hỗ trợ quá trình học tập",
-          "Bắt buộc luôn phải nghe ở tốc độ 2.0x"
-        ],
-        correct: "A"
-      }
-    ];
-    setMinitest({
-      MaMinitest: 999,
-      TieuDe: "Bài kiểm tra nhanh (Minitest Mock)"
-    });
-    setMinitestQuestions(mockQuestions);
-  };
+  const rawFileUrl = baiGiang?.FileUrl || null;
+  const fileUrl = rawFileUrl ? (rawFileUrl.startsWith("http") ? rawFileUrl : `${API}${rawFileUrl}`) : null;
+  const mediaType = getMediaType(fileUrl);
+  const ytPlayerRef = useRef<any>(null);
+
+
 
   // Fetch student info
   useEffect(() => {
@@ -176,19 +165,21 @@ function BaiGiangSV() {
             if (data.CauHoi) {
               setMinitestQuestions(JSON.parse(data.CauHoi));
             } else {
-              useMockMinitest();
+              setMinitestQuestions([]);
             }
           } catch (e) {
             console.error("Error parsing minitest questions:", e);
-            useMockMinitest();
+            setMinitestQuestions([]);
           }
         } else {
-          useMockMinitest();
+          setMinitest(null);
+          setMinitestQuestions([]);
         }
       })
       .catch(err => {
         console.error("Error fetching minitest:", err);
-        useMockMinitest();
+        setMinitest(null);
+        setMinitestQuestions([]);
       });
   }, [id]);
 
@@ -367,6 +358,90 @@ function BaiGiangSV() {
     }
   };
 
+  useEffect(() => {
+    if (mediaType !== "youtube" || !fileUrl) return;
+
+    const videoId = getYouTubeVideoId(fileUrl);
+    if (!videoId) return;
+
+    // Load the Iframe Player API code asynchronously.
+    if (!(window as any).YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
+    }
+
+    let intervalId: any;
+
+    const createPlayer = () => {
+      const container = document.getElementById("youtube-player-container");
+      if (container) {
+        container.innerHTML = '<div id="youtube-player" style="width: 100%; height: 100%;"></div>';
+      }
+
+      ytPlayerRef.current = new (window as any).YT.Player("youtube-player", {
+        height: "100%",
+        width: "100%",
+        videoId: videoId,
+        playerVars: {
+          controls: 1,
+          disablekb: 1,
+          fs: 1,
+          modestbranding: 1,
+          rel: 0,
+          showinfo: 0
+        },
+        events: {
+          onStateChange: (event: any) => {
+            if (event.data === (window as any).YT.PlayerState.ENDED) {
+              handleMarkVideoComplete();
+            }
+          },
+          onReady: () => {
+            // Start checking time
+            intervalId = setInterval(() => {
+              const player = ytPlayerRef.current;
+              if (player && typeof player.getCurrentTime === "function" && typeof player.getPlayerState === "function") {
+                const state = player.getPlayerState();
+                if (state === (window as any).YT.PlayerState.PLAYING) {
+                  const currentTime = player.getCurrentTime();
+                  if (progress.DaXemVideo === 0) {
+                    if (currentTime > maxTimeWatchedRef.current + 1.5) {
+                      player.seekTo(maxTimeWatchedRef.current, true);
+                    } else if (currentTime > maxTimeWatchedRef.current) {
+                      maxTimeWatchedRef.current = currentTime;
+                    }
+                  }
+                }
+              }
+            }, 250);
+          }
+        }
+      });
+    };
+
+    // If API is already ready, call directly. Otherwise, register onYouTubeIframeAPIReady callback.
+    if ((window as any).YT && (window as any).YT.Player) {
+      createPlayer();
+    } else {
+      const previousCallback = (window as any).onYouTubeIframeAPIReady;
+      (window as any).onYouTubeIframeAPIReady = () => {
+        if (previousCallback) previousCallback();
+        createPlayer();
+      };
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === "function") {
+        ytPlayerRef.current.destroy();
+      }
+    };
+  }, [mediaType, fileUrl, progress.DaXemVideo]);
+
   const handleCloseAlert = () => {
     setShowQuizAlert(false);
     if (quizAlertStatus === "error") {
@@ -403,7 +478,11 @@ function BaiGiangSV() {
 
     if (!isCorrect) {
       setQuizAlertStatus("error");
-      setQuizAlertMessage("Bạn đã trả lời sai! Bạn cần xem lại video từ đầu để làm lại bài trắc nghiệm.");
+      if (mediaType === "document") {
+        setQuizAlertMessage("Bạn đã trả lời sai! Bạn cần xem/tải lại tài liệu để làm lại bài trắc nghiệm.");
+      } else {
+        setQuizAlertMessage("Bạn đã trả lời sai! Bạn cần xem lại video từ đầu để làm lại bài trắc nghiệm.");
+      }
       setShowQuizAlert(true);
 
       if (!id || !maSinhVien) return;
@@ -465,8 +544,6 @@ function BaiGiangSV() {
         </div>
   );
 
-  const rawFileUrl = baiGiang.FileUrl || null;
-  const fileUrl = rawFileUrl ? (rawFileUrl.startsWith("http") ? rawFileUrl : `${API}${rawFileUrl}`) : null;
   const noiDung = baiGiang.NoiDung || "";
 
   return (
@@ -505,28 +582,6 @@ function BaiGiangSV() {
         <div className="ld2-main-col">
           {/* Khung chứa Video Player */}
           {(() => {
-            const getMediaType = (url: string | null): "youtube" | "drive" | "video" | "document" | "none" => {
-              if (!url) return "none";
-              const u = url.toLowerCase().trim();
-              if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
-              if (u.includes("drive.google.com")) return "drive";
-              if (/\.(mp4|webm|ogg)$/i.test(u)) return "video";
-              return "document";
-            };
-
-            const getYouTubeEmbedUrl = (url: string): string => {
-              let videoId = "";
-              if (url.includes("youtu.be/")) {
-                videoId = url.split("youtu.be/")[1]?.split(/[?#]/)[0] || "";
-              } else if (url.includes("youtube.com/watch")) {
-                const searchParams = new URLSearchParams(url.split("?")[1] || "");
-                videoId = searchParams.get("v") || "";
-              } else if (url.includes("youtube.com/embed/")) {
-                videoId = url.split("youtube.com/embed/")[1]?.split(/[?#]/)[0] || "";
-              }
-              return `https://www.youtube.com/embed/${videoId}`;
-            };
-
             const getGoogleDrivePreviewUrl = (url: string): string => {
               if (url.includes("/view")) {
                 return url.replace("/view", "/preview");
@@ -539,39 +594,201 @@ function BaiGiangSV() {
               return url;
             };
 
-            const mediaType = getMediaType(fileUrl);
+            const renderQuizOverlay = () => {
+              return (
+                <div className="video-quiz-overlay" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, background: "rgba(0,0,0,0.4)" }}>
+                  <div className="video-quiz-card anim-fade-in" style={{ background: "#fff", padding: "20px", borderRadius: "12px", width: "90%", maxWidth: "450px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "10px" }}>
+                      <h4 style={{ margin: 0, color: "#000080", fontSize: "15px", fontWeight: 800 }}>
+                        {minitest?.TieuDe || "Câu hỏi tương tác"} ({currentQuestionIndex + 1}/{minitestQuestions.length})
+                      </h4>
+                    </div>
+
+                    {(() => {
+                      const currentQ = minitestQuestions[currentQuestionIndex];
+                      if (!currentQ) return null;
+                      return (
+                        <div>
+                          <p style={{ fontWeight: 700, color: "#1e293b", fontSize: "14px", margin: "0 0 16px 0", lineHeight: 1.5 }}>
+                            {currentQ.question}
+                          </p>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+                            {currentQ.answers?.map((text: string, aIdx: number) => {
+                              const label = ["A", "B", "C", "D"][aIdx];
+                              const isSelected = currentAnswer === label;
+                              return (
+                                <button
+                                  key={label}
+                                  onClick={() => setCurrentAnswer(label)}
+                                  style={{
+                                    textAlign: "left",
+                                    padding: "12px 14px",
+                                    borderRadius: "10px",
+                                    border: `1.5px solid ${isSelected ? "#F95800" : "#e2e8f0"}`,
+                                    background: isSelected ? "#fff7ed" : "#fff",
+                                    color: isSelected ? "#F95800" : "#334155",
+                                    fontSize: "13px",
+                                    fontWeight: isSelected ? 700 : 500,
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease",
+                                    lineHeight: 1.4
+                                  }}
+                                >
+                                  <span style={{ fontWeight: 800, marginRight: "8px", color: isSelected ? "#F95800" : "#64748b" }}>{label}.</span>
+                                  {text}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div style={{ textAlign: "right" }}>
+                            <button
+                              onClick={handleQuizSubmit}
+                              style={{
+                                background: "linear-gradient(135deg, #F95800, #ff7e40)",
+                                color: "#fff",
+                                border: "none",
+                                padding: "10px 24px",
+                                borderRadius: "30px",
+                                fontSize: "13px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                boxShadow: "0 4px 12px rgba(249, 88, 0, 0.2)"
+                              }}
+                            >
+                              {currentQuestionIndex === minitestQuestions.length - 1 ? "Nộp bài hoàn thành" : "Nộp câu trả lời"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              );
+            };
 
             if (mediaType === "youtube") {
-              const embedUrl = getYouTubeEmbedUrl(fileUrl!);
+              const isQuizActive = progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0;
               return (
                 <div style={{ position: "relative", width: "100%", paddingTop: "56.25%", background: "#000", borderRadius: "12px", overflow: "hidden", marginBottom: "20px" }}>
-                  <iframe
-                    src={embedUrl}
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="Lecture Video"
-                  />
+                  <div
+                    id="youtube-player-container"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      filter: isQuizActive ? "blur(8px) brightness(0.5)" : "none",
+                      transition: "filter 0.3s ease"
+                    }}
+                  >
+                    <div id="youtube-player" style={{ width: "100%", height: "100%" }} />
+                  </div>
+                  {isQuizActive && renderQuizOverlay()}
                 </div>
               );
             }
 
             if (mediaType === "drive") {
               const previewUrl = getGoogleDrivePreviewUrl(fileUrl!);
+              const isQuizActive = progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0;
               return (
                 <div style={{ position: "relative", width: "100%", paddingTop: "56.25%", background: "#000", borderRadius: "12px", overflow: "hidden", marginBottom: "20px" }}>
                   <iframe
                     src={previewUrl}
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      border: 0,
+                      filter: isQuizActive ? "blur(8px) brightness(0.5)" : "none",
+                      transition: "filter 0.3s ease"
+                    }}
                     allow="autoplay"
                     allowFullScreen
                     title="Google Drive Video"
                   />
+                  {isQuizActive && renderQuizOverlay()}
                 </div>
               );
             }
 
             if (mediaType === "document") {
+              const isQuizActive = progress.DaXemVideo === 1 && progress.DaDatMinitest === 0 && minitestQuestions.length > 0;
+              if (isQuizActive) {
+                return (
+                  <div className="ld2-premium-card anim-fade-in" style={{ padding: "30px", background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "20px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "10px" }}>
+                      <h4 style={{ margin: 0, color: "#000080", fontSize: "15px", fontWeight: 800 }}>
+                        {minitest?.TieuDe || "Câu hỏi tương tác"} ({currentQuestionIndex + 1}/{minitestQuestions.length})
+                      </h4>
+                    </div>
+
+                    {(() => {
+                      const currentQ = minitestQuestions[currentQuestionIndex];
+                      if (!currentQ) return null;
+                      return (
+                        <div>
+                          <p style={{ fontWeight: 700, color: "#1e293b", fontSize: "14px", margin: "0 0 16px 0", lineHeight: 1.5 }}>
+                            {currentQ.question}
+                          </p>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+                            {currentQ.answers?.map((text: string, aIdx: number) => {
+                              const label = ["A", "B", "C", "D"][aIdx];
+                              const isSelected = currentAnswer === label;
+                              return (
+                                <button
+                                  key={label}
+                                  onClick={() => setCurrentAnswer(label)}
+                                  style={{
+                                    textAlign: "left",
+                                    padding: "12px 14px",
+                                    borderRadius: "10px",
+                                    border: `1.5px solid ${isSelected ? "#F95800" : "#e2e8f0"}`,
+                                    background: isSelected ? "#fff7ed" : "#fff",
+                                    color: isSelected ? "#F95800" : "#334155",
+                                    fontSize: "13px",
+                                    fontWeight: isSelected ? 700 : 500,
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease",
+                                    lineHeight: 1.4
+                                  }}
+                                >
+                                  <span style={{ fontWeight: 800, marginRight: "8px", color: isSelected ? "#F95800" : "#64748b" }}>{label}.</span>
+                                  {text}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div style={{ textAlign: "right" }}>
+                            <button
+                              onClick={handleQuizSubmit}
+                              style={{
+                                background: "linear-gradient(135deg, #F95800, #ff7e40)",
+                                color: "#fff",
+                                border: "none",
+                                padding: "10px 24px",
+                                borderRadius: "30px",
+                                fontSize: "13px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                boxShadow: "0 4px 12px rgba(249, 88, 0, 0.2)"
+                              }}
+                            >
+                              {currentQuestionIndex === minitestQuestions.length - 1 ? "Nộp bài hoàn thành" : "Nộp câu trả lời"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              }
+
               return (
                 <div className="ld2-premium-card" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", textAlign: "center", background: "#fff", border: "1.5px dashed #cbd5e1", borderRadius: "12px", marginBottom: "20px" }}>
                   <FiFileText size={48} style={{ color: "#3b82f6", marginBottom: "16px" }} />
@@ -583,6 +800,11 @@ function BaiGiangSV() {
                     href={fileUrl!}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={async () => {
+                      if (progress.DaXemVideo === 0) {
+                        await handleMarkVideoComplete();
+                      }
+                    }}
                     style={{
                       background: "#F95800",
                       color: "#fff",
@@ -990,7 +1212,9 @@ function BaiGiangSV() {
                   {progress.DaXemVideo === 1 ? <FiCheckCircle /> : "1"}
                 </div>
                 <div className="ld2-timeline-content">
-                  <span className="ld2-timeline-label">Xem video bài giảng</span>
+                  <span className="ld2-timeline-label">
+                    {mediaType === "document" ? "Xem / Tải tài liệu học" : "Xem video bài giảng"}
+                  </span>
                   <span className="ld2-timeline-desc">
                     {progress.DaXemVideo === 1 ? "Đã hoàn thành" : "Đang thực hiện"}
                   </span>
@@ -998,19 +1222,21 @@ function BaiGiangSV() {
               </div>
 
               {/* Bước 2: Minitest */}
-              <div className={`ld2-timeline-item ${
-                progress.DaXemVideo === 0 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
-              }`}>
-                <div className="ld2-timeline-bullet">
-                  {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo === 0 ? <FiLock /> : "2"}
+              {minitestQuestions && minitestQuestions.length > 0 && (
+                <div className={`ld2-timeline-item ${
+                  progress.DaXemVideo === 0 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
+                }`}>
+                  <div className="ld2-timeline-bullet">
+                    {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo === 0 ? <FiLock /> : "2"}
+                  </div>
+                  <div className="ld2-timeline-content">
+                    <span className="ld2-timeline-label">Hoàn thành Minitest</span>
+                    <span className="ld2-timeline-desc">
+                      {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo === 0 ? "Đang khóa" : "Chờ thực hiện"}
+                    </span>
+                  </div>
                 </div>
-                <div className="ld2-timeline-content">
-                  <span className="ld2-timeline-label">Hoàn thành Minitest</span>
-                  <span className="ld2-timeline-desc">
-                    {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo === 0 ? "Đang khóa" : "Chờ thực hiện"}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -1033,7 +1259,11 @@ function BaiGiangSV() {
               className={`ld2-popup-btn ${quizAlertStatus}`}
               onClick={handleCloseAlert}
             >
-              {quizAlertStatus === "success" ? "Đi đến bài tập" : "Xem lại video"}
+              {quizAlertStatus === "success" 
+                ? "Đi đến bài tập" 
+                : mediaType === "document" 
+                  ? "Xem lại tài liệu" 
+                  : "Xem lại video"}
             </button>
           </div>
         </div>

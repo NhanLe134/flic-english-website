@@ -83,7 +83,7 @@ export default function Progress() {
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
   const [hoTen, setHoTen] = useState("Lê Nhàn");
   const [userId, setUserId] = useState<number | null>(null);
-  const API = "http://localhost:5000";
+  const API = "http://14.225.192.252:5000";
 
   useEffect(() => {
     const userJson = sessionStorage.getItem("user");

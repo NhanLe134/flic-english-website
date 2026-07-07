@@ -1,10 +1,10 @@
-﻿import "./CourseDetailHome.css";
+import "./CourseDetailHome.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const courseImages: Record<string, string> = {
   TOEIC:   "/image(17).png",
@@ -12,7 +12,10 @@ const courseImages: Record<string, string> = {
   VSTEP:   "/image(19).png",
   General: "/image(20).png",
 }
-const getImage = (trinhDo: string) => courseImages[trinhDo] || "/image(17).png"
+const getImage = (trinhDo: string) => {
+  const path = courseImages[trinhDo] || "/image(17).png";
+  return `${import.meta.env.BASE_URL}${path.substring(1)}`;
+}
 
 function CourseDetail() {
   const navigate  = useNavigate()
@@ -86,15 +89,15 @@ function CourseDetail() {
   }
 
   if (loading) return (
-    <><NavbarAuto /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Đang tải...</div><Footer /></>
+    <><NavTuDong /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Đang tải...</div><Footer /></>
   )
   if (!course) return (
-    <><NavbarAuto /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Không tìm thấy khóa học.</div><Footer /></>
+    <><NavTuDong /><div style={{ textAlign:"center", padding:80, color:"#999" }}>Không tìm thấy khóa học.</div><Footer /></>
   )
 
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
       <div className="toeic-page">
         <nav className="toeic-breadcrumb">
           <Link to="/">Trang chủ</Link>

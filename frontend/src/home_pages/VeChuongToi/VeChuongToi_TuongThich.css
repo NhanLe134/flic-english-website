@@ -1,0 +1,70 @@
+/* 
+  Style tuong thich cho trang VeChuongToi (Mobile & Tablet)
+*/
+
+/* ==========================================================================
+   1. TABLET LAYOUT (768px - 1024px)
+   ========================================================================== */
+@media screen and (max-width: 1024px) {
+  /* Banner tu dong co dan, thay vi set height cung */
+  .about-hero img {
+    height: auto;
+    max-height: 350px;
+    object-fit: contain; /* Dam bao hien thi toan bo anh khong bi mat goc */
+    background-color: #fcf6f2; /* Lay mau nen phu de anh noi bat */
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 0 24px;
+  }
+}
+
+/* ==========================================================================
+   2. MOBILE LAYOUT (< 768px)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+  /* Banner tu dong co dan, hien thi toan bo tren mobile */
+  .about-hero img {
+    height: auto;
+    max-height: 220px;
+    object-fit: contain; /* Dam bao anh khong bi cat (crop) */
+    background-color: #fcf6f2;
+  }
+
+  .about-container {
+    padding: 40px 0 60px;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr; /* Chuyen ve 1 cot */
+    gap: 20px;
+    padding: 0 16px;
+  }
+
+  .about-card {
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .about-card h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .about-card p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .about-card ul {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .about-card ul li {
+    padding: 16px;
+    font-size: 13px;
+  }
+}

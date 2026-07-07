@@ -1,6 +1,7 @@
 import "./MyCourses.css";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../../utils/schedule";
 import {
   FaCalendarAlt,
   FaUsers,
@@ -12,7 +13,7 @@ import {
 } from "react-icons/fa";
 import { FiFileText, FiX } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 function pctColor(pct: number) {
   if (pct >= 90) return "#22c55e";
@@ -52,6 +53,7 @@ function MyCourses() {
   }>>({});
 
   const [submittedExerciseIds, setSubmittedExerciseIds] = useState<Set<number>>(new Set());
+  const [completedLectureIds, setCompletedLectureIds] = useState<Set<number>>(new Set());
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
@@ -65,6 +67,18 @@ function MyCourses() {
         }
       })
       .catch((err) => console.error("Error fetching submissions:", err));
+  }, [userId, refreshTrigger]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API}/student/completed-lectures/${userId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCompletedLectureIds(new Set<number>(data.map((id: any) => Number(id))));
+        }
+      })
+      .catch((err) => console.error("Error fetching completed lectures:", err));
   }, [userId, refreshTrigger]);
 
   const handleToggleClassDetails = async (classId: number) => {
@@ -343,7 +357,7 @@ function MyCourses() {
                         {c.LichHoc && (
                           <span>
                             <FaCalendarAlt className="mc-icon" />
-                            Lịch học: {c.LichHoc}
+                            Lịch học: {formatScheduleOnlyDays(c.LichHoc)}
                           </span>
                         )}
                         <span>
@@ -406,7 +420,7 @@ function MyCourses() {
 
                           const uncompletedLessons = activeLessons.map((l: any, idx: number) => {
                             const lectures = (details.lecturesMap[l.MaLesson] || []).filter(
-                              (lec: any) => localStorage.getItem(`completed_lecture_${userId}_${lec.MaBaiHoc}`) !== "true"
+                              (lec: any) => !completedLectureIds.has(Number(lec.MaBaiHoc))
                             );
                             const exercises = details.exercises
                               .filter((ex: any) => ex.MaLesson === l.MaLesson)
@@ -422,14 +436,10 @@ function MyCourses() {
                               documents,
                               hasContent: lectures.length > 0 || exercises.length > 0 || documents.length > 0
                             };
-                          }).filter((l: any) => l.hasContent);
+                          });
 
                           if (totalLessons === 0) {
                             return <div className="mc-details-empty">Lớp học chưa cập nhật buổi học.</div>;
-                          }
-
-                          if (uncompletedLessons.length === 0) {
-                            return <div className="mc-details-empty">Bạn đã hoàn thành tất cả các nội dung trong lớp học này.</div>;
                           }
 
                           return (
@@ -443,6 +453,11 @@ function MyCourses() {
                                     </div>
 
                                     <div className="mc-lesson-content-grid">
+                                      {l.lectures.length === 0 && l.exercises.length === 0 && l.documents.length === 0 && (
+                                        <div style={{ color: "#94a3b8", fontSize: "13px", padding: "8px 0", gridColumn: "1 / -1" }}>
+                                          Buổi học chưa có nội dung cần hoàn thành.
+                                        </div>
+                                      )}
                                       {/* Lectures */}
                                       {l.lectures.map((lec: any) => (
                                         <Link

@@ -12,7 +12,7 @@ import {
   FiHash
 } from "react-icons/fi";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 interface StudentProfile {
   MaSinhVien: string;

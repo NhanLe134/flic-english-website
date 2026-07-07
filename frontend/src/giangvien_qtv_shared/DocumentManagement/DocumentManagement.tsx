@@ -2,6 +2,7 @@ import "./DocumentManagement.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
+import { hasPermission } from "../../utils/permission";
 
 interface DocumentManagementProps {
   buoiHocIdProp?: string;
@@ -18,6 +19,46 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
 
+  const handleViewDocumentDetail = (doc: any) => {
+    const fileUrl = doc.FileUrl
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://14.225.192.252:5000${doc.FileUrl}`)
+      : doc.NoiDung?.includes("File: /uploads/")
+      ? `http://14.225.192.252:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      : null;
+
+    if (fileUrl) {
+      window.open(fileUrl, "_blank");
+    } else {
+      const newWindow = window.open("", "_blank");
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>${doc.TieuDe || "Tài liệu"}</title>
+              <style>
+                body {
+                  font-family: system-ui, -apple-system, sans-serif;
+                  padding: 40px;
+                  max-width: 800px;
+                  margin: 0 auto;
+                  line-height: 1.6;
+                  color: #333;
+                }
+                h1 { color: #000080; border-bottom: 2px solid #eee; padding-bottom: 12px; }
+                p { font-size: 16px; white-space: pre-wrap; }
+              </style>
+            </head>
+            <body>
+              <h1>${doc.TieuDe || "Tài liệu"}</h1>
+              <p>${doc.NoiDung || ""}</p>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    }
+  };
+
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [allExistingDocs, setAllExistingDocs] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
@@ -26,7 +67,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://localhost:5000/tailieu/list/all";
+      let url = "http://14.225.192.252:5000/tailieu/list/all";
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -43,14 +84,14 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 
   const handleReuseDocument = async (docId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/tailieu/${docId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/tailieu/${docId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
         // Refresh documents list
-        const dRes = await fetch(`http://localhost:5000/tailieu/${buoiHocId}`);
+        const dRes = await fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`);
         const dData = await dRes.json();
         setDocuments(dData);
         setShowReuseModal(false);
@@ -66,7 +107,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== LOAD DATA ===== */
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://localhost:5000/tailieu/${buoiHocId}`)
+    fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setDocuments(data))
       .catch(err => console.log(err));
@@ -84,7 +125,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== XÓA ===== */
   const handleConfirmDelete = async () => {
     if (selectedId !== null) {
-      await fetch(`http://localhost:5000/tailieu/${selectedId}`, { method: "DELETE" });
+      await fetch(`http://14.225.192.252:5000/tailieu/${selectedId}`, { method: "DELETE" });
       setDocuments(documents.filter(doc => doc.MaTaiLieu !== selectedId));
     }
     setShowConfirm(false);
@@ -119,15 +160,19 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
             <FiSearch size={16} />
           </button>
         </form>
-        <button
-          className="add-btn-reuse"
-          onClick={openReuseModal}
-        >
-          <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn tài liệu có sẵn
-        </button>
-        <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
-          <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm tài liệu
-        </button>
+        {(hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
+          <>
+            <button
+              className="add-btn-reuse"
+              onClick={openReuseModal}
+            >
+              <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn tài liệu có sẵn
+            </button>
+            <button className="add-btn" onClick={() => navigate(`/them-tai-lieu/${buoiHocId}`)}>
+              <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm tài liệu
+            </button>
+          </>
+        )}
       </div>
 
       {/* LIST */}
@@ -143,7 +188,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
                 ⏱ Cập nhật: {new Date(doc.NgayCapNhat).toLocaleDateString("vi-VN")}
               </span>
               <button className="action-icon-btn detail-icon-btn" 
-                onClick={() => navigate(`/quan-ly-tai-lieu/${doc.MaTaiLieu}`)}
+                onClick={() => handleViewDocumentDetail(doc)}
                 title="Xem Chi Tiết">
                 <FiEye size={16} />
               </button>
@@ -159,14 +204,34 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 
       {/* DELETE MODAL */}
       {showConfirm && (
-        <div className="confirm-overlay">
-          <div className="confirm-modal">
-            <div className="warning-icon">!</div>
-            <h3>Xác nhận Xóa</h3>
-            <p>Bạn có chắc chắn muốn xóa tài liệu này không?</p>
-            <div className="confirm-buttons">
-              <button className="btn-confirm" onClick={handleConfirmDelete}>Xác nhận</button>
-              <button className="btn-cancel" onClick={() => setShowConfirm(false)}>Không</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => setShowConfirm(false)}>
+          <div style={{
+            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #cbd5e1", textAlign: "center"
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+              Xác nhận xóa tài liệu
+            </h3>
+            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Bạn có chắc chắn muốn xóa tài liệu này không?
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+              >
+                Xóa
+              </button>
             </div>
           </div>
         </div>
@@ -174,7 +239,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
 
       {showReuseModal && (
         <div className="confirm-overlay" style={{ zIndex: 1000 }}>
-          <div className="confirm-modal" style={{ maxWidth: "600px", padding: "20px" }}>
+          <div className="confirm-modal" style={{ maxWidth: "800px", width: "90%", padding: "20px" }}>
             <h3 style={{ marginBottom: "15px" }}>Chọn tài liệu có sẵn</h3>
             
             <input
@@ -192,7 +257,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
               }}
             />
 
-            <div style={{ maxHeight: "300px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
+            <div style={{ maxHeight: "450px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
               {allExistingDocs.filter(doc => doc.TieuDe?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
                 <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy tài liệu nào.</div>
               ) : (

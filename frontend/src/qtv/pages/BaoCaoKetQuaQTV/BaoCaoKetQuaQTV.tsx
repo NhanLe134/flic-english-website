@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo, Fragment } from "react"
 import styles from "./BaoCaoKetQuaQTV.module.css"
-import { FiSearch, FiUsers, FiCheckCircle, FiAward } from "react-icons/fi"
+import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap"
 
-const API = 'http://localhost:5000'
+const API = 'http://14.225.192.252:5000'
 
 interface ExerciseHeader {
   MaBaiTap: number
@@ -64,6 +67,23 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedStudents, setExpandedStudents] = useState<Set<number>>(new Set())
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [selectedReview, setSelectedReview] = useState<{
+    studentId: number
+    exerciseId: number
+    classId: number
+  } | null>(null)
+
+  const handleOpenReview = (studentId: number, exerciseId: number, className: string) => {
+    const foundLesson = allLessons.find(l => l.TenLop === className && l.MaLopHoc);
+    const classId = foundLesson ? foundLesson.MaLopHoc || 0 : 0;
+    setSelectedReview({ studentId, exerciseId, classId })
+  }
+
+  const handleCloseReview = () => {
+    setSelectedReview(null)
+  }
 
   const toggleExpandStudent = (id: number) => {
     setExpandedStudents(prev => {
@@ -150,20 +170,6 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     return allBuoiNumbers;
   }, [allLessons, filterLop])
 
-  const getBuoiAvg = (hv: HocVien, buoiNum: number) => {
-    const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
-    if (buoiExs.length === 0) return null
-
-    const scores = buoiExs
-      .map(ex => hv.rawScores[ex.MaBaiTap])
-      .filter((s): s is number => s !== null && typeof s === 'number')
-
-    if (scores.length === 0) return null
-
-    const avg = scores.reduce((a, b) => a + b, 0) / scores.length
-    return Math.round(avg * 10) / 10
-  }
-
   const getBuoiStatusOrAvg = (hv: HocVien, buoiNum: number) => {
     const buoiExs = activeHeaders.filter(h => h.ThuTu === buoiNum && h.TenLop === hv.lopKhoaHoc)
     if (buoiExs.length === 0) return { status: "none", val: null }
@@ -236,30 +242,146 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   }, [filtered, currentPage])
 
   const tongHV    = filtered.length
-  const dangHoc   = filtered.filter(h => h.trangThai === "Đang học").length
-  const hoanThanh = filtered.filter(h => h.trangThai === "Hoàn thành").length
+  const chuaHoanThanh = filtered.filter(h => {
+    const classExs = activeHeaders.filter(ex => ex.TenLop === h.lopKhoaHoc)
+    if (classExs.length === 0) return false
+    return classExs.some(ex => {
+      const score = h.rawScores[ex.MaBaiTap];
+      return score === null || score === undefined || score === "Chưa nộp";
+    });
+  }).length
   const diemTBs   = filtered.filter(h => h.diemTB !== null).map(h => h.diemTB as number)
   const diemTBchung = diemTBs.length > 0
     ? (diemTBs.reduce((a, b) => a + b, 0) / diemTBs.length).toFixed(2)
     : "—"
 
+  const isAnyExpanded = expandedStudents.size > 0;
+  const buoiColWidth = isAnyExpanded ? '240px' : '120px';
 
+  const handleExportExcel = (mode: "summary" | "detail") => {
+    if (filtered.length === 0) {
+      alert("Không có học viên nào để xuất!");
+      return;
+    }
 
-  const handleExportCSV = () => {
-    const headers = ["Họ và tên", "Mã HV", "Trạng thái", ...uniqueBuois.map(b => `Buổi ${b}`)]
-    const rows = filtered.map(h => [
-      h.hoTen, h.maHV, h.trangThai,
-      ...uniqueBuois.map(b => {
-        const avg = getBuoiAvg(h, b)
-        return avg !== null ? avg : "Chưa nộp"
-      })
-    ])
-    const csv  = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n")
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement("a"); a.href = url; a.download = "baocao_ketqua.csv"; a.click()
-    URL.revokeObjectURL(url)
-  }
+    let headers: string[] = [];
+    let rows: Record<string, any>[] = [];
+
+    if (mode === "summary") {
+      headers = [
+        "Mã học viên",
+        "Họ tên",
+        "Lớp/khóa",
+        "Khóa học",
+        "Trạng thái",
+        ...uniqueBuois.map(b => `Buổi ${b}`),
+        "Điểm trung bình"
+      ];
+
+      rows = filtered.map(h => {
+        const rowData: Record<string, any> = {
+          "Mã học viên": h.maHV,
+          "Họ tên": h.hoTen,
+          "Lớp/khóa": h.lopKhoaHoc || "—",
+          "Khóa học": h.tenKhoa || "—",
+          "Trạng thái": h.trangThai || "—",
+        };
+        uniqueBuois.forEach(b => {
+          const res = getBuoiStatusOrAvg(h, b);
+          rowData[`Buổi ${b}`] = res.status === "graded" ? res.val : res.status === "pending" ? "Cần chấm" : "Chưa nộp";
+        });
+        rowData["Điểm trung bình"] = h.diemTB !== null ? h.diemTB : "—";
+        return rowData;
+      });
+    } else {
+      // mode === "detail"
+      headers = [
+        "Mã học viên",
+        "Họ tên",
+        "Lớp/khóa",
+        "Khóa học",
+        "Trạng thái"
+      ];
+
+      const courseName = filtered[0]?.tenKhoa || "";
+      uniqueBuois.forEach(b => {
+        const exsInBuoi = exercisesByBuoi[b] || [];
+        exsInBuoi.forEach(ex => {
+          headers.push(`${ex.TenBai}\n${courseName}`);
+        });
+        headers.push(`Buổi ${b}`);
+      });
+
+      headers.push("Điểm trung bình");
+
+      rows = filtered.map(h => {
+        const rowData: Record<string, any> = {
+          "Mã học viên": h.maHV,
+          "Họ tên": h.hoTen,
+          "Lớp/khóa": h.lopKhoaHoc || "—",
+          "Khóa học": h.tenKhoa || "—",
+          "Trạng thái": h.trangThai || "—",
+        };
+
+        uniqueBuois.forEach(b => {
+          const exsInBuoi = exercisesByBuoi[b] || [];
+          exsInBuoi.forEach(ex => {
+            const colHeader = `${ex.TenBai}\n${h.tenKhoa || ""}`;
+            const scoreVal = h.rawScores[ex.MaBaiTap];
+            if (scoreVal !== null && typeof scoreVal === 'number') {
+              rowData[colHeader] = scoreVal;
+            } else if (scoreVal === 'Cần chấm') {
+              rowData[colHeader] = "Cần chấm";
+            } else {
+              rowData[colHeader] = "Chưa nộp";
+            }
+          });
+
+          const res = getBuoiStatusOrAvg(h, b);
+          rowData[`Buổi ${b}`] = res.status === "graded" ? res.val : res.status === "pending" ? "Cần chấm" : "Chưa nộp";
+        });
+
+        rowData["Điểm trung bình"] = h.diemTB !== null ? h.diemTB : "—";
+        return rowData;
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng điểm");
+
+    // Dynamic column widths
+    const colWidths: { wch: number }[] = [];
+    if (mode === "summary") {
+      colWidths.push(
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 15 },
+        ...uniqueBuois.map(() => ({ wch: 15 })),
+        { wch: 18 }
+      );
+    } else {
+      colWidths.push(
+        { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 15 }
+      );
+      uniqueBuois.forEach(b => {
+        const exsInBuoi = exercisesByBuoi[b] || [];
+        exsInBuoi.forEach(() => {
+          colWidths.push({ wch: 30 });
+        });
+        colWidths.push({ wch: 15 });
+      });
+      colWidths.push({ wch: 18 });
+    }
+    worksheet["!cols"] = colWidths;
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    
+    const filePrefix = mode === "summary" ? "BangDiem_TongQuan" : "BangDiem_ChiTiet";
+    saveAs(blob, `${filePrefix}_${filterLop || "Lop"}_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xlsx`);
+
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
 
   return (
     <div className={styles.page}>
@@ -271,8 +393,8 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
           <p className={styles.subtitle}>Xem và xuất điểm bài tập của từng học viên theo lớp học</p>
         </div>
         {showCsvButton && (
-          <button className={styles.exportBtn} onClick={handleExportCSV}>
-            ⬇ Xuất CSV
+          <button className={styles.exportBtn} onClick={() => setShowExportModal(true)}>
+            ⬇ Xuất Excel
           </button>
         )}
       </div>
@@ -291,25 +413,14 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             </div>
           </div>
 
-          <div className={`${styles.card} ${styles.cardActive}`}>
-            <div className={styles.cardIconContainer}>
-              <FiUsers size={18} />
+          <div className={`${styles.card} ${styles.cardCompleted}`} style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+            <div className={styles.cardIconContainer} style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' }}>
+              <FiAlertCircle size={18} />
             </div>
             <div className={styles.cardContent}>
-              <span className={styles.cardLabel}>Đang học</span>
-              <h2 className={styles.cardValue}>{dangHoc}</h2>
-              <small className={styles.cardSubtext}>Học viên đang học</small>
-            </div>
-          </div>
-
-          <div className={`${styles.card} ${styles.cardCompleted}`}>
-            <div className={styles.cardIconContainer}>
-              <FiCheckCircle size={18} />
-            </div>
-            <div className={styles.cardContent}>
-              <span className={styles.cardLabel}>Hoàn thành</span>
-              <h2 className={styles.cardValue}>{hoanThanh}</h2>
-              <small className={styles.cardSubtext}>Học viên hoàn thành</small>
+              <span className={styles.cardLabel}>Chưa hoàn thành</span>
+              <h2 className={styles.cardValue}>{chuaHoanThanh}</h2>
+              <small className={styles.cardSubtext}>Học viên chưa hoàn thành</small>
             </div>
           </div>
 
@@ -342,12 +453,14 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
           <select className={styles.select} value={filterKhoa} onChange={e => setFilterKhoa(e.target.value)}>
             {khoaList.map(k => <option key={k}>{k}</option>)}
           </select>
-          <select className={styles.select} value={filterLop} onChange={e => setFilterLop(e.target.value)}>
-            {lopList.map(l => <option key={l}>{l}</option>)}
-          </select>
-          <select className={styles.select} value={filterTT} onChange={e => setFilterTT(e.target.value)}>
-            {ttList.map(t => <option key={t}>{t}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+            <select className={styles.select} value={filterLop} onChange={e => setFilterLop(e.target.value)}>
+              {lopList.map(l => <option key={l}>{l}</option>)}
+            </select>
+            <select className={styles.select} value={filterTT} onChange={e => setFilterTT(e.target.value)}>
+              {ttList.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* TABLE */}
@@ -358,17 +471,16 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}></th>
-                  <th>MÃ SINH VIÊN</th>
-                  <th>HỌ TÊN</th>
-                  <th>LỚP/KHÓA</th>
-                  <th>TRẠNG THÁI</th>
+                  <th style={{ width: '40px', minWidth: '40px', maxWidth: '40px', padding: '0 8px', textAlign: 'center', boxSizing: 'border-box' }}></th>
+                  <th style={{ width: '120px', minWidth: '120px', maxWidth: '120px', boxSizing: 'border-box' }}>MÃ SINH VIÊN</th>
+                  <th style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>HỌ TÊN</th>
+                  <th style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>TRẠNG THÁI</th>
                   {uniqueBuois.map(b => {
                     const classLessons = allLessons.filter(l => l.TenLop === filterLop)
                     const lessonForBuoi = classLessons.find(l => l.ThuTu === b)
                     const isActive = lessonForBuoi && classLessons[0]?.ActiveBuoiHocId === lessonForBuoi.MaBuoiHoc
                     return (
-                      <th key={b}>
+                      <th key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                           <span>BUỔI {b}</span>
                           {isActive && (
@@ -378,7 +490,8 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                       </th>
                     )
                   })}
-                  <th>ĐIỂM TB</th>
+                  <th style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}>ĐIỂM TB</th>
+                  <th></th> {/* Dummy column to absorb extra space and prevent column stretching */}
                 </tr>
               </thead>
               <tbody>
@@ -400,20 +513,16 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                           onClick={() => toggleExpandStudent(hv.id)}
                           style={{ cursor: 'pointer' }}
                         >
-                          <td style={{ width: '40px', padding: '0 8px', textAlign: 'center' }}>
+                          <td style={{ width: '40px', minWidth: '40px', maxWidth: '40px', padding: '0 8px', textAlign: 'center', boxSizing: 'border-box' }}>
                             <span style={{ fontSize: '10px', color: '#666', display: 'inline-block', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>
                               ▶
                             </span>
                           </td>
-                          <td className={styles.maHV}>{hv.maHV}</td>
-                          <td>
-                            <p className={styles.tenHV}>{hv.hoTen}</p>
+                          <td className={styles.maHV} style={{ width: '120px', minWidth: '120px', maxWidth: '120px', boxSizing: 'border-box' }}>{hv.maHV}</td>
+                          <td style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>
+                            <p className={styles.tenHV} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{hv.hoTen}</p>
                           </td>
-                          <td>
-                            <p className={styles.tenLop}>{hv.lopKhoaHoc}</p>
-                            <p className={styles.subInfo}>{hv.tenKhoa}</p>
-                          </td>
-                          <td>
+                          <td style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>
                             <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
                               {hv.trangThai}
                             </span>
@@ -423,16 +532,16 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                             const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
                             if (hvActiveThuTu === null || b > hvActiveThuTu) {
-                              return <td key={b} className={styles.emptyVal}>—</td>
+                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>—</td>
                             }
 
                             const res = getBuoiStatusOrAvg(hv, b)
                             const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
                             if (!hasExs) {
-                              return <td key={b} className={styles.emptyVal}>—</td>
+                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>—</td>
                             }
                             return (
-                              <td key={b}>
+                              <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
                                 {res.status === "graded" ? (
                                   <span className={`${styles.diemBadge} ${diemColor(res.val as number)}`}>{res.val}</span>
                                 ) : res.status === "pending" ? (
@@ -443,7 +552,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                               </td>
                             )
                           })}
-                          <td>
+                          <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}>
                             {hv.diemTB !== null ? (
                               <span className={`${styles.diemBadge} ${diemColor(hv.diemTB)}`} style={{ fontWeight: 700 }}>
                                 {hv.diemTB}
@@ -452,45 +561,64 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                               <span className={styles.chuaNop}>—</span>
                             )}
                           </td>
+                          <td></td> {/* Dummy column */}
                         </tr>
                         {isExpanded && (
                           maxExCount > 0 ? (
                             Array.from({ length: maxExCount }).map((_, i) => (
                               <tr key={`sub-${hv.id}-${i}`} style={{ background: '#fbfbfb' }}>
-                                <td colSpan={5}></td>
+                                <td colSpan={4}></td>
                                 {uniqueBuois.map(b => {
                                   const exList = exercisesByBuoi[b] || []
                                   const ex = exList[i]
-                                  if (!ex) return <td key={b}></td>
+                                  if (!ex) return <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}></td>
 
                                   const scoreVal = hv.rawScores[ex.MaBaiTap]
+                                  const wasSubmitted = scoreVal !== null && scoreVal !== undefined;
                                   return (
-                                    <td key={b} style={{ padding: '6px 8px', borderBottom: '1px solid #f3f4f6' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                          <span style={{ fontWeight: 600, fontSize: '12.5px', color: '#1e293b' }}>{ex.TenBai}</span>
-                                          <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>{hv.tenKhoa}</span>
+                                    <td 
+                                      key={b} 
+                                      onClick={() => {
+                                        if (wasSubmitted) {
+                                          handleOpenReview(hv.id, ex.MaBaiTap, hv.lopKhoaHoc);
+                                        }
+                                      }}
+                                      style={{ 
+                                        padding: '6px 8px', 
+                                        borderBottom: '1px solid #f3f4f6', 
+                                        width: buoiColWidth, 
+                                        minWidth: buoiColWidth, 
+                                        maxWidth: buoiColWidth, 
+                                        boxSizing: 'border-box',
+                                        cursor: wasSubmitted ? 'pointer' : 'default'
+                                      }}
+                                      className={wasSubmitted ? styles.subRowCell : undefined}
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', width: '100%', overflow: 'hidden' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, flex: 1 }}>
+                                          <span style={{ fontWeight: 600, fontSize: '12px', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }} title={ex.TenBai}>{ex.TenBai}</span>
                                         </div>
-                                        <div>
+                                        <div style={{ flexShrink: 0 }}>
                                           {scoreVal !== null && typeof scoreVal === 'number' ? (
                                             <span className={`${styles.diemBadgeMini} ${diemColor(scoreVal)}`}>{scoreVal}</span>
                                           ) : scoreVal === 'Cần chấm' ? (
                                             <span className={styles.diemBadgeMini} style={{ background: '#ffe6cc', color: '#d35400', fontSize: '11px', fontWeight: 600 }}>Cần chấm</span>
                                           ) : (
-                                            <span className={styles.chuaNopMini}>Chưa nộp</span>
+                                            <span className={styles.chuaNopMini}>Chưa</span>
                                           )}
                                         </div>
                                       </div>
                                     </td>
                                   )
                                 })}
-                                <td></td>
+                                <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}></td>
+                                <td></td> {/* Dummy column */}
                               </tr>
                             ))
                           ) : (
                             <tr style={{ background: '#fbfbfb' }}>
-                              <td colSpan={5}></td>
-                              <td colSpan={uniqueBuois.length + 1} style={{ textAlign: 'center', color: '#bbb', fontSize: '12.5px', padding: '12px' }}>
+                              <td colSpan={4}></td>
+                              <td colSpan={uniqueBuois.length + 2} style={{ textAlign: 'center', color: '#bbb', fontSize: '12.5px', padding: '12px' }}>
                                 Không có bài tập nào.
                               </td>
                             </tr>
@@ -527,6 +655,79 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
         )}
       </div>
 
+      {showExportModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowExportModal(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ padding: '16px 20px' }}>
+              <h2>Chọn chế độ xuất Excel</h2>
+              <button className={styles.modalClose} onClick={() => setShowExportModal(false)}>&times;</button>
+            </div>
+            <div className={styles.modalBody} style={{ padding: '20px' }}>
+              <div className={styles.exportOptions} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  className={styles.exportOptionBtn}
+                  onClick={() => {
+                    setShowExportModal(false);
+                    handleExportExcel("summary");
+                  }}
+                >
+                  Chế độ 1: Xuất tổng quan
+                </button>
+                <button 
+                  className={`${styles.exportOptionBtn} ${styles.highlight}`}
+                  onClick={() => {
+                    setShowExportModal(false);
+                    handleExportExcel("detail");
+                  }}
+                >
+                  Chế độ 2: Xuất chi tiết toàn bộ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center",
+          alignItems: "center", zIndex: 1100
+        }}>
+          <div style={{
+            background: "white", padding: "40px 60px", borderRadius: "16px",
+            textAlign: "center", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)"
+          }}>
+            <div style={{
+              width: "60px", height: "60px", borderRadius: "50%",
+              border: "3px solid #2ecc71", display: "flex", justifyContent: "center",
+              alignItems: "center", margin: "0 auto 15px"
+            }}>
+              <span style={{ fontSize: 28, color: "#2ecc71" }}>✔</span>
+            </div>
+            <p style={{ margin: 0, fontWeight: 600, color: "#333" }}>Tải file báo cáo thành công</p>
+          </div>
+        </div>
+      )}
+
+      {selectedReview && (
+        <div className={styles.reviewModalBackdrop} onClick={handleCloseReview}>
+          <div className={styles.reviewModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.reviewModalCloseBtn} onClick={handleCloseReview} title="Đóng">
+              &times;
+            </button>
+            <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+              <ChiTietBaiTap 
+                overrideExerciseId={selectedReview.exerciseId}
+                overrideStudentId={selectedReview.studentId}
+                overrideClassId={selectedReview.classId}
+                isModal={true}
+                onClose={handleCloseReview}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

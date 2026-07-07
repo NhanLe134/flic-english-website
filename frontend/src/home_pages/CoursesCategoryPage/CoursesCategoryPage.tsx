@@ -1,10 +1,10 @@
-﻿import NavbarAuto from "../../components/NavbarAuto";
-import Footer from "../../components/Footer";
+import NavTuDong from "../../components/NavTuDong/NavTuDong";
+import Footer from "../../components/Footer/Footer";
 import "./CoursesCategoryPage.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 const categoryMeta: Record<string, { title: string; image: string; breadcrumb: string }> = {
   toeic: {
@@ -151,7 +151,7 @@ const CoursesCategoryPage = () => {
 
   return (
     <>
-      <NavbarAuto />
+      <NavTuDong />
 
       <div className="cat-page-wrapper">
         <div className="cat-container">
@@ -176,7 +176,7 @@ const CoursesCategoryPage = () => {
             <div className="cat-grid-layout">
               {filteredCourses.map((c) => (
                 <div className="cat-course-card" key={c.MaKhoaHoc}>
-                  <img src={meta.image} alt={c.TenKhoaHoc} />
+                  <img src={`${import.meta.env.BASE_URL}${meta.image.substring(1)}`} alt={c.TenKhoaHoc} />
 
                   <div className="cat-card-content">
                     <h2>{c.TenKhoaHoc}</h2>

@@ -3,6 +3,7 @@ import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
 import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut, FiFileText } from "react-icons/fi";
 import "./SidebarGV.css";
+import { hasPermission } from "../../utils/permission";
 
 const menuItems = [
   { label: "Quản lý giảng dạy",       path: "/quan-ly-khoa-hoc",   icon: <FiBookOpen className="menu-icon" /> },
@@ -75,11 +76,27 @@ const Sidebar = () => {
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
 
+  const allowedMenuItems = menuItems.filter(item => {
+    if (item.path === "/quan-ly-khoa-hoc") {
+      return hasPermission("LECTURE_CREATE") || hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE") || hasPermission("EXTRA_PRACTICE_CREATE") || hasPermission("DOCUMENT_CREATE_PENDING");
+    }
+    if (item.path === "/quan-ly-de-thi") {
+      return hasPermission("QUIZ_CREATE");
+    }
+    if (item.path === "/danh-sach-hoc-vien") {
+      return hasPermission("SUBMISSION_VIEW") || hasPermission("STUDENT_GRADE");
+    }
+    if (item.path === "/quan-ly-ket-qua") {
+      return hasPermission("GRADEBOOK_VIEW_CLASS") || hasPermission("GRADEBOOK_VIEW_ALL");
+    }
+    return true;
+  });
+
   useEffect(() => {
     const userStr = sessionStorage.getItem("user");
     if (!userStr) return;
     const user = JSON.parse(userStr);
-    fetch(`http://localhost:5000/giangvien/${user.MaNguoiDung}`)
+    fetch(`http://14.225.192.252:5000/giangvien/${user.MaNguoiDung}`)
       .then(res => res.json())
       .then(data => setTeacherInfo(data))
       .catch(err => console.log(err));
@@ -120,7 +137,7 @@ const Sidebar = () => {
       </div>
 
       <ul className="sidebar-menu">
-        {menuItems.map((item) => (
+        {allowedMenuItems.map((item) => (
           <li
             key={item.path}
             onClick={() => {
@@ -141,45 +158,30 @@ const Sidebar = () => {
       {/* MODAL XÁC NHẬN ĐĂNG XUẤT */}
       {showLogoutModal && (
         <div
-          style={{
-            position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 9999
-          }}
+          className="logout-modal-backdrop"
           onClick={() => setShowLogoutModal(false)}
         >
           <div
-            style={{
-              background: "#fff", borderRadius: 16, padding: "36px 32px",
-              minWidth: 320, textAlign: "center", boxShadow: "0 8px 32px rgba(0,0,0,0.15)"
-            }}
+            className="logout-modal-card"
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ fontSize: 40, marginBottom: 12 }}>👋</div>
-            <h3 style={{ marginBottom: 8, fontSize: 20, fontWeight: 700, color: "#222" }}>
-              Đăng xuất
-            </h3>
-            <p style={{ color: "#777", marginBottom: 24, fontSize: 14 }}>
+            <div className="logout-modal-icon-container">
+              <FiLogOut className="logout-modal-large-icon" size={44} color="#F95800" />
+            </div>
+            <h3 className="logout-modal-title">Đăng xuất</h3>
+            <p className="logout-modal-text">
               Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <div className="logout-modal-actions">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                style={{
-                  padding: "10px 24px", borderRadius: 8,
-                  border: "1px solid #ddd", background: "#fff",
-                  color: "#555", cursor: "pointer", fontWeight: 500
-                }}
+                className="logout-modal-cancel-btn"
               >
                 Hủy
               </button>
               <button
                 onClick={handleLogout}
-                style={{
-                  padding: "10px 24px", borderRadius: 8,
-                  border: "none", background: "#F95800",
-                  color: "#fff", cursor: "pointer", fontWeight: 600
-                }}
+                className="logout-modal-confirm-btn"
               >
                 Đăng xuất
               </button>

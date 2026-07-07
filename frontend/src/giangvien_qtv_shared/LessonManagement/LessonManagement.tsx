@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiMessageSquare, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
+import { hasPermission } from "../../utils/permission";
 
 interface LessonManagementProps {
   buoiHocIdProp?: string;
@@ -26,7 +27,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://localhost:5000/baigiang/list/all";
+      let url = "http://14.225.192.252:5000/baigiang/list/all";
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -43,14 +44,14 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   const handleReuseLecture = async (lectureId: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/baigiang/${lectureId}/clone`, {
+      const res = await fetch(`http://14.225.192.252:5000/baigiang/${lectureId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
         // Refresh lessons list
-        const lRes = await fetch(`http://localhost:5000/baigiang/${buoiHocId}`);
+        const lRes = await fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`);
         const lData = await lRes.json();
         setLessons(lData);
         setShowReuseModal(false);
@@ -65,7 +66,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://localhost:5000/baigiang/${buoiHocId}`)
+    fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
@@ -78,10 +79,19 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   const confirmDelete = async () => {
     if (selectedId !== null) {
-      await fetch(`http://localhost:5000/baigiang/${selectedId}`, {
-        method: "DELETE"
-      });
-      setLessons(lessons.filter(l => l.MaBaiHoc !== selectedId));
+      try {
+        const res = await fetch(`http://14.225.192.252:5000/baigiang/${selectedId}`, {
+          method: "DELETE"
+        });
+        if (res.ok) {
+          setLessons(lessons.filter(l => l.MaBaiHoc !== selectedId));
+        } else {
+          const body = await res.text();
+          alert("Xóa bài giảng thất bại: " + body);
+        }
+      } catch (err) {
+        alert("Lỗi kết nối: " + err);
+      }
     }
     setShowModal(false);
     setSelectedId(null);
@@ -121,15 +131,19 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <FiSearch size={16} />
           </button>
         </form>
-        <button
-          className="add-btn-reuse"
-          onClick={openReuseModal}
-        >
-          <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn BG có sẵn
-        </button>
-        <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
-          <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm BG mới
-        </button>
+        {hasPermission("LECTURE_CREATE") && (
+          <>
+            <button
+              className="add-btn-reuse"
+              onClick={openReuseModal}
+            >
+              <FiBookOpen size={14} style={{ marginRight: 6 }} /> Chọn BG có sẵn
+            </button>
+            <button className="add-btn" onClick={() => navigate(`/them-bai-giang/${buoiHocId}`)}>
+              <FiPlus size={14} style={{ marginRight: 6 }} /> Thêm BG mới
+            </button>
+          </>
+        )}
       </div>
 
       {/* TABLE */}
@@ -182,11 +196,6 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         title="Xem chi tiết">
                         <FiEye size={16} />
                       </button>
-                      <button className="action-icon-btn discuss-icon-btn"
-                        onClick={() => navigate(`/lesson-discussion/${l.MaBaiHoc}`)}
-                        title="Thảo luận">
-                        <FiMessageSquare size={16} />
-                      </button>
                       <button className="action-btn minitest-btn"
                         onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
                         title="Tạo MiniTest">
@@ -208,20 +217,42 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
       {/* DELETE MODAL */}
       {showModal && (
-        <div className="baigiang-modal-overlay">
-          <div className="modal">
-            <div className="modal-icon">!</div>
-            <h3>Xác nhận Xóa</h3>
-            <p>Bạn có chắc chắn muốn xóa bài học này?</p>
-            <button className="confirm-btn" onClick={confirmDelete}>Xác nhận</button>
-            <button className="cancel-btn" onClick={() => setShowModal(false)}>Không</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => setShowModal(false)}>
+          <div style={{
+            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #cbd5e1", textAlign: "center"
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+              Xác nhận xóa bài học
+            </h3>
+            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Bạn có chắc chắn muốn xóa bài học này?
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+              >
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {showReuseModal && (
         <div className="baigiang-modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal" style={{ maxWidth: "600px", padding: "20px" }}>
+          <div className="modal" style={{ maxWidth: "800px", width: "90%", padding: "20px" }}>
             <h3 style={{ marginBottom: "15px" }}>Chọn bài giảng có sẵn</h3>
             
             <input
@@ -239,7 +270,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
               }}
             />
 
-            <div style={{ maxHeight: "300px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
+            <div style={{ maxHeight: "450px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", padding: "2px", textAlign: "left" }}>
               {allExistingLectures.filter(bg => bg.TieuDe?.toLowerCase().includes(reuseSearch.toLowerCase())).length === 0 ? (
                 <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>Không tìm thấy bài giảng nào.</div>
               ) : (

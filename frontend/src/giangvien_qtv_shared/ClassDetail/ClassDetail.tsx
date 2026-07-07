@@ -1,10 +1,12 @@
 import "./ClassDetail.css";
 import { useState, useEffect } from "react";
+import { formatScheduleOnlyDays } from "../../utils/schedule";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiCalendar, FiArrowLeft, FiEye, FiTrash2, FiSearch } from "react-icons/fi";
 import { FaClock, FaBook } from "react-icons/fa"; // Đã bỏ FaChalkboardTeacher và FaUsers
 import LessonManagement from "../LessonManagement/LessonManagement";
 import DocumentManagement from "../DocumentManagement/DocumentManagement";
+import { hasPermission } from "../../utils/permission";
 
 type ActiveTab = "exercises" | "lectures" | "documents";
 
@@ -23,7 +25,7 @@ const ClassDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:5000/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (data) => {
         setLesson(data);
@@ -34,7 +36,7 @@ const ClassDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:5000/baitap/buoihoc/${id}`)
+    fetch(`http://14.225.192.252:5000/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => {
         console.log("ClassDetail exercises fetched:", data);
@@ -47,7 +49,7 @@ const ClassDetail = () => {
 
   const handleToggleOpen = async (maBaiTap: number) => {
     try {
-      const res = await fetch("http://localhost:5000/baitap/toggle-open", {
+      const res = await fetch("http://14.225.192.252:5000/baitap/toggle-open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBaiTap: maBaiTap })
@@ -81,7 +83,7 @@ const ClassDetail = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `http://localhost:5000/baitap/${selectedId}`;
+      const url = `http://14.225.192.252:5000/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
@@ -154,7 +156,7 @@ const ClassDetail = () => {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Lịch học</span>
-                <span className="cd-meta-value">{lesson.LichHoc}</span>
+                <span className="cd-meta-value">{formatScheduleOnlyDays(lesson.LichHoc)}</span>
               </div>
             </div>
 
@@ -263,23 +265,27 @@ const ClassDetail = () => {
               <option value="practice">Bài LTT</option>
             </select>
 
-            <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
-              + Tạo BT/KT
-            </button>
+            {(hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE")) && (
+              <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
+                + Tạo BT/KT
+              </button>
+            )}
 
-            <button
-              className="ep-add-btn"
-              onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
-              style={{
-                background: "#fff",
-                color: "#F95800",
-                border: "1.5px solid #F95800",
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
-            >
-              + Tạo bài LTT
-            </button>
+            {hasPermission("EXTRA_PRACTICE_CREATE") && (
+              <button
+                className="ep-add-btn"
+                onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
+                style={{
+                  background: "#fff",
+                  color: "#F95800",
+                  border: "1.5px solid #F95800",
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = "#fff4ec"; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = "#fff"; }}
+              >
+                + Tạo bài LTT
+              </button>
+            )}
 
             <div className="ep-total-box">
               <p>Tổng số bài tập</p>
@@ -292,7 +298,7 @@ const ClassDetail = () => {
           ) : (
             <div className="lesson-card-grid">
               {filteredExercises.map((ex: any) => (
-                <div key={ex.MaBaiTap} className="lesson-content-card">
+                <div key={ex.MaBaiTap} className="lesson-content-card" style={{ height: '260px', display: 'flex', flexDirection: 'column' }}>
                   <div className="lesson-content-head">
                     <h4>{ex.Title}</h4>
                     {ex.TrangThai !== "practice" && (
@@ -302,7 +308,44 @@ const ClassDetail = () => {
                     )}
                   </div>
 
-                  <p>{ex.Type || "Bài tập"}</p>
+                  {(() => {
+                    let parsedContent: any = {};
+                    try {
+                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                    } catch (e) {}
+                    const isExam = ex.IsExam === 1 || ex.Type === "exam" || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+                    
+                    let label = "BaiTap";
+                    let color = "#000080";
+                    let bg = "#e0e7ff";
+                    
+                    if (ex.TrangThai === "practice") {
+                      label = "LuyenTapThem";
+                      color = "#c2410c";
+                      bg = "#ffedd5";
+                    } else if (isExam) {
+                      label = "BaiKTra";
+                      color = "#b91c1c";
+                      bg = "#fee2e2";
+                    }
+
+                    return (
+                      <span style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: color,
+                        background: bg,
+                        padding: "3px 8px",
+                        borderRadius: "12px",
+                        display: "inline-block",
+                        width: "fit-content",
+                        marginTop: "4px",
+                        marginBottom: "12px"
+                      }}>
+                        {label}
+                      </span>
+                    );
+                  })()}
                   
                   {(() => {
                     let parsedContent: any = {};
@@ -359,7 +402,7 @@ const ClassDetail = () => {
                     {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}
                   </span>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
                     <button
                       onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
                       style={{
@@ -388,37 +431,49 @@ const ClassDetail = () => {
                     >
                       <FiEye size={16} />
                     </button>
-                    <button
-                      onClick={() => {
-                        setSelectedId(Number(ex.MaBaiTap));
-                        setShowDeleteModal(true);
-                      }}
-                      style={{
-                        background: "#fee2e2",
-                        border: "1px solid #fecaca",
-                        color: "#ef4444",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        transition: "all 0.2s",
-                        flexShrink: 0
-                      }}
-                      title="Xóa bài tập"
-                      onMouseOver={e => {
-                        e.currentTarget.style.background = "#fca5a5";
-                        e.currentTarget.style.color = "#b91c1c";
-                      }}
-                      onMouseOut={e => {
-                        e.currentTarget.style.background = "#fee2e2";
-                        e.currentTarget.style.color = "#ef4444";
-                      }}
-                    >
-                      <FiTrash2 size={15} />
-                    </button>
+                    {(() => {
+                      const isPractice = ex.TrangThai === "practice";
+                      const isExam = ex.IsExam === 1 || ex.Type === "exam";
+                      const canDelete = isPractice 
+                        ? hasPermission("EXTRA_PRACTICE_CREATE")
+                        : (isExam ? hasPermission("QUIZ_CREATE") : hasPermission("BAITAP_CREATE"));
+                      
+                      if (!canDelete) return null;
+
+                      return (
+                        <button
+                          onClick={() => {
+                            setSelectedId(Number(ex.MaBaiTap));
+                            setShowDeleteModal(true);
+                          }}
+                          style={{
+                            background: "#fee2e2",
+                            border: "1px solid #fecaca",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            transition: "all 0.2s",
+                            flexShrink: 0
+                          }}
+                          title="Xóa bài tập"
+                          onMouseOver={e => {
+                            e.currentTarget.style.background = "#fca5a5";
+                            e.currentTarget.style.color = "#b91c1c";
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.background = "#fee2e2";
+                            e.currentTarget.style.color = "#ef4444";
+                          }}
+                        >
+                          <FiTrash2 size={15} />
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -437,13 +492,38 @@ const ClassDetail = () => {
 
       {/* ===== MODAL ===== */}
       {showDeleteModal && (
-        <div className="baitap-modal-overlay">
-          <div className="delete-modal">
-            <div className="modal-icon">!</div>
-            <h3>Xác nhận Xóa</h3>
-            <p>Bạn có chắc chắn muốn xóa bài tập này không?</p>
-            <button className="confirm-btn" onClick={handleDelete}>Xác nhận</button>
-            <button className="cancel-btn" onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>Không</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>
+          <div style={{
+            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #cbd5e1", textAlign: "center"
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
+              Xác nhận xóa bài tập
+            </h3>
+            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Bạn có chắc chắn muốn xóa bài tập này không?
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedId(null);
+                }}
+                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDelete}
+                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
+              >
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
       )}

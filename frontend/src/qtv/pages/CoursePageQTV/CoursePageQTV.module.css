@@ -24,7 +24,7 @@
 .content { padding: 0 32px 32px 32px; }
 
 /* ── Stat row ── */
-.statRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.statRow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; max-width: 640px; }
 .statCard { 
   background: #ffffff; 
   border: 1px solid #eef2f6; 
@@ -34,6 +34,15 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.statCardClickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.statCardClickable:hover {
+  border-color: #000080;
+  box-shadow: 0 4px 12px rgba(0, 0, 128, 0.05);
+  transform: translateY(-2px);
 }
 .statMint   { background: transparent; }
 .statGreen  { background: transparent; }
@@ -187,9 +196,11 @@
 }
 .detailModal {
   background: #fff; border-radius: 16px; padding: 28px;
-  width: 800px; max-width: 96vw; max-height: 90vh; overflow-y: auto;
+  width: 800px; max-width: 96vw; height: 85vh; max-height: 85vh;
+  display: flex; flex-direction: column;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   animation: slideUp .22s ease;
+  overflow: hidden;
 }
 .enrollModal {
   background: #fff; border-radius: 16px; padding: 28px;
@@ -247,12 +258,13 @@
 .inlineActions   { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 
 /* ── Detail Modal: stats + tabs ── */
-.detailStats   { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 16px 0; padding: 16px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 12px; }
-.detailStatItem{ text-align: center; }
-.detailStatVal { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #F95800; }
-.detailStatLbl { font-size: 11px; color: #888; }
+.detailStats   { display: flex; gap: 16px; margin: 16px 0 24px; }
+.detailStatItem{ flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all .2s ease; }
+.detailStatItem:hover { background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-1px); }
+.detailStatVal { font-size: 26px; font-weight: 700; color: #000080; margin-bottom: 2px; }
+.detailStatLbl { font-size: 13px; font-weight: 600; color: #64748b; }
 
-.tabs    { display: flex; gap: 4px; border-bottom: 2px solid #eef2f6; margin-bottom: 16px; }
+.tabs    { display: flex; gap: 4px; border-bottom: 2px solid #eef2f6; margin-bottom: 12px; }
 .tab     { padding: 9px 20px; font-size: 13px; font-weight: 600; color: #888; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; border-radius: 6px 6px 0 0; font-family: inherit; transition: all .2s; }
 .tab:hover   { color: #F95800; background: #fff4ee; }
 .tabActive   { color: #F95800; border-bottom-color: #F95800; }
@@ -266,16 +278,16 @@
 .boldText { font-weight: 600; }
 
 /* ── Roadmap ── */
-.roadmapList { display: flex; flex-direction: column; gap: 10px; }
-.roadmapItem { display: flex; align-items: flex-start; gap: 12px; background: #ffffff; border: 1px solid #eef2f6; border-radius: 12px; padding: 14px 16px; transition: background .15s; }
-.roadmapItem:hover { background: #f8fafc; }
-.roadmapNum  { width: 28px; height: 28px; border-radius: 50%; background: #F95800; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-.roadmapIcon { width: 34px; height: 34px; border-radius: 8px; background: #fff4ec; color: #F95800; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.roadmapList { display: flex; flex-direction: column; gap: 14px; }
+.roadmapItem { display: flex; align-items: flex-start; gap: 16px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; transition: all 0.2s ease; }
+.roadmapItem:hover { background: #f8fafc; border-color: #000080; box-shadow: 0 4px 12px rgba(0, 0, 128, 0.05); }
+.roadmapNum  { width: 30px; height: 30px; border-radius: 50%; background: #000080; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.roadmapIcon { width: 34px; height: 34px; border-radius: 8px; background: #fff4ec; color: #000080; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .roadmapInfo { flex: 1; min-width: 0; }
-.roadmapTitle{ font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-.roadmapDesc { font-size: 12px; color: #666; margin-bottom: 6px; }
+.roadmapTitle{ font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.roadmapDesc { font-size: 13px; color: #475569; margin-bottom: 8px; line-height: 1.5; }
 .roadmapMeta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.durationText{ font-size: 12px; color: #888; }
+.durationText{ font-size: 12px; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-weight: 500; }
 .roadmapActions { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
 
 /* ── Enroll Modal ── */
@@ -477,11 +489,39 @@
   font-style: italic;
 }
 
-/* ── Class block ── */
-.classBlock {
-  border-bottom: 1px solid #dbeafe;
+/* ── Class table ── */
+.classTableHeader {
+  display: grid;
+  grid-template-columns: 3fr 2fr 2fr 1fr 1fr;
+  padding: 12px 24px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 11px;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
 }
-.classBlock:last-child { border-bottom: none; }
+
+.classTableRow {
+  display: grid;
+  grid-template-columns: 3fr 2fr 2fr 1fr 1fr;
+  padding: 16px 24px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.classTableRow:hover {
+  border-color: #F95800;
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.08);
+}
 
 .classBlockHeader {
   display: flex;
@@ -1060,4 +1100,206 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+.infoTabGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 0 0 16px 0;
+}
+
+.infoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infoLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.infoValue {
+  padding: 10px 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.infoInput {
+  padding: 10px 14px;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.infoInput:focus {
+  border-color: #000080;
+  box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.15);
+}
+
+/* ── Custom Scrollbar ── */
+.modalScrollableBody {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin: 0;
+  margin-bottom: 16px;
+}
+.modalScrollableBody::-webkit-scrollbar {
+  width: 6px;
+}
+.modalScrollableBody::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.modalScrollableBody::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.modalScrollableBody::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ── Roadmap Table ── */
+.roadmapTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.roadmapTable th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid #cbd5e1;
+}
+.roadmapTable td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+  font-size: 14px;
+}
+.roadmapTable tr:hover {
+  background-color: #f8fafc;
+}
+.sessionCol {
+  font-weight: 700;
+  color: #000080;
+  width: 90px;
+}
+.contentCol {
+  width: 55%;
+  min-width: 380px;
+}
+.assetsCol {
+  width: 35%;
+  min-width: 250px;
+}
+.assetItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 6px;
+  border: 1px solid #e2e8f0;
+}
+.assetItemRow.lecture {
+  background: #fff4ec;
+  border-color: #ffd8be;
+  color: #c2410c;
+}
+.assetItemRow.exercise {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+.assetItemRow.doc {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+.removeAssetBtn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 50%;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+.removeAssetBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+.roadmapMiniBtn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.roadmapMiniBtn:hover {
+  background: #f1f5f9;
+}
+.roadmapDeleteBtn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  background: white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.roadmapDeleteBtn:hover {
+  background: #fef2f2;
+}
+
+.roadmapActionsContainer {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.roadmapTable tr:hover .roadmapActionsContainer {
+  opacity: 1;
+  visibility: visible;
+}
+
+.roadmapTable tr:hover .removeAssetBtn {
+  opacity: 1;
+  visibility: visible;
 }

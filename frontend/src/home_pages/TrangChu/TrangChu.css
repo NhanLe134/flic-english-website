@@ -1,0 +1,765 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Playfair+Display:wght@700;800&display=swap');
+
+/* Kiểu mặc định cho trang chủ (Desktop/Laptop) */
+.trang-chu {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ================= HỢP PHẦN HERO ================= */
+.hero {
+  background-color: white;
+  padding: 50px 0 100px;
+  font-family: 'Inter', sans-serif;
+}
+
+.hero-container {
+  max-width: 1250px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.hero-left {
+  width: 50%;
+}
+
+/* TIÊU ĐỀ PHỤ */
+.hero-subtitle {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 12px;
+}
+
+/* TIÊU ĐỀ CHÍNH */
+.hero-left h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 16px 0 24px;
+  color: #111111;
+  letter-spacing: -1px;
+}
+
+/* MÔ TẢ */
+.hero-left p {
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+  font-size: 16px;
+  color: #4a4a4a;
+  margin-bottom: 40px;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+/* THỐNG KÊ */
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 40px;
+}
+
+.hero-stats>div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-stats h3 {
+  font-family: 'Inter', sans-serif;
+  color: #F95800;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+.hero-stats span {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #555555;
+  font-weight: 500;
+}
+
+/* HÌNH ẢNH HERO */
+.hero-right {
+  display: flex;
+  justify-content: flex-end;
+  width: 45%;
+}
+
+.hero-right img {
+  width: 450px;
+  height: auto;
+  display: block;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+}
+
+.btn-login,
+.btn-register {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 12px 40px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.btn-login {
+  background-color: #F95800;
+  color: white;
+  border: 2px solid #F95800;
+}
+
+.btn-login:hover {
+  background-color: #d64c00;
+  border-color: #d64c00;
+}
+
+.btn-register {
+  background-color: transparent;
+  color: #F95800;
+  border: 2px solid #F95800;
+}
+
+.btn-register:hover {
+  background-color: #FFF2EB;
+}
+
+/* ================= HỢP PHẦN ABOUT (GIỚI THIỆU) ================= */
+.about {
+  padding: 100px 0;
+  background-color: #ffffff !important;
+}
+
+.about-inner-container {
+  max-width: 1250px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 80px;
+  padding: 0 40px;
+}
+
+.about-left {
+  width: 45%;
+  display: flex;
+  justify-content: center;
+}
+
+/* THẺ GRADIENT */
+.about-left-card {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1.5;
+  background: linear-gradient(135deg, #3d7d44 0%, #e9be47 100%);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.card-icon {
+  margin-bottom: 20px;
+}
+
+.cap-svg {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+}
+
+.card-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.card-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+/* PHẦN BÊN PHẢI */
+.about-right {
+  width: 50%;
+  font-family: 'Inter', sans-serif;
+}
+
+.about-right h2 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  color: #111111;
+  margin: 0 0 12px;
+  letter-spacing: -1px;
+}
+
+/* ĐƯỜNG GẠCH DƯỚI MÀU CAM */
+.about-title-underline {
+  width: 60px;
+  height: 5px;
+  background-color: #F95800;
+  border-radius: 2px;
+  margin-bottom: 24px;
+}
+
+.about-right p {
+  font-size: 16px;
+  color: #333333;
+  line-height: 1.7;
+  margin-bottom: 32px;
+  font-weight: 400;
+}
+
+/* HỘP THỐNG KÊ */
+.about-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.about-stat-item {
+  background: #FFF2EB;
+  border: none;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.about-stat-item .stat-number {
+  font-family: 'Inter', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #F95800;
+  line-height: 1;
+  margin: 0;
+}
+
+.about-stat-item .stat-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #111111;
+  font-weight: 700;
+  margin: 0;
+  text-transform: none;
+}
+
+/* NÚT BẤM GIỚI THIỆU */
+.btn-about {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 40px;
+  background-color: #F95800;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: 0 10px 20px rgba(249, 88, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-about:hover {
+  background-color: #d64c00;
+  transform: translateY(-2px);
+  box-shadow: 0 15px 25px rgba(249, 88, 0, 0.3);
+}
+
+/* ================= HỢP PHẦN RESULTS (KẾT QUẢ) ================= */
+.results-section {
+  background: #f3f3f3;
+  padding: 50px 0 100px 0;
+}
+
+.results-container {
+  max-width: 1200px;
+  margin: auto;
+  text-align: center;
+  padding: 0 40px;
+  box-sizing: border-box;
+}
+
+.results-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.results-underline {
+  width: 70px;
+  height: 4px;
+  background: #F95800;
+  margin: 20px auto;
+}
+
+.results-subtitle {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 60px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Grid hiển thị hình ảnh */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 30px;
+}
+
+@media screen and (max-width: 768px) {
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .result-card.hide-on-mobile {
+    display: none;
+  }
+}
+
+.result-card {
+  border-radius: 20px;
+  overflow: hidden;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.result-card img {
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+}
+
+.result-card:hover {
+  transform: translateY(-6px);
+}
+
+/* Hộp thoại Modal phóng to ảnh */
+.results-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.results-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.results-modal-img {
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 4px solid #fff;
+  object-fit: contain;
+}
+
+.results-modal-close {
+  position: absolute;
+  top: -45px;
+  right: 0;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 36px;
+  cursor: pointer;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.results-modal-close:hover {
+  color: #F95800;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ================= HỢP PHẦN TEACHERS (GIÁO VIÊN) ================= */
+.teachers {
+  padding: 80px 0;
+  text-align: center;
+  background-color: #ffffff;
+}
+
+.teachers h2 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 36px;
+  font-weight: 800;
+  color: #111111;
+  margin: 0 0 16px;
+  position: relative;
+  display: inline-block;
+  letter-spacing: -0.5px;
+}
+
+.teachers h2::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  background-color: #F95800;
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.teachers-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-style: italic;
+  color: #555555;
+  margin-bottom: 50px;
+}
+
+.teachers-container {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  max-width: 1250px;
+  margin: auto;
+  padding: 0 40px;
+}
+
+/* THẺ GIÁO VIÊN */
+.teacher-card {
+  width: 320px;
+  background: #FFF6EE;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.teacher-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* PHẦN ĐẦU GRADIENT CỦA THẺ */
+.teacher-card-top {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.gradient-orange {
+  background: linear-gradient(180deg, #F95800 0%, #FFB74D 100%);
+}
+
+.gradient-green {
+  background: linear-gradient(180deg, #538C44 0%, #C6CE50 100%);
+}
+
+.gradient-red {
+  background: linear-gradient(180deg, #b33f00 0%, #F95800 100%);
+}
+
+/* ẢNH GIÁO VIÊN TRÒN */
+.teacher-circle-img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 5px solid white;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacher-circle-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* PHẦN THÔNG TIN THẺ BÊN DƯỚI */
+.teacher-card-bottom {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.teacher-card-bottom h3 {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #111111;
+  margin: 0 0 4px;
+}
+
+.teacher-role {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F95800;
+  margin-bottom: 20px;
+}
+
+/* HỘP ĐIỂM NỔI BẬT */
+.teacher-highlights-box {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.teacher-icon {
+  color: #F95800;
+  font-size: 22px;
+  stroke-width: 2px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.highlight-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #4a4a4a;
+  font-weight: 600;
+}
+
+/* CHUYÊN MÔN */
+.teacher-specialty {
+  text-align: left;
+}
+
+.teacher-specialty h4 {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #8b5a2b;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.teacher-specialty ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teacher-specialty ul li {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #555555;
+  position: relative;
+  padding-left: 14px;
+  line-height: 1.4;
+}
+
+.teacher-specialty ul li::before {
+  content: "•";
+  color: #F95800;
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+/* ĐIỀU HƯỚNG SLIDER VÀ PHÂN TRANG RESPONSIVE */
+.desktop-only-flex {
+  display: flex;
+}
+
+.mobile-only-block {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .desktop-only-flex {
+    display: none;
+  }
+
+  .mobile-only-block {
+    display: block;
+  }
+
+  .teachers-slider-wrapper {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .teachers-slider-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    position: relative;
+    max-width: 450px;
+    margin: 0 auto;
+  }
+
+  .teacher-card.active-slide {
+    width: 100%;
+    max-width: 320px;
+    margin: 0;
+    animation: slideFadeIn 0.4s ease;
+  }
+
+  .slider-arrow {
+    background: #FFF2EB;
+    border: 1px solid #fbd0b9;
+    color: #F95800;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .slider-arrow:hover {
+    background: #F95800;
+    color: white;
+  }
+
+  .slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .slider-dots .dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .slider-dots .dot.active {
+    background-color: #F95800;
+    width: 18px;
+    border-radius: 4px;
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0.5;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ================= PHẦN KÊU GỌI HÀNH ĐỘNG (CTA) ================= */
+.cta-section {
+  background: linear-gradient(90deg, #3d7d44 0%, #e9be47 100%);
+  padding: 40px 20px;
+  text-align: center;
+  color: white;
+}
+
+.cta-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.cta-section h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 36px;
+  letter-spacing: -0.5px;
+  color: white;
+}
+
+.cta-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.95);
+}

@@ -1,0 +1,41 @@
+/* CSS cho giao dien NgheChonAnh */
+.ad-listening-image-block {
+  width: 100%;
+}
+
+.ad-listening-image-audio-wrapper {
+  margin-bottom: 20px;
+}
+
+.ad-listening-image-body {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.ad-listening-image-left {
+  /* The anh chiem min 50% max 60% cua the cha */
+  min-width: 50%;
+  max-width: 60%;
+  background: #f8fafc;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 280px;
+}
+
+.ad-listening-image-img {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: contain;
+}
+
+.ad-listening-image-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

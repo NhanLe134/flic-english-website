@@ -1,8 +1,9 @@
-﻿import "./ApproveAdmin.css";
+import "./ApproveAdmin.css";
 import React, { useState, useEffect, useRef } from "react";
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiUsers } from "react-icons/fi";
+import { formatScheduleOnlyDays } from "../../../utils/schedule";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 
 const DAYS_OF_WEEK = [
@@ -258,6 +259,14 @@ export default function ApproveAdmin() {
 
   // Kỹ năng của khóa học trong modal
   const [courseSkills, setCourseSkills] = useState<string[]>([]);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [cForm.desc, showCourseModal]);
 
   // Danh sách giảng viên từ cơ sở dữ liệu
   const [teachersList, setTeachersList] = useState<Teacher[]>([]);
@@ -1094,7 +1103,7 @@ export default function ApproveAdmin() {
                                         }}
                                       >
                                         <div className="class-item-name">{cls.name}</div>
-                                        <div className="class-item-schedule">{cls.schedule}</div>
+                                        <div className="class-item-schedule">{formatScheduleOnlyDays(cls.schedule)}</div>
                                         <div className="class-item-students">
                                           <FiUsers className="class-row-icon" />
                                           <span>{cls.students}</span>
@@ -1289,7 +1298,14 @@ export default function ApproveAdmin() {
 
               <div className="form-field-group">
                 <label>Mô tả chi tiết</label>
-                <textarea value={cForm.desc} onChange={e => setCForm(p => ({ ...p, desc: e.target.value }))} placeholder="Nội dung chính và mô tả khóa học..." rows={3} />
+                <textarea
+                  ref={textareaRef}
+                  value={cForm.desc}
+                  onChange={e => setCForm(p => ({ ...p, desc: e.target.value }))}
+                  placeholder="Nội dung chính và mô tả khóa học..."
+                  rows={3}
+                  style={{ overflowY: 'hidden', resize: 'none' }}
+                />
               </div>
 
             </div>

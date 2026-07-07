@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import dailyImg from "../../../assets/daily.png";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
 
 function DocDetail() {
   const navigate      = useNavigate()

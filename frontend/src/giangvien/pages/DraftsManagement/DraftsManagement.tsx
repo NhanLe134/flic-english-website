@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend } from "react-icons/fi";
 import "./DraftsManagement.css";
@@ -40,7 +40,7 @@ const DraftsManagement = () => {
   const fetchDrafts = () => {
     if (!maNguoiDung) return;
     setLoading(true);
-    fetch(`http://localhost:5000/teacher/${maNguoiDung}/drafts`)
+    fetch(`http://14.225.192.252:5000/teacher/${maNguoiDung}/drafts`)
       .then((res) => res.json())
       .then((data) => {
         setLessons(data.lessons || []);
@@ -57,7 +57,7 @@ const DraftsManagement = () => {
 
   const handleSubmitLesson = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/baigiang/${id}/status`, {
+      const res = await fetch(`http://14.225.192.252:5000/baigiang/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "pending" })
@@ -76,7 +76,7 @@ const DraftsManagement = () => {
 
   const handleSubmitExercise = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/baitap/${id}/status`, {
+      const res = await fetch(`http://14.225.192.252:5000/baitap/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "pending" })
@@ -93,34 +93,61 @@ const DraftsManagement = () => {
     }
   };
 
-  const handleDeleteLesson = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bản nháp bài giảng này không?")) return;
-    try {
-      const res = await fetch(`http://localhost:5000/baigiang/${id}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        alert("Đã xóa bản nháp bài giảng!");
-        fetchDrafts();
-      }
-    } catch (err) {
-      console.error(err);
-    }
+  const [confirmDialog, setConfirmDialog] = useState<{
+    show: boolean;
+    message: string;
+    subMessage?: string;
+    onConfirm?: () => void;
+  }>({
+    show: false,
+    message: ""
+  });
+
+  const showConfirm = (message: string, subMessage: string, onConfirm: () => void) => {
+    setConfirmDialog({
+      show: true,
+      message,
+      subMessage,
+      onConfirm
+    });
   };
 
-  const handleDeleteExercise = async (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bản nháp này không?")) return;
-    try {
-      const res = await fetch(`http://localhost:5000/baitap/${id}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        alert("Đã xóa bản nháp!");
-        fetchDrafts();
+  const handleDeleteLesson = (lessonId: number) => {
+    showConfirm(
+      "Xác nhận xóa bản nháp bài giảng",
+      "Hành động này sẽ xóa vĩnh viễn bản nháp bài giảng hiện tại.",
+      async () => {
+        try {
+          const res = await fetch(`http://14.225.192.252:5000/baigiang/${lessonId}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            fetchDrafts();
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    );
+  };
+
+  const handleDeleteExercise = (exId: number) => {
+    showConfirm(
+      "Xác nhận xóa bản nháp bài tập",
+      "Hành động này sẽ xóa vĩnh viễn bản nháp bài tập hiện tại.",
+      async () => {
+        try {
+          const res = await fetch(`http://14.225.192.252:5000/baitap/${exId}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            fetchDrafts();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    );
   };
 
   const getFilteredItems = () => {
@@ -252,6 +279,83 @@ const DraftsManagement = () => {
               );
             })
           )}
+        </div>
+      )}
+
+      {confirmDialog.show && (
+        <div className="modal-overlay" style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1001,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>
+          <div className="modal-container" style={{
+            background: "#ffffff",
+            padding: "32px 40px",
+            borderRadius: "16px",
+            width: "90%",
+            maxWidth: "480px",
+            textAlign: "center",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+          }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#1e293b", margin: "0 0 16px 0" }}>
+              Xác nhận xóa
+            </h3>
+            <p style={{ fontSize: "14px", color: "#475569", margin: confirmDialog.subMessage ? "0 0 8px 0" : "0 0 24px 0", lineHeight: "1.5" }}>
+              {confirmDialog.message}
+            </p>
+            {confirmDialog.subMessage && (
+              <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 24px 0", lineHeight: "1.5" }}>
+                {confirmDialog.subMessage}
+              </p>
+            )}
+            <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(p => ({ ...p, show: false }))}
+                style={{
+                  background: "#f1f5f9",
+                  color: "#475569",
+                  border: "1px solid #cbd5e1",
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s"
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDialog(p => ({ ...p, show: false }));
+                  if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+                }}
+                style={{
+                  background: "#ef4444",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  transition: "all 0.2s"
+                }}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

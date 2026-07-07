@@ -16,12 +16,12 @@ const DanhSachBaiNop = () => {
 
   const id = parseInt(maBaiTap.trim());
 
-  fetch(`http://localhost:5000/baitap/${id}`)
+  fetch(`http://14.225.192.252:5000/baitap/${id}`)
     .then(res => res.json())
     .then(data => setExercise(data))
     .catch(err => console.log(err));
 
-  fetch(`http://localhost:5000/bainop/baitap/${id}`)
+  fetch(`http://14.225.192.252:5000/bainop/baitap/${id}`)
     .then(res => res.json())
     .then(data => setDanhSach(data))
     .catch(err => console.log(err));
@@ -45,7 +45,6 @@ const DanhSachBaiNop = () => {
       <div className="dsbn-header">
         <div>
           <h1>{exercise?.Title || "Đang tải..."}</h1>
-          <p>Loại: {exercise?.Type} • Danh sách bài nộp của học viên</p>
         </div>
       </div>
 

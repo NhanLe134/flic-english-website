@@ -1,0 +1,251 @@
+.auth-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  /* Dynamic viewport height cho thiết bị di động (tránh lỗi thanh địa chỉ Safari iOS) */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: authModalFadeIn 0.25s ease-out;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.auth-modal-card-wrapper {
+  position: relative;
+  background: white;
+  /* Mảng nền trắng cố định lên thẻ wrapper */
+  border-radius: 24px;
+  width: 500px;
+  max-width: calc(100vw - 30px);
+  max-height: 85vh;
+  /* Giới hạn chiều cao 85vh ở tất cả các thiết bị */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 0;
+  /* Xóa padding ngoài để form tự cuộn */
+  overflow: hidden;
+  /* Giúp bo tròn 24px hoạt động đúng */
+}
+
+/* KHỐI HEADER CỐ ĐỊNH - Căn giữa dọc, xếp dòng thẳng hàng giữa Title và Nút Close */
+.auth-modal-header {
+  position: relative;
+  /* Để button absolute close đính đúng góc phải */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Căn giữa tiêu đề */
+  width: 100%;
+  padding: 24px 36px 12px 36px;
+  /* Khoảng cách lề trên và lề trái/phải đều nhau 36px */
+  box-sizing: border-box;
+  background: white;
+  z-index: 10;
+}
+
+/* Tiêu đề header chính - căn giữa tuyệt đối */
+.auth-modal-header-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f58220;
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.5px;
+  text-align: center;
+  /* Căn giữa chữ */
+  width: 100%;
+}
+
+/* Nút Close X mới - nằm ở mép phải tuyệt đối của header, giữ nguyên vị trí cũ */
+.auth-modal-close-btn-new {
+  position: absolute;
+  right: 36px;
+  /* Căn sát lề phải bằng với padding của header */
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 28px;
+  font-weight: 300;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: color 0.2s, transform 0.2s, background-color 0.2s;
+  box-sizing: border-box;
+}
+
+.auth-modal-close-btn-new:hover {
+  color: #f58220;
+  background-color: #fdf8f3;
+  transform: translateY(-50%) rotate(90deg);
+  /* Giữ nguyên translateY khi hover */
+}
+
+/* KHỐI BODY CUỘN SCROLL ĐỘC LẬP */
+.auth-modal-body {
+  overflow-y: auto;
+  /* Cho phép cuộn riêng */
+  flex-grow: 1;
+  padding: 0 36px 30px 36px;
+  /* Padding trái phải cân đối 36px giúp form đều nhau */
+  box-sizing: border-box;
+}
+
+/* Custom Scrollbar giống như ảnh bạn gửi (mỏng, cân đối) */
+/* Thiết kế scrollbar siêu mỏng, tinh tế tông cam thương hiệu */
+.auth-modal-body::-webkit-scrollbar {
+  width: 4px;
+  /* Mỏng nhẹ, tinh tế hơn */
+}
+
+.auth-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-modal-body::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 130, 32, 0.35);
+  /* Màu cam thương hiệu FLIC trong suốt nhẹ */
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.auth-modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(245, 130, 32, 0.7);
+  /* Đậm hơn khi di chuột vào */
+}
+
+@keyframes authModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes authModalSlideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* responsive */
+@media (max-width: 576px) {
+  .auth-modal-backdrop {
+    padding: 10px;
+    align-items: center;
+    /* Luôn căn giữa chiều cao (vh) giống desktop */
+    height: 100dvh;
+  }
+
+  .auth-modal-card-wrapper {
+    max-height: 80vh;
+    /* Giới hạn chiều cao tối đa 80vh ở màn hình điện thoại */
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+  }
+
+  .auth-modal-header {
+    padding: 20px 24px 8px 24px;
+  }
+
+  .auth-modal-body {
+    padding: 0 24px 20px 24px;
+  }
+
+  .auth-modal-header-title {
+    font-size: 20px;
+  }
+
+  .auth-modal-close-btn-new {
+    font-size: 24px;
+    right: 24px;
+    /* Sát lề phải khớp padding header mobile */
+  }
+}
+
+/* Custom Confirm Modal styling */
+.confirm-modal-backdrop {
+  z-index: 999999 !important; /* Đảm bảo đè lên trên tất cả mọi thứ bao gồm navbar, sidebar và các modal khác */
+}
+
+.confirm-modal-card {
+  width: 450px !important;
+  border-radius: 16px !important;
+  animation: authModalSlideUp 0.25s ease-out;
+}
+
+.confirm-modal-body {
+  padding: 10px 30px 24px 30px !important;
+  text-align: center;
+}
+
+.confirm-modal-text {
+  font-size: 16px;
+  color: #334155;
+  line-height: 1.6;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.confirm-btn-cancel,
+.confirm-btn-ok {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+
+.confirm-btn-cancel {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.confirm-btn-cancel:hover {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.confirm-btn-ok {
+  background-color: #F95800; /* Matching brand color #F95800 */
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(249, 88, 0, 0.2);
+}
+
+.confirm-btn-ok:hover {
+  background-color: #e04f00; /* Darker orange for hover */
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.3);
+}
+

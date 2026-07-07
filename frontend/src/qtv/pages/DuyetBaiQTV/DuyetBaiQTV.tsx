@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import styles from "./DuyetBaiQTV.module.css";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiEye } from "react-icons/fi";
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap";
 
-const API = "http://localhost:5000";
+const API = "http://14.225.192.252:5000";
+
+const getMediaUrl = (url: string) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+  return API + "/" + url.replace(/^\//, "");
+};
 
 type ContentType = "baigiang" | "baitap" | "dethi";
 type ApprovalStatus = "Chờ duyệt" | "Đã duyệt" | "Từ chối";
@@ -30,6 +37,7 @@ export default function DuyetBaiQTV() {
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   const [baiGiangData, setBaiGiangData] = useState<BaiGiangItem[]>([]);
   const [baiTapData, setBaiTapData] = useState<any[]>([]);
@@ -192,49 +200,49 @@ export default function DuyetBaiQTV() {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className={styles.searchWrap}>
+        {/* Search bar & Tab Filters */}
+        <div className={styles.filterRow}>
           <div className={styles.searchBox}>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm theo tiêu đề, giáo viên..."
+              placeholder="Tìm kiếm theo tiêu đề, người tạo..."
             />
             <button className={styles.searchBtn}>
               <FiSearch />
             </button>
           </div>
-        </div>
 
-        {/* Tab Buttons */}
-        <div className={styles.tabContainer}>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "baigiang" ? styles.tabBtnActive : ""}`}
-            onClick={() => {
-              setActiveTab("baigiang");
-              setFilterStatus("Tất cả");
-            }}
-          >
-            Bài giảng
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
-            onClick={() => {
-              setActiveTab("baitap");
-              setFilterStatus("Tất cả");
-            }}
-          >
-            Bài tập / Bài kiểm tra
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === "dethi" ? styles.tabBtnActive : ""}`}
-            onClick={() => {
-              setActiveTab("dethi");
-              setFilterStatus("Tất cả");
-            }}
-          >
-            Đề thi thử
-          </button>
+          {/* Tab Buttons */}
+          <div className={styles.tabContainer}>
+            <button
+              className={`${styles.tabBtn} ${activeTab === "baigiang" ? styles.tabBtnActive : ""}`}
+              onClick={() => {
+                setActiveTab("baigiang");
+                setFilterStatus("Tất cả");
+              }}
+            >
+              Bài giảng
+            </button>
+            <button
+              className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
+              onClick={() => {
+                setActiveTab("baitap");
+                setFilterStatus("Tất cả");
+              }}
+            >
+              Bài tập / Bài kiểm tra
+            </button>
+            <button
+              className={`${styles.tabBtn} ${activeTab === "dethi" ? styles.tabBtnActive : ""}`}
+              onClick={() => {
+                setActiveTab("dethi");
+                setFilterStatus("Tất cả");
+              }}
+            >
+              Đề thi thử
+            </button>
+          </div>
         </div>
 
         {/* Table Card */}
@@ -242,7 +250,7 @@ export default function DuyetBaiQTV() {
           <div className={styles.tableHeader}>
             <div>
               <h3>Danh sách nội dung chờ duyệt</h3>
-              <p>Kiểm tra và phê duyệt bài đăng, khóa học do giáo viên gửi</p>
+              <p>Kiểm tra và phê duyệt bài đăng, khóa học do người tạo gửi</p>
             </div>
             
             {/* Filter pills */}
@@ -267,10 +275,9 @@ export default function DuyetBaiQTV() {
               <thead>
                 <tr>
                   <th>TIÊU ĐỀ</th>
-                  <th>GIÁO VIÊN</th>
+                  <th>NGƯỜI TẠO</th>
                   <th>LOẠI</th>
                   <th>TRẠNG THÁI DUYỆT</th>
-                  <th>CẤP ĐỘ</th>
                   <th>NGÀY GỬI</th>
                 </tr>
               </thead>
@@ -306,7 +313,7 @@ export default function DuyetBaiQTV() {
                           {getStatusLabel(item.TrangThaiDuyet || item.TrangThai)}
                         </span>
                       </td>
-                      <td>{item.CapDo || "—"}</td>
+                    
                       <td>
                         {item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate
                           ? new Date(item.NgayGui || item.NgayTao || item.NgayCapNhat || item.CreatedDate).toLocaleDateString("vi-VN")
@@ -376,24 +383,7 @@ export default function DuyetBaiQTV() {
                       <input type="text" disabled value={selectedItem.Type || "—"} />
                     </div>
                   </div>
-                  <div className={styles.formGroupFull}>
-                    <label>Đề bài / Nội dung</label>
-                    <textarea
-                      disabled
-                      rows={3}
-                      value={selectedItem.Content || "Không có nội dung đề bài."}
-                    />
-                  </div>
-                  {selectedItem.Questions && (
-                    <div className={styles.formGroupFull}>
-                      <label>Câu hỏi / Đáp án</label>
-                      <textarea
-                        disabled
-                        rows={4}
-                        value={selectedItem.Questions}
-                      />
-                    </div>
-                  )}
+
                   {selectedItem.Vocabulary && (
                     <div className={styles.formGroupFull}>
                       <label>Từ vựng đi kèm</label>
@@ -403,14 +393,10 @@ export default function DuyetBaiQTV() {
                 </>
               ) : activeTab === "dethi" ? (
                 <>
-                  <div className={styles.formRowThree}>
+                  <div className={styles.formRow}>
                     <div className={styles.formGroup}>
                       <label>Thời gian làm bài</label>
                       <input type="text" disabled value={`${selectedItem.ThoiGian || 120} phút`} />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Cấp độ đề thi</label>
-                      <input type="text" disabled value={selectedItem.CapDo || "—"} />
                     </div>
                     <div className={styles.formGroup}>
                       <label>Loại đề thi</label>
@@ -448,6 +434,141 @@ export default function DuyetBaiQTV() {
                       })()}
                     />
                   </div>
+                  
+                  {(() => {
+                    let parsedKyNang: any = null;
+                    try {
+                      parsedKyNang = typeof selectedItem.NoiDungDeThi === "string"
+                        ? JSON.parse(selectedItem.NoiDungDeThi)
+                        : selectedItem.NoiDungDeThi;
+                    } catch (e) {
+                      console.error("Error parsing exam content:", e);
+                    }
+                    if (!parsedKyNang) return null;
+
+                    return (
+                      <div style={{ marginTop: "16px", borderTop: "1px solid #cbd5e1", paddingTop: "16px", boxSizing: "border-box", textAlign: "left" }}>
+                        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#1e293b", marginBottom: "14px" }}>
+                          Xem trước nội dung đề thi chi tiết
+                        </h3>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                          {/* 1. Listening Section */}
+                          <div>
+                            <h4 style={{ color: "#F95800", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px", margin: "0 0 10px 0", fontSize: "13px", fontWeight: 700 }}>1. Kỹ năng Nghe (Listening)</h4>
+                            {(!parsedKyNang.listening?.parts || parsedKyNang.listening.parts.length === 0) ? (
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Chưa có phần nghe nào.</p>
+                            ) : (
+                              parsedKyNang.listening.parts.map((p: any, pIdx: number) => (
+                                <div key={pIdx} style={{ margin: "12px 0", paddingLeft: "10px", borderLeft: "2px solid #cbd5e1" }}>
+                                  <h5 style={{ margin: "0 0 4px 0", fontSize: "12.5px", fontWeight: 600 }}>Phần {p.soPhan}: {p.tieuDe}</h5>
+                                  <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 8px 0" }} dangerouslySetInnerHTML={{ __html: p.huongDan }} />
+                                  {p.audioUrl && (
+                                    <div style={{ margin: "8px 0" }}>
+                                      <audio src={getMediaUrl(p.audioUrl)} controls style={{ height: "24px", maxWidth: "100%" }} />
+                                    </div>
+                                  )}
+
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+                                    {p.cauHois?.map((q: any, qIdx: number) => (
+                                      <div key={qIdx} style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                                        <div style={{ fontWeight: 600, fontSize: "12px" }} dangerouslySetInnerHTML={{ __html: `Câu ${q.id}: ${q.noiDung}` }} />
+                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "4px" }}>
+                                          {q.luaChon?.map((choice: string, cIdx: number) => (
+                                            <div key={cIdx} style={{ fontSize: "11.5px", color: q.dapAn === ["A", "B", "C", "D"][cIdx] ? "#107544" : "#475569", fontWeight: q.dapAn === ["A", "B", "C", "D"][cIdx] ? 600 : 400 }}>
+                                              {choice}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* 2. Reading Section */}
+                          <div>
+                            <h4 style={{ color: "#F95800", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px", margin: "0 0 10px 0", fontSize: "13px", fontWeight: 700 }}>2. Kỹ năng Đọc (Reading)</h4>
+                            {(!parsedKyNang.reading?.parts || parsedKyNang.reading.parts.length === 0) ? (
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Chưa có phần đọc nào.</p>
+                            ) : (
+                              parsedKyNang.reading.parts.map((p: any, pIdx: number) => (
+                                <div key={pIdx} style={{ margin: "12px 0", paddingLeft: "10px", borderLeft: "2px solid #cbd5e1" }}>
+                                  <h5 style={{ margin: "0 0 4px 0", fontSize: "12.5px", fontWeight: 600 }}>Phần {p.soPhan}: {p.tieuDe}</h5>
+                                  <p style={{ fontSize: "12px", color: "#475569", fontStyle: "italic", background: "#f1f5f9", padding: "10px", borderRadius: "6px", margin: "6px 0 10px 0", border: "1px solid #cbd5e1" }} dangerouslySetInnerHTML={{ __html: p.doanVan }} />
+
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+                                    {p.cauHois?.map((q: any, qIdx: number) => (
+                                      <div key={qIdx} style={{ padding: "10px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                                        <div style={{ fontWeight: 600, fontSize: "12px" }} dangerouslySetInnerHTML={{ __html: `Câu ${q.id}: ${q.noiDung}` }} />
+                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "4px" }}>
+                                          {q.luaChon?.map((choice: string, cIdx: number) => (
+                                            <div key={cIdx} style={{ fontSize: "11.5px", color: q.dapAn === ["A", "B", "C", "D"][cIdx] ? "#107544" : "#475569", fontWeight: q.dapAn === ["A", "B", "C", "D"][cIdx] ? 600 : 400 }}>
+                                              {choice}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* 3. Writing Section */}
+                          <div>
+                            <h4 style={{ color: "#F95800", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px", margin: "0 0 10px 0", fontSize: "13px", fontWeight: 700 }}>3. Kỹ năng Viết (Writing)</h4>
+                            {(!parsedKyNang.writing?.parts || parsedKyNang.writing.parts.length === 0) ? (
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Chưa có phần viết nào.</p>
+                            ) : (
+                              parsedKyNang.writing.parts.map((p: any, pIdx: number) => (
+                                <div key={pIdx} style={{ margin: "12px 0", paddingLeft: "10px", borderLeft: "2px solid #cbd5e1" }}>
+                                  <h5 style={{ margin: "0 0 4px 0", fontSize: "12.5px", fontWeight: 700 }}>Phần {p.soPhan}: {p.tieuDe} ({p.loaiBai || (p.yeuCau && p.yeuCau.toLowerCase().includes("letter") ? "Letter" : "Email")})</h5>
+                                  <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 4px 0" }}>Số từ tối thiểu: {p.soTuToiThieu} từ</p>
+                                  <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 8px 0" }} dangerouslySetInnerHTML={{ __html: `Hướng dẫn: ${p.huongDan}` }} />
+                                  {p.goiY && (
+                                    <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 8px 0" }} dangerouslySetInnerHTML={{ __html: `Gợi ý: ${p.goiY}` }} />
+                                  )}
+                                  <p style={{ fontSize: "12.5px", color: "#1e293b", background: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }} dangerouslySetInnerHTML={{ __html: p.noiDung || "(Chưa nhập đề bài)" }} />
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* 4. Speaking Section */}
+                          <div>
+                            <h4 style={{ color: "#F95800", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px", margin: "0 0 10px 0", fontSize: "13px", fontWeight: 700 }}>4. Kỹ năng Nói (Speaking)</h4>
+                            {(!parsedKyNang.speaking?.parts || parsedKyNang.speaking.parts.length === 0) ? (
+                              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>Chưa có phần nói nào.</p>
+                            ) : (
+                              parsedKyNang.speaking.parts.map((p: any, pIdx: number) => (
+                                <div key={pIdx} style={{ margin: "12px 0", background: "#f8fafc", padding: "14px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                                  <h5 style={{ margin: "0 0 6px 0", fontSize: "13px", fontWeight: 700 }}>Phần {p.soPhan}</h5>
+                                  <p style={{ fontSize: "12.5px", color: "#1e293b", fontWeight: 600, marginBottom: "8px" }} dangerouslySetInnerHTML={{ __html: `Đề bài: ${p.noiDung || "(Chưa nhập câu hỏi)"}` }} />
+                                  {p.imageUrl && (
+                                    <div style={{ margin: "10px 0", textAlign: "left" }}>
+                                      <img src={getMediaUrl(p.imageUrl)} alt="Speaking Visual Prompt" style={{ maxWidth: "200px", maxHeight: "150px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
+                                    </div>
+                                  )}
+                                  {p.audioUrl && (
+                                    <div style={{ margin: "8px 0" }}>
+                                      <audio src={getMediaUrl(p.audioUrl)} controls style={{ height: "24px", maxWidth: "100%" }} />
+                                    </div>
+                                  )}
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "11.5px", color: "#475569" }}>
+                                    <div>Thời gian chuẩn bị: <strong>{p.thoiGianChuanBi || 0} giây</strong></div>
+                                    <div>Thời gian trả lời: <strong>{p.thoiGianNoi || 0} giây</strong></div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <div className={styles.formGroupFull}>
@@ -463,32 +584,64 @@ export default function DuyetBaiQTV() {
                 </div>
               )}
 
-              <div className={styles.formRowThree}>
-                <div className={styles.formGroup}>
-                  <label>{activeTab === "dethi" ? "Trạng thái duyệt" : "Lớp học"}</label>
-                  <input type="text" disabled value={activeTab === "dethi" ? (selectedItem.TrangThaiDuyet || "Chờ duyệt") : (selectedItem.TenLop || "—")} />
+              {activeTab === "dethi" ? (
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Trạng thái duyệt</label>
+                    <input type="text" disabled value={selectedItem.TrangThaiDuyet || "Chờ duyệt"} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Ngày gửi</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={
+                        selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate
+                          ? new Date(selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate).toLocaleDateString("vi-VN")
+                          : "—"
+                      }
+                    />
+                  </div>
                 </div>
-                <div className={styles.formGroup}>
-                  <label>Ngày gửi</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={
-                      selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate
-                        ? new Date(selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate).toLocaleDateString("vi-VN")
-                        : "—"
-                    }
-                  />
+              ) : (
+                <div className={styles.formRowThree}>
+                  <div className={styles.formGroup}>
+                    <label>Lớp học</label>
+                    <input type="text" disabled value={selectedItem.TenLop || "—"} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Ngày gửi</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={
+                        selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate
+                          ? new Date(selectedItem.NgayGui || selectedItem.NgayTao || selectedItem.NgayCapNhat || selectedItem.CreatedDate).toLocaleDateString("vi-VN")
+                          : "—"
+                      }
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Trình độ khóa học</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={selectedItem.CapDo || "Beginner"}
+                    />
+                  </div>
                 </div>
-                <div className={styles.formGroup}>
-                  <label>Trình độ khóa học</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={selectedItem.CapDo || "Beginner"}
-                  />
+              )}
+              {selectedItem.MaBaiTap && selectedItem.MaBaiTap.startsWith("baitap-") && (
+                <div className={styles.formGroupFull} style={{ textAlign: "center", margin: "16px 0 8px 0" }}>
+                  <button
+                    type="button"
+                    className={styles.previewBtn}
+                    onClick={() => setShowPreview(true)}
+                  >
+                    <FiEye /> Xem trước bài tập
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className={styles.modalFooter}>
@@ -516,6 +669,28 @@ export default function DuyetBaiQTV() {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════ POPUP XEM TRƯỚC BÀI TẬP ════ */}
+      {showPreview && selectedItem && (
+        <div className={styles.previewModalBackdrop} onClick={() => setShowPreview(false)}>
+          <div className={styles.previewModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.previewModalCloseBtn} onClick={() => setShowPreview(false)} title="Đóng">
+              &times;
+            </button>
+            <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+              <ChiTietBaiTap
+                overrideExerciseId={(() => {
+                  const match = selectedItem.MaBaiTap?.match(/^(baitap|exam)-(\d+)$/);
+                  return match ? parseInt(match[2], 10) : undefined;
+                })()}
+                isModal={true}
+                isPreview={true}
+                onClose={() => setShowPreview(false)}
+              />
             </div>
           </div>
         </div>

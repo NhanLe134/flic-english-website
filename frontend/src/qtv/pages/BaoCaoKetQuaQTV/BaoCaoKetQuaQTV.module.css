@@ -79,7 +79,7 @@ svg:active {
 /* ── Stats ── */
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -181,18 +181,17 @@ svg:active {
 
 /* ── Filter bar ── */
 .filterBar {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 20px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 
 .searchWrap {
   margin-bottom: 0;
-  flex: 2;
-  min-width: 250px;
+  width: 100%;
 }
 
 .searchBox {
@@ -242,12 +241,12 @@ svg:active {
   font-size: 13px;
   font-family: inherit;
   outline: none;
-  background: #fff;
   cursor: pointer;
   color: #333;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  width: 100%;
   background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
   background-position: right 12px center;
   background-size: 13px;
@@ -270,11 +269,31 @@ svg:active {
   width: 100%;
 }
 
+.tableWrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tableWrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 130, 32, 0.35);
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.tableWrap::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(245, 130, 32, 0.7);
+}
+
 
 /* ── Table ── */
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 
@@ -285,12 +304,13 @@ svg:active {
 
 
 .table th {
-  padding: 12px 14px;
+  padding: 10px 8px;
   text-align: left;
   font-size: 12px;
   font-weight: 700;
   color: #888;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 
@@ -300,11 +320,12 @@ svg:active {
 
 
 .table td {
-  padding: 14px;
+  padding: 10px 8px;
   border-bottom: 1px solid #f3f3f3;
   font-size: 13px;
   vertical-align: middle;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 
@@ -315,7 +336,7 @@ svg:active {
 
 
 .row:hover {
-  background: #fdf8f3;
+  background: #f0f7ff;
 }
 
 
@@ -607,6 +628,199 @@ svg:active {
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
-.clickableCell:hover {
-  background-color: #fdf2e9 !important;
+
+/* EXPORT MODAL */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: lrpFadeIn 0.25s ease-out;
+}
+
+.modalContent {
+  background: white;
+  width: 90%;
+  max-width: 580px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: lrpSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modalHeader h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.modalClose:hover {
+  color: #475569;
+}
+
+.modalBody {
+  padding: 24px;
+}
+
+.exportOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.exportOptionBtn {
+  width: 100%;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  outline: none;
+}
+
+.exportOptionBtn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.exportOptionBtn.highlight {
+  background: #fff7ed;
+  border-color: #ffedd5;
+  color: #ea580c;
+}
+
+.exportOptionBtn.highlight:hover {
+  background: #ffedd5;
+  border-color: #fed7aa;
+}
+
+@keyframes lrpFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes lrpSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Review Modal Popup */
+.reviewModalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: lrpFadeIn 0.2s ease-out;
+}
+
+.reviewModalContent {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  animation: lrpSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reviewModalCloseBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f1f5f9;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  transition: all 0.2s;
+}
+
+.reviewModalCloseBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+.subRowCell {
+  transition: background-color 0.15s ease;
+}
+
+.subRowCell:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Custom scrollbar for review modal content and its internal scrollable elements */
+.reviewModalContent *::-webkit-scrollbar,
+.reviewModalContent::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.reviewModalContent *::-webkit-scrollbar-track,
+.reviewModalContent::-webkit-scrollbar-track {
+  background: rgba(245, 130, 32, 0.05);
+  border-radius: 4px;
+}
+
+.reviewModalContent *::-webkit-scrollbar-thumb,
+.reviewModalContent::-webkit-scrollbar-thumb {
+  background: rgba(245, 130, 32, 0.35);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.reviewModalContent *::-webkit-scrollbar-thumb:hover,
+.reviewModalContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 130, 32, 0.7);
 }
