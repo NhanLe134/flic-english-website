@@ -103,7 +103,7 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
   return (
     <div>
       {/* 1. Tập tin audio chung cho cả bài nếu là nghe trắc nghiệm */}
-      {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "Nghe audio trắc nghiệm" && (
+      {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "nghe audio trắc nghiệm" && (
         <div className="ad-audio-card">
           <h4><FiVolume2 style={{ color: "#f95800", fontSize: "1.2rem" }} /> General audio file for the entire assignment:</h4>
           <CustomAudioPlayer src={`${API}${exercise.AudioUrl}`} className="ad-audio-player" />
@@ -132,8 +132,8 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
       {questionPages.map((page, pIdx) => {
         if (pIdx !== currentPageIdx) return null;
 
-        const alreadyHasGlobalAudio = exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "Nghe audio trắc nghiệm";
-        const isFindMistakes = (exercise?.Type || "").toLowerCase() === "Tìm lỗi sai";
+        const alreadyHasGlobalAudio = exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "nghe audio trắc nghiệm";
+        const isFindMistakes = (exercise?.Type || "").toLowerCase() === "tìm lỗi sai";
 
         return (
           <div key={pIdx} className={`ad-page-container ${isModal ? "ad-page-readonly" : ""}`}>

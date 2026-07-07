@@ -98,7 +98,7 @@ const LessonList = () => {
     );
   };
 
-  const handleMarkActiveLesson = async (lessonId: number) => {
+  const handleMarkActiveLesson = async (lessonId: number | null) => {
     try {
       const res = await fetch(`http://14.225.192.252:5000/classes/${id}/active-buoihoc`, {
         method: "PUT",
@@ -304,7 +304,11 @@ const LessonList = () => {
                 {isOpened ? (
                   <button
                     type="button"
-                    onClick={() => handleMarkActiveLesson(lesson.MaBuoiHoc)}
+                    onClick={() => {
+                      const currentLessonIndex = lessons.findIndex(l => l.MaBuoiHoc === lesson.MaBuoiHoc);
+                      const targetId = currentLessonIndex > 0 ? lessons[currentLessonIndex - 1].MaBuoiHoc : null;
+                      handleMarkActiveLesson(targetId);
+                    }}
                     style={{
                       background: "#e8f5e9",
                       color: "#2e7d32",

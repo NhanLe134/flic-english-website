@@ -198,7 +198,17 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
           <FiVolume2 size={20} />
         </button>
 
-        <div className="pronounce-target-label">Câu {Number(qIdx) + 1}</div>
+        <div className="pronounce-target-label">
+          Câu {(() => {
+            if (typeof qIdx === "string" && qIdx.includes("_")) {
+              const parts = qIdx.split("_");
+              const idx = Number(parts[parts.length - 1]);
+              return isNaN(idx) ? qIdx : idx + 1;
+            }
+            const idx = Number(qIdx);
+            return isNaN(idx) ? qIdx : idx + 1;
+          })()}
+        </div>
         <div className="pronounce-target-text-container">
           {wordFeedback.map((item: { word: string; status: string }, index: number) => (
             <span 

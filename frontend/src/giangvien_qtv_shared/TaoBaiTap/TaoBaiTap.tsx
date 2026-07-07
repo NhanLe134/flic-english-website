@@ -223,6 +223,10 @@ const TaoBaiTap = () => {
   const isPractice = searchParams.get("isPractice") === "true";
   const isMiniTest = searchParams.get("isMiniTest") === "true";
   const maBaiHocParam = searchParams.get("maBaiHoc");
+  const [sessionLectures, setSessionLectures] = useState<any[]>([]);
+  const [selectedMaBaiHoc, setSelectedMaBaiHoc] = useState<number | "">(
+    maBaiHocParam ? Number(maBaiHocParam) : ""
+  );
   const [, setLecture] = useState<any>(null);
 
   const [lesson, setLesson] = useState<any>(null);
@@ -546,6 +550,23 @@ const TaoBaiTap = () => {
       .catch(err => console.log(err));
   }, [id]);
 
+  /* ===== LOAD SESSION LECTURES ===== */
+  useEffect(() => {
+    if (!id) return;
+    fetch(`http://14.225.192.252:5000/baigiang/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const published = data.filter((bg: any) => bg.TrangThai === "published");
+          setSessionLectures(published);
+          if (!selectedMaBaiHoc && !maBaiHocParam && published.length > 0) {
+            setSelectedMaBaiHoc(published[0].MaBaiHoc);
+          }
+        }
+      })
+      .catch(err => console.error("Lỗi tải danh sách bài giảng:", err));
+  }, [id, maBaiHocParam]);
+
   useEffect(() => {
     // Tự động điều chỉnh chiều cao của toàn bộ textarea tự co giãn
     const textareas = document.querySelectorAll(".auto-resize-textarea");
@@ -558,6 +579,7 @@ const TaoBaiTap = () => {
   const [activeTab, setActiveTab] = useState<"create" | "reuse">("create");
   const [allExistingEx, setAllExistingEx] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     // Fetch all existing exercises for cloning
@@ -576,15 +598,23 @@ const TaoBaiTap = () => {
   }, []);
 
   const handleReuseExercise = async (exerciseId: number) => {
+    if (!selectedMaBaiHoc) {
+      alert("Vui lòng chọn bài giảng để gắn với bài tập này!");
+      return;
+    }
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
       const res = await fetch(`http://14.225.192.252:5000/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ MaBuoiHoc: Number(id) })
+        body: JSON.stringify({ 
+          MaBuoiHoc: Number(id),
+          MaBaiHoc: Number(selectedMaBaiHoc)
+        })
       });
       if (res.ok) {
-        setSuccessMessage("Sao chép bài tập thành công");
-        setShowSuccess(true);
+        alert("Chọn bài tập thành công!");
         const isQTVPath = location.pathname.startsWith("/QTV");
         if (isQTVPath) {
           setTimeout(() => navigate("/QTV/khoahoc"), 1500);
@@ -597,6 +627,8 @@ const TaoBaiTap = () => {
       }
     } catch (err) {
       alert("Lỗi kết nối: " + err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -1929,6 +1961,13 @@ const TaoBaiTap = () => {
       return;
     }
 
+    if (!isExam && !selectedMaBaiHoc) {
+      alert("Vui lòng chọn bài giảng để gắn với bài tập này!");
+      const el = document.querySelector(".exercise-title");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
     const user = JSON.parse(userStr || "{}");
     const isTeacher = user.VaiTro === "Giảng Viên";
@@ -2006,7 +2045,7 @@ const TaoBaiTap = () => {
           Vocabulary:  "", 
           CreatedDate: today,
           MaBuoiHoc:    Number(id),
-          MaBaiHoc:     maBaiHocParam ? Number(maBaiHocParam) : null,
+          MaBaiHoc:     isExam ? null : (selectedMaBaiHoc ? Number(selectedMaBaiHoc) : null),
           AudioUrl:    mainAudioUrl,
           ShowAnswer:  showAnswer ? 1 : 0,
           IsFree:      isFree ? 1 : 0,
@@ -2176,10 +2215,11 @@ const TaoBaiTap = () => {
                   <button
                     type="button"
                     className="save-btn"
-                    style={{ fontSize: "13px", padding: "8px 16px", width: "auto", margin: 0 }}
+                    style={{ fontSize: "13px", padding: "8px 16px", width: "auto", margin: 0, opacity: isProcessing ? 0.6 : 1 }}
+                    disabled={isProcessing}
                     onClick={() => handleReuseExercise(ex.MaBaiTap)}
                   >
-                    Chọn bài này
+                    {isProcessing ? "Đang xử lý..." : "Chọn bài này"}
                   </button>
                 </div>
               ))
@@ -2358,6 +2398,48 @@ const TaoBaiTap = () => {
             <p style={{ color: "#c5221f", fontStyle: "italic", fontSize: "12.5px", margin: "4px 0 10px 0", fontWeight: 500 }}>
               {titleError}
             </p>
+          )}
+
+          {!isExam && (
+            <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>
+                Bài giảng gắn kèm <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <select
+                className="exercise-type"
+                style={{ 
+                  width: "100%", 
+                  marginTop: 0, 
+                  marginBottom: 0,
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                  color: "#334155",
+                  outline: "none",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
+                }}
+                value={selectedMaBaiHoc}
+                onChange={e => setSelectedMaBaiHoc(e.target.value ? Number(e.target.value) : "")}
+              >
+                <option value="">-- Chọn bài giảng (Bắt buộc) --</option>
+                {sessionLectures.map((lec: any) => (
+                  <option key={lec.MaBaiHoc} value={lec.MaBaiHoc}>
+                    {lec.TieuDe} ({lec.LoaiBaiHoc})
+                  </option>
+                ))}
+              </select>
+              {sessionLectures.length === 0 ? (
+                <p style={{ color: "#ef4444", fontSize: "12px", margin: "2px 0 0 0", fontStyle: "italic", fontWeight: 500 }}>
+                  ⚠️ Buổi học này chưa có bài giảng nào được xuất bản. Vui lòng tạo bài giảng trước khi tạo bài tập!
+                </p>
+              ) : !selectedMaBaiHoc ? (
+                <p style={{ color: "#ef4444", fontSize: "12px", margin: "2px 0 0 0", fontStyle: "italic", fontWeight: 500 }}>
+                  * Bắt buộc chọn bài giảng để gắn kèm bài tập này.
+                </p>
+              ) : null}
+            </div>
           )}
 
 
@@ -4916,72 +4998,51 @@ const TaoBaiTap = () => {
       {renderFormattingToolbar()}
 
       {confirmDialog.show && (
-        <div className="modal-overlay" style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "rgba(0, 0, 0, 0.4)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 9999,
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        }}>
-          <div className="modal-container" style={{
-            background: "#ffffff",
-            padding: "32px 40px",
-            borderRadius: "16px",
-            width: "90%",
-            maxWidth: "480px",
-            textAlign: "center",
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-          }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#1e293b", margin: "0 0 16px 0" }}>
-              {confirmDialog.title}
-            </h3>
-            <p style={{ fontSize: "14px", color: "#475569", margin: "0 0 24px 0", lineHeight: "1.5" }}>
-              {confirmDialog.message}
-            </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
-              <button
-                type="button"
-                onClick={() => setConfirmDialog(p => ({ ...p, show: false }))}
-                style={{
-                  background: "#f1f5f9",
-                  color: "#475569",
-                  border: "1px solid #cbd5e1",
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  transition: "all 0.2s"
-                }}
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setConfirmDialog(p => ({ ...p, show: false }));
-                  if (confirmDialog.onConfirm) confirmDialog.onConfirm();
-                }}
-                style={{
-                  background: "#ef4444",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  transition: "all 0.2s"
-                }}
-              >
-                Xác nhận
-              </button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => setConfirmDialog(p => ({ ...p, show: false }))}>
+          <div style={{
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>{confirmDialog.title}</span>
+              <button type="button" onClick={() => setConfirmDialog(p => ({ ...p, show: false }))} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                {confirmDialog.message}
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDialog(p => ({ ...p, show: false }))}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmDialog(p => ({ ...p, show: false }));
+                    if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+                  }}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xác nhận
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -192,6 +192,8 @@ function App() {
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
           <Route path="bai-giang/:id" element={<LessonDetail />} />
           <Route path="baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
+          <Route path="danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
+          <Route path="cham-bai/:maBaiNop" element={<ChamBaiPage />} />
         </Route>
 
         {/*Sinh viên*/}

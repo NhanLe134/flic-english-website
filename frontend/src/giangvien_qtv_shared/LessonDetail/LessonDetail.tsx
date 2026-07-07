@@ -188,9 +188,6 @@ const LessonDetail: React.FC = () => {
           {lesson.TrangThai === 'published' ? 'Đã duyệt' : lesson.TrangThai === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
         </span>
       </div>
-      <p style={{ color: "#777", marginBottom: 16 }}>
-        {lesson.LoaiBaiHoc} • {lesson.ThoiLuong}
-      </p>
 
       {noiDung && (
         <>
@@ -205,7 +202,7 @@ const LessonDetail: React.FC = () => {
                 remarkPlugins={[remarkGfm]}
                 components={markdownComponents}
               >
-                {unescapeMarkdown(noiDung)}
+                {unescapeMarkdown(noiDung).trim()}
               </ReactMarkdown>
             </div>
           )}

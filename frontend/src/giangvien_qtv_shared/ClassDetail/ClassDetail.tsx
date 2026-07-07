@@ -10,6 +10,14 @@ import { hasPermission } from "../../utils/permission";
 
 type ActiveTab = "exercises" | "lectures" | "documents";
 
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
+
 const ClassDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -25,7 +33,7 @@ const ClassDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
+    fetch(`${API}/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (data) => {
         setLesson(data);
@@ -36,7 +44,7 @@ const ClassDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://14.225.192.252:5000/baitap/buoihoc/${id}`)
+    fetch(`${API}/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => {
         console.log("ClassDetail exercises fetched:", data);
@@ -49,7 +57,7 @@ const ClassDetail = () => {
 
   const handleToggleOpen = async (maBaiTap: number) => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/baitap/toggle-open", {
+      const res = await fetch(`${API}/baitap/toggle-open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBaiTap: maBaiTap })
@@ -83,7 +91,7 @@ const ClassDetail = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `http://14.225.192.252:5000/baitap/${selectedId}`;
+      const url = `${API}/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
@@ -298,7 +306,7 @@ const ClassDetail = () => {
           ) : (
             <div className="lesson-card-grid">
               {filteredExercises.map((ex: any) => (
-                <div key={ex.MaBaiTap} className="lesson-content-card" style={{ height: '260px', display: 'flex', flexDirection: 'column' }}>
+                <div key={ex.MaBaiTap} className="lesson-content-card" style={{ height: '200px', display: 'flex', flexDirection: 'column' }}>
                   <div className="lesson-content-head">
                     <h4>{ex.Title}</h4>
                     {ex.TrangThai !== "practice" && (
@@ -359,6 +367,8 @@ const ClassDetail = () => {
                     const isOpened = !!parsedContent.isOpened;
                     const isApproved = ex.TrangThai === "published";
 
+                    if (!isApproved) return null;
+
                     return (
                       <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
                         <span style={{
@@ -373,7 +383,7 @@ const ClassDetail = () => {
                           gap: "4px",
                           width: "fit-content"
                         }}>
-                          {!isApproved ? "⏳ Đang chờ duyệt" : isManual ? (isOpened ? "🔓 Đang mở đề (Thủ công)" : "🔒 Đang đóng đề (Thủ công)") : "🕒 Tự động mở theo lịch"}
+                          {isManual ? (isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề ") : "🕒 Tự động mở theo lịch"}
                         </span>
                         {isApproved && isManual && (
                           <button
@@ -497,32 +507,43 @@ const ClassDetail = () => {
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
         }} onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>
           <div style={{
-            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
             boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            border: "1px solid #cbd5e1", textAlign: "center"
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
-              Xác nhận xóa bài tập
-            </h3>
-            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Bạn có chắc chắn muốn xóa bài tập này không?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedId(null);
-                }}
-                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleDelete}
-                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
-              >
-                Xóa
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa bài tập</span>
+              <button type="button" onClick={() => { setShowDeleteModal(false); setSelectedId(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa bài tập này không?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
           </div>
         </div>

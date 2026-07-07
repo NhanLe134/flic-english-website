@@ -98,6 +98,7 @@ export default function ClassDetailSV() {
   const [pendingReview, setPendingReview] = useState<{ sub: any; selectedExercise: any } | null>(null);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
+  const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
     loading: boolean;
     baiGiangs: any[];
@@ -244,6 +245,24 @@ export default function ClassDetailSV() {
       return;
     }
 
+    // Resolve student info first if not resolved
+    let resolvedMaSV = maSinhVien;
+    if (!resolvedMaSV) {
+      try {
+        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+        const userId = user.MaNguoiDung;
+        if (userId) {
+          const svRes = await fetch(`${API}/students/by-user/${userId}`).then(r => r.json());
+          if (svRes && svRes.MaSinhVien) {
+            resolvedMaSV = svRes.MaSinhVien;
+            setMaSinhVien(svRes.MaSinhVien);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     setLessonDetails(prev => ({
       ...prev,
       [lessonId]: {
@@ -281,11 +300,29 @@ export default function ClassDetailSV() {
 
       const activeBaiHoc = published.length > 0 ? published[0].MaBaiHoc : null;
 
+      // Fetch progress for each published lecture in parallel
+      const baiGiangsWithProgress = await Promise.all(
+        published.map(async (b: any) => {
+          if (resolvedMaSV) {
+            try {
+              const prog = await fetch(`${API}/student/progress/minitest/${b.MaBaiHoc}/${resolvedMaSV}`).then(r => r.json());
+              return {
+                ...b,
+                completed: prog.DaXemVideo === 1
+              };
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          return { ...b, completed: false };
+        })
+      );
+
       setLessonDetails(prev => ({
         ...prev,
         [lessonId]: {
           loading: false,
-          baiGiangs: published,
+          baiGiangs: baiGiangsWithProgress,
           taiLieus,
           practices,
           exams,
@@ -591,7 +628,7 @@ export default function ClassDetailSV() {
                                               <th style={{ textAlign: "center" }}>#</th>
                                               <th>Tên bài giảng</th>
                                               <th style={{ textAlign: "center" }}>Loại</th>
-                                              <th style={{ textAlign: "center" }}>Thời lượng</th>
+                                              <th style={{ textAlign: "center" }}>Trạng thái</th>
                                               <th style={{ textAlign: "center" }}>Hành động</th>
                                             </tr>
                                           </thead>
@@ -601,7 +638,20 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{b.TieuDe}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
-                                                <td style={{ textAlign: "center" }}>{b.ThoiLuong || "—"}</td>
+                                                <td style={{ textAlign: "center" }}>
+                                                  <span style={{
+                                                    display: "inline-block",
+                                                    padding: "4px 10px",
+                                                    borderRadius: "20px",
+                                                    fontSize: "12px",
+                                                    fontWeight: 600,
+                                                    background: b.completed ? "#e8f5e9" : "#f1f5f9",
+                                                    color: b.completed ? "#2e7d32" : "#64748b",
+                                                    border: b.completed ? "1px solid #c8e6c9" : "1px solid #e2e8f0"
+                                                  }}>
+                                                    {b.completed ? "Đã hoàn thành" : "Chưa xem"}
+                                                  </span>
+                                                </td>
                                                 <td style={{ textAlign: "center" }}>
                                                   <button
                                                     className="ld2-open-btn"
