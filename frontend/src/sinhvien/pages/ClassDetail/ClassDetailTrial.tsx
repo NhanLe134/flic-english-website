@@ -10,7 +10,8 @@ import {
   FaFileAlt,
   FaPencilAlt,
   FaClipboardCheck,
-  FaInfoCircle
+  FaInfoCircle,
+  FaLock
 } from "react-icons/fa";
 
 const API = "http://14.225.192.252:5000";
@@ -41,6 +42,7 @@ interface Lesson {
   NgayKetThuc: string;
   ThuTu: number;
   TrangThaiDuyet: string;
+  TrangThai?: string;
 }
 
 export default function ClassDetailTrial() {
@@ -362,17 +364,18 @@ export default function ClassDetailTrial() {
           <div className="cd-timeline-list">
             {[...lessons].reverse().map((lesson, indexInReversed) => {
               const idx = (lessons.length - 1) - indexInReversed;
-              const isExpanded = expandedLessonId === lesson.MaLesson;
+              const isLocked = lesson.TrangThai === "Chờ mở";
+              const isExpanded = !isLocked && expandedLessonId === lesson.MaLesson;
 
-              let markerClass = "cd-timeline-marker cd-marker-current";
-              let markerContent: React.ReactNode = idx + 1;
+              let markerClass = isLocked ? "cd-timeline-marker cd-marker-upcoming" : "cd-timeline-marker cd-marker-current";
+              let markerContent: React.ReactNode = isLocked ? <FaLock size={10} /> : idx + 1;
 
               const detail = lessonDetails[lesson.MaLesson];
 
               return (
                 <div
                   key={lesson.MaLesson}
-                  className={`cd-timeline-item ${isExpanded ? "current-item" : ""}`}
+                  className={`cd-timeline-item ${isExpanded ? "current-item" : ""} ${isLocked ? "locked-item" : ""}`}
                 >
                   {/* Timeline node marker */}
                   <div className={markerClass}>{markerContent}</div>
@@ -382,24 +385,29 @@ export default function ClassDetailTrial() {
                     {/* Header (clickable to toggle) */}
                     <div
                       className="cd-session-card"
-                      onClick={() => handleToggleLesson(lesson.MaLesson)}
-                      style={{ cursor: "pointer" }}
+                      onClick={() => !isLocked && handleToggleLesson(lesson.MaLesson)}
+                      style={{ cursor: isLocked ? "not-allowed" : "pointer", opacity: isLocked ? 0.7 : 1 }}
                     >
                       <div className="cd-session-left">
                         <h4 className="cd-session-title">{lesson.TenLesson}</h4>
+                        {isLocked && <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "600", color: "#ef4444", background: "#fee2e2", padding: "2px 6px", borderRadius: "4px" }}>Chờ mở</span>}
                       </div>
                       <div className="cd-session-right">
                         <span className="cd-session-date">
                           <FaCalendarAlt size={12} />
                           {formatDate(lesson.NgayBatDau)}
                         </span>
-                        <FaChevronRight
-                          className="cd-session-chevron"
-                          style={{
-                            transform: isExpanded ? "rotate(90deg)" : "none",
-                            transition: "transform 0.2s ease"
-                          }}
-                        />
+                        {!isLocked ? (
+                          <FaChevronRight
+                            className="cd-session-chevron"
+                            style={{
+                              transform: isExpanded ? "rotate(90deg)" : "none",
+                              transition: "transform 0.2s ease"
+                            }}
+                          />
+                        ) : (
+                          <FaLock size={12} style={{ color: "#94a3b8" }} />
+                        )}
                       </div>
                     </div>
 

@@ -10,6 +10,7 @@ interface Lesson {
   NgayBatDau: string;
   NgayKetThuc: string;
   ThuTu: number;
+  TrangThai?: string;
 }
 
 const LessonList = () => {
@@ -23,7 +24,7 @@ const LessonList = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [activeBuoiHocId, setActiveBuoiHocId] = useState<number | null>(null);
+
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [lessonForm, setLessonForm] = useState({
@@ -65,16 +66,7 @@ const LessonList = () => {
     });
   };
 
-  const fetchClassInfo = () => {
-    fetch(`http://14.225.192.252:5000/classes/${id}/info`)
-      .then(res => res.json())
-      .then(data => {
-        if (data) {
-          setActiveBuoiHocId(data.ActiveBuoiHocId);
-        }
-      })
-      .catch(err => console.log(err));
-  };
+
 
   const handleDeleteLesson = (lessonId: number, lessonName: string) => {
     showConfirm(
@@ -106,7 +98,11 @@ const LessonList = () => {
         body: JSON.stringify({ activeBuoiHocId: lessonId })
       });
       if (res.ok) {
-        setActiveBuoiHocId(lessonId);
+        // Re-fetch lessons list to update TrangThai on screen immediately
+        fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
+          .then(r => r.json())
+          .then(data => setLessons(data))
+          .catch(err => console.log(err));
       } else {
         showAlert("Lỗi khi cập nhật buổi học đang học");
       }
@@ -177,8 +173,6 @@ const LessonList = () => {
       .then(res => res.json())
       .then(data => setLessons(data))
       .catch(err => console.log(err));
-
-    fetchClassInfo();
   }, [id]);
 
   const filteredLessons = lessons.filter((lesson) =>
@@ -281,9 +275,7 @@ const LessonList = () => {
       {/* LESSON GRID */}
       <div className="lesson-grid">
         {filteredLessons.map((lesson) => {
-          const activeLessonIndex = lessons.findIndex(l => l.MaBuoiHoc === activeBuoiHocId);
-          const currentLessonIndex = lessons.findIndex(l => l.MaBuoiHoc === lesson.MaBuoiHoc);
-          const isOpened = activeLessonIndex !== -1 && currentLessonIndex <= activeLessonIndex;
+          const isOpened = lesson.TrangThai === "Đã mở";
 
           return (
             <div key={lesson.MaBuoiHoc} className="lesson-card">
