@@ -153,8 +153,10 @@ export default function ClassDetailSV() {
         }
 
         if (Array.isArray(lessonsRes)) {
-          // Sort lessons by ThuTu ascending
-          const sorted = [...lessonsRes].sort((a, b) => a.ThuTu - b.ThuTu);
+          // Filter out sessions that are "Chờ mở" and sort lessons by ThuTu ascending
+          const sorted = [...lessonsRes]
+            .filter((l: any) => l.TrangThai !== "Chờ mở")
+            .sort((a, b) => a.ThuTu - b.ThuTu);
           setLessons(sorted);
         } else {
           setLessons([]);
