@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import styles from "./DuyetBaiQTV.module.css";
 import { FiSearch, FiEye } from "react-icons/fi";
-import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap";
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap";
 
 const API = "http://14.225.192.252:5000";
 

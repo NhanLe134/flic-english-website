@@ -15,21 +15,21 @@ interface Question {
 }
 
 const mapDangBaiToType = (db: string): string => {
-  if (!db) return "multiple";
+  if (!db) return "Tổng hợp";
   const dbClean = db.trim();
-  if (dbClean === "Nghe audio trắc nghiệm") return "listening-mcq";
-  if (dbClean === "Hình ảnh chọn đáp án") return "listening-image";
-  if (dbClean === "Nghe chép chính tả") return "listening-dictation";
-  if (dbClean === "Điền từ vào đoạn văn") return "listening-fill-in";
-  if (dbClean === "Luyện phát âm (check phát âm tự động)") return "speaking-pronounce";
-  if (dbClean === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking-topic";
-  if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
-  if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "reading-vocab-mcq";
-  if (dbClean === "Sắp xếp từ thành câu") return "writing-order-words";
-  if (dbClean === "Tìm lỗi sai") return "writing-find-mistakes";
-  if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "writing-tense-mcq";
-  if (dbClean === "Viết đoạn văn ngắn") return "writing-essay";
-  if (dbClean === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
+  if (dbClean === "Nghe audio trắc nghiệm") return "Nghe audio trắc nghiệm";
+  if (dbClean === "Hình ảnh chọn đáp án") return "Hình ảnh chọn đáp án";
+  if (dbClean === "Nghe chép chính tả") return "Nghe chép chính tả";
+  if (dbClean === "Điền từ vào đoạn văn") return "Điền từ vào đoạn văn";
+  if (dbClean === "Luyện phát âm (check phát âm tự động)") return "Luyện phát âm (check phát âm tự động)";
+  if (dbClean === "Nói theo chủ đề (ghi âm nộp GV)") return "Nói theo chủ đề (ghi âm nộp GV)";
+  if (dbClean === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "Trắc nghiệm đọc hiểu (chia đôi màn hình)";
+  if (dbClean === "Bài tập từ vựng" || dbClean === "Nối từ") return "Nối từ";
+  if (dbClean === "Sắp xếp từ thành câu") return "Sắp xếp từ thành câu";
+  if (dbClean === "Tìm lỗi sai") return "Tìm lỗi sai";
+  if (dbClean === "Trắc nghiệm xác định thì" || dbClean === "Trắc nghiệm") return "Trắc nghiệm";
+  if (dbClean === "Viết đoạn văn ngắn") return "Viết đoạn văn ngắn";
+  if (dbClean === "Sắp xếp câu thành đoạn văn") return "Sắp xếp câu thành đoạn văn";
   return dbClean;
 };
 
@@ -54,20 +54,20 @@ const ExerciseDetail = () => {
   /* ===== NORMALIZE TYPE ===== */
   const exType = (exercise?.Type || "").toLowerCase();
   const normalizedType: string =
-    ["writing", "reading", "essay", "writing-essay", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences"].includes(exType) ? "essay" :
-    ["multiple", "quiz", "trắc nghiệm", "writing-tense-mcq", "reading-vocab-mcq"].includes(exType) ? "multiple" :
-    ["listening", "nghe", "listening-mcq", "listening-image"].includes(exType) ? "listening" :
+    ["writing", "reading", "essay", "Viết đoạn văn ngắn", "Nghe chép chính tả", "Luyện phát âm (check phát âm tự động)", "Sắp xếp từ thành câu", "Sắp xếp câu thành đoạn văn"].includes(exType) ? "essay" :
+    ["Tổng hợp", "quiz", "trắc nghiệm", "Trắc nghiệm", "Nối từ"].includes(exType) ? "Tổng hợp" :
+    ["listening", "nghe", "Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án"].includes(exType) ? "listening" :
     ["matching", "ghép"].includes(exType)                ? "matching"   :
     ["connect", "nối"].includes(exType)                  ? "connect"    :
     ["ordering", "sắp xếp"].includes(exType)             ? "ordering"   :
-    ["speaking", "nói", "speaking-topic"].includes(exType) ? "speaking" :
-    ["reading-split"].includes(exType)                    ? "reading-split" :
-    ["listening-fill-in"].includes(exType)                ? "listening-fill-in" :
+    ["speaking", "nói", "Nói theo chủ đề (ghi âm nộp GV)"].includes(exType) ? "speaking" :
+    ["Trắc nghiệm đọc hiểu (chia đôi màn hình)"].includes(exType)                    ? "Trắc nghiệm đọc hiểu (chia đôi màn hình)" :
+    ["Điền từ vào đoạn văn"].includes(exType)                ? "Điền từ vào đoạn văn" :
     ["vocabulary", "từ vựng", "vocab"].includes(exType)  ? "vocabulary" :
     exType;
 
   const isPairs = normalizedType === "connect" || normalizedType === "matching";
-  const isMC = normalizedType === "multiple" || normalizedType === "listening";
+  const isMC = normalizedType === "Tổng hợp" || normalizedType === "listening";
 
   const parseMCQuestions = (raw: string): MCQuestion[] => {
     if (!raw) return [];
@@ -228,11 +228,11 @@ const ExerciseDetail = () => {
           try {
             const parsed = JSON.parse(exercise.Questions);
             if (Array.isArray(parsed)) {
-              if (exercise.Type === "listening-dictation" || exercise.Type === "speaking-pronounce") {
+              if (exercise.Type === "Nghe chép chính tả" || exercise.Type === "Luyện phát âm (check phát âm tự động)") {
                 essayFromQuestions = parsed.map(q => q.text || q.question || "");
-              } else if (exercise.Type === "writing-order-words") {
+              } else if (exercise.Type === "Sắp xếp từ thành câu") {
                 essayFromQuestions = parsed.map(q => q.correctSentence || q.question || "");
-              } else if (exercise.Type === "writing-order-sentences") {
+              } else if (exercise.Type === "Sắp xếp câu thành đoạn văn") {
                 essayFromQuestions = parsed.map(q => (q.sentences || []).filter(Boolean).join(" / "));
               } else {
                 essayFromQuestions = parsed.map(q => q.question || "");
@@ -249,7 +249,7 @@ const ExerciseDetail = () => {
     }
 
     // Reading split
-    if (normalizedType === "reading-split" && exercise.Questions) {
+    if (normalizedType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && exercise.Questions) {
       try {
         const parsed = JSON.parse(exercise.Questions);
         if (Array.isArray(parsed)) setEditReadingSplit(parsed);
@@ -262,7 +262,7 @@ const ExerciseDetail = () => {
     }
 
     // Listening fill in
-    if (normalizedType === "listening-fill-in" && exercise.Questions) {
+    if (normalizedType === "Điền từ vào đoạn văn" && exercise.Questions) {
       try {
         const parsed = JSON.parse(exercise.Questions);
         if (Array.isArray(parsed)) setEditFillIn(parsed);
@@ -337,7 +337,7 @@ const ExerciseDetail = () => {
         )}
 
         {/* MC / Listening questions */}
-        {(normalizedType === "multiple" || normalizedType === "listening") && (
+        {(normalizedType === "Tổng hợp" || normalizedType === "listening") && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {editQuestions.length === 0 ? (
               <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
@@ -345,9 +345,9 @@ const ExerciseDetail = () => {
               </p>
             ) : (
               editQuestions.map((q, qi) => {
-                const isAudioOnlyMC = exType === "listening-image" || exType === "listening-mcq";
+                const isAudioOnlyMC = exType === "Hình ảnh chọn đáp án" || exType === "Nghe audio trắc nghiệm";
                 const hasAnswers = q.answers && q.answers.some(a => a && a.trim() !== "");
-                const isFlatMC = exType === "listening-image" || exType === "writing-tense-mcq";
+                const isFlatMC = exType === "Hình ảnh chọn đáp án" || exType === "Trắc nghiệm";
                 const hasSubQuestions = !isFlatMC && q.subQuestions && q.subQuestions.length > 0;
                 return (
                   <div key={qi} style={{ padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
@@ -535,7 +535,7 @@ const ExerciseDetail = () => {
         )}
 
         {/* Reading Split */}
-        {normalizedType === "reading-split" && (
+        {normalizedType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {editReadingSplit.length === 0 ? (
               <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
@@ -587,7 +587,7 @@ const ExerciseDetail = () => {
         )}
 
         {/* Listening Fill In */}
-        {normalizedType === "listening-fill-in" && (
+        {normalizedType === "Điền từ vào đoạn văn" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {editFillIn.length === 0 ? (
               <p style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>

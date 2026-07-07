@@ -33,20 +33,20 @@ interface ExamSection {
 
 /*
 const mapDangBaiToType = (db: string): string => {
-  if (db === "Nghe audio trắc nghiệm") return "listening-mcq";
-  if (db === "Hình ảnh chọn đáp án") return "listening-image";
-  if (db === "Nghe chép chính tả") return "listening-dictation";
-  if (db === "Điền từ vào đoạn văn") return "listening-fill-in";
-  if (db === "Luyện phát âm (check phát âm tự động)") return "speaking-pronounce";
-  if (db === "Nói theo chủ đề (ghi âm nộp GV)") return "speaking-topic";
-  if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "reading-split";
-  if (db === "Bài tập từ vựng" || db === "Nối từ") return "reading-vocab-mcq";
-  if (db === "Sắp xếp từ thành câu") return "writing-order-words";
-  if (db === "Tìm lỗi sai") return "writing-find-mistakes";
-  if (db === "Trắc nghiệm xác định thì" || db === "Trắc nghiệm") return "writing-tense-mcq";
-  if (db === "Viết đoạn văn ngắn") return "writing-essay";
-  if (db === "Sắp xếp câu thành đoạn văn") return "writing-order-sentences";
-  return "multiple";
+  if (db === "Nghe audio trắc nghiệm") return "Nghe audio trắc nghiệm";
+  if (db === "Hình ảnh chọn đáp án") return "Hình ảnh chọn đáp án";
+  if (db === "Nghe chép chính tả") return "Nghe chép chính tả";
+  if (db === "Điền từ vào đoạn văn") return "Điền từ vào đoạn văn";
+  if (db === "Luyện phát âm (check phát âm tự động)") return "Luyện phát âm (check phát âm tự động)";
+  if (db === "Nói theo chủ đề (ghi âm nộp GV)") return "Nói theo chủ đề (ghi âm nộp GV)";
+  if (db === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "Trắc nghiệm đọc hiểu (chia đôi màn hình)";
+  if (db === "Bài tập từ vựng" || db === "Nối từ") return "Nối từ";
+  if (db === "Sắp xếp từ thành câu") return "Sắp xếp từ thành câu";
+  if (db === "Tìm lỗi sai") return "Tìm lỗi sai";
+  if (db === "Trắc nghiệm xác định thì" || db === "Trắc nghiệm") return "Trắc nghiệm";
+  if (db === "Viết đoạn văn ngắn") return "Viết đoạn văn ngắn";
+  if (db === "Sắp xếp câu thành đoạn văn") return "Sắp xếp câu thành đoạn văn";
+  return "Tổng hợp";
 };
 */
 
@@ -122,35 +122,35 @@ const RichTextarea = ({
 
 const getQuestionSummary = (q: any, type: string) => {
   let text = "";
-  if (type === "listening-mcq") {
+  if (type === "Nghe audio trắc nghiệm") {
     text = q.prompt || (q.subQuestions?.[0]?.question);
-  } else if (type === "writing-tense-mcq") {
+  } else if (type === "Trắc nghiệm") {
     text = q.question;
-  } else if (type === "writing-find-mistakes") {
+  } else if (type === "Tìm lỗi sai") {
     text = q.question;
-  } else if (type === "reading-vocab-mcq") {
+  } else if (type === "Nối từ") {
     const pairs = q.vocabPairs || [];
     if (pairs.length > 0) {
       text = pairs.map((p: any) => `${p.word || "?"}: ${p.meaning || "?"}`).join(", ");
     } else {
       text = "Chưa có cặp từ vựng";
     }
-  } else if (type === "listening-image") {
+  } else if (type === "Hình ảnh chọn đáp án") {
     text = `[Hình ảnh & Audio - Đáp án: ${q.correct || "A"}]`;
-  } else if (type === "listening-dictation") {
+  } else if (type === "Nghe chép chính tả") {
     text = q.text;
-  } else if (type === "listening-fill-in") {
+  } else if (type === "Điền từ vào đoạn văn") {
     text = q.text;
-  } else if (type === "speaking-pronounce") {
+  } else if (type === "Luyện phát âm (check phát âm tự động)") {
     text = q.text;
-  } else if (type === "writing-order-words") {
+  } else if (type === "Sắp xếp từ thành câu") {
     text = q.correctSentence || q.text;
-  } else if (type === "writing-order-sentences") {
+  } else if (type === "Sắp xếp câu thành đoạn văn") {
     const sents = q.sentences || [];
     text = sents.filter((s: string) => s && s.trim() !== "").join(" / ");
-  } else if (type === "reading-split") {
+  } else if (type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") {
     text = q.text || (q.subQuestions?.[0]?.question);
-  } else if (type === "speaking-topic") {
+  } else if (type === "Nói theo chủ đề (ghi âm nộp GV)") {
     text = q.prompt;
   }
   
@@ -243,7 +243,7 @@ const TaoBaiTap = () => {
   }>({ show: false, title: "", message: "" });
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
-  const [type] = useState(isMiniTest ? "writing-tense-mcq" : "listening-mcq");
+  const [type] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
   
   const [kyNang] = useState(isMiniTest ? "Viet" : "Nghe");
   const [dangBai] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
@@ -259,7 +259,7 @@ const TaoBaiTap = () => {
   const [commonAudioUrl, setCommonAudioUrl] = useState("");
   const [examSections, setExamSections] = useState<ExamSection[]>([
     {
-      type: "listening-mcq",
+      type: "Nghe audio trắc nghiệm",
       title: "Phần 1: Nghe trắc nghiệm",
       audioUrl: "",
       questions: [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }]
@@ -634,7 +634,7 @@ const TaoBaiTap = () => {
     const targetType = secIdx !== undefined ? examSections[secIdx].type : type;
 
     // 1. Dạng Đọc hiểu chia đôi màn hình (reading-split)
-    if (targetType === "reading-split") {
+    if (targetType === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") {
       const parsedPassages: any[] = [];
       const rawBlocks = text.split(/\[(?:Bài đọc|Reading|Passage)\]/i).map(b => b.trim()).filter(Boolean);
 
@@ -792,7 +792,7 @@ const TaoBaiTap = () => {
     }
 
     // 2. Dạng trắc nghiệm nhóm/ngữ cảnh (multiple, listening-mcq)
-    if (targetType === "multiple" || targetType === "listening-mcq") {
+    if (targetType === "Tổng hợp" || targetType === "Nghe audio trắc nghiệm") {
       const groupBoundary = /(?=\[(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc)\s*\d*\]|^(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc)\s*\d*\s*[\.\:\-])/im;
       const groupBlocks = text.split(groupBoundary).map(g => g.trim()).filter(Boolean);
       const parsedGroups: any[] = [];
@@ -903,7 +903,7 @@ const TaoBaiTap = () => {
     }
 
     // Dạng Tìm lỗi sai (writing-find-mistakes)
-    if (targetType === "writing-find-mistakes") {
+    if (targetType === "Tìm lỗi sai") {
       const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
@@ -972,7 +972,7 @@ const TaoBaiTap = () => {
     }
 
     // 3. Dạng trắc nghiệm phẳng (writing-tense-mcq)
-    if (targetType === "writing-tense-mcq") {
+    if (targetType === "Trắc nghiệm") {
       const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
@@ -1044,7 +1044,7 @@ const TaoBaiTap = () => {
     }
 
     // 4. Dạng Nghe chép chính tả (listening-dictation) & Luyện phát âm (speaking-pronounce)
-    if (targetType === "listening-dictation" || targetType === "speaking-pronounce") {
+    if (targetType === "Nghe chép chính tả" || targetType === "Luyện phát âm (check phát âm tự động)") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const parsed: any[] = [];
       for (const line of lines) {
@@ -1087,7 +1087,7 @@ const TaoBaiTap = () => {
     }
 
     // 5. Sắp xếp câu thành đoạn văn (writing-order-sentences)
-    if (targetType === "writing-order-sentences") {
+    if (targetType === "Sắp xếp câu thành đoạn văn") {
       const parsedParagraphs: any[] = [];
       const rawBlocks = text.split(/\[(?:Đoạn văn|Paragraph|Đoạn|Passage)\]/i).map(b => b.trim()).filter(Boolean);
 
@@ -1161,7 +1161,7 @@ const TaoBaiTap = () => {
     }
 
     // 6. Sắp xếp từ thành câu (writing-order-words)
-    if (targetType === "writing-order-words") {
+    if (targetType === "Sắp xếp từ thành câu") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const parsed: any[] = [];
       let i = 0;
@@ -1213,7 +1213,7 @@ const TaoBaiTap = () => {
     }
 
     // 7. Điền từ vào đoạn văn (listening-fill-in)
-    if (targetType === "listening-fill-in") {
+    if (targetType === "Điền từ vào đoạn văn") {
       const blocks: { passage: string; answersText: string }[] = [];
       const rawBlocks = text.split(/\[(?:Đoạn văn|Passage)\]/i).map(b => b.trim()).filter(Boolean);
       
@@ -1288,7 +1288,7 @@ const TaoBaiTap = () => {
     }
 
     // 8. Bài tập từ vựng nối từ (reading-vocab-mcq)
-    if (targetType === "reading-vocab-mcq") {
+    if (targetType === "Nối từ") {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const vocabPairs: { word: string; meaning: string }[] = [];
       let explanation = "";
@@ -1461,12 +1461,12 @@ const TaoBaiTap = () => {
   /* ===== EXAM BUILDER HELPERS ===== */
   const addExamSection = () => {
     const allTypes = [
-      "listening-mcq", "listening-image", "listening-dictation", "listening-fill-in",
-      "speaking-pronounce", "speaking-topic", "reading-split", "reading-vocab-mcq",
-      "writing-order-words", "writing-tense-mcq", "writing-find-mistakes", "writing-essay", "writing-order-sentences"
+      "Nghe audio trắc nghiệm", "Hình ảnh chọn đáp án", "Nghe chép chính tả", "Điền từ vào đoạn văn",
+      "Luyện phát âm (check phát âm tự động)", "Nói theo chủ đề (ghi âm nộp GV)", "Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Nối từ",
+      "Sắp xếp từ thành câu", "Trắc nghiệm", "Tìm lỗi sai", "Viết đoạn văn ngắn", "Sắp xếp câu thành đoạn văn"
     ];
     const existingTypes = examSections.map(s => s.type);
-    const defaultType = allTypes.find(t => !existingTypes.includes(t)) || "listening-mcq";
+    const defaultType = allTypes.find(t => !existingTypes.includes(t)) || "Nghe audio trắc nghiệm";
     const newIdx = examSections.length;
 
     setExamSections([
@@ -1475,7 +1475,7 @@ const TaoBaiTap = () => {
         type: defaultType,
         title: `Phần ${newIdx + 1}`,
         audioUrl: "",
-        questions: defaultType === "writing-essay" ? [] : (defaultType === "speaking-topic" ? [{ prompt: "", imageUrl: "", audioUrl: "", question: "", answers: [], correct: "" }] : [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }])
+        questions: defaultType === "Viết đoạn văn ngắn" ? [] : (defaultType === "Nói theo chủ đề (ghi âm nộp GV)" ? [{ prompt: "", imageUrl: "", audioUrl: "", question: "", answers: [], correct: "" }] : [{ question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }])
       }
     ]);
     setTimeout(() => {
@@ -1496,7 +1496,7 @@ const TaoBaiTap = () => {
     if (presetType === "toeic2") {
       newSections = [
         {
-          type: "listening-image",
+          type: "Hình ảnh chọn đáp án",
           title: "Part 1: Photographs (Mô tả tranh nghe)",
           questions: Array.from({ length: 6 }).map(() => ({
             question: "",
@@ -1507,7 +1507,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Part 2: Question-Response (Hỏi & Đáp)",
           questions: Array.from({ length: 25 }).map(() => ({
             question: "",
@@ -1517,7 +1517,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Part 3: Conversations (Hội thoại)",
           questions: Array.from({ length: 13 }).map(() => ({
             prompt: "",
@@ -1531,7 +1531,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Part 4: Talks (Bài nói ngắn)",
           questions: Array.from({ length: 10 }).map(() => ({
             prompt: "",
@@ -1545,7 +1545,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "writing-tense-mcq",
+          type: "Trắc nghiệm",
           title: "Part 5: Incomplete Sentences (Điền câu)",
           questions: Array.from({ length: 30 }).map(() => ({
             question: "",
@@ -1555,7 +1555,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "reading-split",
+          type: "Trắc nghiệm đọc hiểu (chia đôi màn hình)",
           title: "Part 6: Text Completion (Điền đoạn văn)",
           questions: Array.from({ length: 4 }).map(() => ({
             text: "",
@@ -1568,7 +1568,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "reading-split",
+          type: "Trắc nghiệm đọc hiểu (chia đôi màn hình)",
           title: "Part 7: Reading Comprehension (Đọc hiểu)",
           questions: Array.from({ length: 10 }).map(() => ({
             text: "",
@@ -1584,7 +1584,7 @@ const TaoBaiTap = () => {
     } else if (presetType === "toeic4") {
       newSections = [
         {
-          type: "listening-image",
+          type: "Hình ảnh chọn đáp án",
           title: "Part 1: Photographs (Mô tả tranh nghe)",
           questions: Array.from({ length: 6 }).map(() => ({
             question: "",
@@ -1595,7 +1595,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Part 2: Question-Response (Hỏi & Đáp)",
           questions: Array.from({ length: 25 }).map(() => ({
             question: "",
@@ -1605,7 +1605,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Part 3: Conversations (Hội thoại)",
           questions: Array.from({ length: 13 }).map(() => ({
             prompt: "",
@@ -1619,7 +1619,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Part 4: Talks (Bài nói ngắn)",
           questions: Array.from({ length: 10 }).map(() => ({
             prompt: "",
@@ -1633,7 +1633,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "writing-tense-mcq",
+          type: "Trắc nghiệm",
           title: "Part 5: Incomplete Sentences (Điền câu)",
           questions: Array.from({ length: 30 }).map(() => ({
             question: "",
@@ -1643,7 +1643,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "reading-split",
+          type: "Trắc nghiệm đọc hiểu (chia đôi màn hình)",
           title: "Part 6: Text Completion (Điền đoạn văn)",
           questions: Array.from({ length: 4 }).map(() => ({
             text: "",
@@ -1656,7 +1656,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "reading-split",
+          type: "Trắc nghiệm đọc hiểu (chia đôi màn hình)",
           title: "Part 7: Reading Comprehension (Đọc hiểu)",
           questions: Array.from({ length: 10 }).map(() => ({
             text: "",
@@ -1669,7 +1669,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "speaking-pronounce",
+          type: "Luyện phát âm (check phát âm tự động)",
           title: "Part 8: Read a text aloud (Đọc to)",
           questions: Array.from({ length: 2 }).map(() => ({
             text: "",
@@ -1678,7 +1678,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "speaking-topic",
+          type: "Nói theo chủ đề (ghi âm nộp GV)",
           title: "Part 9: Describe a picture & Respond to questions (Nói mô tả & Trả lời)",
           questions: Array.from({ length: 5 }).map(() => ({
             prompt: "",
@@ -1687,7 +1687,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "speaking-topic",
+          type: "Nói theo chủ đề (ghi âm nộp GV)",
           title: "Part 10: Express an opinion (Bày tỏ ý kiến nói)",
           questions: [
             {
@@ -1698,7 +1698,7 @@ const TaoBaiTap = () => {
           ]
         },
         {
-          type: "writing-essay",
+          type: "Viết đoạn văn ngắn",
           title: "Part 11: Writing (Viết mô tả & Viết thư & Viết luận)",
           content: "Nhập các hướng dẫn/đề bài viết chung ở đây...",
           questions: []
@@ -1707,7 +1707,7 @@ const TaoBaiTap = () => {
     } else if (presetType === "vstep4") {
       newSections = [
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Listening Part 1: Short Instructions/Announcements (Nghe thông báo ngắn)",
           questions: Array.from({ length: 8 }).map(() => ({
             question: "",
@@ -1717,7 +1717,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Listening Part 2: Conversations (Nghe hội thoại)",
           questions: Array.from({ length: 3 }).map(() => ({
             prompt: "",
@@ -1731,7 +1731,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "listening-mcq",
+          type: "Nghe audio trắc nghiệm",
           title: "Listening Part 3: Lectures/Talks (Nghe bài nói ngắn)",
           questions: Array.from({ length: 3 }).map(() => ({
             prompt: "",
@@ -1745,7 +1745,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "reading-split",
+          type: "Trắc nghiệm đọc hiểu (chia đôi màn hình)",
           title: "Reading: 4 Passages (Đọc hiểu 4 bài)",
           questions: Array.from({ length: 4 }).map(() => ({
             text: "",
@@ -1758,19 +1758,19 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "writing-essay",
+          type: "Viết đoạn văn ngắn",
           title: "Writing Task 1: Email/Letter writing (Viết thư)",
           content: "Write a letter to...",
           questions: []
         },
         {
-          type: "writing-essay",
+          type: "Viết đoạn văn ngắn",
           title: "Writing Task 2: Essay writing (Viết luận)",
           content: "Write an essay discussing...",
           questions: []
         },
         {
-          type: "speaking-topic",
+          type: "Nói theo chủ đề (ghi âm nộp GV)",
           title: "Speaking Part 1: Social Interaction (Giao tiếp xã hội)",
           questions: Array.from({ length: 2 }).map(() => ({
             prompt: "",
@@ -1782,7 +1782,7 @@ const TaoBaiTap = () => {
           }))
         },
         {
-          type: "speaking-topic",
+          type: "Nói theo chủ đề (ghi âm nộp GV)",
           title: "Speaking Part 2: Solution Discussion (Thảo luận giải pháp)",
           questions: [
             {
@@ -1791,7 +1791,7 @@ const TaoBaiTap = () => {
           ]
         },
         {
-          type: "speaking-topic",
+          type: "Nói theo chủ đề (ghi âm nộp GV)",
           title: "Speaking Part 3: Topic Development (Phát triển chủ đề)",
           questions: [
             {
@@ -2190,7 +2190,7 @@ const TaoBaiTap = () => {
         /* EXERCISE EDITOR */
         <div className="exercise-editor">
           {/* NÚT QUÉT FILE CÂU HỎI */}
-          {isMiniTest ? (["multiple", "listening-mcq", "writing-tense-mcq", "writing-find-mistakes", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(type) ? (
+          {isMiniTest ? (["Tổng hợp", "Nghe audio trắc nghiệm", "Trắc nghiệm", "Tìm lỗi sai", "Nối từ", "Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Nghe chép chính tả", "Luyện phát âm (check phát âm tự động)", "Sắp xếp từ thành câu", "Sắp xếp câu thành đoạn văn", "Điền từ vào đoạn văn"].includes(type) ? (
             <div style={{
               background: "#f8fafc",
               border: "1px dashed #cbd5e1",
@@ -2218,7 +2218,7 @@ const TaoBaiTap = () => {
                 borderLeft: "4px solid #000080",
                 lineHeight: "1.5"
               }}>
-                {type === "multiple" || type === "listening-mcq" ? (
+                {type === "Tổng hợp" || type === "Nghe audio trắc nghiệm" ? (
                   `Mẫu file Trắc nghiệm nhóm / Nghe Audio MCQ (Hỗ trợ chia theo nhóm/ngữ cảnh):\n` +
                   `[Nhóm 1]\n` +
                   `Ngữ cảnh: Dialogue between a student and a teacher. (tùy chọn)\n` +
@@ -2243,7 +2243,7 @@ const TaoBaiTap = () => {
                   `C. Late arrival\n` +
                   `D. Track maintenance\n` +
                   `Đáp án đúng: B`
-                ) : type === "writing-tense-mcq" ? (
+                ) : type === "Trắc nghiệm" ? (
                   `Mẫu file Trắc nghiệm MCQ:\n` +
                   `Câu 1: She _______ English for 5 years.\n` +
                   `A. has studied\n` +
@@ -2252,12 +2252,12 @@ const TaoBaiTap = () => {
                   `D. is studying\n` +
                   `Đáp án đúng: A\n` +
                   `Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hiện tại (tùy chọn)`
-                ) : type === "reading-vocab-mcq" ? (
+                ) : type === "Nối từ" ? (
                   `Mẫu file Bài tập từ vựng nối từ (Mỗi dòng là một cặp từ cách nhau bởi dấu gạch ngang, 1 bên từ tiếng Anh - 1 bên diễn giải nghĩa cũng bằng tiếng Anh):\n` +
                   `cat - a small domesticated carnivorous mammal with soft fur\n` +
                   `dog - a common domesticated carnivorous mammal that typically has a long snout\n` +
                   `apple - a round fruit with red, green, or yellow skin and crisp white flesh`
-                ) : type === "reading-split" ? (
+                ) : type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" ? (
                   `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều bài đọc liên tiếp bằng cách lặp lại [Bài đọc] và [Câu hỏi]):\n` +
                   `[Bài đọc]\n` +
                   `This is the reading passage text. You can write paragraphs here...\n\n` +
@@ -2283,17 +2283,17 @@ const TaoBaiTap = () => {
                   `C. Options C\n` +
                   `D. Options D\n` +
                   `Đáp án đúng: A`
-                ) : type === "listening-dictation" ? (
+                ) : type === "Nghe chép chính tả" ? (
                   `Mẫu file Nghe chép chính tả (Mỗi dòng là một câu, hỗ trợ nhiều câu):\n` +
                   `Hello, welcome to our class.\n` +
                   `I am learning English today.\n` +
                   `Practicing listening is very important.`
-                ) : type === "speaking-pronounce" ? (
+                ) : type === "Luyện phát âm (check phát âm tự động)" ? (
                   `Mẫu file Luyện phát âm (Mỗi dòng là một câu/từ, hỗ trợ nhiều câu):\n` +
                   `Hello, beautiful world!\n` +
                   `English pronunciation\n` +
                   `Thank you very much`
-                ) : type === "writing-order-words" ? (
+                ) : type === "Sắp xếp từ thành câu" ? (
                   `Mẫu file Sắp xếp từ (Tạo nhiều câu bằng cách viết các cặp dòng liên tiếp):\n` +
                   `Tôi thích học tiếng Anh.\n` +
                   `I like learning English.\n` +
@@ -2301,7 +2301,7 @@ const TaoBaiTap = () => {
                   `The weather is very nice today.\n` +
                   `Tôi là học sinh.\n` +
                   `I am a student.`
-                ) : type === "writing-order-sentences" ? (
+                ) : type === "Sắp xếp câu thành đoạn văn" ? (
                   `Mẫu file Sắp xếp câu thành đoạn văn (Mỗi dòng là một câu, hỗ trợ tạo nhiều đoạn bằng nhãn [Đoạn văn]):\n` +
                   `[Đoạn văn]\n` +
                   `First, download the app.\n` +
@@ -2311,7 +2311,7 @@ const TaoBaiTap = () => {
                   `The first step is parsing the text.\n` +
                   `The second step is displaying the output.\n` +
                   `The final step is getting user approval.`
-                ) : type === "listening-fill-in" ? (
+                ) : type === "Điền từ vào đoạn văn" ? (
                   `Mẫu file Điền từ vào đoạn văn (Đoạn văn chứa các ký hiệu ô trống [1], [2],...):\n` +
                   `[Đoạn văn]\n` +
                   `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
@@ -2617,7 +2617,7 @@ const TaoBaiTap = () => {
                           Phần {idx + 1}: {stripHtml(cleanSectionTitle(sec.title || `Phần ${idx + 1}`))}
                         </span>
                         <span style={{ fontSize: "10px", background: isCollapsed ? "#e2e8f0" : "#F95800", color: isCollapsed ? "#475569" : "#fff", padding: "2px 6px", borderRadius: "10px" }}>
-                          {sec.type === "writing-essay" ? "Tự luận" : `${count} nhóm`}
+                          {sec.type === "Viết đoạn văn ngắn" ? "Tự luận" : `${count} nhóm`}
                         </span>
                       </div>
                     );
@@ -2691,7 +2691,7 @@ const TaoBaiTap = () => {
                           }}
                         />
                         <span style={{ fontSize: "11px", color: "#666", background: "#f1f5f9", padding: "2px 8px", borderRadius: "12px", fontWeight: "600", flexShrink: 0 }}>
-                          {sec.type === "writing-essay" ? "Tự luận" : `${sec.questions?.length || 0} câu hỏi/nhóm`}
+                          {sec.type === "Viết đoạn văn ngắn" ? "Tự luận" : `${sec.questions?.length || 0} câu hỏi/nhóm`}
                         </span>
                       </div>
                       
@@ -2779,10 +2779,10 @@ const TaoBaiTap = () => {
                         // Otherwise, update type normally
                         copy[secIdx].type = val;
                         // Reset properties based on type
-                        if (val === "speaking-topic") {
+                        if (val === "Nói theo chủ đề (ghi âm nộp GV)") {
                           copy[secIdx].questions = [{ prompt: "", imageUrl: "", audioUrl: "", question: "", answers: [], correct: "" }];
                           copy[secIdx].content = "";
-                        } else if (val === "writing-essay") {
+                        } else if (val === "Viết đoạn văn ngắn") {
                           copy[secIdx].questions = [];
                           copy[secIdx].content = "";
                         } else {
@@ -2804,25 +2804,25 @@ const TaoBaiTap = () => {
                         setExamSections(copy);
                       }}
                     >
-                      <option value="listening-mcq">Nghe: Nghe audio trắc nghiệm</option>
-                      <option value="listening-image">Nghe: Hình ảnh chọn đáp án</option>
-                      <option value="listening-dictation">Nghe: Nghe chép chính tả</option>
-                      <option value="listening-fill-in">Nghe: Điền từ vào đoạn văn</option>
-                      <option value="speaking-pronounce">Nói: Luyện phát âm (tự động check)</option>
-                      <option value="speaking-topic">Nói: Nói theo chủ đề (ghi âm nộp GV)</option>
-                      <option value="reading-split">Đọc: Trắc nghiệm đọc hiểu (chia đôi màn hình)</option>
-                      <option value="reading-vocab-mcq">Đọc: Nối từ</option>
-                      <option value="writing-order-words">Viết: Sắp xếp từ thành câu</option>
-                      <option value="writing-tense-mcq">Viết: Trắc nghiệm</option>
-                      <option value="writing-find-mistakes">Viết: Tìm lỗi sai</option>
-                      <option value="writing-essay">Viết: Viết đoạn văn ngắn</option>
-                      <option value="writing-order-sentences">Viết: Sắp xếp câu thành đoạn văn</option>
+                      <option value="Nghe audio trắc nghiệm">Nghe: Nghe audio trắc nghiệm</option>
+                      <option value="Hình ảnh chọn đáp án">Nghe: Hình ảnh chọn đáp án</option>
+                      <option value="Nghe chép chính tả">Nghe: Nghe chép chính tả</option>
+                      <option value="Điền từ vào đoạn văn">Nghe: Điền từ vào đoạn văn</option>
+                      <option value="Luyện phát âm (check phát âm tự động)">Nói: Luyện phát âm (tự động check)</option>
+                      <option value="Nói theo chủ đề (ghi âm nộp GV)">Nói: Nói theo chủ đề (ghi âm nộp GV)</option>
+                      <option value="Trắc nghiệm đọc hiểu (chia đôi màn hình)">Đọc: Trắc nghiệm đọc hiểu (chia đôi màn hình)</option>
+                      <option value="Nối từ">Đọc: Nối từ</option>
+                      <option value="Sắp xếp từ thành câu">Viết: Sắp xếp từ thành câu</option>
+                      <option value="Trắc nghiệm">Viết: Trắc nghiệm</option>
+                      <option value="Tìm lỗi sai">Viết: Tìm lỗi sai</option>
+                      <option value="Viết đoạn văn ngắn">Viết: Viết đoạn văn ngắn</option>
+                      <option value="Sắp xếp câu thành đoạn văn">Viết: Sắp xếp câu thành đoạn văn</option>
                     </select>
                   </div>
                 </div>
 
                 {/* NÚT QUÉT FILE CÂU HỎI CHO PHẦN THI */}
-                {["multiple", "listening-mcq", "writing-tense-mcq", "writing-find-mistakes", "reading-vocab-mcq", "reading-split", "listening-dictation", "speaking-pronounce", "writing-order-words", "writing-order-sentences", "listening-fill-in"].includes(sec.type) ? (
+                {["Tổng hợp", "Nghe audio trắc nghiệm", "Trắc nghiệm", "Tìm lỗi sai", "Nối từ", "Trắc nghiệm đọc hiểu (chia đôi màn hình)", "Nghe chép chính tả", "Luyện phát âm (check phát âm tự động)", "Sắp xếp từ thành câu", "Sắp xếp câu thành đoạn văn", "Điền từ vào đoạn văn"].includes(sec.type) ? (
                   <div style={{
                     background: "#f8fafc",
                     border: "1px dashed #cbd5e1",
@@ -2848,7 +2848,7 @@ const TaoBaiTap = () => {
                       borderLeft: "4px solid #000080",
                       lineHeight: "1.5"
                     }}>
-                      {sec.type === "multiple" || sec.type === "listening-mcq" ? (
+                      {sec.type === "Tổng hợp" || sec.type === "Nghe audio trắc nghiệm" ? (
                         `Mẫu file Trắc nghiệm nhóm / Nghe Audio MCQ (Hỗ trợ chia theo nhóm/ngữ cảnh):\n` +
                         `[Nhóm 1]\n` +
                         `Ngữ cảnh: Dialogue between a student and a teacher. (tùy chọn)\n` +
@@ -2875,7 +2875,7 @@ const TaoBaiTap = () => {
                         `D. Track maintenance\n` +
                         `Đáp án đúng: B\n` +
                         `Giải thích: Tàu hoãn do sự cố kỹ thuật đường ray (tùy chọn)`
-                      ) : sec.type === "writing-find-mistakes" ? (
+                      ) : sec.type === "Tìm lỗi sai" ? (
                         `Mẫu file Tìm lỗi sai:\n` +
                         `Lưu ý: Dùng 2 khoảng trắng liên tiếp (dấu cách kép) để phân tách các đoạn từ trong câu văn gốc.\n\n` +
                         `Câu 1: By the time  you  will arrive  I'll have already left.\n` +
@@ -2886,7 +2886,7 @@ const TaoBaiTap = () => {
                         `Từ sai: are\n` +
                         `Sửa lại: is\n` +
                         `Giải thích: Chủ ngữ "Neither of..." đi với động từ số ít (tùy chọn)`
-                      ) : sec.type === "writing-tense-mcq" ? (
+                      ) : sec.type === "Trắc nghiệm" ? (
                         `Mẫu file Trắc nghiệm MCQ:\n` +
                         `Câu 1: She _______ English for 5 years.\n` +
                         `A. has studied\n` +
@@ -2895,14 +2895,14 @@ const TaoBaiTap = () => {
                         `D. is studying\n` +
                         `Đáp án đúng: A\n` +
                         `Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hiện tại (tùy chọn)`
-                      ) : sec.type === "reading-vocab-mcq" ? (
+                      ) : sec.type === "Nối từ" ? (
                         `Mẫu file Bài tập từ vựng nối từ:\n` +
                         `Mỗi dòng là một cặp từ cách nhau bởi dấu gạch ngang (1 bên từ tiếng Anh - 1 bên diễn giải nghĩa cũng bằng tiếng Anh). Có thể thêm dòng giải thích ở cuối cùng. Ví dụ:\n` +
                         `cat - a small domesticated carnivorous mammal with soft fur\n` +
                         `dog - a common domesticated carnivorous mammal that typically has a long snout\n` +
                         `apple - a round fruit with red, green, or yellow skin and crisp white flesh\n` +
                         `Giải thích: Luyện tập từ vựng về động vật và trái cây (tùy chọn)`
-                      ) : sec.type === "reading-split" ? (
+                      ) : sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" ? (
                         `Mẫu file Đọc chia đôi màn hình (Có thể tạo nhiều bài đọc liên tiếp):\n` +
                         `[Bài đọc]\n` +
                         `This is the reading passage text. You can write paragraphs here...\n\n` +
@@ -2924,20 +2924,20 @@ const TaoBaiTap = () => {
                         `D. Options D\n` +
                         `Đáp án đúng: A\n` +
                         `Giải thích: Đoạn 2 nói về phát kiến khoa học (tùy chọn)`
-                      ) : sec.type === "listening-dictation" ? (
+                      ) : sec.type === "Nghe chép chính tả" ? (
                         `Mẫu file Nghe chép chính tả:\n` +
                         `Mỗi dòng trong file là một câu trả lời chính xác, theo sau có thể là 1 dòng giải thích. Ví dụ:\n` +
                         `Hello, welcome to our class.\n` +
                         `Giải thích: Chào mừng học viên đến lớp học (tùy chọn)\n` +
                         `I am learning English today.\n` +
                         `Giải thích: Luyện tập câu giao tiếp cơ bản (tùy chọn)`
-                      ) : sec.type === "speaking-pronounce" ? (
+                      ) : sec.type === "Luyện phát âm (check phát âm tự động)" ? (
                         `Mẫu file Luyện phát âm:\n` +
                         `Mỗi dòng là một từ hoặc câu mẫu, theo sau có thể là 1 dòng hướng dẫn phát âm. Ví dụ:\n` +
                         `Hello, beautiful world!\n` +
                         `Giải thích: Chú ý phát âm chuẩn âm đầu và trọng âm câu (tùy chọn)\n` +
                         `English pronunciation`
-                      ) : sec.type === "writing-order-words" ? (
+                      ) : sec.type === "Sắp xếp từ thành câu" ? (
                         `Mẫu file Sắp xếp từ:\n` +
                         `Viết tiếng Việt ở dòng lẻ, câu tiếng Anh ở dòng chẵn, theo sau có thể là 1 dòng giải thích. Ví dụ:\n` +
                         `Tôi thích học tiếng Anh.\n` +
@@ -2945,7 +2945,7 @@ const TaoBaiTap = () => {
                         `Giải thích: Like đi kèm danh động từ V-ing (tùy chọn)\n` +
                         `Thời tiết hôm nay rất đẹp.\n` +
                         `The weather is very nice today.`
-                      ) : sec.type === "writing-order-sentences" ? (
+                      ) : sec.type === "Sắp xếp câu thành đoạn văn" ? (
                         `Mẫu file Sắp xếp câu thành đoạn văn (Hỗ trợ nhiều đoạn bằng nhãn [Đoạn văn]):\n` +
                         `[Đoạn văn]\n` +
                         `First, download the app.\n` +
@@ -2956,7 +2956,7 @@ const TaoBaiTap = () => {
                         `The first step is parsing the text.\n` +
                         `The second step is displaying the output.\n` +
                         `The final step is getting user approval.`
-                      ) : sec.type === "listening-fill-in" ? (
+                      ) : sec.type === "Điền từ vào đoạn văn" ? (
                         `Mẫu file Điền từ vào đoạn văn:\n` +
                         `[Đoạn văn]\n` +
                         `Yesterday I went to the [1] and bought some [2] to eat.\n\n` +
@@ -2991,9 +2991,9 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* Section Specific Inputs */}
-                {sec.type === "listening-mcq" && (
+                {sec.type === "Nghe audio trắc nghiệm" && (
                   <div>
-                    {sec.type === "listening-mcq" && (
+                    {sec.type === "Nghe audio trắc nghiệm" && (
                       <div style={{ marginBottom: 15 }}>
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>File nghe chung cho phần này (Tùy chọn)</label>
                         <input
@@ -3021,7 +3021,7 @@ const TaoBaiTap = () => {
                         isCollapsed={!!collapsedQuestions[`${secIdx}_${qIdx}`]}
                         onToggle={() => toggleQuestionCollapse(secIdx, qIdx)}
                       >
-                        {sec.type === "listening-mcq" && (
+                        {sec.type === "Nghe audio trắc nghiệm" && (
                            <div style={{ marginBottom: 12 }}>
                             <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Audio bài nghe cho nhóm này (Tùy chọn)</label>
                             <input
@@ -3038,7 +3038,7 @@ const TaoBaiTap = () => {
                           </div>
                         )}
 
-                        {sec.type === "listening-mcq" && (sec.title.includes("Part 3") || sec.title.includes("Part 4")) && (
+                        {sec.type === "Nghe audio trắc nghiệm" && (sec.title.includes("Part 3") || sec.title.includes("Part 4")) && (
                           <div style={{ marginBottom: 12 }}>
                             <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Hình ảnh cho nhóm này (Tùy chọn)</label>
                             <input
@@ -3140,7 +3140,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── EXAM TENSE MCQ (writing-tense-mcq / Trắc nghiệm) ── */}
-                {sec.type === "writing-tense-mcq" && (
+                {sec.type === "Trắc nghiệm" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3205,7 +3205,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── EXAM FIND AND CORRECT MISTAKES (writing-find-mistakes / Tìm lỗi sai) ── */}
-                {sec.type === "writing-find-mistakes" && (
+                {sec.type === "Tìm lỗi sai" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3300,7 +3300,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── TIMED EXAM VOCABULARY MATCHING (reading-vocab-mcq) ── */}
-                {sec.type === "reading-vocab-mcq" && (
+                {sec.type === "Nối từ" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3414,7 +3414,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "listening-image" && (
+                {sec.type === "Hình ảnh chọn đáp án" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3478,7 +3478,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "listening-dictation" && (
+                {sec.type === "Nghe chép chính tả" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3526,7 +3526,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "listening-fill-in" && (
+                {sec.type === "Điền từ vào đoạn văn" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3608,7 +3608,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "speaking-pronounce" && (
+                {sec.type === "Luyện phát âm (check phát âm tự động)" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3654,7 +3654,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "writing-order-words" && (
+                {sec.type === "Sắp xếp từ thành câu" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3697,7 +3697,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "writing-order-sentences" && (
+                {sec.type === "Sắp xếp câu thành đoạn văn" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3772,7 +3772,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "reading-split" && (
+                {sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3796,7 +3796,7 @@ const TaoBaiTap = () => {
                           />
                         </div>
 
-                        {sec.type === "reading-split" && sec.title.includes("Part 7") && (
+                        {sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && sec.title.includes("Part 7") && (
                           <div style={{ marginBottom: 12 }}>
                             <label style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>Hình ảnh cho bài đọc này (Tùy chọn)</label>
                             <input
@@ -3878,7 +3878,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "speaking-topic" && (
+                {sec.type === "Nói theo chủ đề (ghi âm nộp GV)" && (
                   <div>
                     {sec.questions?.map((q, qIdx) => (
                       <QuestionCard
@@ -3930,7 +3930,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
 
-                {sec.type === "writing-essay" && (
+                {sec.type === "Viết đoạn văn ngắn" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài viết luận</label>
                     <RichTextarea
@@ -3958,7 +3958,7 @@ const TaoBaiTap = () => {
           <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 30, paddingTop: 24 }}>
             <h3 style={{ color: "#000080", marginBottom: 20, fontSize: "18px", fontWeight: 700 }}>Danh sách Câu Hỏi ({dangBai})</h3>
 
-            {type === "listening-mcq" && (
+            {type === "Nghe audio trắc nghiệm" && (
               <div style={{
                 background: "#f8fafc",
                 border: "1px dashed #cbd5e1",
@@ -4020,7 +4020,7 @@ const TaoBaiTap = () => {
                 </div>
 
                 {/* ── SPEAKING PRONOUNCE ── */}
-                {type === "speaking-pronounce" && (
+                {type === "Luyện phát âm (check phát âm tự động)" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Từ vựng / Câu mẫu phát âm</label>
                     <input
@@ -4052,7 +4052,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── SPEAKING TOPIC ── */}
-                {type === "speaking-topic" && (
+                {type === "Nói theo chủ đề (ghi âm nộp GV)" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài / Topic bằng chữ</label>
                     <RichTextarea
@@ -4091,7 +4091,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── SIMPLE MCQ (writing-tense-mcq / Trắc nghiệm) ── */}
-                {type === "writing-tense-mcq" && (
+                {type === "Trắc nghiệm" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu hỏi</label>
                     <input
@@ -4144,7 +4144,7 @@ const TaoBaiTap = () => {
                   </div>
                 )}
                 {/* ── FIND AND CORRECT MISTAKES (writing-find-mistakes / Tìm lỗi sai) ── */}
-                {type === "writing-find-mistakes" && (
+                {type === "Tìm lỗi sai" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu văn gốc (Dùng dấu cách kép để phân đoạn câu)</label>
                     <textarea
@@ -4225,9 +4225,9 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── LISTENING MCQ & TENSE MCQ & VOCAB MCQ ── */}
-                {(type === "listening-mcq" || type === "multiple") && (
+                {(type === "Nghe audio trắc nghiệm" || type === "Tổng hợp") && (
                   <div>
-                    {type === "listening-mcq" && (
+                    {type === "Nghe audio trắc nghiệm" && (
                       <div style={{ marginBottom: 12 }}>
                         <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block" }}>Audio riêng của câu hỏi (Tùy chọn)</label>
                         <input
@@ -4326,7 +4326,7 @@ const TaoBaiTap = () => {
                 ) }
 
                 {/* ── VOCABULARY MATCHING (reading-vocab-mcq) ── */}
-                {type === "reading-vocab-mcq" && (
+                {type === "Nối từ" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666", display: "block", marginBottom: 5 }}>
                       Danh sách các cặp từ nối (Tiếng Anh - Diễn giải tiếng Anh)
@@ -4401,7 +4401,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── LISTENING IMAGE ── */}
-                {type === "listening-image" && (
+                {type === "Hình ảnh chọn đáp án" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Hình ảnh đề bài</label>
                     <input
@@ -4482,7 +4482,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── LISTENING DICTATION ── */}
-                {type === "listening-dictation" && (
+                {type === "Nghe chép chính tả" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
                     <input
@@ -4509,7 +4509,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── LISTENING FILL IN (CLOZE) ── */}
-                {type === "listening-fill-in" && (
+                {type === "Điền từ vào đoạn văn" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>🎵 Audio nghe</label>
                     <input
@@ -4565,7 +4565,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── WRITING ORDER WORDS ── */}
-                {type === "writing-order-words" && (
+                {type === "Sắp xếp từ thành câu" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Câu gợi ý / Câu gốc (tiếng Việt)</label>
                     <input
@@ -4587,7 +4587,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── WRITING ESSAY ── */}
-                {type === "writing-essay" && (
+                {type === "Viết đoạn văn ngắn" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Đề bài viết luận</label>
                     <RichTextarea
@@ -4601,7 +4601,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── WRITING ORDER SENTENCES ── */}
-                {type === "writing-order-sentences" && (
+                {type === "Sắp xếp câu thành đoạn văn" && (
                   <div>
                     <p style={{ fontSize: 12, color: "#888", marginBottom: 5 }}>Nhập các câu của đoạn văn theo thứ tự đúng logic:</p>
                     {q.sentences?.map((sText: string, sIdx: number) => (
@@ -4646,7 +4646,7 @@ const TaoBaiTap = () => {
                 )}
 
                 {/* ── READING SPLIT ── */}
-                {type === "reading-split" && (
+                {type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>Bài đọc dài (Hiển thị bên trái)</label>
                     <RichTextarea
