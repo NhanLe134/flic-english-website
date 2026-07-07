@@ -16,7 +16,8 @@ import {
   FaFileAlt,
   FaPencilAlt,
   FaClipboardCheck,
-  FaInfoCircle
+  FaInfoCircle,
+  FaLock
 } from "react-icons/fa";
 
 const API = "http://14.225.192.252:5000";
@@ -47,6 +48,7 @@ interface Lesson {
   NgayKetThuc: string;
   ThuTu: number;
   TrangThaiDuyet: string;
+  TrangThai?: string;
 }
 
 const getExerciseDeadline = (ex: any) => {
@@ -152,8 +154,10 @@ export default function ClassDetailSV() {
         }
 
         if (Array.isArray(lessonsRes)) {
-          // Sort lessons by ThuTu ascending
-          const sorted = [...lessonsRes].sort((a, b) => a.ThuTu - b.ThuTu);
+          // Filter out sessions that are "Chờ mở" and sort lessons by ThuTu ascending
+          const sorted = [...lessonsRes]
+            .filter((l: any) => l.TrangThai !== "Chờ mở")
+            .sort((a, b) => a.ThuTu - b.ThuTu);
           setLessons(sorted);
         } else {
           setLessons([]);
@@ -518,14 +522,18 @@ export default function ClassDetailSV() {
           <div className="cd-timeline-list">
             {[...lessons].reverse().map((lesson, indexInReversed) => {
               const idx = (lessons.length - 1) - indexInReversed;
-              const isCompleted = idx < completedCount;
-              const isCurrent = idx === completedCount;
-              const isExpanded = expandedLessonId === lesson.MaLesson;
+              const isLocked = lesson.TrangThai === "Chờ mở";
+              const isCompleted = !isLocked && idx < completedCount;
+              const isCurrent = !isLocked && idx === completedCount;
+              const isExpanded = !isLocked && expandedLessonId === lesson.MaLesson;
 
               let markerClass = "cd-timeline-marker cd-marker-upcoming";
               let markerContent: React.ReactNode = idx + 1;
 
-              if (isCompleted) {
+              if (isLocked) {
+                markerClass = "cd-timeline-marker cd-marker-upcoming";
+                markerContent = <FaLock size={10} />;
+              } else if (isCompleted) {
                 markerClass = "cd-timeline-marker cd-marker-completed";
                 markerContent = <FaCheck size={12} />;
               } else if (isCurrent) {
@@ -538,7 +546,7 @@ export default function ClassDetailSV() {
               return (
                 <div
                   key={lesson.MaLesson}
-                  className={`cd-timeline-item ${isCurrent ? "current-item" : ""}`}
+                  className={`cd-timeline-item ${isCurrent ? "current-item" : ""} ${isLocked ? "locked-item" : ""}`}
                 >
                   {/* Timeline node marker */}
                   <div className={markerClass}>{markerContent}</div>
@@ -548,24 +556,29 @@ export default function ClassDetailSV() {
                     {/* Header (clickable to toggle) */}
                     <div
                       className="cd-session-card"
-                      onClick={() => handleToggleLesson(lesson.MaLesson)}
-                      style={{ cursor: "pointer" }}
+                      onClick={() => !isLocked && handleToggleLesson(lesson.MaLesson)}
+                      style={{ cursor: isLocked ? "not-allowed" : "pointer", opacity: isLocked ? 0.7 : 1 }}
                     >
                       <div className="cd-session-left">
                         <h4 className="cd-session-title">{lesson.TenLesson}</h4>
+                        {isLocked && <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "600", color: "#ef4444", background: "#fee2e2", padding: "2px 6px", borderRadius: "4px" }}>Chờ mở</span>}
                       </div>
                       <div className="cd-session-right">
                         <span className="cd-session-date">
                           <FaCalendarAlt size={12} />
                           {formatDate(lesson.NgayBatDau)}
                         </span>
-                        <FaChevronRight
-                          className="cd-session-chevron"
-                          style={{
-                            transform: isExpanded ? "rotate(90deg)" : "none",
-                            transition: "transform 0.2s ease"
-                          }}
-                        />
+                        {!isLocked ? (
+                          <FaChevronRight
+                            className="cd-session-chevron"
+                            style={{
+                              transform: isExpanded ? "rotate(90deg)" : "none",
+                              transition: "transform 0.2s ease"
+                            }}
+                          />
+                        ) : (
+                          <FaLock size={12} style={{ color: "#94a3b8" }} />
+                        )}
                       </div>
                     </div>
 

@@ -4425,7 +4425,17 @@ app.put("/classes/:id/active-buoihoc", async (req, res) => {
       .query(`
         UPDATE LOPHOC 
         SET ActiveBuoiHocId = @activeBuoiHocId 
-        WHERE MaLopHoc = @classId
+        WHERE MaLopHoc = @classId;
+
+        IF @activeBuoiHocId IS NOT NULL
+        BEGIN
+            DECLARE @activeThuTu INT;
+            SELECT @activeThuTu = ThuTu FROM BUOIHOC WHERE MaBuoiHoc = @activeBuoiHocId;
+
+            UPDATE BUOIHOC
+            SET TrangThai = N'Đã mở'
+            WHERE MaLopHoc = @classId AND ThuTu <= @activeThuTu;
+        END
       `)
     res.json({ message: "Cập nhật buổi học đang học thành công" })
   } catch (err) { res.status(500).send(err.message) }
@@ -5464,8 +5474,28 @@ const initDb = async () => {
       BEGIN
           ALTER TABLE dbo.BAIKIEMTRA ALTER COLUMN MaGiangVien INT NULL;
       END
+
+      -- Thêm cột TrangThai vào BUOIHOC và đồng bộ dữ liệu cũ
+      IF NOT EXISTS (
+          SELECT * FROM sys.columns 
+          WHERE object_id = OBJECT_ID('dbo.BUOIHOC') AND name = 'TrangThai'
+      )
+      BEGIN
+          ALTER TABLE dbo.BUOIHOC ADD TrangThai NVARCHAR(50) NOT NULL DEFAULT N'Chờ mở';
+
+          -- Cập nhật các buổi học cũ đã mở thành 'Đã mở'
+          UPDATE b 
+          SET b.TrangThai = N'Đã mở'
+          FROM dbo.BUOIHOC b
+          INNER JOIN dbo.LOPHOC l ON b.MaLopHoc = l.MaLopHoc
+          WHERE b.ThuTu <= (
+              SELECT active_bh.ThuTu 
+              FROM dbo.BUOIHOC active_bh 
+              WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
+          );
+      END
     `)
-    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, and MaNguoiDung columns checked/added).")
+    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, BUOIHOC TrangThai, and MaNguoiDung columns checked/added).")
   } catch (err) {
     console.error("Database initialization error:", err.message)
   }

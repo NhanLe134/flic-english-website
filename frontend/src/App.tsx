@@ -107,7 +107,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter basename="/flic-english-website">
+    <BrowserRouter basename={window.location.pathname.startsWith("/flic-english-website") ? "/flic-english-website" : ""}>
       <Routes>
         {/* PUBLIC */}
         <Route path="/" element={<TrangChu />} />
