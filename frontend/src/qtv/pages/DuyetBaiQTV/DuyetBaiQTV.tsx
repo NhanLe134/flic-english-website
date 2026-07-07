@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import styles from "./DuyetBaiQTV.module.css";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiEye } from "react-icons/fi";
+import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/ChiTietBaiTap";
 
 const API = "http://14.225.192.252:5000";
 
@@ -36,6 +37,7 @@ export default function DuyetBaiQTV() {
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   const [baiGiangData, setBaiGiangData] = useState<BaiGiangItem[]>([]);
   const [baiTapData, setBaiTapData] = useState<any[]>([]);
@@ -204,7 +206,7 @@ export default function DuyetBaiQTV() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm theo tiêu đề, giáo viên..."
+              placeholder="Tìm kiếm theo tiêu đề, người tạo..."
             />
             <button className={styles.searchBtn}>
               <FiSearch />
@@ -248,7 +250,7 @@ export default function DuyetBaiQTV() {
           <div className={styles.tableHeader}>
             <div>
               <h3>Danh sách nội dung chờ duyệt</h3>
-              <p>Kiểm tra và phê duyệt bài đăng, khóa học do giáo viên gửi</p>
+              <p>Kiểm tra và phê duyệt bài đăng, khóa học do người tạo gửi</p>
             </div>
             
             {/* Filter pills */}
@@ -273,7 +275,7 @@ export default function DuyetBaiQTV() {
               <thead>
                 <tr>
                   <th>TIÊU ĐỀ</th>
-                  <th>GIÁO VIÊN</th>
+                  <th>NGƯỜI TẠO</th>
                   <th>LOẠI</th>
                   <th>TRẠNG THÁI DUYỆT</th>
                   <th>NGÀY GỬI</th>
@@ -381,24 +383,7 @@ export default function DuyetBaiQTV() {
                       <input type="text" disabled value={selectedItem.Type || "—"} />
                     </div>
                   </div>
-                  <div className={styles.formGroupFull}>
-                    <label>Đề bài / Nội dung</label>
-                    <textarea
-                      disabled
-                      rows={3}
-                      value={selectedItem.Content || "Không có nội dung đề bài."}
-                    />
-                  </div>
-                  {selectedItem.Questions && (
-                    <div className={styles.formGroupFull}>
-                      <label>Câu hỏi / Đáp án</label>
-                      <textarea
-                        disabled
-                        rows={4}
-                        value={selectedItem.Questions}
-                      />
-                    </div>
-                  )}
+
                   {selectedItem.Vocabulary && (
                     <div className={styles.formGroupFull}>
                       <label>Từ vựng đi kèm</label>
@@ -646,6 +631,17 @@ export default function DuyetBaiQTV() {
                   </div>
                 </div>
               )}
+              {selectedItem.MaBaiTap && selectedItem.MaBaiTap.startsWith("baitap-") && (
+                <div className={styles.formGroupFull} style={{ textAlign: "center", margin: "16px 0 8px 0" }}>
+                  <button
+                    type="button"
+                    className={styles.previewBtn}
+                    onClick={() => setShowPreview(true)}
+                  >
+                    <FiEye /> Xem trước bài tập
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className={styles.modalFooter}>
@@ -673,6 +669,28 @@ export default function DuyetBaiQTV() {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════ POPUP XEM TRƯỚC BÀI TẬP ════ */}
+      {showPreview && selectedItem && (
+        <div className={styles.previewModalBackdrop} onClick={() => setShowPreview(false)}>
+          <div className={styles.previewModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.previewModalCloseBtn} onClick={() => setShowPreview(false)} title="Đóng">
+              &times;
+            </button>
+            <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+              <ChiTietBaiTap
+                overrideExerciseId={(() => {
+                  const match = selectedItem.MaBaiTap?.match(/^(baitap|exam)-(\d+)$/);
+                  return match ? parseInt(match[2], 10) : undefined;
+                })()}
+                isModal={true}
+                isPreview={true}
+                onClose={() => setShowPreview(false)}
+              />
             </div>
           </div>
         </div>

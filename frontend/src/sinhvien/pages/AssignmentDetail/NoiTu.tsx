@@ -19,6 +19,7 @@ interface NoiTuProps {
 export const NoiTu: React.FC<NoiTuProps> = ({
   q,
   qIdx,
+  mcAnswers,
   setMcAnswers,
   submitted,
   onAutoSubmit,
@@ -79,12 +80,12 @@ export const NoiTu: React.FC<NoiTuProps> = ({
     };
   }, []);
 
-  // Save progress to mcAnswers (stores the count of correct matches)
+  // Save progress to mcAnswers (stores the list of correct matched words joined by |||)
   useEffect(() => {
     if (!submitted) {
       setMcAnswers((prev) => ({
         ...prev,
-        [qIdx]: String(matchedLeft.length),
+        [qIdx]: matchedLeft.join("|||"),
       }));
     }
   }, [matchedLeft, qIdx, setMcAnswers, submitted]);
@@ -141,7 +142,7 @@ export const NoiTu: React.FC<NoiTuProps> = ({
   };
 
   const handleLeftClick = (item: string) => {
-    if (submitted || isProcessing || matchedLeft.includes(item)) return;
+    if (submitted || isProcessing || matchedLeft.includes(item) || wrongAttempts >= 3) return;
 
     if (selectedLeft === item) {
       setSelectedLeft(null);
@@ -154,7 +155,7 @@ export const NoiTu: React.FC<NoiTuProps> = ({
   };
 
   const handleRightClick = (item: string) => {
-    if (submitted || isProcessing || matchedRight.includes(item)) return;
+    if (submitted || isProcessing || matchedRight.includes(item) || wrongAttempts >= 3) return;
 
     if (selectedRight === item) {
       setSelectedRight(null);
@@ -165,6 +166,104 @@ export const NoiTu: React.FC<NoiTuProps> = ({
       }
     }
   };
+
+  if (submitted) {
+    const matchedScore = mcAnswers[qIdx] || "";
+    let correctCount = 0;
+    let savedMatchedWords: string[] = [];
+
+    if (matchedScore) {
+      if (matchedScore.includes("|||")) {
+        savedMatchedWords = matchedScore.split("|||").filter(Boolean);
+        correctCount = savedMatchedWords.length;
+      } else if (matchedScore.includes("/")) {
+        const numerator = Number(matchedScore.split("/")[0]);
+        correctCount = isNaN(numerator) ? 0 : numerator;
+        savedMatchedWords = vocabPairs.slice(0, correctCount).map(p => p.word);
+      } else if (!isNaN(Number(matchedScore))) {
+        correctCount = Number(matchedScore);
+        savedMatchedWords = vocabPairs.slice(0, correctCount).map(p => p.word);
+      } else {
+        savedMatchedWords = matchedScore.split(",").filter(Boolean);
+        correctCount = savedMatchedWords.length;
+      }
+    } else {
+      correctCount = vocabPairs.length;
+      savedMatchedWords = vocabPairs.map(p => p.word);
+    }
+
+    const displayScore = `${correctCount}/${vocabPairs.length}`;
+
+    return (
+      <div className="flic-vocab-matching-container review-mode">
+        <h4 className="flic-vocab-title" style={{ textAlign: "center", marginBottom: "8px" }}>Match the pairs</h4>
+        
+        {displayScore && (
+          <div style={{
+            textAlign: "center",
+            fontSize: "14px",
+            fontWeight: 700,
+            color: "#1e3a8a",
+            marginBottom: "16px"
+          }}>
+            Số cặp nối đúng: <span style={{ color: "#F95800", fontSize: "16px" }}>{displayScore}</span>
+          </div>
+        )}
+
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          maxWidth: "500px",
+          margin: "0 auto 24px auto",
+          background: "#f8fafc",
+          padding: "20px",
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0"
+        }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 40px 1fr",
+            fontWeight: "bold",
+            color: "#64748b",
+            fontSize: "12px",
+            textTransform: "uppercase",
+            borderBottom: "1px solid #e2e8f0",
+            paddingBottom: "8px",
+            marginBottom: "4px"
+          }}>
+            <span>Từ vựng</span>
+            <span></span>
+            <span style={{ textAlign: "right" }}>Nghĩa của từ</span>
+          </div>
+          {vocabPairs.map((pair, idx) => {
+            const isCorrect = savedMatchedWords.map(w => w.trim().toLowerCase()).includes(pair.word.trim().toLowerCase());
+            return (
+              <div key={idx} style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 40px 1fr",
+                alignItems: "center",
+                background: isCorrect ? "#f0fdf4" : "#fef2f2",
+                border: isCorrect ? "1px solid #bbf7d0" : "1px solid #fecaca",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                color: isCorrect ? "#15803d" : "#b91c1c"
+              }}>
+                <span style={{ fontWeight: 600 }}>{pair.word}</span>
+                <span style={{ textAlign: "center" }}>{isCorrect ? "➔" : "✗"}</span>
+                <span style={{ textAlign: "right" }}>{pair.meaning}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flic-vocab-result">
+          <FiCheckCircle style={{ color: "#16a34a", fontSize: 20 }} />
+          <span>Bài tập nối từ đã được hoàn thành!</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flic-vocab-matching-container">

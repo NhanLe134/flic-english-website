@@ -31,7 +31,7 @@ const AddLesson: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [level, setLevel] = useState("Beginner");
+
   const [link, setLink] = useState("");
 
   const [isFree, setIsFree] = useState(false);
@@ -226,7 +226,7 @@ const AddLesson: React.FC = () => {
       const createdMaBaiHoc = resData.MaBaiHoc;
 
       if (hasMinitest && createdMaBaiHoc) {
-        const minitestRes = await fetch("http://localhost:5000/minitest/create", {
+        const minitestRes = await fetch("http://14.225.192.252:5000/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -313,13 +313,6 @@ const AddLesson: React.FC = () => {
               ]}
             />
           </div>
-
-          <label>Mức độ</label>
-          <select value={level} onChange={(e) => setLevel(e.target.value)}>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
           
           <div style={{ marginTop: 16 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: '500', color: '#5a3e2b' }}>

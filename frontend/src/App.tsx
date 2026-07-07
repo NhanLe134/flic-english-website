@@ -107,7 +107,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/flic-english-website">
       <Routes>
         {/* PUBLIC */}
         <Route path="/" element={<TrangChu />} />

@@ -21,6 +21,7 @@ interface Student {
   MaSinhVien: string;
   MSSV: string | null;
   HoTen: string;
+  BietDanh?: string | null;
   GioiTinh: string | null;
   NgayGhiDanh: string;
   TrangThai: string;
@@ -141,6 +142,7 @@ const StudentListQTV: React.FC = () => {
           MaSinhVien: s.MaSinhVien,
           MSSV: s.MSSV || null,
           HoTen: s.HoTen,
+          BietDanh: s.BietDanh || null,
           GioiTinh: s.GioiTinh || "—",
           NgayGhiDanh: s.NgayGhiDanh || "—",
           TrangThai: s.TrangThai || "Đang học"
@@ -238,6 +240,7 @@ const StudentListQTV: React.FC = () => {
       "Mã học viên (Hệ thống)": s.MaSinhVien,
       "Mã số sinh viên (Trường)": s.MSSV || "—",
       "Tên học viên": s.HoTen,
+      "Biệt danh": s.BietDanh || "—",
       "Giới tính": s.GioiTinh || "—",
       "Ngày ghi danh": formatDate(s.NgayGhiDanh),
       "Trạng thái học tập": s.TrangThai
@@ -248,7 +251,7 @@ const StudentListQTV: React.FC = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Học viên lớp " + selectedClass.name);
 
     const colWidths = [
-      { wch: 6 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 12 }, { wch: 18 }, { wch: 15 }
+      { wch: 6 }, { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 18 }, { wch: 15 }
     ];
     worksheet["!cols"] = colWidths;
 
@@ -450,7 +453,8 @@ const StudentListQTV: React.FC = () => {
                           <th style={{ width: 60, textAlign: "center" }}>STT</th>
                           <th>Mã học viên</th>
                           <th>MSSV (Trường)</th>
-                          <th style={{ width: 280 }}>Họ tên</th>
+                          <th style={{ width: 220 }}>Họ tên</th>
+                          <th style={{ width: 120 }}>Biệt danh</th>
                           <th>Giới tính</th>
                           <th>Ngày ghi danh</th>
                           <th>Trạng thái</th>
@@ -465,6 +469,7 @@ const StudentListQTV: React.FC = () => {
                             <td>
                               <span className="slqtv-student-name">{s.HoTen}</span>
                             </td>
+                            <td>{s.BietDanh || "—"}</td>
                             <td>
                               {s.GioiTinh === "Nam" ? (
                                 <span className="slqtv-gender-badge male">Nam</span>
