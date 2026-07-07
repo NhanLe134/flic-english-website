@@ -1,4 +1,4 @@
-import "./ClassDetailSV.css";
+﻿import "./ClassDetailSV.css";
 import "../LessonDetail/LessonDetailSV.css";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -93,6 +93,8 @@ export default function ClassDetailSV() {
   const [error, setError] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingReviewAction, setPendingReviewAction] = useState<(() => void) | null>(null);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
@@ -329,7 +331,7 @@ export default function ClassDetailSV() {
   const mapTypeToSkillName = (type?: string) => {
     if (!type) return "";
     const t = type.toLowerCase().trim();
-    
+
     if (t.includes("listening") || t.includes("nghe") || t.includes("l") || t.includes("hình ảnh chọn đáp án") || t.includes("điền từ vào đoạn văn")) {
       return "Listening";
     }
@@ -687,8 +689,8 @@ export default function ClassDetailSV() {
                                               }
                                             }
                                             return (
-                                              <tr 
-                                                key={ex.MaBaiTap} 
+                                              <tr
+                                                key={ex.MaBaiTap}
                                                 id={`ex-${ex.MaBaiTap}`}
                                                 style={{ cursor: "pointer" }}
                                                 onClick={() => setSelectedExercise({ ...ex, activeTab: 'practices', lesson })}
@@ -750,8 +752,8 @@ export default function ClassDetailSV() {
                                               }
                                             }
                                             return (
-                                              <tr 
-                                                key={ex.MaBaiTap} 
+                                              <tr
+                                                key={ex.MaBaiTap}
                                                 id={`ex-${ex.MaBaiTap}`}
                                                 style={{ cursor: "pointer" }}
                                                 onClick={() => setSelectedExercise({ ...ex, activeTab: 'exams', lesson })}
@@ -800,8 +802,8 @@ export default function ClassDetailSV() {
       {selectedExercise && (
         <div className="exit-confirm-modal-backdrop" onClick={() => setSelectedExercise(null)}>
           <div className="exit-confirm-modal-card" style={{ maxWidth: "420px", textAlign: "left", position: "relative" }} onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="exit-modal-close-x" 
+            <button
+              className="exit-modal-close-x"
               onClick={() => setSelectedExercise(null)}
               title="Đóng"
             >
@@ -810,7 +812,7 @@ export default function ClassDetailSV() {
             <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "700", color: "#1e3a8a", paddingRight: "24px" }}>
               {selectedExercise.Title}
             </h3>
-            
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
                 <span style={{ color: "#64748b", fontSize: "14px" }}>Phân loại:</span>
@@ -829,7 +831,7 @@ export default function ClassDetailSV() {
               {(() => {
                 const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap))
                   .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
-                
+
                 if (exSubs.length === 0) {
                   return (
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "4px" }}>
@@ -856,11 +858,8 @@ export default function ClassDetailSV() {
                             <button
                               className="ld2-review-btn"
                               style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
-                              onClick={async () => {
-                                const confirmReview = window.confirm(
-                                  "Nếu xem lại đáp án và giải thích, bạn sẽ KHÔNG được thực hiện lại (làm lại) bài tập này nữa. Bạn có chắc chắn muốn xem lại không?"
-                                );
-                                if (confirmReview) {
+                              onClick={() => {
+                                setPendingReviewAction(() => async () => {
                                   try {
                                     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
                                     const userObj = JSON.parse(userStr || "{}");
@@ -878,7 +877,8 @@ export default function ClassDetailSV() {
                                   const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
                                   navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`);
                                   setSelectedExercise(null);
-                                }
+                                });
+                                setShowConfirmModal(true);
                               }}
                             >
                               Xem lại
@@ -891,7 +891,7 @@ export default function ClassDetailSV() {
                 );
               })()}
             </div>
-            
+
             {(() => {
               const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap));
               const lastSub = exSubs.length > 0 ? exSubs[exSubs.length - 1] : null;
@@ -900,7 +900,7 @@ export default function ClassDetailSV() {
 
               const isMaxAttempt = attemptsCount >= 3;
               const isDisabled = isMaxAttempt || hasReviewed;
-              
+
               let buttonText = "Làm bài";
               let tooltipText = "";
               if (attemptsCount > 0) {
@@ -921,7 +921,7 @@ export default function ClassDetailSV() {
                   )}
                   <button
                     className="ld2-open-btn"
-                    style={{ 
+                    style={{
                       padding: "10px 20px",
                       opacity: isDisabled ? 0.5 : 1,
                       cursor: isDisabled ? "not-allowed" : "pointer",
@@ -939,6 +939,49 @@ export default function ClassDetailSV() {
                 </div>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {showConfirmModal && (
+        <div className="auth-modal-backdrop confirm-modal-backdrop" onClick={() => {
+          setShowConfirmModal(false);
+          setPendingReviewAction(null);
+        }}>
+          <div className="auth-modal-card-wrapper confirm-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="auth-modal-header">
+              <h2 className="auth-modal-header-title">Xác nhận xem lại</h2>
+              <button
+                className="auth-modal-close-btn-new"
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setPendingReviewAction(null);
+                }}
+                type="button"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="auth-modal-body confirm-modal-body">
+              <p className="confirm-modal-text">
+                Nếu xem lại đáp án và giải thích, <br /> bạn sẽ <strong>KHÔNG</strong> được làm lại bài tập này nữa.
+              </p>
+              <div className="confirm-modal-actions">
+                <button className="confirm-btn-cancel" onClick={() => {
+                  setShowConfirmModal(false);
+                  setPendingReviewAction(null);
+                }}>
+                  Hủy
+                </button>
+                <button className="confirm-btn-ok" onClick={() => {
+                  setShowConfirmModal(false);
+                  if (pendingReviewAction) pendingReviewAction();
+                  setPendingReviewAction(null);
+                }}>
+                  Đồng ý
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

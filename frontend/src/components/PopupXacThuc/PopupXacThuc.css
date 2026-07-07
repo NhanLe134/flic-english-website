@@ -185,3 +185,67 @@
     /* Sát lề phải khớp padding header mobile */
   }
 }
+
+/* Custom Confirm Modal styling */
+.confirm-modal-backdrop {
+  z-index: 999999 !important; /* Đảm bảo đè lên trên tất cả mọi thứ bao gồm navbar, sidebar và các modal khác */
+}
+
+.confirm-modal-card {
+  width: 450px !important;
+  border-radius: 16px !important;
+  animation: authModalSlideUp 0.25s ease-out;
+}
+
+.confirm-modal-body {
+  padding: 10px 30px 24px 30px !important;
+  text-align: center;
+}
+
+.confirm-modal-text {
+  font-size: 16px;
+  color: #334155;
+  line-height: 1.6;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.confirm-btn-cancel,
+.confirm-btn-ok {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+
+.confirm-btn-cancel {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.confirm-btn-cancel:hover {
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.confirm-btn-ok {
+  background-color: #F95800; /* Matching brand color #F95800 */
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(249, 88, 0, 0.2);
+}
+
+.confirm-btn-ok:hover {
+  background-color: #e04f00; /* Darker orange for hover */
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.3);
+}
+
