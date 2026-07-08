@@ -4,6 +4,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
 import { hasPermission } from "../../utils/permission";
 
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
+
 interface DocumentManagementProps {
   buoiHocIdProp?: string;
   isEmbedded?: boolean;
@@ -18,12 +26,13 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [classStatus, setClassStatus] = useState<string>("");
 
   const handleViewDocumentDetail = (doc: any) => {
     const fileUrl = doc.FileUrl
-      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://14.225.192.252:5000${doc.FileUrl}`)
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `${API}${doc.FileUrl}`)
       : doc.NoiDung?.includes("File: /uploads/")
-      ? `http://14.225.192.252:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      ? `${API}${doc.NoiDung.split("File: ")[1]?.trim()}`
       : null;
 
     if (fileUrl) {
@@ -68,7 +77,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://14.225.192.252:5000/tailieu/list/all";
+      let url = `${API}/tailieu/list/all`;
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -87,7 +96,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
     if (isProcessing) return;
     setIsProcessing(true);
     try {
-      const res = await fetch(`http://14.225.192.252:5000/tailieu/${docId}/clone`, {
+      const res = await fetch(`${API}/tailieu/${docId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
@@ -95,7 +104,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       if (res.ok) {
         alert("Chọn tài liệu thành công!");
         // Refresh documents list
-        const dRes = await fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`);
+        const dRes = await fetch(`${API}/tailieu/${buoiHocId}`);
         const dData = await dRes.json();
         setDocuments(dData);
         setShowReuseModal(false);
@@ -113,9 +122,18 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== LOAD DATA ===== */
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`)
+    fetch(`${API}/tailieu/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setDocuments(data))
+      .catch(err => console.log(err));
+
+    fetch(`${API}/buoihoc/${buoiHocId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.TrangThaiLopHoc) {
+          setClassStatus(data.TrangThaiLopHoc);
+        }
+      })
       .catch(err => console.log(err));
   }, [buoiHocId]);
 
@@ -131,7 +149,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== XÓA ===== */
   const handleConfirmDelete = async () => {
     if (selectedId !== null) {
-      await fetch(`http://14.225.192.252:5000/tailieu/${selectedId}`, { method: "DELETE" });
+      await fetch(`${API}/tailieu/${selectedId}`, { method: "DELETE" });
       setDocuments(documents.filter(doc => doc.MaTaiLieu !== selectedId));
     }
     setShowConfirm(false);
@@ -166,7 +184,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
             <FiSearch size={16} />
           </button>
         </form>
-        {(hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
+        {classStatus !== "Đã hoàn thành" && (hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
           <>
             <button
               className="add-btn-reuse"
@@ -198,11 +216,13 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
                 title="Xem Chi Tiết">
                 <FiEye size={16} />
               </button>
-              <button className="action-icon-btn delete-icon-btn" 
-                onClick={() => handleOpenDelete(doc.MaTaiLieu)}
-                title="Xóa tài liệu">
-                <FiTrash2 size={16} />
-              </button>
+              {classStatus !== "Đã hoàn thành" && (
+                <button className="action-icon-btn delete-icon-btn" 
+                  onClick={() => handleOpenDelete(doc.MaTaiLieu)}
+                  title="Xóa tài liệu">
+                  <FiTrash2 size={16} />
+                </button>
+              )}
             </div>
           </div>
         ))}
