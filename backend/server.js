@@ -2146,7 +2146,7 @@ app.get("/bainop/baitap/:maBaiTap", async (req, res) => {
           SELECT 
             k.MaKetQua AS MaBaiNop, CAST(NULL AS NVARCHAR(MAX)) AS NoiDung, k.ThoiGianLamBai AS NgayNop,
             k.Diem, CAST(N'' AS NVARCHAR(MAX)) AS NhanXet, N'Đã chấm' AS TrangThai,
-            s.MaSinhVien, s.MSSV, n.HoTen, k.SoLanLamBai
+            s.MaSinhVien, s.MSSV, n.HoTen, k.SoLanLamBai, CAST(0 AS INT) AS DaXemGiaiThich
           FROM KETQUABAIKIEMTRA k
           JOIN SINHVIEN s ON k.MaSinhVien = s.MaNguoiDung OR CAST(k.MaSinhVien AS NVARCHAR(50)) = s.MaSinhVien
           JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -2160,7 +2160,7 @@ app.get("/bainop/baitap/:maBaiTap", async (req, res) => {
           SELECT 
             b.MaBaiNop, b.NoiDung, b.NgayNop,
             b.Diem, b.NhanXet, b.TrangThai,
-            s.MaSinhVien, s.MSSV, n.HoTen, b.SoLanLamBai
+            s.MaSinhVien, s.MSSV, n.HoTen, b.SoLanLamBai, b.DaXemGiaiThich
           FROM BAINOP b
           JOIN SINHVIEN s ON b.MaSinhVien = s.MaSinhVien OR b.MaSinhVien = CAST(s.MaNguoiDung AS NVARCHAR(50))
           JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -2189,7 +2189,7 @@ app.get("/bainop/:maBaiNop", async (req, res) => {
         SELECT 
           b.MaBaiNop, b.MaBaiTap, b.NoiDung,
           b.NgayNop, b.Diem, b.NhanXet, b.TrangThai,
-          s.MaSinhVien, s.MSSV, n.HoTen
+          s.MaSinhVien, s.MSSV, n.HoTen, b.DaXemGiaiThich
         FROM BAINOP b
         JOIN SINHVIEN s ON b.MaSinhVien = s.MaSinhVien OR b.MaSinhVien = CAST(s.MaNguoiDung AS NVARCHAR(50))
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -2209,7 +2209,7 @@ app.get("/bainop/:maBaiNop", async (req, res) => {
         SELECT 
           k.MaKetQua AS MaBaiNop, k.MaBaiKiemTra AS MaBaiTap, CAST(NULL AS NVARCHAR(MAX)) AS NoiDung,
           k.ThoiGianLamBai AS NgayNop, k.Diem, CAST(N'' AS NVARCHAR(MAX)) AS NhanXet, N'Đã chấm' AS TrangThai,
-          s.MaSinhVien, s.MSSV, n.HoTen
+          s.MaSinhVien, s.MSSV, n.HoTen, CAST(0 AS INT) AS DaXemGiaiThich
         FROM KETQUABAIKIEMTRA k
         JOIN SINHVIEN s ON k.MaSinhVien = s.MaNguoiDung OR CAST(k.MaSinhVien AS NVARCHAR(50)) = s.MaSinhVien
         JOIN NGUOIDUNG n ON s.MaNguoiDung = n.MaNguoiDung
@@ -2239,6 +2239,43 @@ app.put("/bainop/:maBaiNop/cham", async (req, res) => {
               WHERE MaBaiNop=@maBaiNop`);
     res.json({ message: "Chấm bài thành công" });
   } catch (err) { res.status(500).send(err.message); }
+});
+
+// Đánh dấu đã xem giải thích/đáp án
+app.put("/bainop/xem-giai-thich", async (req, res) => {
+  try {
+    const { MaSinhVien, MaBaiTap } = req.body;
+    const parsedSV = parseStudentId(MaSinhVien);
+    const sql = require("mssql");
+    const pool = await poolPromise;
+
+    // Phân giải MaSinhVien từ MaSinhVien hoặc MaNguoiDung
+    const svRes = await pool.request()
+      .input("id", sql.Int, parsedSV)
+      .query(`
+        SELECT MaSinhVien 
+        FROM SINHVIEN 
+        WHERE MaSinhVien = @id OR MaNguoiDung = @id
+      `);
+    
+    let studentIdInt = parsedSV;
+    if (svRes.recordset.length > 0) {
+      studentIdInt = svRes.recordset[0].MaSinhVien;
+    }
+
+    await pool.request()
+      .input("MaBaiTap", sql.Int, MaBaiTap)
+      .input("ParsedSV", sql.Int, studentIdInt)
+      .query(`
+        UPDATE BAINOP 
+        SET DaXemGiaiThich = 1 
+        WHERE MaBaiTap=@MaBaiTap 
+          AND MaSinhVien=@ParsedSV
+      `);
+    res.json({ message: "Đã đánh dấu đã xem giải thích thành công" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // Nộp bài
@@ -2306,11 +2343,7 @@ app.post("/bainop", async (req, res) => {
 
       const newAttempt = maxAttempt + 1;
 
-      // Xóa tất cả các lần làm bài cũ của bài tập này để chỉ lưu lần cuối cùng
-      await pool.request()
-        .input("MaBaiTap", MaBaiTap)
-        .input("MaSinhVien", MaSinhVien)
-        .query(`DELETE FROM BAINOP WHERE MaBaiTap=@MaBaiTap AND MaSinhVien=@MaSinhVien`);
+
 
       await pool.request()
         .input("MaBaiTap", MaBaiTap)
@@ -4221,7 +4254,7 @@ app.get("/student/bainop/:maNguoiDung", async (req, res) => {
       SELECT b.MaBaiNop, b.MaBaiTap, b.Diem, b.NgayNop, b.TrangThai,
              ISNULL(e.TieuDe, p.Title) AS TenBaiTap, 
              ISNULL(bg.MaBuoiHoc, p.MaBuoiHoc) AS MaBuoiHoc,
-             CAST(0 AS INT) AS IsExam, b.SoLanLamBai
+             CAST(0 AS INT) AS IsExam, b.SoLanLamBai, b.DaXemGiaiThich, b.MaSinhVien
       FROM BAINOP b
       JOIN SINHVIEN s ON b.MaSinhVien = s.MaSinhVien OR b.MaSinhVien = CAST(s.MaNguoiDung AS NVARCHAR(50))
       LEFT JOIN BAITAP e ON b.MaBaiTap = e.MaBaiTap
@@ -4234,7 +4267,7 @@ app.get("/student/bainop/:maNguoiDung", async (req, res) => {
 
       SELECT k.MaKetQua AS MaBaiNop, k.MaBaiKiemTra AS MaBaiTap, k.Diem, k.ThoiGianLamBai AS NgayNop, N'Đã chấm' AS TrangThai,
              kt.TenBai AS TenBaiTap, kt.MaBuoiHoc AS MaBuoiHoc,
-             CAST(1 AS INT) AS IsExam, k.SoLanLamBai
+             CAST(1 AS INT) AS IsExam, k.SoLanLamBai, CAST(0 AS INT) AS DaXemGiaiThich, CAST(k.MaSinhVien AS NVARCHAR(50)) AS MaSinhVien
       FROM KETQUABAIKIEMTRA k
       JOIN SINHVIEN s ON k.MaSinhVien = s.MaNguoiDung OR CAST(k.MaSinhVien AS NVARCHAR(50)) = s.MaSinhVien
       JOIN BAIKIEMTRA kt ON k.MaBaiKiemTra = kt.MaBaiKiemTra

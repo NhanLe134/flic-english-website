@@ -148,7 +148,7 @@ export default function ClassDetailSV() {
         const myClasses = Array.isArray(myClassesRes) ? myClassesRes : [];
         const enrolledClass = myClasses.find((c: any) => c.MaLopHoc === Number(classId));
 
-        if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành')) {
+        if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành' && enrolledClass.TrangThai !== 'Hoàn thành')) {
           setError("Bạn không có quyền truy cập lớp học này hoặc yêu cầu ghi danh của bạn đang chờ duyệt.");
           return;
         }
@@ -753,8 +753,9 @@ export default function ClassDetailSV() {
                                         </thead>
                                         <tbody>
                                           {detail.practices.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -763,6 +764,13 @@ export default function ClassDetailSV() {
                                                 score = Math.max(...scores).toString();
                                               }
                                             }
+
+                                            const lastSub = exSubmissions.length > 0 ? exSubmissions[exSubmissions.length - 1] : null;
+                                            const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+                                            const dlStr = getExerciseDeadline(ex);
+                                            const overdue = isDeadlineOverdue(dlStr);
+                                            const isLocked = attempts >= 3 || hasReviewed || overdue;
+
                                             return (
                                               <tr
                                                 key={ex.MaBaiTap}
@@ -773,16 +781,17 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
-                                                {(() => {
-                                                  const dlStr = getExerciseDeadline(ex);
-                                                  const overdue = isDeadlineOverdue(dlStr);
-                                                  return (
-                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
-                                                      {formatDeadline(dlStr)}
-                                                    </td>
-                                                  );
-                                                })()}
-                                                <td style={{ textAlign: "center" }}>{attempts}</td>
+                                                <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                  {formatDeadline(dlStr)}
+                                                </td>
+                                                <td style={{
+                                                  textAlign: "center",
+                                                  color: isLocked ? "#ef4444" : "inherit",
+                                                  fontWeight: isLocked ? 600 : "normal"
+                                                }}>
+                                                  {attempts}
+                                                  {isLocked && <FaLock style={{ marginLeft: "6px", fontSize: "12px", color: "#ef4444", verticalAlign: "middle" }} />}
+                                                </td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
                                               </tr>
                                             );
@@ -816,8 +825,9 @@ export default function ClassDetailSV() {
                                         </thead>
                                         <tbody>
                                           {detail.exams.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -826,6 +836,13 @@ export default function ClassDetailSV() {
                                                 score = Math.max(...scores).toString();
                                               }
                                             }
+
+                                            const lastSub = exSubmissions.length > 0 ? exSubmissions[exSubmissions.length - 1] : null;
+                                            const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+                                            const dlStr = getExerciseDeadline(ex);
+                                            const overdue = isDeadlineOverdue(dlStr);
+                                            const isLocked = attempts >= 3 || hasReviewed || overdue;
+
                                             return (
                                               <tr
                                                 key={ex.MaBaiTap}
@@ -836,18 +853,18 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
-                                                {(() => {
-                                                  const dlStr = getExerciseDeadline(ex);
-                                                  const overdue = isDeadlineOverdue(dlStr);
-                                                  return (
-                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
-                                                      {formatDeadline(dlStr)}
-                                                    </td>
-                                                  );
-                                                })()}
-                                                <td style={{ textAlign: "center" }}>{attempts}</td>
+                                                <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                  {formatDeadline(dlStr)}
+                                                </td>
+                                                <td style={{
+                                                  textAlign: "center",
+                                                  color: isLocked ? "#ef4444" : "inherit",
+                                                  fontWeight: isLocked ? 600 : "normal"
+                                                }}>
+                                                  {attempts}
+                                                  {isLocked && <FaLock style={{ marginLeft: "6px", fontSize: "12px", color: "#ef4444", verticalAlign: "middle" }} />}
+                                                </td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
-
                                               </tr>
                                             );
                                           })}
@@ -955,40 +972,33 @@ export default function ClassDetailSV() {
               const attemptsCount = lastSub ? (lastSub.SoLanLamBai || 1) : 0;
               const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
               const isClassCompleted = info?.TrangThaiLopHoc === "Đã hoàn thành";
-
-              const isMaxAttempt = attemptsCount >= 3;
-              const isDisabled = isMaxAttempt || hasReviewed || isClassCompleted;
-
               let buttonText = "Làm bài";
-              let tooltipText = "";
               if (attemptsCount > 0) {
                 buttonText = "Làm lại";
-              }
-              if (isClassCompleted) {
-                tooltipText = "Lớp học đã hoàn thành, bạn chỉ có thể xem lại bài cũ.";
-              } else if (isMaxAttempt) {
-                tooltipText = "Bạn đã đạt giới hạn làm bài (tối đa 3 lần).";
-              } else if (hasReviewed) {
-                tooltipText = "Bạn đã xem giải thích đáp án, không thể làm lại.";
               }
 
               return (
                 <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", alignItems: "center" }}>
-                  {tooltipText && (
-                    <span style={{ color: "#ef4444", fontSize: "12px", fontWeight: "600" }}>
-                      {tooltipText}
-                    </span>
-                  )}
                   <button
                     className="ld2-open-btn"
                     style={{
                       padding: "10px 20px",
-                      opacity: isDisabled ? 0.5 : 1,
-                      cursor: isDisabled ? "not-allowed" : "pointer",
-                      backgroundColor: isDisabled ? "#cbd5e1" : "#f95800"
+                      cursor: "pointer",
+                      backgroundColor: "#f95800"
                     }}
-                    disabled={isDisabled}
                     onClick={() => {
+                      if (isClassCompleted) {
+                        alert("Lớp học đã hoàn thành, không thể làm lại bài tập này.");
+                        return;
+                      }
+                      if (attemptsCount >= 3) {
+                        alert("Bạn đã đạt giới hạn làm bài (tối đa 3 lần).");
+                        return;
+                      }
+                      if (hasReviewed) {
+                        alert("Bạn đã xem kết quả bài tập, không thể làm lại bài tập này.");
+                        return;
+                      }
                       const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
                       navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`);
                       setSelectedExercise(null);
@@ -1046,10 +1056,18 @@ export default function ClassDetailSV() {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          MaSinhVien: userObj.MaSinhVien || userObj.MaNguoiDung,
+                          MaSinhVien: sub.MaSinhVien || userObj.MaSinhVien || userObj.MaNguoiDung,
                           MaBaiTap: selEx.MaBaiTap
                         })
                       });
+
+                      // Cập nhật state cục bộ để giao diện nhận biết tức thì trạng thái đã xem giải thích
+                      setSubmissions(prev => prev.map(item => {
+                        if (String(item.MaBaiTap) === String(selEx.MaBaiTap)) {
+                          return { ...item, DaXemGiaiThich: 1 };
+                        }
+                        return item;
+                      }));
                     } catch (e) {
                       console.error("Error setting review flag:", e);
                     }

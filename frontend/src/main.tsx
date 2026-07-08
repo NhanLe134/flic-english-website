@@ -19,8 +19,9 @@ if (typeof window !== "undefined") {
     box.style.background = "#fff";
     box.style.padding = "24px 32px";
     box.style.borderRadius = "16px";
-    box.style.width = "90%";
-    box.style.maxWidth = "400px";
+    box.style.width = "fit-content";
+    box.style.minWidth = "320px";
+    box.style.maxWidth = "480px";
     box.style.textAlign = "center";
     box.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
     

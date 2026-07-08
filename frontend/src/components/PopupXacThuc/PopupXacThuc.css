@@ -57,7 +57,7 @@
 .auth-modal-header-title {
   font-size: 22px;
   font-weight: 700;
-  color: #f58220;
+  color: #000080;
   margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
   letter-spacing: 0.5px;
@@ -134,6 +134,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -144,6 +145,7 @@
     transform: translateY(30px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -186,9 +188,9 @@
   }
 }
 
-/* Custom Confirm Modal styling */
 .confirm-modal-backdrop {
-  z-index: 999999 !important; /* Đảm bảo đè lên trên tất cả mọi thứ bao gồm navbar, sidebar và các modal khác */
+  z-index: 999999 !important;
+  /* Đảm bảo đè lên trên tất cả mọi thứ bao gồm navbar, sidebar và các modal khác */
 }
 
 .confirm-modal-card {
@@ -239,13 +241,14 @@
 }
 
 .confirm-btn-ok {
-  background-color: #F95800; /* Matching brand color #F95800 */
+  background-color: #F95800;
+  /* Matching brand color #F95800 */
   color: #fff;
   box-shadow: 0 4px 6px rgba(249, 88, 0, 0.2);
 }
 
 .confirm-btn-ok:hover {
-  background-color: #e04f00; /* Darker orange for hover */
+  background-color: #e04f00;
+  /* Darker orange for hover */
   box-shadow: 0 4px 12px rgba(249, 88, 0, 0.3);
 }
-
