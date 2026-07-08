@@ -24,6 +24,23 @@ function formatStudentId(maSVInt) {
   return "SV" + String(maSVInt).padStart(8, '0');
 }
 
+function normalizeDeadline(value) {
+  if (!value || value === "null" || value === "undefined") return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === "number") return new Date(value);
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const candidate = trimmed.includes("T") || trimmed.includes(" ")
+    ? trimmed.replace(" ", "T")
+    : `${trimmed}T00:00:00`;
+
+  const date = new Date(candidate);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 async function isClassCompletedByBuoiHoc(pool, maBuoiHoc) {
   if (!maBuoiHoc) return false;
   const res = await pool.request()
@@ -2540,7 +2557,7 @@ app.post("/baitap/create", async (req, res) => {
           const parsedContent = JSON.parse(Content);
           durationVal = parsedContent.duration || durationVal;
           startTimeVal = parsedContent.startTime || startTimeVal;
-          deadlineVal = parsedContent.deadline || deadlineVal;
+          deadlineVal = normalizeDeadline(parsedContent.deadline || parsedContent.deadlineDate || null);
         }
       } catch (err) {
         console.error("Error parsing exam content JSON:", err);
@@ -2599,7 +2616,7 @@ app.post("/baitap/create", async (req, res) => {
       if (Content && typeof Content === "string" && Content.trim().startsWith("{")) {
         try {
           const parsed = JSON.parse(Content);
-          deadlineVal = parsed.deadline || parsed.deadlineDate || null;
+          deadlineVal = normalizeDeadline(parsed.deadline || parsed.deadlineDate || null);
         } catch (e) {
           console.error("Error parsing content for deadline in create:", e);
         }
@@ -4924,7 +4941,7 @@ app.post("/exercises/:id/clone", async (req, res) => {
       .input("KyNang", ex.KyNang || "")
       .input("MaGiangVien", ex.MaGiangVien || null)
       .input("FileDinhKem", ex.FileDinhKem || null)
-      .input("HanNop", ex.HanNop || null)
+      .input("HanNop", normalizeDeadline(ex.HanNop))
       .query(`
         INSERT INTO BAITAP 
           (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, MaGiangVien, FileDinhKem, HanNop)

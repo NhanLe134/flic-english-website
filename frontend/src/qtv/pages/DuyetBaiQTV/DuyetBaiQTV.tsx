@@ -164,6 +164,22 @@ export default function DuyetBaiQTV() {
     return matchStatus && matchSearch;
   });
 
+  const sortedData = [...filteredData].sort((a, b) => {
+    const aStatus = getStatusLabel(a.TrangThaiDuyet || a.TrangThai);
+    const bStatus = getStatusLabel(b.TrangThaiDuyet || b.TrangThai);
+
+    if (aStatus === "Chờ duyệt" && bStatus !== "Chờ duyệt") return -1;
+    if (aStatus !== "Chờ duyệt" && bStatus === "Chờ duyệt") return 1;
+
+    const aDateStr = a.NgayGui || a.NgayTao || a.NgayCapNhat || a.CreatedDate || "";
+    const bDateStr = b.NgayGui || b.NgayTao || b.NgayCapNhat || b.CreatedDate || "";
+
+    const aTime = aDateStr ? new Date(aDateStr).getTime() : 0;
+    const bTime = bDateStr ? new Date(bDateStr).getTime() : 0;
+
+    return bTime - aTime;
+  });
+
   const getTabPillCount = (status: string) => {
     return currentData.filter((i: any) => {
       const label = getStatusLabel(i.TrangThaiDuyet || i.TrangThai);
@@ -282,14 +298,14 @@ export default function DuyetBaiQTV() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.length === 0 ? (
+                {sortedData.length === 0 ? (
                   <tr>
                     <td colSpan={6} className={styles.emptyCell}>
                       Không tìm thấy nội dung nào phù hợp.
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((item: any, idx) => (
+                  sortedData.map((item: any, idx) => (
                     <tr
                       key={idx}
                       className={styles.clickableRow}
