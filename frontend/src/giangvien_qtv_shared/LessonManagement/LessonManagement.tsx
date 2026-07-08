@@ -4,6 +4,14 @@ import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "reac
 import "./LessonManagement.css";
 import { hasPermission } from "../../utils/permission";
 
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
+
 interface LessonManagementProps {
   buoiHocIdProp?: string;
   isEmbedded?: boolean;
@@ -23,12 +31,13 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   const [allExistingLectures, setAllExistingLectures] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [classStatus, setClassStatus] = useState<string>("");
 
   const openReuseModal = async () => {
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://14.225.192.252:5000/baigiang/list/all";
+      let url = `${API}/baigiang/list/all`;
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -47,7 +56,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     if (isProcessing) return;
     setIsProcessing(true);
     try {
-      const res = await fetch(`http://14.225.192.252:5000/baigiang/${lectureId}/clone`, {
+      const res = await fetch(`${API}/baigiang/${lectureId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
@@ -55,7 +64,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
       if (res.ok) {
         alert("Chọn bài giảng thành công!");
         // Refresh lessons list
-        const lRes = await fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`);
+        const lRes = await fetch(`${API}/baigiang/${buoiHocId}`);
         const lData = await lRes.json();
         setLessons(lData);
         setShowReuseModal(false);
@@ -72,9 +81,18 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
 
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`)
+    fetch(`${API}/baigiang/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setLessons(data))
+      .catch(err => console.log(err));
+
+    fetch(`${API}/buoihoc/${buoiHocId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.TrangThaiLopHoc) {
+          setClassStatus(data.TrangThaiLopHoc);
+        }
+      })
       .catch(err => console.log(err));
   }, [buoiHocId]);
 
@@ -86,7 +104,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   const confirmDelete = async () => {
     if (selectedId !== null) {
       try {
-        const res = await fetch(`http://14.225.192.252:5000/baigiang/${selectedId}`, {
+        const res = await fetch(`${API}/baigiang/${selectedId}`, {
           method: "DELETE"
         });
         if (res.ok) {
@@ -137,7 +155,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <FiSearch size={16} />
           </button>
         </form>
-        {hasPermission("LECTURE_CREATE") && (
+        {classStatus !== "Đã hoàn thành" && hasPermission("LECTURE_CREATE") && (
           <>
             <button
               className="add-btn-reuse"
@@ -202,17 +220,21 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         title="Xem chi tiết">
                         <FiEye size={16} />
                       </button>
-                      <button className="action-btn minitest-btn"
-                        onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
-                        title="Tạo MiniTest">
-                        <FiPlus size={14} style={{ marginRight: 4 }} />
-                        <span>MiniTest</span>
-                      </button>
-                      <button className="action-icon-btn delete-icon-btn"
-                        onClick={() => handleDeleteClick(l.MaBaiHoc)}
-                        title="Xóa bài học">
-                        <FiTrash2 size={16} />
-                      </button>
+                      {classStatus !== "Đã hoàn thành" && (
+                        <button className="action-btn minitest-btn"
+                          onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
+                          title="Tạo MiniTest">
+                          <FiPlus size={14} style={{ marginRight: 4 }} />
+                          <span>MiniTest</span>
+                        </button>
+                      )}
+                      {classStatus !== "Đã hoàn thành" && (
+                        <button className="action-icon-btn delete-icon-btn"
+                          onClick={() => handleDeleteClick(l.MaBaiHoc)}
+                          title="Xóa bài học">
+                          <FiTrash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

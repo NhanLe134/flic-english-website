@@ -32,7 +32,7 @@ const QuanLyKhoaHoc = () => {
         const mappedClasses = data.map((c: any) => ({
           id: c.MaLopHoc,
           name: c.TenLop,
-          code: `CT-${c.MaLopHoc}`,
+          code: `${c.MaLopHoc}`,
           schedule: formatScheduleOnlyDays(c.LichHoc) || '—',
           courseName: c.TenKhoaHoc || '',
           students: c.SoLuongHocVien || 0,

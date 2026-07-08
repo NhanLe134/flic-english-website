@@ -13,6 +13,14 @@ interface Lesson {
   TrangThai?: string;
 }
 
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
+
 const LessonList = () => {
 
   const navigate = useNavigate();
@@ -74,7 +82,7 @@ const LessonList = () => {
       "Tất cả tài liệu, bài giảng, và bài tập liên kết với buổi này sẽ bị ảnh hưởng.",
       async () => {
         try {
-          const res = await fetch(`http://14.225.192.252:5000/qtv/buoihoc/${lessonId}`, {
+          const res = await fetch(`${API}/qtv/buoihoc/${lessonId}`, {
             method: "DELETE"
           });
           if (res.ok) {
@@ -92,14 +100,14 @@ const LessonList = () => {
 
   const handleMarkActiveLesson = async (lessonId: number | null) => {
     try {
-      const res = await fetch(`http://14.225.192.252:5000/classes/${id}/active-buoihoc`, {
+      const res = await fetch(`${API}/classes/${id}/active-buoihoc`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activeBuoiHocId: lessonId })
       });
       if (res.ok) {
         // Re-fetch lessons list to update TrangThai on screen immediately
-        fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
+        fetch(`${API}/classes/${id}/buoihoc`)
           .then(r => r.json())
           .then(data => setLessons(data))
           .catch(err => console.log(err));
@@ -122,7 +130,7 @@ const LessonList = () => {
       return;
     }
     try {
-      const res = await fetch("http://14.225.192.252:5000/qtv/buoihoc", {
+      const res = await fetch(`${API}/qtv/buoihoc`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,7 +152,7 @@ const LessonList = () => {
           order: 1
         });
         // Re-fetch lessons list
-        fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
+        fetch(`${API}/classes/${id}/buoihoc`)
           .then(r => r.json())
           .then(data => setLessons(data))
           .catch(err => console.log(err));
@@ -168,10 +176,21 @@ const LessonList = () => {
     setShowAddModal(true);
   };
 
+  const [classStatus, setClassStatus] = useState<string>("");
+
   useEffect(() => {
-    fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`)
+    fetch(`${API}/classes/${id}/buoihoc`)
       .then(res => res.json())
       .then(data => setLessons(data))
+      .catch(err => console.log(err));
+
+    fetch(`${API}/classes/${id}/info`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.TrangThaiLopHoc) {
+          setClassStatus(data.TrangThaiLopHoc);
+        }
+      })
       .catch(err => console.log(err));
   }, [id]);
 
@@ -246,30 +265,32 @@ const LessonList = () => {
           Quản lý bản nháp
         </button>
 
-        <button
-          type="button"
-          className="create-lesson-btn"
-          onClick={handleOpenAddModal}
-          style={{
-            height: "40px",
-            padding: "0 20px",
-            borderRadius: "8px",
-            background: "#F95800",
-            border: "none",
-            color: "white",
-            fontWeight: "600",
-            cursor: "pointer",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            transition: "background 0.2s"
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.background = "#e04f00")}
-          onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
-        >
-          Tạo buổi học
-        </button>
+        {classStatus !== "Đã hoàn thành" && (
+          <button
+            type="button"
+            className="create-lesson-btn"
+            onClick={handleOpenAddModal}
+            style={{
+              height: "40px",
+              padding: "0 20px",
+              borderRadius: "8px",
+              background: "#F95800",
+              border: "none",
+              color: "white",
+              fontWeight: "600",
+              cursor: "pointer",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "background 0.2s"
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#e04f00")}
+            onMouseOut={(e) => (e.currentTarget.style.background = "#F95800")}
+          >
+            Tạo buổi học
+          </button>
+        )}
       </div>
 
       {/* LESSON GRID */}
@@ -279,21 +300,37 @@ const LessonList = () => {
 
           return (
             <div key={lesson.MaBuoiHoc} className="lesson-card">
-              <button
-                type="button"
-                className="lesson-delete-btn"
-                title="Xóa buổi học"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteLesson(lesson.MaBuoiHoc, lesson.TenBuoiHoc);
-                }}
-              >
-                <FiTrash2 />
-              </button>
+              {classStatus !== "Đã hoàn thành" && (
+                <button
+                  type="button"
+                  className="lesson-delete-btn"
+                  title="Xóa buổi học"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteLesson(lesson.MaBuoiHoc, lesson.TenBuoiHoc);
+                  }}
+                >
+                  <FiTrash2 />
+                </button>
+              )}
               <h3>{lesson.TenBuoiHoc}</h3>
               <p className="lesson-desc">{lesson.MoTa}</p>
               <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-                {isOpened ? (
+                {classStatus === "Đã hoàn thành" ? (
+                  <span style={{
+                    color: isOpened ? "#2e7d32" : "#666",
+                    border: isOpened ? "1.5px solid #c8e6c9" : "1.5px solid #ccc",
+                    background: isOpened ? "#e8f5e9" : "#f1f5f9",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    textAlign: "center",
+                    display: "inline-block"
+                  }}>
+                    {isOpened ? "Đã mở" : "Chưa mở"}
+                  </span>
+                ) : isOpened ? (
                   <button
                     type="button"
                     onClick={() => {

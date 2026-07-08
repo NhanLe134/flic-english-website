@@ -13,7 +13,13 @@ import {
 } from "react-icons/fa";
 import { FiFileText, FiX } from "react-icons/fi";
 
-const API = "http://14.225.192.252:5000";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
 
 function pctColor(pct: number) {
   if (pct >= 90) return "#22c55e";
@@ -117,7 +123,9 @@ function MyCourses() {
         fetch(`${API}/classes/${classId}/tailieu`).then(r => r.json())
       ]);
 
-      const lessonsList = Array.isArray(lessonsRes) ? lessonsRes : [];
+      const lessonsList = Array.isArray(lessonsRes)
+        ? lessonsRes.filter((l: any) => l.TrangThai !== "Chờ mở")
+        : [];
       const exercisesList = Array.isArray(exercisesRes)
         ? exercisesRes.map((ex: any) => ({
             ...ex,

@@ -47,7 +47,7 @@ const CourseDetail = () => {
             return {
               id: c.MaLopHoc,
               name: c.TenLop,
-              code: `CT-${c.MaLopHoc}`,
+              code: `${c.MaLopHoc}`,
               schedule: c.LichHoc,
               students: soLuong,
               progress: c.TienDo || 0,
