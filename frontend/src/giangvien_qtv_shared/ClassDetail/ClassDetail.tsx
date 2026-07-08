@@ -174,7 +174,7 @@ const ClassDetail = () => {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Trạng thái</span>
-                <span className="cd-meta-value">Đang học</span>
+                <span className="cd-meta-value">{lesson.TrangThaiLopHoc || "Đang học"}</span>
               </div>
               <span 
                 className="cd-class-id"
@@ -186,7 +186,7 @@ const ClassDetail = () => {
                   marginLeft: "10px",
                 }}
               >
-                Mã lớp: B239B1
+                Mã lớp: {lesson.MaLopHoc}
               </span>
             </div>
           </div>
@@ -220,7 +220,7 @@ const ClassDetail = () => {
               lineHeight: 1,
             }}
           >
-            Đang học
+            {lesson.TrangThaiLopHoc || "Đang học"}
           </span>
           <span 
             className="cd-class-dates"
@@ -273,13 +273,13 @@ const ClassDetail = () => {
               <option value="practice">Bài LTT</option>
             </select>
 
-            {(hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE")) && (
+            {lesson?.TrangThaiLopHoc !== "Đã hoàn thành" && (hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE")) && (
               <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
                 + Tạo BT/KT
               </button>
             )}
 
-            {hasPermission("EXTRA_PRACTICE_CREATE") && (
+            {lesson?.TrangThaiLopHoc !== "Đã hoàn thành" && hasPermission("EXTRA_PRACTICE_CREATE") && (
               <button
                 className="ep-add-btn"
                 onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
@@ -385,7 +385,7 @@ const ClassDetail = () => {
                         }}>
                           {isManual ? (isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề ") : "🕒 Tự động mở theo lịch"}
                         </span>
-                        {isApproved && isManual && (
+                        {isApproved && isManual && lesson?.TrangThaiLopHoc !== "Đã hoàn thành" && (
                           <button
                             onClick={() => handleToggleOpen(ex.MaBaiTap)}
                             style={{
@@ -442,6 +442,7 @@ const ClassDetail = () => {
                       <FiEye size={16} />
                     </button>
                     {(() => {
+                      if (lesson?.TrangThaiLopHoc === "Đã hoàn thành") return null;
                       const isPractice = ex.TrangThai === "practice";
                       const isExam = ex.IsExam === 1 || ex.Type === "exam";
                       const canDelete = isPractice 

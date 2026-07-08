@@ -20,7 +20,13 @@ import {
   FaLock
 } from "react-icons/fa";
 
-const API = "http://14.225.192.252:5000";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -144,6 +150,11 @@ export default function ClassDetailSV() {
 
         if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành')) {
           setError("Bạn không có quyền truy cập lớp học này hoặc yêu cầu ghi danh của bạn đang chờ duyệt.");
+          return;
+        }
+
+        if (infoRes && infoRes.TrangThaiLopHoc === "Chưa bắt đầu") {
+          setError("Lớp học chưa bắt đầu. Bạn không thể truy cập lớp học này.");
           return;
         }
 
@@ -943,16 +954,19 @@ export default function ClassDetailSV() {
               const lastSub = exSubs.length > 0 ? exSubs[exSubs.length - 1] : null;
               const attemptsCount = lastSub ? (lastSub.SoLanLamBai || 1) : 0;
               const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+              const isClassCompleted = info?.TrangThaiLopHoc === "Đã hoàn thành";
 
               const isMaxAttempt = attemptsCount >= 3;
-              const isDisabled = isMaxAttempt || hasReviewed;
+              const isDisabled = isMaxAttempt || hasReviewed || isClassCompleted;
 
               let buttonText = "Làm bài";
               let tooltipText = "";
               if (attemptsCount > 0) {
                 buttonText = "Làm lại";
               }
-              if (isMaxAttempt) {
+              if (isClassCompleted) {
+                tooltipText = "Lớp học đã hoàn thành, bạn chỉ có thể xem lại bài cũ.";
+              } else if (isMaxAttempt) {
                 tooltipText = "Bạn đã đạt giới hạn làm bài (tối đa 3 lần).";
               } else if (hasReviewed) {
                 tooltipText = "Bạn đã xem giải thích đáp án, không thể làm lại.";
@@ -1028,7 +1042,7 @@ export default function ClassDetailSV() {
                     try {
                       const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
                       const userObj = JSON.parse(userStr || "{}");
-                      await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
+                      await fetch(`${API}/bainop/xem-giai-thich`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({

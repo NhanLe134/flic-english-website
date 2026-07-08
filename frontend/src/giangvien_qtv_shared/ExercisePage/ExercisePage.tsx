@@ -17,6 +17,7 @@ const ExercisePage = () => {
   const [soHocVien, setSoHocVien] = useState(0);
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
+  const [trangThaiLopHoc, setTrangThaiLopHoc] = useState("Đang học");
   const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
 
 
@@ -26,18 +27,20 @@ const ExercisePage = () => {
     fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (buoiHocData) => {
-        setLesson(Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData);
-        const maLopHoc = buoiHocData.MaLopHoc;
+        const lessonObj = Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData;
+        setLesson(lessonObj);
+        const maLopHoc = lessonObj.MaLopHoc;
 
         // Lấy số học viên thực tế từ SINHVIEN_LOPHOC
         const countRes = await fetch(`http://14.225.192.252:5000/lophoc/${maLopHoc}/students/count`);
         const countData = await countRes.json();
         setSoHocVien(countData.SoLuongHocVien || 0);
 
-        // Lấy thông tin lớp (LichHoc)
+        // Lấy thông tin lớp (LichHoc và TrangThaiLopHoc)
         const lopRes = await fetch(`http://14.225.192.252:5000/classes/${maLopHoc}/info`);
         const lopData = await lopRes.json();
         setLichHoc(formatScheduleOnlyDays(lopData.LichHoc) || "—");
+        setTrangThaiLopHoc(lopData.TrangThaiLopHoc || "Đang học");
 
         // Lấy tên giảng viên
         const userStr = sessionStorage.getItem("user");
@@ -187,15 +190,15 @@ const ExercisePage = () => {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Trạng thái</span>
-                <span className="cd-meta-value">Đang học</span>
+                <span className="cd-meta-value">{trangThaiLopHoc}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="cd-right-content">
-          <span className="status-badge">Đang học</span>
-          <span className="cd-class-id">Mã lớp: B239B1</span>
+          <span className="status-badge">{trangThaiLopHoc}</span>
+          <span className="cd-class-id">Mã lớp: {lesson?.MaLopHoc}</span>
           <span className="cd-class-dates">
             <FiCalendar size={13} style={{ marginRight: 6 }} />
             {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} - {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
