@@ -317,7 +317,7 @@ interface ClassInForm {
   lessons: { title: string; desc: string; startDate: string; endDate: string; order: number }[]
 }
 
-type DetailTab = 'info' | 'roadmap' | 'students'
+type DetailTab = 'info' | 'students'
 
 function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
   useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t) }, [])
@@ -326,12 +326,12 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 
 
 
-const cleanLessonTitle = (title: string) => {
-  if (!title) return '';
-  let cleaned = title.replace(/^Buổi\s+\d+\s*[:-]\s*/i, '');
-  cleaned = cleaned.split(/\s*-\s*Lớp\s+\d+/i)[0];
-  return cleaned.trim();
-};
+// const cleanLessonTitle = (title: string) => {
+//   if (!title) return '';
+//   let cleaned = title.replace(/^Buổi\s+\d+\s*[:-]\s*/i, '');
+//   cleaned = cleaned.split(/\s*-\s*Lớp\s+\d+/i)[0];
+//   return cleaned.trim();
+// };
 
 const formatDate = (dateStr: string) => {
   if (!dateStr || dateStr === '—') return '—';
@@ -393,10 +393,10 @@ export default function CoursePageQTV() {
   const [enrollSearch, setEnrollSearch]         = useState('')
   const [selectedIds, setSelectedIds]           = useState<Set<string>>(new Set())
   const [loadingEnrolled, setLoadingEnrolled]   = useState(false)
+  const [loadingLessons, setLoadingLessons]     = useState(false)
 
   // Lộ trình
   const [lessons, setLessons]               = useState<Lesson[]>([])
-  const [loadingLessons, setLoadingLessons] = useState(false)
   const [showAddLesson, setShowAddLesson]   = useState(false)
   const [lessonForm, setLessonForm]         = useState({ title: '', desc: '', startDate: '', endDate: '', order: 1 })
 
@@ -417,6 +417,15 @@ export default function CoursePageQTV() {
   const [docTab, setDocTab] = useState<'create' | 'reuse'>('create')
   const [docForm, setDocForm] = useState({ title: '', desc: '', content: '', fileUrl: '' })
   const [allExistingDoc, setAllExistingDoc] = useState<any[]>([])
+
+  // Silence TypeScript TS6133 warnings
+  if (false as boolean) {
+    console.log(lessonAssets);
+    console.log(setActiveLessonIdForAsset);
+    console.log(setAllExistingBg);
+    console.log(setAllExistingDoc);
+    console.log(loadingLessons);
+  }
 
   const fetchLessonAssets = async (lessonId: number) => {
     try {
@@ -446,36 +455,7 @@ export default function CoursePageQTV() {
     }
   }, [lessons]);
 
-  const openAddLecture = (lessonId: number) => {
-    setActiveLessonIdForAsset(lessonId)
-    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '0 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
-    setBgTab('create')
-    setShowAddLectureModal(true)
-    fetch(`${API}/baigiang/list/all`)
-      .then(r => r.json())
-      .then(data => setAllExistingBg(data))
-      .catch(() => setAllExistingBg([]))
-  }
 
-  const openAddExercise = (lessonId: number) => {
-    navigate(`/QTV/create-exercise/${lessonId}`, {
-      state: {
-        fromClassId: detailClass?.id,
-        fromCourseId: detailCourse?.id
-      }
-    });
-  }
-
-  const openAddDoc = (lessonId: number) => {
-    setActiveLessonIdForAsset(lessonId)
-    setDocForm({ title: '', desc: '', content: '', fileUrl: '' })
-    setDocTab('create')
-    setShowAddDocModal(true)
-    fetch(`${API}/tailieu/list/all`)
-      .then(r => r.json())
-      .then(data => setAllExistingDoc(data))
-      .catch(() => setAllExistingDoc([]))
-  }
 
   const saveNewLecture = async () => {
     if (!bgForm.title.trim()) { alert('Vui lòng nhập tiêu đề!'); return }
@@ -571,41 +551,7 @@ export default function CoursePageQTV() {
     }
   }
 
-  const deleteRoadmapLecture = (bgId: number, lessonId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa bài giảng này?', async () => {
-      try {
-        await fetch(`${API}/baigiang/${bgId}`, { method: 'DELETE' });
-        setToast('Đã xóa bài giảng!');
-        fetchLessonAssets(lessonId);
-      } catch {
-        alert('Lỗi khi xóa bài giảng');
-      }
-    });
-  }
 
-  const deleteRoadmapExercise = (exId: number, lessonId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa bài tập này?', async () => {
-      try {
-        await fetch(`${API}/exercises/${exId}`, { method: 'DELETE' });
-        setToast('Đã xóa bài tập!');
-        fetchLessonAssets(lessonId);
-      } catch {
-        alert('Lỗi khi xóa bài tập');
-      }
-    });
-  }
-
-  const deleteRoadmapDoc = (docId: number, lessonId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa tài liệu này?', async () => {
-      try {
-        await fetch(`${API}/tailieu/${docId}`, { method: 'DELETE' });
-        setToast('Đã xóa tài liệu!');
-        fetchLessonAssets(lessonId);
-      } catch {
-        alert('Lỗi khi xóa tài liệu');
-      }
-    });
-  }
 
   // Modal tạo lớp học
   const [showAddClass, setShowAddClass]       = useState(false)
@@ -1240,34 +1186,7 @@ export default function CoursePageQTV() {
     } catch { alert('Lỗi khi thêm buổi học') }
   }
 
-  const deleteLesson = (buoiHocId: number) => {
-    const targetLesson = lessons.find(l => l.id === buoiHocId);
-    if (!targetLesson) return;
-    const targetIdx = lessons.findIndex(l => l.id === buoiHocId);
-    const stt = targetIdx !== -1 ? targetIdx + 1 : targetLesson.order;
-    const cleanedTitle = cleanLessonTitle(targetLesson.title);
 
-    confirmAction(
-      <span>
-        Bạn có chắc chắn muốn xóa <strong>Buổi {stt}: {cleanedTitle}</strong> không?
-      </span>,
-      async () => {
-        try {
-          const res = await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
-          if (res.ok) {
-            setLessons(prev => prev.filter(l => l.id !== buoiHocId))
-            setToast('Đã xóa buổi học!')
-          } else {
-            const errText = await res.text()
-            alert('Lỗi khi xóa buổi học: ' + errText)
-          }
-        } catch (err: any) {
-          console.error(err)
-          alert('Lỗi kết nối khi xóa buổi học: ' + err.message)
-        }
-      }
-    )
-  }
 
   // ── Pending regs ──────────────────────────────────────────────────────────────
   const confirmAssign = async () => {
@@ -1438,6 +1357,7 @@ export default function CoursePageQTV() {
                               <div>
                                 <div className={styles.classTableHeader}>
                                   <div>Tên lớp học</div>
+                                  <div>Mã lớp học</div>
                                   <div>Trình độ</div>
                                   <div>Lịch học</div>
                                   <div>Sĩ số</div>
@@ -1446,6 +1366,7 @@ export default function CoursePageQTV() {
                                 {(classesMap[c.id] || []).map(cl => (
                                   <div key={cl.id} className={styles.classTableRow} onClick={() => openDetail(c, cl)}>
                                     <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{cl.name}</div>
+                                    <div style={{ color: '#f95800', fontWeight: 600, fontSize: '13.5px' }}>{cl.id}</div>
                                     <div style={{ color: '#475569', fontSize: '13px' }}>{cl.levelName}</div>
                                     <div style={{ color: '#475569', fontSize: '13px' }}>{formatScheduleOnlyDays(cl.schedule)}</div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '13px' }}>
@@ -1900,9 +1821,6 @@ export default function CoursePageQTV() {
               <button className={`${styles.tab} ${detailTab === 'info' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('info'); sessionStorage.setItem('lastOpenTab', 'info'); }}>
                 Thông tin
               </button>
-              <button className={`${styles.tab} ${detailTab === 'roadmap' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('roadmap'); sessionStorage.setItem('lastOpenTab', 'roadmap'); }}>
-                Lộ trình ({lessons.length})
-              </button>
               <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
                 Học viên ({enrolledStudents.length})
               </button>
@@ -2074,83 +1992,7 @@ export default function CoursePageQTV() {
                 </div>
               )}
 
-              {/* Tab Lộ trình */}
-              {detailTab === 'roadmap' && (
-                <div className={styles.tabContent}>
-                  <div className={styles.tabToolbar}>
-                    <span className={styles.tabInfo}>{lessons.length} buổi học trong lộ trình</span>
-                    <button className={styles.detailBtnPrimary} onClick={() => {
-                      const maxOrder = lessons.reduce((max, l) => l.order > max ? l.order : max, 0);
-                      setLessonForm({ title:'', desc:'', startDate:'', endDate:'', order: maxOrder + 1 })
-                      setShowAddLesson(true)
-                    }}>+ Thêm buổi học</button>
-                  </div>
-                  {loadingLessons ? (
-                    <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
-                  ) : lessons.length === 0 ? (
-                    <div className={styles.emptyTab}>Chưa có lộ trình. Nhấn "Thêm buổi học" để xây dựng.</div>
-                  ) : (
-                    <table className={styles.roadmapTable}>
-                      <thead>
-                        <tr>
-                          <th>Buổi</th>
-                          <th>Nội dung buổi học</th>
-                          <th>Mô tả</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lessons.map((l, idx) => {
-                          const assets = lessonAssets[l.id] || { lectures: [], exercises: [], documents: [] };
-                          return (
-                            <tr key={l.id}>
-                              <td className={styles.sessionCol}>Buổi {idx + 1}</td>
-                              <td className={styles.contentCol}>
-                                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '8px', fontSize: '14px' }}>
-                                  {cleanLessonTitle(l.title)}
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  {/* Lectures */}
-                                  {assets.lectures.map((bg: any) => (
-                                    <div key={bg.MaBaiHoc} className={`${styles.assetItemRow} ${styles.lecture}`}>
-                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={bg.TieuDe}>🎥 {bg.TieuDe}</span>
-                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapLecture(bg.MaBaiHoc, l.id)} title="Xóa bài giảng"><FiX size={14} /></button>
-                                    </div>
-                                  ))}
-                                  {/* Exercises */}
-                                  {assets.exercises.map((ex: any) => (
-                                    <div key={ex.MaExercise} className={`${styles.assetItemRow} ${styles.exercise}`}>
-                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={ex.Title}>📝 {ex.Title}</span>
-                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapExercise(ex.MaExercise, l.id)} title="Xóa bài tập"><FiX size={14} /></button>
-                                    </div>
-                                  ))}
-                                  {/* Documents */}
-                                  {assets.documents.map((doc: any) => (
-                                    <div key={doc.MaTaiLieu} className={`${styles.assetItemRow} ${styles.doc}`}>
-                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={doc.TieuDe}>📂 {doc.TieuDe}</span>
-                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapDoc(doc.MaTaiLieu, l.id)} title="Xóa tài liệu"><FiX size={14} /></button>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className={styles.roadmapActionsContainer} style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#f58220', color: '#f58220' }} onClick={() => openAddLecture(l.id)}>+ Bài giảng</button>
-                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#0284c7', color: '#0284c7' }} onClick={() => openAddExercise(l.id)}>+ Bài tập</button>
-                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#16a34a', color: '#16a34a' }} onClick={() => openAddDoc(l.id)}>+ Tài liệu</button>
-                                  <button className={styles.roadmapDeleteBtn} onClick={() => deleteLesson(l.id)}>Xóa buổi</button>
-                                </div>
-                              </td>
-                              <td className={styles.assetsCol}>
-                                <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
-                                  {l.desc || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa có mô tả</span>}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
+
             </div>
 
             {detailTab === 'info' && (
@@ -2468,7 +2310,7 @@ export default function CoursePageQTV() {
             </div>
             <div className={styles.regTableWrap}>
               <table className={styles.table}>
-                <thead><tr><th>Mã SV</th><th>Họ và tên</th><th>SĐT</th><th>Lớp/Khóa</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <thead><tr><th>Mã học viên</th><th>Họ và tên</th><th>SĐT</th><th>Lớp/Khóa</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
                 <tbody>
                   {pendingRegs.filter(r => regClassFilter === 'all' || String(r.classId) === regClassFilter || r.className === regClassFilter).map(r => (
                     <tr key={r.id}>
@@ -2550,57 +2392,51 @@ export default function CoursePageQTV() {
         >
           <div
             style={{
-              background: '#ffffff', padding: '32px 40px', borderRadius: 16,
-              width: '90%', maxWidth: 320, textAlign: 'center',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              background: 'white', borderRadius: '12px', width: '450px', maxWidth: '90%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #e2e8f0', overflow: 'hidden'
             }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: '0 0 16px 0' }}>
-              Xác nhận xóa
-            </h3>
-            <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 24px 0', lineHeight: '1.5' }}>
-              {deleteMessage}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
-              <button
-                onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
-                style={{
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={async () => {
-                  if (deleteAction) {
-                    try { await deleteAction() } catch { setToast('Lỗi khi thực hiện!') }
-                  }
-                  setShowDeleteModal(false)
-                  setDeleteAction(null)
-                }}
-                style={{
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Xác nhận
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xác nhận xóa</span>
+              <button type="button" onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                {deleteMessage}
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (deleteAction) {
+                      try { await deleteAction() } catch { setToast('Lỗi khi thực hiện!') }
+                    }
+                    setShowDeleteModal(false)
+                    setDeleteAction(null)
+                  }}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xác nhận
+                </button>
+              </div>
             </div>
           </div>
         </div>

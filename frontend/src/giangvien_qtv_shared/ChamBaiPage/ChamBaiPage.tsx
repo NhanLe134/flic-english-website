@@ -89,13 +89,13 @@ const ChamBaiPage = () => {
 
   // ── Normalize type ─────────────────────────────────────────────────────────
   const normalizedType: string =
-    ["writing", "reading", "essay"].includes(exType)     ? "essay"      :
-    ["Tổng hợp", "quiz", "trắc nghiệm"].includes(exType) ? "Tổng hợp"   :
-    ["listening", "nghe"].includes(exType)               ? "listening"  :
+    ["writing", "reading", "essay", "viết đoạn văn ngắn", "nghe chép chính tả", "luyện phát âm (check phát âm tự động)", "sắp xếp từ thành câu", "sắp xếp câu thành đoạn văn", "tìm lỗi sai"].includes(exType) ? "essay" :
+    ["tổng hợp", "quiz", "trắc nghiệm"].includes(exType) ? "Tổng hợp" :
+    ["listening", "nghe", "nghe audio trắc nghiệm", "hình ảnh chọn đáp án"].includes(exType) ? "listening" :
     ["matching", "ghép"].includes(exType)                ? "matching"   :
-    ["connect", "nối"].includes(exType)                  ? "connect"    :
+    ["connect", "nối", "nối từ"].includes(exType)         ? "connect"    :
     ["ordering", "sắp xếp"].includes(exType)             ? "ordering"   :
-    ["speaking", "nói"].includes(exType)                 ? "speaking"   :
+    ["speaking", "nói", "nói theo chủ đề (ghi âm nộp gv)"].includes(exType) ? "speaking" :
     ["vocabulary", "từ vựng", "vocab"].includes(exType)  ? "vocabulary" :
     exType;
 
@@ -599,7 +599,7 @@ const ChamBaiPage = () => {
         ) : !(isExam || hasSections) && parsedSubmission ? (
           /* ── CASE 2: REGULAR MULTIPLE QUESTIONS (JSON LIST) ── */
           <div>
-            {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "Nghe audio trắc nghiệm" && (
+            {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "nghe audio trắc nghiệm" && (
               <div style={{
                 background: "#fff",
                 border: "1.5px solid #e0d8cc",

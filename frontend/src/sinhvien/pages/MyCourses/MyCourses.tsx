@@ -117,7 +117,9 @@ function MyCourses() {
         fetch(`${API}/classes/${classId}/tailieu`).then(r => r.json())
       ]);
 
-      const lessonsList = Array.isArray(lessonsRes) ? lessonsRes : [];
+      const lessonsList = Array.isArray(lessonsRes)
+        ? lessonsRes.filter((l: any) => l.TrangThai !== "Chờ mở")
+        : [];
       const exercisesList = Array.isArray(exercisesRes)
         ? exercisesRes.map((ex: any) => ({
             ...ex,

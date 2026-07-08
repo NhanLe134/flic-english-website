@@ -1187,16 +1187,6 @@ function BaiGiangSV() {
               }}>
                 {baiGiang.LoaiBaiHoc}
               </span>
-              <span style={{
-                background: "#f1f5f9",
-                color: "#475569",
-                fontSize: "11px",
-                fontWeight: 700,
-                padding: "4px 8px",
-                borderRadius: "6px"
-              }}>
-                ⏱ {baiGiang.ThoiLuong || "N/A"}
-              </span>
             </div>
           </div>
 

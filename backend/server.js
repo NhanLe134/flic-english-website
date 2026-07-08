@@ -4425,7 +4425,17 @@ app.put("/classes/:id/active-buoihoc", async (req, res) => {
       .query(`
         UPDATE LOPHOC 
         SET ActiveBuoiHocId = @activeBuoiHocId 
-        WHERE MaLopHoc = @classId
+        WHERE MaLopHoc = @classId;
+
+        IF @activeBuoiHocId IS NOT NULL
+        BEGIN
+            DECLARE @activeThuTu INT;
+            SELECT @activeThuTu = ThuTu FROM BUOIHOC WHERE MaBuoiHoc = @activeBuoiHocId;
+
+            UPDATE BUOIHOC
+            SET TrangThai = N'Đã mở'
+            WHERE MaLopHoc = @classId AND ThuTu <= @activeThuTu;
+        END
       `)
     res.json({ message: "Cập nhật buổi học đang học thành công" })
   } catch (err) { res.status(500).send(err.message) }
@@ -4548,7 +4558,7 @@ app.get("/exercises/list/all", async (req, res) => {
     let query = `
       SELECT DISTINCT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                       CAST(e.LaBaiKiemTra AS INT) AS IsExam,
-                      e.NgayTao AS CreatedDate, l.TenLop, ls.TenBuoiHoc
+                      e.NgayTao AS CreatedDate, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM BAITAP e
       JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
       JOIN BUOIHOC ls ON bh.MaBuoiHoc = ls.MaBuoiHoc
@@ -4595,7 +4605,7 @@ app.get("/tailieu/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc
+      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM TAILIEU t
       JOIN BUOIHOC ls ON t.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
@@ -4640,7 +4650,7 @@ app.get("/baigiang/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, l.TenLop, ls.TenBuoiHoc
+      SELECT DISTINCT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM BAIHOCKHOAHOC b
       JOIN BUOIHOC ls ON b.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
@@ -4682,7 +4692,7 @@ app.get("/baigiang/list/all", async (req, res) => {
 // Clone bài tập
 app.post("/exercises/:id/clone", async (req, res) => {
   try {
-    const { MaBuoiHoc } = req.body;
+    const { MaBuoiHoc, MaBaiHoc } = req.body;
     if (!MaBuoiHoc) return res.status(400).json({ message: "Thiếu MaBuoiHoc" });
     const pool = await poolPromise;
     
@@ -4697,21 +4707,23 @@ app.post("/exercises/:id/clone", async (req, res) => {
     const ex = orig.recordset[0];
     const today = new Date().toISOString().split('T')[0];
 
-    let targetMaBaiHoc = null;
-    const bhResult = await pool.request()
-      .input("buoiHocId", MaBuoiHoc)
-      .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
-    if (bhResult.recordset.length > 0) {
-      targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-    } else {
-      const insertBh = await pool.request()
+    let targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
+    if (!targetMaBaiHoc) {
+      const bhResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
-        .query(`
-          INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
-          VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
-          SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-        `);
-      targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+      if (bhResult.recordset.length > 0) {
+        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+      } else {
+        const insertBh = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`
+            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
+            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+          `);
+        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+      }
     }
     
     await pool.request()
@@ -5462,8 +5474,30 @@ const initDb = async () => {
       BEGIN
           ALTER TABLE dbo.BAIKIEMTRA ALTER COLUMN MaGiangVien INT NULL;
       END
+
+      -- Thêm cột TrangThai vào BUOIHOC và đồng bộ dữ liệu cũ
+      IF NOT EXISTS (
+          SELECT * FROM sys.columns 
+          WHERE object_id = OBJECT_ID('dbo.BUOIHOC') AND name = 'TrangThai'
+      )
+      BEGIN
+          ALTER TABLE dbo.BUOIHOC ADD TrangThai NVARCHAR(50) NOT NULL DEFAULT N'Chờ mở';
+
+          -- Chạy lệnh UPDATE dưới dạng SQL động để tránh lỗi biên dịch của SQL Server khi cột TrangThai chưa tồn tại
+          EXEC sp_executesql N'
+              UPDATE b 
+              SET b.TrangThai = N''Đã mở''
+              FROM dbo.BUOIHOC b
+              INNER JOIN dbo.LOPHOC l ON b.MaLopHoc = l.MaLopHoc
+              WHERE b.ThuTu <= (
+                  SELECT active_bh.ThuTu 
+                  FROM dbo.BUOIHOC active_bh 
+                  WHERE active_bh.MaBuoiHoc = l.ActiveBuoiHocId
+              );
+          ';
+      END
     `)
-    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, and MaNguoiDung columns checked/added).")
+    console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, BUOIHOC TrangThai, and MaNguoiDung columns checked/added).")
   } catch (err) {
     console.error("Database initialization error:", err.message)
   }
