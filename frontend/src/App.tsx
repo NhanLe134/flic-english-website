@@ -78,6 +78,7 @@ import TestExamPage from "./sinhvien/pages/TestExamPage"
 import ClassDetailTrial from "./sinhvien/pages/ClassDetail/ClassDetailTrial"
 import NavTuDong from "./components/NavTuDong/NavTuDong"
 import Footer from "./components/Footer/Footer"
+import { MobileNoticeProvider, useMobileNotice } from "./context/MobileNoticeContext"
 
 const ClassDetailTrialPublic = () => {
   return (
@@ -94,6 +95,22 @@ const ClassDetailTrialPublic = () => {
 };
 
 
+const MobileNoticeTrigger = () => {
+  const { showMobileNotice } = useMobileNotice();
+  useEffect(() => {
+    const handleShow = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const role = customEvent.detail?.role || "Học Viên";
+      showMobileNotice(role);
+    };
+    window.addEventListener("show-mobile-notice", handleShow);
+    return () => {
+      window.removeEventListener("show-mobile-notice", handleShow);
+    };
+  }, [showMobileNotice]);
+  return null;
+};
+
 function App() {
   useEffect(() => {
     try {
@@ -108,8 +125,9 @@ function App() {
 
   return (
     <BrowserRouter basename={window.location.pathname.startsWith("/flic-english-website") ? "/flic-english-website" : ""}>
-      <Routes>
-        {/* PUBLIC */}
+      <MobileNoticeProvider>
+        <MobileNoticeTrigger />
+        <Routes>
         <Route path="/" element={<TrangChu />} />
         <Route path="/about" element={<VeChuongToi />} />
         <Route path="/courses" element={<CoursesPageHome />} />
@@ -228,6 +246,7 @@ function App() {
         </Route>
       </Routes>
       <PopupXacThuc />
+      </MobileNoticeProvider>
     </BrowserRouter>
   )
 }

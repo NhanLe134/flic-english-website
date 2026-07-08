@@ -9,7 +9,7 @@ interface LoginProps {
   onClose?: () => void;
 }
 
-const Login = ({ isModal = false }: LoginProps) => {
+const Login = ({ isModal = false, onClose }: LoginProps) => {
   const navigate  = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -54,6 +54,15 @@ const Login = ({ isModal = false }: LoginProps) => {
       const roleRes  = await fetch(`${API}/users/role/${data.MaNguoiDung}`)
       const roleData = await roleRes.json()
       const vaiTro   = roleData?.VaiTro || "Học Viên"
+
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        // Nếu là điện thoại, hiển thị popup thông báo và đưa về trang chủ chưa đăng nhập
+        if (onClose) onClose();
+        // Trigger show mobile notice popup thông qua custom event
+        window.dispatchEvent(new CustomEvent("show-mobile-notice", { detail: { role: vaiTro } }));
+        return;
+      }
 
       sessionStorage.setItem("user", JSON.stringify({ ...data, VaiTro: vaiTro }))
 
