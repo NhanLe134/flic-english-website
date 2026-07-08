@@ -128,6 +128,14 @@ function ChiTietBaiTap({
 
   const { submitting, handleSubmit } = submitter;
 
+  const handleWrappedSubmit = (answers: any) => {
+    if (isPreview) {
+      console.log("Submit disabled in preview mode");
+      return;
+    }
+    handleSubmit(answers);
+  };
+
   // Layout navigation buttons logic
   const [showBackBtn, setShowBackBtn] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -219,7 +227,7 @@ function ChiTietBaiTap({
         setExamSecondsLeft(secLeft);
         if (secLeft <= 0) {
           clearInterval(interval);
-          handleSubmit({
+          handleWrappedSubmit({
             mcAnswers, essayAnswers, recordedBlobs, recordedUrls: recorder.recordedUrls,
             fillInAnswers, spokenTexts: recorder.spokenTexts, speechScores: recorder.speechScores,
             orderedWords, shuffledSentences
@@ -431,14 +439,14 @@ function ChiTietBaiTap({
           setSpeechScores={recorder.setSpeechScores}
           isListeningSTT={isListeningSTT}
           setIsListeningSTT={setIsListeningSTT}
-          handleSubmit={handleSubmit}
+          handleSubmit={handleWrappedSubmit}
         />
       )}
 
       {/* 7. Nút Nộp Bài góc dưới */}
       {!submitted && !isReview && (
         <button
-          onClick={() => handleSubmit({
+          onClick={() => handleWrappedSubmit({
             mcAnswers, essayAnswers, recordedBlobs, recordedUrls: recorder.recordedUrls,
             fillInAnswers, spokenTexts: recorder.spokenTexts, speechScores: recorder.speechScores,
             orderedWords, shuffledSentences

@@ -936,6 +936,14 @@ app.put("/qtv/lophoc/:id", async (req, res) => {
             SET TrangThai = N'Hoàn thành' 
             WHERE MaLopHoc = @id AND TrangThai = N'Đang học'
           `);
+      } else if (TrangThai === "Đang diễn ra") {
+        await pool.request()
+          .input("id", req.params.id)
+          .query(`
+            UPDATE SINHVIEN_LOPHOC 
+            SET TrangThai = N'Đang học' 
+            WHERE MaLopHoc = @id AND TrangThai = N'Hoàn thành'
+          `);
       }
     }
 
@@ -1913,7 +1921,7 @@ app.get("/classes/:id/info", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
+          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
           COALESCE((
             SELECT TOP 1 
               CASE 
@@ -2531,8 +2539,14 @@ app.post("/baitap/create", async (req, res) => {
         if (Content) {
           const parsedContent = JSON.parse(Content);
           durationVal = parsedContent.duration || durationVal;
-          startTimeVal = parsedContent.startTime || startTimeVal;
-          deadlineVal = parsedContent.deadline || deadlineVal;
+          if (parsedContent.startTime) {
+            const dStart = new Date(parsedContent.startTime);
+            if (!isNaN(dStart.getTime())) startTimeVal = dStart;
+          }
+          if (parsedContent.deadline) {
+            const dDead = new Date(parsedContent.deadline);
+            if (!isNaN(dDead.getTime())) deadlineVal = dDead;
+          }
         }
       } catch (err) {
         console.error("Error parsing exam content JSON:", err);
@@ -2591,7 +2605,13 @@ app.post("/baitap/create", async (req, res) => {
       if (Content && typeof Content === "string" && Content.trim().startsWith("{")) {
         try {
           const parsed = JSON.parse(Content);
-          deadlineVal = parsed.deadline || parsed.deadlineDate || null;
+          const rawDeadline = parsed.deadline || parsed.deadlineDate || null;
+          if (rawDeadline) {
+            const d = new Date(rawDeadline);
+            if (!isNaN(d.getTime())) {
+              deadlineVal = d;
+            }
+          }
         } catch (e) {
           console.error("Error parsing content for deadline in create:", e);
         }
@@ -3172,7 +3192,7 @@ app.get("/teacher/classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT DISTINCT
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
+          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
           COALESCE((
             SELECT TOP 1 
               CASE 
@@ -3919,14 +3939,14 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
+          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
           k.TenKhoaHoc,
           sl.TrangThai, sl.NgayGhiDanh
         FROM SINHVIEN_LOPHOC sl
         JOIN LOPHOC l ON sl.MaLopHoc = l.MaLopHoc
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
         JOIN KHOAHOC k ON kc.MaKhoaHoc = k.MaKhoaHoc
-        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Đã hoàn thành') AND (l.TrangThai IS NULL OR l.TrangThai != N'Chưa bắt đầu')
+        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Hoàn thành' OR sl.TrangThai = N'Đã hoàn thành') AND (l.TrangThai IS NULL OR l.TrangThai != N'Chưa bắt đầu')
         ORDER BY sl.NgayGhiDanh DESC
       `);
 
@@ -4295,7 +4315,7 @@ app.get("/student/progress/classes/:maNguoiDung", async (req, res) => {
         LEFT JOIN PHANCONGGIANGVIEN pc ON lh.MaLopHoc = pc.MaLopHoc
         LEFT JOIN GIANGVIEN gv ON pc.MaGiangVien = gv.MaGiangVien
         LEFT JOIN NGUOIDUNG nd ON gv.MaNguoiDung = nd.MaNguoiDung
-        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Đã hoàn thành') AND (lh.TrangThai IS NULL OR lh.TrangThai != N'Chưa bắt đầu')
+        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Hoàn thành' OR sl.TrangThai = N'Đã hoàn thành') AND (lh.TrangThai IS NULL OR lh.TrangThai != N'Chưa bắt đầu')
       `);
 
     const classesMap = {};
