@@ -53,7 +53,7 @@ const CoursesCategoryPage = () => {
         fetch(`${API}/admin/khoahoc`)
           .then(r => r.json())
           .then(data => setCourses(
-            Array.isArray(data) ? data.filter((c: any) => c.TrangThai === "Đã duyệt") : []
+            Array.isArray(data) ? data.filter((c: any) => c.TrangThai === "Hiển thị") : []
           ))
           .catch(() => setCourses([]))
       })

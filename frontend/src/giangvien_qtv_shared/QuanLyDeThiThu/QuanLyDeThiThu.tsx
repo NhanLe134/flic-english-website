@@ -17,6 +17,8 @@ import {
   FiX
 } from "react-icons/fi";
 
+const API = window.location.hostname === "localhost" ? "http://localhost:5000" : "http://14.225.192.252:5000";
+
 interface CauHoi {
   id: number;
   noiDung: string;
@@ -457,7 +459,7 @@ const QuanLyDeThiThu = () => {
     }
 
     try {
-      const res = await fetch(`http://14.225.192.252:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
+      const res = await fetch(`${API}/dethi/submissions/${selectedSubmission.id}/grade`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -485,7 +487,7 @@ const QuanLyDeThiThu = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://14.225.192.252:5000/upload", {
+    const res = await fetch(`${API}/upload`, {
       method: "POST",
       body: formData
     });
@@ -567,7 +569,7 @@ const QuanLyDeThiThu = () => {
 
   const loadTests = async () => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/dethi");
+      const res = await fetch(`${API}/dethi`);
       if (res.ok) {
         const data = await res.json();
         const mappedTests = data.map((t: any) => ({
@@ -615,7 +617,7 @@ const QuanLyDeThiThu = () => {
 
   const loadSubmissions = async () => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/dethi/submissions");
+      const res = await fetch(`${API}/dethi/submissions`);
       if (res.ok) {
         const data = await res.json();
         setSubmissions(data);
@@ -673,6 +675,17 @@ const QuanLyDeThiThu = () => {
       return () => {
         window.removeEventListener("popstate", handlePopState);
       };
+    }
+  }, [editingTest]);
+
+  // Check for pending toast notification when returning to the test list view
+  useEffect(() => {
+    if (!editingTest) {
+      const pendingToast = sessionStorage.getItem("pending_test_toast");
+      if (pendingToast) {
+        showToast(pendingToast);
+        sessionStorage.removeItem("pending_test_toast");
+      }
     }
   }, [editingTest]);
 
@@ -746,13 +759,14 @@ const QuanLyDeThiThu = () => {
     };
 
     try {
-      const res = await fetch("http://14.225.192.252:5000/dethi", {
+      const res = await fetch(`${API}/dethi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData)
       });
       if (res.ok) {
         await loadTests();
+        showToast("Đã nhân bản đề thi thành công! 📑");
       } else {
         alert("Lỗi sao chép đề thi.");
       }
@@ -768,6 +782,7 @@ const QuanLyDeThiThu = () => {
       const updated = [clonedTest, ...tests];
       localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
       setTests(updated);
+      showToast("Đã nhân bản đề thi thành công! 📑");
     }
   };
 
@@ -1245,13 +1260,13 @@ D. Visiting friends
     try {
       let response;
       if (isNew) {
-        response = await fetch("http://14.225.192.252:5000/dethi", {
+        response = await fetch(`${API}/dethi`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
         });
       } else {
-        response = await fetch(`http://14.225.192.252:5000/dethi/${editingTest.MaBaiTest}`, {
+        response = await fetch(`${API}/dethi/${editingTest.MaBaiTest}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
@@ -1260,6 +1275,17 @@ D. Visiting friends
 
       if (response.ok) {
         await loadTests();
+        
+        let msg = "";
+        if (statusToSet === "published") {
+          msg = isNew 
+            ? (isQTV ? "Đăng tải đề thi mới thành công! 🎉" : "Đã gửi yêu cầu duyệt đề thi mới! ✉️")
+            : "Cập nhật đề thi thành công! 🎉";
+        } else {
+          msg = isNew ? "Đã lưu bản nháp đề thi mới! 💾" : "Đã lưu bản nháp đề thi thành công! 💾";
+        }
+        sessionStorage.setItem("pending_test_toast", msg);
+
         isExitingRef.current = true;
         setEditingTest(null);
         window.history.back();
@@ -1286,6 +1312,17 @@ D. Visiting friends
 
       localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
       setTests(updated);
+      
+      let msg = "";
+      if (statusToSet === "published") {
+        msg = isNew 
+          ? (isQTV ? "Đăng tải đề thi mới thành công! 🎉" : "Đã gửi yêu cầu duyệt đề thi mới! ✉️")
+          : "Cập nhật đề thi thành công! 🎉";
+      } else {
+        msg = isNew ? "Đã lưu bản nháp đề thi mới! 💾" : "Đã lưu bản nháp đề thi thành công! 💾";
+      }
+      sessionStorage.setItem("pending_test_toast", msg);
+
       isExitingRef.current = true;
       setEditingTest(null);
       window.history.back();
@@ -3201,11 +3238,12 @@ D. Visiting friends
                       const isNew = testIdToDelete > 1000000000000;
                       if (!isNew) {
                         try {
-                          const res = await fetch(`http://14.225.192.252:5000/dethi/${testIdToDelete}`, {
+                          const res = await fetch(`${API}/dethi/${testIdToDelete}`, {
                             method: "DELETE"
                           });
                           if (res.ok) {
                             await loadTests();
+                            showToast("Đã xóa đề thi thành công! 🗑️");
                           } else {
                             alert("Lỗi khi xóa đề thi trên máy chủ.");
                           }
@@ -3214,11 +3252,13 @@ D. Visiting friends
                           const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
                           localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
                           setTests(updated);
+                          showToast("Đã xóa đề thi thành công! 🗑️");
                         }
                       } else {
                         const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
                         localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
                         setTests(updated);
+                        showToast("Đã xóa đề thi thành công! 🗑️");
                       }
                     }
                     setShowDeleteConfirmPopup(false);

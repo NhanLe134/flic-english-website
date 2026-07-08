@@ -309,7 +309,7 @@ app.post("/login", async (req, res) => {
 app.get("/courses", async (req, res) => {
   try {
     const pool = await poolPromise;
-    const result = await pool.request().query(`SELECT MaKhoaHoc, TenKhoaHoc, MoTa, TrinhDo FROM KHOAHOC ORDER BY NgayTao DESC`);
+    const result = await pool.request().query(`SELECT MaKhoaHoc, TenKhoaHoc, MoTa, TrinhDo, TrangThai FROM KHOAHOC WHERE TrangThai = N'Hiển thị' ORDER BY NgayTao DESC`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -341,7 +341,7 @@ app.post("/qtv/khoahoc", async (req, res) => {
       .query(`
         INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao)
         OUTPUT INSERTED.MaKhoaHoc
-        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @Listening, @Reading, @Speaking, @Writing, 'Pending', @MaNguoiDung, GETDATE())
+        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @Listening, @Reading, @Speaking, @Writing, N'Ẩn', @MaNguoiDung, GETDATE())
       `)
     const newId = result.recordset[0].MaKhoaHoc
     res.json({
@@ -606,7 +606,7 @@ app.get("/teacher/courses/:maNguoiDung", async (req, res) => {
         INNER JOIN LOPHOC l ON kc.MaLop = l.MaLop
         INNER JOIN PHANCONGGIANGVIEN p ON l.MaLopHoc = p.MaLopHoc
         INNER JOIN GIANGVIEN g ON p.MaGiangVien = g.MaGiangVien
-        WHERE g.MaNguoiDung = @maNguoiDung
+        WHERE g.MaNguoiDung = @maNguoiDung AND k.TrangThai = N'Hiển thị'
         GROUP BY k.MaKhoaHoc, k.TenKhoaHoc, k.TrinhDo
       `)
     res.json(result.recordset)
@@ -2443,11 +2443,11 @@ app.get("/admin/stats", async (req, res) => {
     });
   } catch (err) { res.status(500).send(err.message); }
 });
-// Lấy danh sách khóa học cho admin
 app.get("/admin/khoahoc", async (req, res) => {
   try {
+    const showAll = req.query.all === "true" || req.query.all === true;
     const pool = await poolPromise;
-    const result = await pool.request().query(`
+    let queryStr = `
       SELECT 
         kh.MaKhoaHoc,
         kh.TenKhoaHoc,
@@ -2477,7 +2477,13 @@ app.get("/admin/khoahoc", async (req, res) => {
           WHERE khct.MaKhoaHoc = kh.MaKhoaHoc
         ) AS SoLop
       FROM KHOAHOC kh
-    `);
+    `;
+    
+    if (!showAll) {
+      queryStr += ` WHERE kh.TrangThai = N'Hiển thị'`;
+    }
+    
+    const result = await pool.request().query(queryStr);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -3767,7 +3773,7 @@ app.get("/courses/public", async (req, res) => {
           WHERE khct.MaKhoaHoc = k.MaKhoaHoc
         ) AS HoTen
       FROM KHOAHOC k
-      WHERE k.TrangThai = N'Đã duyệt'
+      WHERE k.TrangThai = N'Hiển thị'
       ORDER BY k.NgayTao DESC
     `)
     res.json(result.recordset)
@@ -3833,7 +3839,7 @@ app.get("/courses/:id/detail", async (req, res) => {
             WHERE khct.MaKhoaHoc = k.MaKhoaHoc
           ) AS HoTen
         FROM KHOAHOC k
-        WHERE k.MaKhoaHoc = @id AND k.TrangThai = N'Đã duyệt'
+        WHERE k.MaKhoaHoc = @id AND k.TrangThai = N'Hiển thị'
       `)
     res.json(result.recordset[0] || null)
   } catch (err) { res.status(500).send(err.message) }
