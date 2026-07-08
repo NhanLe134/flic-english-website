@@ -617,7 +617,11 @@ const TaoBaiTap = () => {
         alert("Chọn bài tập thành công!");
         const isQTVPath = location.pathname.startsWith("/QTV");
         if (isQTVPath) {
-          setTimeout(() => navigate("/QTV/khoahoc"), 1500);
+          if (location.state?.fromPage === "kho-hoc-lieu") {
+            setTimeout(() => navigate("/QTV/kho-hoc-lieu"), 1500);
+          } else {
+            setTimeout(() => navigate("/QTV/khoahoc"), 1500);
+          }
         } else {
           setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
         }
@@ -2073,15 +2077,21 @@ const TaoBaiTap = () => {
       setShowSuccess(true);
       const isQTVPath = location.pathname.startsWith("/QTV");
       if (isQTVPath) {
-        setTimeout(() => {
-          navigate("/QTV/khoahoc", {
-            state: {
-              openClassId: fromClassId,
-              openCourseId: fromCourseId,
-              activeTab: "roadmap"
-            }
-          });
-        }, 1500);
+        if (location.state?.fromPage === "kho-hoc-lieu") {
+          setTimeout(() => {
+            navigate("/QTV/kho-hoc-lieu");
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            navigate("/QTV/khoahoc", {
+              state: {
+                openClassId: fromClassId,
+                openCourseId: fromCourseId,
+                activeTab: "roadmap"
+              }
+            });
+          }, 1500);
+        }
       } else {
         setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
       }
@@ -2097,13 +2107,17 @@ const TaoBaiTap = () => {
     <div className="ce-wrapper" style={isQTV ? { padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
       <div className="back" onClick={() => {
         if (isQTV) {
-          navigate("/QTV/khoahoc", {
-            state: {
-              openClassId: fromClassId,
-              openCourseId: fromCourseId,
-              activeTab: "roadmap"
-            }
-          });
+          if (location.state?.fromPage === "kho-hoc-lieu") {
+            navigate("/QTV/kho-hoc-lieu");
+          } else {
+            navigate("/QTV/khoahoc", {
+              state: {
+                openClassId: fromClassId,
+                openCourseId: fromCourseId,
+                activeTab: "roadmap"
+              }
+            });
+          }
         } else {
           navigate(-1);
         }
