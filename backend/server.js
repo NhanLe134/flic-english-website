@@ -2359,8 +2359,14 @@ app.post("/baitap/create", async (req, res) => {
         if (Content) {
           const parsedContent = JSON.parse(Content);
           durationVal = parsedContent.duration || durationVal;
-          startTimeVal = parsedContent.startTime || startTimeVal;
-          deadlineVal = parsedContent.deadline || deadlineVal;
+          if (parsedContent.startTime) {
+            const dStart = new Date(parsedContent.startTime);
+            if (!isNaN(dStart.getTime())) startTimeVal = dStart;
+          }
+          if (parsedContent.deadline) {
+            const dDead = new Date(parsedContent.deadline);
+            if (!isNaN(dDead.getTime())) deadlineVal = dDead;
+          }
         }
       } catch (err) {
         console.error("Error parsing exam content JSON:", err);
@@ -2419,7 +2425,13 @@ app.post("/baitap/create", async (req, res) => {
       if (Content && typeof Content === "string" && Content.trim().startsWith("{")) {
         try {
           const parsed = JSON.parse(Content);
-          deadlineVal = parsed.deadline || parsed.deadlineDate || null;
+          const rawDeadline = parsed.deadline || parsed.deadlineDate || null;
+          if (rawDeadline) {
+            const d = new Date(rawDeadline);
+            if (!isNaN(d.getTime())) {
+              deadlineVal = d;
+            }
+          }
         } catch (e) {
           console.error("Error parsing content for deadline in create:", e);
         }

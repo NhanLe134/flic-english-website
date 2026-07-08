@@ -16,24 +16,19 @@ const QuanLyKetQuaHocTap = () => {
 
     fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
-      .then(async (data) => {
-        // Fetch số học viên thực tế cho từng lớp
-        const withStudents = await Promise.all(
-          data.map(async (c: any) => {
-            try {
-              const res = await fetch(`http://14.225.192.252:5000/lophoc/${c.MaLopHoc}/students/count`);
-              const json = await res.json();
-              return { ...c, SoLuongHocVien: json?.SoLuongHocVien ?? 0 };
-            } catch {
-              return { ...c, SoLuongHocVien: 0 };
-            }
-          })
-        );
-        setClasses(withStudents);
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          // Chuyển hướng ngay lập tức tới lớp học phụ trách đầu tiên
+          navigate(`/lesson-result/${data[0].MaLopHoc}`, { replace: true });
+        } else {
+          setLoading(false);
+        }
       })
-      .catch(err => console.log(err))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(err => {
+        console.log(err);
+        setLoading(false);
+      });
+  }, [navigate]);
 
 
 

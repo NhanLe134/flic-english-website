@@ -304,189 +304,204 @@ const ClassDetail = () => {
           {filteredExercises.length === 0 ? (
             <div className="lesson-tab-empty">Chưa có bài tập nào cho buổi học này.</div>
           ) : (
-            <div className="lesson-card-grid">
-              {filteredExercises.map((ex: any) => (
-                <div key={ex.MaBaiTap} className="lesson-content-card" style={{ height: '200px', display: 'flex', flexDirection: 'column' }}>
-                  <div className="lesson-content-head">
-                    <h4>{ex.Title}</h4>
-                    {ex.TrangThai !== "practice" && (
-                      <span className={`content-status ${ex.TrangThai || "pending"}`}>
-                        {ex.TrangThai === "published" ? "Đã duyệt" : ex.TrangThai === "rejected" ? "Từ chối" : "Chờ duyệt"}
-                      </span>
-                    )}
-                  </div>
+            <div className="doc-list" style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+              {filteredExercises.map((ex: any) => {
+                let parsedContent: any = {};
+                try {
+                  if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                } catch (e) {}
+                const isExam = ex.IsExam === 1 || ex.Type === "exam" || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
 
-                  {(() => {
-                    let parsedContent: any = {};
-                    try {
-                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
-                    } catch (e) {}
-                    const isExam = ex.IsExam === 1 || ex.Type === "exam" || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
-                    
-                    let label = "BaiTap";
-                    let color = "#000080";
-                    let bg = "#e0e7ff";
-                    
-                    if (ex.TrangThai === "practice") {
-                      label = "LuyenTapThem";
-                      color = "#c2410c";
-                      bg = "#ffedd5";
-                    } else if (isExam) {
-                      label = "BaiKTra";
-                      color = "#b91c1c";
-                      bg = "#fee2e2";
-                    }
+                let typeLabel = "BaiTap";
+                let typeColor = "#000080";
+                let typeBg = "#e0e7ff";
+                if (ex.TrangThai === "practice") {
+                  typeLabel = "LuyenTapThem";
+                  typeColor = "#c2410c";
+                  typeBg = "#ffedd5";
+                } else if (isExam) {
+                  typeLabel = "BaiKTra";
+                  typeColor = "#b91c1c";
+                  typeBg = "#fee2e2";
+                }
 
-                    return (
-                      <span style={{
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: color,
-                        background: bg,
-                        padding: "3px 8px",
-                        borderRadius: "12px",
-                        display: "inline-block",
-                        width: "fit-content",
-                        marginTop: "4px",
-                        marginBottom: "12px"
-                      }}>
-                        {label}
-                      </span>
-                    );
-                  })()}
-                  
-                  {(() => {
-                    let parsedContent: any = {};
-                    try {
-                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
-                    } catch (e) {}
-                    const isExam = ex.Type === "exam" || ex.IsExam === 1 || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
-                    if (!isExam) return null;
+                const isPractice = ex.TrangThai === "practice";
 
-                    const isManual = parsedContent.openingMode === "manual";
-                    const isOpened = !!parsedContent.isOpened;
-                    const isApproved = ex.TrangThai === "published";
-
-                    if (!isApproved) return null;
-
-                    return (
-                      <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                return (
+                  <div
+                    key={ex.MaBaiTap}
+                    className="doc-card"
+                    style={{
+                      background: "white",
+                      padding: "12px 20px",
+                      borderRadius: "10px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      border: "1px solid #eef2f6",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.03)";
+                      e.currentTarget.style.borderColor = "#cbd5e1";
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.boxShadow = "none";
+                      e.currentTarget.style.borderColor = "#eef2f6";
+                    }}
+                  >
+                    <div className="doc-left" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <h3 style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: 600, color: "#1e293b" }}>
+                        {ex.Title}
+                      </h3>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         <span style={{
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          color: !isApproved ? "#F95800" : isManual ? (isOpened ? "#16a34a" : "#64748b") : "#b45309",
-                          background: !isApproved ? "#fff3e0" : isManual ? (isOpened ? "#dcfce7" : "#f1f5f9") : "#fef3c7",
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          width: "fit-content"
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          color: typeColor,
+                          background: typeBg,
+                          padding: "3px 8px",
+                          borderRadius: "12px",
+                          display: "inline-block",
+                          whiteSpace: "nowrap"
                         }}>
-                          {isManual ? (isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề ") : "🕒 Tự động mở theo lịch"}
+                          {typeLabel}
                         </span>
-                        {isApproved && isManual && (
+
+                        {!isPractice && (
+                          <span className={`content-status ${ex.TrangThai || "pending"}`} style={{ display: "inline-block" }}>
+                            {ex.TrangThai === "published" ? "Đã duyệt" : ex.TrangThai === "rejected" ? "Từ chối" : "Chờ duyệt"}
+                          </span>
+                        )}
+
+                        {(() => {
+                          if (!isExam) return null;
+                          const isManual = parsedContent.openingMode === "manual";
+                          const isOpened = !!parsedContent.isOpened;
+                          const isApproved = ex.TrangThai === "published";
+
+                          if (!isApproved) return <span style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600 }}>Chờ duyệt đề</span>;
+
+                          return (
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                color: isManual ? (isOpened ? "#16a34a" : "#64748b") : "#b45309",
+                                background: isManual ? (isOpened ? "#dcfce7" : "#f1f5f9") : "#fef3c7",
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                whiteSpace: "nowrap"
+                              }}>
+                                {isManual ? (isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề ") : "🕒 Tự động mở theo lịch"}
+                              </span>
+                              {isApproved && isManual && (
+                                <button
+                                  onClick={() => handleToggleOpen(ex.MaBaiTap)}
+                                  style={{
+                                    background: isOpened ? "#fff" : "#F95800",
+                                    color: isOpened ? "#64748b" : "#fff",
+                                    border: isOpened ? "1.5px solid #cbd5e1" : "none",
+                                    padding: "3px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "11px",
+                                    fontWeight: "700",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease"
+                                  }}
+                                >
+                                  {isOpened ? "Khóa" : "Mở"}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <div className="doc-right" style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                      <span className="doc-date" style={{ fontSize: "12.5px", color: "#64748b", marginRight: "8px", whiteSpace: "nowrap" }}>
+                        ⏱ Cập nhật: {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có"}
+                      </span>
+
+                      <button
+                        onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
+                        style={{
+                          background: "#e0e7ff",
+                          border: "1px solid #c7d2fe",
+                          color: "#4f46e5",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "30px",
+                          height: "30px",
+                          borderRadius: "50%",
+                          transition: "all 0.2s",
+                          flexShrink: 0
+                        }}
+                        title="Xem chi tiết"
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = "#c7d2fe";
+                          e.currentTarget.style.color = "#3730a3";
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = "#e0e7ff";
+                          e.currentTarget.style.color = "#4f46e5";
+                        }}
+                      >
+                        <FiEye size={15} />
+                      </button>
+
+                      {(() => {
+                        const canDelete = isPractice 
+                          ? hasPermission("EXTRA_PRACTICE_CREATE")
+                          : (isExam ? hasPermission("QUIZ_CREATE") : hasPermission("BAITAP_CREATE"));
+                        
+                        if (!canDelete) return null;
+
+                        return (
                           <button
-                            onClick={() => handleToggleOpen(ex.MaBaiTap)}
+                            onClick={() => {
+                              setSelectedId(Number(ex.MaBaiTap));
+                              setShowDeleteModal(true);
+                            }}
                             style={{
-                              background: isOpened ? "#fff" : "#F95800",
-                              color: isOpened ? "#64748b" : "#fff",
-                              border: isOpened ? "1.5px solid #cbd5e1" : "none",
-                              padding: "5px 10px",
-                              borderRadius: "6px",
-                              fontSize: "12px",
-                              fontWeight: "700",
+                              background: "#fee2e2",
+                              border: "1px solid #fecaca",
+                              color: "#ef4444",
                               cursor: "pointer",
-                              transition: "all 0.2s ease",
-                              width: "fit-content"
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "30px",
+                              height: "30px",
+                              borderRadius: "50%",
+                              transition: "all 0.2s",
+                              flexShrink: 0
+                            }}
+                            title="Xóa bài tập"
+                            onMouseOver={e => {
+                              e.currentTarget.style.background = "#fca5a5";
+                              e.currentTarget.style.color = "#b91c1c";
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.background = "#fee2e2";
+                              e.currentTarget.style.color = "#ef4444";
                             }}
                           >
-                            {isOpened ? "Khóa đề" : "Mở đề"}
+                            <FiTrash2 size={14} />
                           </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <span className="content-date">
-                    <FiCalendar size={14} />
-                    {ex.CreatedDate ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN") : "Chưa có ngày tạo"}
-                  </span>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
-                    <button
-                      onClick={() => navigate(`/baitap-detail/${ex.MaBaiTap}/${id}`)}
-                      style={{
-                        background: "#e0e7ff",
-                        border: "1px solid #c7d2fe",
-                        color: "#4f46e5",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        transition: "all 0.2s",
-                        flexShrink: 0
-                      }}
-                      title="Xem chi tiết"
-                      onMouseOver={e => {
-                        e.currentTarget.style.background = "#c7d2fe";
-                        e.currentTarget.style.color = "#3730a3";
-                      }}
-                      onMouseOut={e => {
-                        e.currentTarget.style.background = "#e0e7ff";
-                        e.currentTarget.style.color = "#4f46e5";
-                      }}
-                    >
-                      <FiEye size={16} />
-                    </button>
-                    {(() => {
-                      const isPractice = ex.TrangThai === "practice";
-                      const isExam = ex.IsExam === 1 || ex.Type === "exam";
-                      const canDelete = isPractice 
-                        ? hasPermission("EXTRA_PRACTICE_CREATE")
-                        : (isExam ? hasPermission("QUIZ_CREATE") : hasPermission("BAITAP_CREATE"));
-                      
-                      if (!canDelete) return null;
-
-                      return (
-                        <button
-                          onClick={() => {
-                            setSelectedId(Number(ex.MaBaiTap));
-                            setShowDeleteModal(true);
-                          }}
-                          style={{
-                            background: "#fee2e2",
-                            border: "1px solid #fecaca",
-                            color: "#ef4444",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: "32px",
-                            height: "32px",
-                            borderRadius: "50%",
-                            transition: "all 0.2s",
-                            flexShrink: 0
-                          }}
-                          title="Xóa bài tập"
-                          onMouseOver={e => {
-                            e.currentTarget.style.background = "#fca5a5";
-                            e.currentTarget.style.color = "#b91c1c";
-                          }}
-                          onMouseOut={e => {
-                            e.currentTarget.style.background = "#fee2e2";
-                            e.currentTarget.style.color = "#ef4444";
-                          }}
-                        >
-                          <FiTrash2 size={15} />
-                        </button>
-                      );
-                    })()}
+                        );
+                      })()}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
