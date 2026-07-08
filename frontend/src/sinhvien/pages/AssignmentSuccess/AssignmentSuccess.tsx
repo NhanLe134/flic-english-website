@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FiCheck } from "react-icons/fi";
 import { useState } from "react";
 
+const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:5000" : "http://14.225.192.252:5000";
+
 function AssignmentSuccess() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -22,7 +24,7 @@ function AssignmentSuccess() {
     try {
       const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
       const user = JSON.parse(userStr || "{}");
-      await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
+      await fetch(`${API}/bainop/xem-giai-thich`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

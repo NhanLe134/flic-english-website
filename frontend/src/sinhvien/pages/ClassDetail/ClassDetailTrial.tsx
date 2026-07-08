@@ -567,8 +567,9 @@ export default function ClassDetailTrial() {
                                         </thead>
                                         <tbody>
                                           {detail.practices.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -623,8 +624,9 @@ export default function ClassDetailTrial() {
                                         </thead>
                                         <tbody>
                                           {detail.exams.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -675,17 +677,20 @@ export default function ClassDetailTrial() {
       {selectedExercise && (
         <div className="exit-confirm-modal-backdrop" onClick={() => setSelectedExercise(null)}>
           <div className="exit-confirm-modal-card" style={{ maxWidth: "420px", textAlign: "left", position: "relative" }} onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="exit-modal-close-x" 
-              onClick={() => setSelectedExercise(null)}
-              title="Đóng"
-            >
-              &times;
-            </button>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "700", color: "#1e3a8a", paddingRight: "24px" }}>
-              {selectedExercise.Title}
-            </h3>
-            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", margin: "0 0 16px 0" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#1e3a8a", flex: 1 }}>
+                {selectedExercise.Title}
+              </h3>
+              <button
+                className="exit-modal-close-x"
+                style={{ position: "static", padding: 0, fontSize: "28px" }}
+                onClick={() => setSelectedExercise(null)}
+                title="Đóng"
+              >
+                &times;
+              </button>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
                 <span style={{ color: "#64748b", fontSize: "14px" }}>Phân loại:</span>
@@ -704,7 +709,7 @@ export default function ClassDetailTrial() {
               {(() => {
                 const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap))
                   .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
-                
+
                 if (exSubs.length === 0) {
                   return (
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "4px" }}>
@@ -723,22 +728,25 @@ export default function ClassDetailTrial() {
                       {exSubs.map((sub, sIdx) => {
                         const attemptNum = sub.SoLanLamBai || (sIdx + 1);
                         const scoreDisplay = sub.Diem !== null && sub.Diem !== undefined && sub.Diem !== "" ? `${sub.Diem} điểm` : "Chờ chấm";
+                        const isLastAttempt = sIdx === exSubs.length - 1;
                         return (
                           <div key={sub.MaBaiNop} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #f1f5f9" }}>
                             <span style={{ fontSize: "13px", color: "#475569" }}>
                               Lần {attemptNum}: <strong style={{ color: "#f95800" }}>{scoreDisplay}</strong>
                             </span>
-                            <button
-                              className="ld2-review-btn"
-                              style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
-                              onClick={(e) => {
-                                const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                                handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`, e);
-                                setSelectedExercise(null);
-                              }}
-                            >
-                              Xem lại
-                            </button>
+                            {isLastAttempt && (
+                              <button
+                                className="ld2-review-btn"
+                                style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
+                                onClick={(e) => {
+                                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                                  handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`, e);
+                                  setSelectedExercise(null);
+                                }}
+                              >
+                                Xem lại
+                              </button>
+                            )}
                           </div>
                         );
                       })}

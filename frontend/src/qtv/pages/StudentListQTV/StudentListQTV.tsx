@@ -170,7 +170,8 @@ const StudentListQTV: React.FC = () => {
       try {
         setLoading(true);
         // 1. Fetch courses
-        const coursesRes = await fetch(`${API}/admin/khoahoc`).then(r => r.json());
+        const coursesData = await fetch(`${API}/admin/khoahoc`).then(r => r.json());
+        const coursesRes = Array.isArray(coursesData) ? coursesData.filter((c: any) => c.TrangThai === 'Hiển thị') : [];
         setCourses(coursesRes);
 
         // 2. Fetch classes for each course in parallel
