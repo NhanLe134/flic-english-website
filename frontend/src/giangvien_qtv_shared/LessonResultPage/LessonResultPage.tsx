@@ -46,6 +46,7 @@ const LessonResultPage = () => {
   const [lessons, setLessons] = useState<any[]>([]);
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
+  const [myClasses, setMyClasses] = useState<any[]>([]);
 
 
 
@@ -66,6 +67,9 @@ const LessonResultPage = () => {
     fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(classes => {
+        if (Array.isArray(classes)) {
+          setMyClasses(classes);
+        }
         const hasAccess = Array.isArray(classes) && classes.some((c: any) => Number(c.MaLopHoc) === Number(id));
         if (!hasAccess) {
           setIsAssigned(false);
@@ -400,13 +404,36 @@ const LessonResultPage = () => {
 
   return (
     <div className="lrp-wrapper">
-      <div className="lrp-header-row">
-        <span className="lrp-back" onClick={() => navigate("/quan-ly-ket-qua")}>
-          ← Quay lại
-        </span>
-        <div className="lrp-header-info">
-          <h1>{loading ? "Đang tải..." : classInfo?.TenLop || "—"}</h1>
-        </div>
+      <div className="lrp-header-row" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: '15px', width: '100%', marginBottom: '20px' }}>
+        <h1 style={{ margin: 0, textAlign: 'left', display: 'inline-block', fontSize: '20px', fontWeight: 700 }}>
+          {loading ? "Đang tải..." : classInfo?.TenLop || "—"}
+        </h1>
+        {!loading && myClasses.length > 0 && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', position: 'relative', top: '3px' }}>
+            <span style={{ fontSize: '13.5px', color: '#64748b', fontWeight: 500 }}>Chọn lớp:</span>
+            <select
+              value={id}
+              onChange={(e) => navigate(`/lesson-result/${e.target.value}`)}
+              style={{
+                padding: '5px 10px',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '13.5px',
+                fontWeight: 500,
+                outline: 'none',
+                cursor: 'pointer',
+                background: 'white',
+                color: '#64748b'
+              }}
+            >
+              {myClasses.map((c) => (
+                <option key={c.MaLopHoc} value={c.MaLopHoc}>
+                  {c.TenLop} (Mã: {c.MaLopHoc})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* STATS */}

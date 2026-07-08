@@ -1,8 +1,8 @@
 // CoursePageQTV.tsx – Cấu trúc UI cũ + Kết nối DB + Phân công nhiều GV
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { formatScheduleOnlyDays } from '../../../utils/schedule'
 import styles from './CoursePageQTV.module.css'
-import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
+import { FiSearch, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const API = 'http://14.225.192.252:5000'
@@ -303,12 +303,7 @@ interface EnrolledStudent {
   phone: string; enrollDate: string; status: string
 }
 
-interface PendingReg {
-  id: number; studentId: string; name: string; phone: string
-  courseId: number; courseName: string; regDate: string
-  status: 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối'
-  classId?: number; className?: string
-}
+
 
 interface ClassInForm {
   name: string; schedule: string; maxStudents: number
@@ -571,31 +566,9 @@ export default function CoursePageQTV() {
     copyFromClassId: ''
   })
 
-  // Pending registrations
-  const [pendingRegs, setPendingRegs]               = useState<PendingReg[]>([])
-  const [showRegModal, setShowRegModal]             = useState(false)
-  const [regClassFilter, setRegClassFilter]         = useState<string>('all')
-  const [selectedReg, setSelectedReg]               = useState<PendingReg | null>(null)
-  const [showAssignClassModal, setShowAssignClassModal] = useState(false)
-  const [assignClassId, setAssignClassId]           = useState<number | ''>('')
-
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteMessage, setDeleteMessage]     = useState<React.ReactNode>('')
   const [deleteAction, setDeleteAction]       = useState<(() => Promise<void>) | null>(null)
-
-  const uniqueRegClasses = useMemo(() => {
-    const list: { id: string; name: string }[] = [];
-    const seen = new Set<string>();
-    pendingRegs.forEach(r => {
-      if (r.className) {
-        if (!seen.has(r.className)) {
-          seen.add(r.className);
-          list.push({ id: String(r.classId || r.className), name: r.className });
-        }
-      }
-    });
-    return list;
-  }, [pendingRegs]);
 
   // Helper: mở modal xác nhận xóa
   const confirmAction = (msg: React.ReactNode, action: () => Promise<void>) => {
@@ -667,21 +640,6 @@ export default function CoursePageQTV() {
   useEffect(() => {
     loadCourses()
     fetch(`${API}/qtv/giangvien`).then(r => r.json()).then(setGiaoViens).catch(() => {})
-    fetch(`${API}/dangky/pending?t=${Date.now()}`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setPendingRegs(data.map((r: any) => ({
-            id: r.MaDangKy, studentId: r.MaSinhVien, name: r.HoTen,
-            phone: '—', courseId: r.MaKhoaHoc, courseName: r.TenKhoaHoc,
-            regDate: new Date(r.NgayDangKy).toLocaleDateString('vi-VN'),
-            status: (r.TrangThai === 'Đã ghi danh' ? 'Đã ghi danh' : r.TrangThai === 'Từ chối' ? 'Từ chối' : 'Chờ ghi danh') as 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối',
-            classId: r.MaLopHoc,
-            className: r.TenLop
-          })))
-        }
-      })
-      .catch(() => {})
   }, [])
 
   // Load học viên có yêu cầu chờ ghi danh vào lớp cụ thể khi mở modal ghi danh
@@ -1189,39 +1147,7 @@ export default function CoursePageQTV() {
 
 
   // ── Pending regs ──────────────────────────────────────────────────────────────
-  const confirmAssign = async () => {
-    if (!selectedReg || !assignClassId) { alert('Vui lòng chọn lớp!'); return }
-    try {
-      const res = await fetch(`${API}/qtv/lophoc/${assignClassId}/ghidanh`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ MaSinhVien: selectedReg.studentId })
-      })
-      const data = await res.json()
-      if (res.ok && data.message && data.message.includes("thành công")) {
-        setPendingRegs(prev => prev.map(r => r.id === selectedReg.id ? { ...r, status: 'Đã ghi danh' as const } : r))
-        setShowAssignClassModal(false); setSelectedReg(null); setAssignClassId('')
-        setToast(`Đã ghi danh ${selectedReg.name}!`)
-      } else {
-        alert(data.message || 'Lỗi khi ghi danh')
-      }
-    } catch { alert('Lỗi khi ghi danh') }
-  }
 
-  const rejectReg = (id: number) => {
-    confirmAction('Bạn có chắc chắn muốn từ chối đăng ký này?', async () => {
-      try {
-        await fetch(`${API}/dangky/${id}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TrangThai: 'Từ chối' })
-        })
-        setPendingRegs(prev => prev.map(r => r.id === id ? { ...r, status: 'Từ chối' as const } : r))
-        setToast('Đã từ chối!')
-      } catch {
-        alert('Lỗi khi từ chối đăng ký')
-      }
-    })
-  }
 
   // Trích xuất các cấp độ duy nhất từ danh sách khóa học thực tế (tách theo dấu phẩy)
   /*
@@ -1264,10 +1190,6 @@ export default function CoursePageQTV() {
             <div className={styles.statLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FiPackage style={{ color: '#000080' }} /> Kho học liệu <FiChevronRight /></div>
             <div className={styles.statValue} style={{ fontSize: '13px', fontWeight: 'normal', color: '#64748b', marginTop: '6px' }}>Quản lý bài giảng / bài tập / tài liệu</div>
           </div>
-          <div className={`${styles.statCard} ${styles.statOrange}`} style={{ cursor:'pointer' }} onClick={() => setShowRegModal(true)}>
-            <div className={styles.statLabel}>Yêu cầu ghi danh</div>
-            <div className={styles.statValue}>{pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</div>
-          </div>
         </div>
 
         {/* Search bar below stats */}
@@ -1282,11 +1204,6 @@ export default function CoursePageQTV() {
         <div className={styles.tableCard}>
           <div className={styles.tableHeader}>
             <div><h3>Danh sách khóa học</h3><p>Bấm vào số lớp để xem · Bấm "Chi tiết" để ghi danh và lộ trình</p></div>
-            <div className={styles.tableToolbar}>
-              <button className={styles.btnRegList} onClick={() => setShowRegModal(true)}>
-                <FiFileText style={{ marginRight: 6 }} /> Đăng ký ({pendingRegs.filter(r => r.status === 'Chờ ghi danh').length})
-              </button>
-            </div>
           </div>
 
           {loading ? (
@@ -1354,35 +1271,61 @@ export default function CoursePageQTV() {
                             {(classesMap[c.id] || []).length === 0 ? (
                               <div className={styles.expandEmpty}>Chưa có lớp học nào.</div>
                             ) : (
-                              <div>
-                                <div className={styles.classTableHeader}>
-                                  <div>Tên lớp học</div>
-                                  <div>Mã lớp học</div>
-                                  <div>Trình độ</div>
-                                  <div>Lịch học</div>
-                                  <div>Sĩ số</div>
-                                  <div style={{ textAlign: 'right' }}>Trạng thái</div>
-                                </div>
-                                {(classesMap[c.id] || []).map(cl => (
-                                  <div key={cl.id} className={styles.classTableRow} onClick={() => openDetail(c, cl)}>
-                                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{cl.name}</div>
-                                    <div style={{ color: '#f95800', fontWeight: 600, fontSize: '13.5px' }}>{cl.id}</div>
-                                    <div style={{ color: '#475569', fontSize: '13px' }}>{cl.levelName}</div>
-                                    <div style={{ color: '#475569', fontSize: '13px' }}>{formatScheduleOnlyDays(cl.schedule)}</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '13px' }}>
-                                      <FiUsers size={16} style={{ color: '#64748b' }} /> {cl.students}
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                      <span style={{ 
-                                        fontWeight: 600, 
-                                        fontSize: '13px',
-                                        color: cl.status === 'Đã hoàn thành' ? '#22c55e' : cl.status === 'Đang diễn ra' ? '#0284c7' : '#f97316' 
-                                      }}>
-                                        {cl.status}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
+                              <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
+                                <style>{`
+                                  .qtv-subclass-table th {
+                                    background: #e0f2fe !important;
+                                    color: #1e3a8a !important;
+                                    border-bottom: 1.5px solid #cbd5e1 !important;
+                                  }
+                                `}</style>
+                                <table className="qtv-subclass-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                                  <thead>
+                                    <tr style={{ background: '#e0f2fe', borderBottom: '1.5px solid #cbd5e1' }}>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '22%', background: '#e0f2fe' }}>Tên lớp học</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '12%', background: '#e0f2fe' }}>Mã lớp học</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '25%', background: '#e0f2fe' }}>Trình độ</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%', background: '#e0f2fe' }}>Lịch học</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '10%', background: '#e0f2fe' }}>Sĩ số</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '13%', textAlign: 'right', background: '#e0f2fe' }}>Trạng thái</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {(classesMap[c.id] || []).map(cl => (
+                                      <tr 
+                                        key={cl.id} 
+                                        onClick={() => openDetail(c, cl)}
+                                        style={{ 
+                                          background: '#ffffff',
+                                          borderBottom: '1px solid #cbd5e1', 
+                                          cursor: 'pointer',
+                                          transition: 'background 0.2s'
+                                        }}
+                                        onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                        onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
+                                      >
+                                        <td style={{ padding: '14px 18px', fontWeight: 700, color: '#0f172a', fontSize: '14px', verticalAlign: 'middle' }}>{cl.name}</td>
+                                        <td style={{ padding: '14px 18px', color: '#f95800', fontWeight: 600, fontSize: '13.5px', verticalAlign: 'middle' }}>{cl.id}</td>
+                                        <td style={{ padding: '14px 18px', color: '#475569', fontSize: '13px', verticalAlign: 'middle' }}>{cl.levelName}</td>
+                                        <td style={{ padding: '14px 18px', color: '#475569', fontSize: '13px', verticalAlign: 'middle' }}>{formatScheduleOnlyDays(cl.schedule)}</td>
+                                        <td style={{ padding: '14px 18px', color: '#475569', fontSize: '13px', verticalAlign: 'middle' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <FiUsers size={16} style={{ color: '#64748b' }} /> {cl.students}
+                                          </div>
+                                        </td>
+                                        <td style={{ padding: '14px 18px', textAlign: 'right', verticalAlign: 'middle' }}>
+                                          <span style={{ 
+                                            fontWeight: 600, 
+                                            fontSize: '13px',
+                                            color: cl.status === 'Đã hoàn thành' ? '#22c55e' : cl.status === 'Đang diễn ra' ? '#0284c7' : '#f97316' 
+                                          }}>
+                                            {cl.status}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
                               </div>
                             )}
                           </div>
@@ -2290,95 +2233,7 @@ export default function CoursePageQTV() {
         </div>
       )}
 
-      {/* ════ MODAL: DANH SÁCH ĐĂNG KÝ ════ */}
-      {showRegModal && !showAssignClassModal && (
-        <div className={styles.overlay}>
-          <div className={styles.regModal}>
-            <div className={styles.modalTop}>
-              <div><h3>Danh sách ghi danh đăng ký lớp</h3><div className={styles.modalSub}>Sinh viên đã đăng ký – chờ ghi danh vào lớp</div></div>
-              <button className={styles.modalClose} onClick={() => setShowRegModal(false)}><FiX size={20} /></button>
-            </div>
-            <div className={styles.regFilterRow}>
-              <select value={regClassFilter} onChange={e => setRegClassFilter(e.target.value)} className={styles.regSelect}>
-                <option value="all">Tất cả lớp học</option>
-                {uniqueRegClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <div className={styles.regStats}>
-                <span className={styles.regStatPill} style={{ background:'#fef3c7', color:'#d97706' }}>Chờ: {pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</span>
-                <span className={styles.regStatPill} style={{ background:'#c8eacc', color:'#1e6b30' }}>Đã GD: {pendingRegs.filter(r => r.status === 'Đã ghi danh').length}</span>
-              </div>
-            </div>
-            <div className={styles.regTableWrap}>
-              <table className={styles.table}>
-                <thead><tr><th>Mã học viên</th><th>Họ và tên</th><th>SĐT</th><th>Lớp/Khóa</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-                <tbody>
-                  {pendingRegs.filter(r => regClassFilter === 'all' || String(r.classId) === regClassFilter || r.className === regClassFilter).map(r => (
-                    <tr key={r.id}>
-                      <td className={styles.monoText}>{r.studentId}</td>
-                      <td className={styles.boldText}>{r.name}</td>
-                      <td>{r.phone}</td><td>{r.className ? `${r.className} / ${r.courseName}` : r.courseName}</td><td>{r.regDate}</td>
-                      <td><span className={`${styles.badge} ${r.status === 'Chờ ghi danh' ? styles.badgeYellow : r.status === 'Đã ghi danh' ? styles.badgeGreen : styles.badgeRed}`}>{r.status}</span></td>
-                      <td>
-                        <div className={styles.actionBtns}>
-                          {r.status === 'Chờ ghi danh' && (
-                            <>
-                              <button className={styles.btnPrimary} style={{ fontSize:12, padding:'5px 12px' }}
-                                onClick={() => { setSelectedReg(r); setAssignClassId(r.classId || ''); setShowAssignClassModal(true) }}>
-                                GD vào lớp
-                              </button>
-                              <button className={styles.btnDanger} style={{ fontSize:12 }} onClick={() => rejectReg(r.id)}>Từ chối</button>
-                            </>
-                          )}
-                          {r.status !== 'Chờ ghi danh' && <span style={{ fontSize:12, color:'#aaa' }}>—</span>}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={styles.btnOutline} onClick={() => setShowRegModal(false)}>Đóng</button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ════ MODAL: GHI DANH VÀO LỚP ════ */}
-      {showAssignClassModal && selectedReg && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalTop}>
-              <div><h3>Ghi danh vào lớp học</h3><div className={styles.modalSub}>Chọn lớp phù hợp</div></div>
-              <button className={styles.modalClose} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}><FiX size={20} /></button>
-            </div>
-            <div className={styles.assignStudentInfo}>
-              <div className={styles.assignRow}><span className={styles.assignLabel}>Họ và tên</span><span className={styles.boldText}>{selectedReg.name}</span></div>
-              <div className={styles.assignRow}><span className={styles.assignLabel}>Mã SV</span><span className={styles.monoText}>{selectedReg.studentId}</span></div>
-              <div className={styles.assignRow}><span className={styles.assignLabel}>Khóa học</span><span className={styles.boldText}>{selectedReg.courseName}</span></div>
-            </div>
-            {selectedReg.className ? (
-              <div className={styles.assignRow} style={{ marginTop:16, borderTop:'1px solid #f1f5f9', paddingTop:16 }}><span className={styles.assignLabel}>Lớp học</span><span className={styles.boldText} style={{ color: "#d97706" }}>{selectedReg.className}</span></div>
-            ) : (
-              <div className={styles.formGroup} style={{ marginTop:16 }}>
-                <label>Chọn lớp học <span className={styles.req}>*</span></label>
-                <select value={assignClassId} onChange={e => setAssignClassId(Number(e.target.value))}>
-                  <option value="">-- Chọn lớp --</option>
-                  {(classesMap[selectedReg.courseId] || []).map(cl => (
-                    <option key={cl.id} value={cl.id}>{cl.name} — {formatScheduleOnlyDays(cl.schedule)} — {cl.students} học viên</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div className={styles.modalFooter}>
-              <button className={styles.btnOutline} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}>Hủy</button>
-              <button className={styles.btnPrimary} onClick={confirmAssign} disabled={!assignClassId} style={{ opacity: assignClassId ? 1 : 0.5 }}>
-                Xác nhận ghi danh
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ════ MODAL: XÁC NHẬN XÓA ════ */}
       {showDeleteModal && (

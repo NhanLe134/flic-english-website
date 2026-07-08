@@ -2556,7 +2556,7 @@ app.post("/baitap/create", async (req, res) => {
         if (Content) {
           const parsedContent = JSON.parse(Content);
           durationVal = parsedContent.duration || durationVal;
-          startTimeVal = parsedContent.startTime || startTimeVal;
+          startTimeVal = parsedContent.startTime ? normalizeDeadline(parsedContent.startTime) : null;
           deadlineVal = normalizeDeadline(parsedContent.deadline || parsedContent.deadlineDate || null);
         }
       } catch (err) {
