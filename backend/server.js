@@ -1913,7 +1913,7 @@ app.get("/classes/:id/info", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
+          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
           COALESCE((
             SELECT TOP 1 
               CASE 
@@ -3172,7 +3172,7 @@ app.get("/teacher/classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT DISTINCT
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
+          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
           COALESCE((
             SELECT TOP 1 
               CASE 
@@ -3919,14 +3919,14 @@ app.get("/student/my-classes/:maNguoiDung", async (req, res) => {
       .query(`
         SELECT 
           l.MaLopHoc, l.TenLop, l.LichHoc,
-          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
+          (SELECT COUNT(*) FROM SINHVIEN_LOPHOC WHERE MaLopHoc = l.MaLopHoc AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')) AS SoLuongHocVien,
           k.TenKhoaHoc,
           sl.TrangThai, sl.NgayGhiDanh
         FROM SINHVIEN_LOPHOC sl
         JOIN LOPHOC l ON sl.MaLopHoc = l.MaLopHoc
         JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop
         JOIN KHOAHOC k ON kc.MaKhoaHoc = k.MaKhoaHoc
-        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Đã hoàn thành') AND (l.TrangThai IS NULL OR l.TrangThai != N'Chưa bắt đầu')
+        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Hoàn thành' OR sl.TrangThai = N'Đã hoàn thành') AND (l.TrangThai IS NULL OR l.TrangThai != N'Chưa bắt đầu')
         ORDER BY sl.NgayGhiDanh DESC
       `);
 
@@ -4295,7 +4295,7 @@ app.get("/student/progress/classes/:maNguoiDung", async (req, res) => {
         LEFT JOIN PHANCONGGIANGVIEN pc ON lh.MaLopHoc = pc.MaLopHoc
         LEFT JOIN GIANGVIEN gv ON pc.MaGiangVien = gv.MaGiangVien
         LEFT JOIN NGUOIDUNG nd ON gv.MaNguoiDung = nd.MaNguoiDung
-        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Đã hoàn thành') AND (lh.TrangThai IS NULL OR lh.TrangThai != N'Chưa bắt đầu')
+        WHERE sl.MaSinhVien = @maSinhVien AND (sl.TrangThai = N'Đang học' OR sl.TrangThai = N'Hoàn thành' OR sl.TrangThai = N'Đã hoàn thành') AND (lh.TrangThai IS NULL OR lh.TrangThai != N'Chưa bắt đầu')
       `);
 
     const classesMap = {};
