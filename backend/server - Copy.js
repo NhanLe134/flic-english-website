@@ -936,6 +936,14 @@ app.put("/qtv/lophoc/:id", async (req, res) => {
             SET TrangThai = N'Hoàn thành' 
             WHERE MaLopHoc = @id AND TrangThai = N'Đang học'
           `);
+      } else if (TrangThai === "Đang diễn ra") {
+        await pool.request()
+          .input("id", req.params.id)
+          .query(`
+            UPDATE SINHVIEN_LOPHOC 
+            SET TrangThai = N'Đang học' 
+            WHERE MaLopHoc = @id AND TrangThai = N'Hoàn thành'
+          `);
       }
     }
 
