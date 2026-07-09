@@ -555,14 +555,12 @@ app.get("/qtv/baigiang", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.NoiDung, b.FileUrl, b.MaKhoaHoc, b.MaGiangVien, b.MaBuoiHoc,
-             ISNULL(n.HoTen, n_gv.HoTen) AS TenGiangVien, k.TenKhoaHoc, k.TrinhDo AS CapDo,
+      SELECT b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.NoiDung, b.FileUrl, b.MaKhoaHoc, b.MaBuoiHoc,
+             n.HoTen AS TenGiangVien, k.TenKhoaHoc, k.TrinhDo AS CapDo,
              ISNULL(b.NgayTao, k.NgayTao) AS NgayGui,
              l.TenLop
       FROM BAIHOCKHOAHOC b
       LEFT JOIN NGUOIDUNG n ON b.MaNguoiDung = n.MaNguoiDung
-      LEFT JOIN GIANGVIEN gv ON b.MaGiangVien = gv.MaGiangVien
-      LEFT JOIN NGUOIDUNG n_gv ON gv.MaNguoiDung = n_gv.MaNguoiDung
       LEFT JOIN KHOAHOC k ON b.MaKhoaHoc = k.MaKhoaHoc
       LEFT JOIN BUOIHOC ls ON b.MaBuoiHoc = ls.MaBuoiHoc
       LEFT JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
@@ -1371,13 +1369,12 @@ app.post("/baigiang", async (req, res) => {
       .input("TrangThai", finalTrangThai)
       .input("ThuTu", ThuTu || 1)
       .input("MaKhoaHoc", MaKhoaHoc)
-      .input("MaGiangVien", resolvedMaGiangVien || null)
       .input("MaBuoiHoc", MaBuoiHoc)
       .input("IsFree", IsFree !== undefined ? IsFree : 0)
       .input("MaNguoiDung", MaGiangVien || null)
-      .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc, IsFree, MaNguoiDung) 
+      .query(`INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaBuoiHoc, IsFree, MaNguoiDung) 
               OUTPUT INSERTED.MaBaiHoc
-              VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc, @IsFree, @MaNguoiDung)`);
+              VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaBuoiHoc, @IsFree, @MaNguoiDung)`);
     const newMaBaiHoc = result.recordset[0].MaBaiHoc;
     res.json({ message: "Thêm bài giảng thành công", MaBaiHoc: newMaBaiHoc });
   } catch (err) { res.status(500).send(err.message); }
@@ -1646,19 +1643,9 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
       console.error("Lỗi khi tự động dọn dẹp bản nháp cũ:", cleanErr);
     }
 
-    // 1. Ánh xạ MaNguoiDung sang MaGiangVien
-    const gvResult = await pool.request()
-      .input("maNguoiDung", maNguoiDung)
-      .query(`SELECT MaGiangVien FROM GIANGVIEN WHERE MaNguoiDung = @maNguoiDung`);
-    
-    if (gvResult.recordset.length === 0) {
-      return res.json({ lessons: [], exercises: [], exams: [] });
-    }
-    const maGiangVien = gvResult.recordset[0].MaGiangVien;
-
     // 2. Lấy danh sách bài giảng bản nháp (lessons)
     const lessonsResult = await pool.request()
-      .input("maGiangVien", maGiangVien)
+      .input("maNguoiDung", maNguoiDung)
       .query(`
         SELECT 
           b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai,
@@ -1669,13 +1656,13 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
         LEFT JOIN KHOAHOC kh ON b.MaKhoaHoc = kh.MaKhoaHoc
         LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
         LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
-        WHERE b.MaGiangVien = @maGiangVien AND (b.TrangThai = 'draft' OR b.TrangThai = N'Nháp')
+        WHERE b.MaNguoiDung = @maNguoiDung AND (b.TrangThai = 'draft' OR b.TrangThai = N'Nháp')
         ORDER BY b.MaBaiHoc DESC
       `);
 
     // 3. Lấy danh sách bài tập bản nháp (exercises)
     const exercisesResult = await pool.request()
-      .input("maGiangVien", maGiangVien)
+      .input("maNguoiDung", maNguoiDung)
       .query(`
         SELECT 
           bt.MaBaiTap, bt.TieuDe AS Title, bt.DangBai AS Type, 
@@ -1687,13 +1674,13 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
         LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
         LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
         LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
-        WHERE bt.MaGiangVien = @maGiangVien AND (bt.TrangThai = 'draft' OR bt.TrangThai = N'Nháp')
+        WHERE bt.MaNguoiDung = @maNguoiDung AND (bt.TrangThai = 'draft' OR bt.TrangThai = N'Nháp')
         ORDER BY bt.MaBaiTap DESC
       `);
 
     // 4. Lấy danh sách bài kiểm tra bản nháp (exams)
     const examsResult = await pool.request()
-      .input("maGiangVien", maGiangVien)
+      .input("maNguoiDung", maNguoiDung)
       .query(`
         SELECT 
           bk.MaBaiKiemTra AS MaBaiTap, bk.TenBai AS Title, 'Exam' AS Type, 
@@ -1704,7 +1691,7 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
         LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
         LEFT JOIN KHOAHOCCHITIET khct ON lh.MaLop = khct.MaLop
         LEFT JOIN KHOAHOC kh2 ON khct.MaKhoaHoc = kh2.MaKhoaHoc
-        WHERE bk.MaGiangVien = @maGiangVien AND (bk.TrangThai = 'draft' OR bk.TrangThai = N'Nháp' OR bk.TrangThaiDuyet = N'Nháp')
+        WHERE bk.MaNguoiDung = @maNguoiDung AND (bk.TrangThai = 'draft' OR bk.TrangThai = N'Nháp' OR bk.TrangThaiDuyet = N'Nháp')
         ORDER BY bk.MaBaiKiemTra DESC
       `);
 
@@ -2652,15 +2639,14 @@ app.post("/baitap/create", async (req, res) => {
         .input("TrangThai",     finalTrangThaiCreate)
         .input("TrangThaiDuyet", finalTrangThaiDuyetCreate)
         .input("KyNang",        KyNang      || null)
-        .input("MaGiangVien",   resolvedMaGiangVien || null)
         .input("FileDinhKem",   FileDinhKem || null)
         .input("MaNguoiDung",   MaGiangVien || null)
         .input("HanNop",        deadlineVal)
         .query(`
           INSERT INTO BAITAP
-            (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, MaGiangVien, FileDinhKem, MaNguoiDung, HanNop)
+            (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, FileDinhKem, MaNguoiDung, HanNop)
           VALUES
-            (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @MaGiangVien, @FileDinhKem, @MaNguoiDung, @HanNop)
+            (@TieuDe, @DangBai, @NoiDung, @CauHoi, @NgayTao, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @FileDinhKem, @MaNguoiDung, @HanNop)
         `);
 
       res.json({ message: "Thêm bài tập thành công" });
@@ -3481,14 +3467,12 @@ app.get("/qtv/baitap", async (req, res) => {
              e.TrangThai AS TrangThai, 
              e.KyNang AS KyNang, 
              e.DangBai AS DangBai,
-             ISNULL(n.HoTen, n_gv.HoTen) AS TenGiangVien, 
+             n.HoTen AS TenGiangVien, 
              k.TenKhoaHoc, 
              k.TrinhDo AS CapDo,
              l.TenLop
       FROM BAITAP e
       LEFT JOIN NGUOIDUNG n ON e.MaNguoiDung = n.MaNguoiDung
-      LEFT JOIN GIANGVIEN gv ON e.MaGiangVien = gv.MaGiangVien
-      LEFT JOIN NGUOIDUNG n_gv ON gv.MaNguoiDung = n_gv.MaNguoiDung
       LEFT JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
       LEFT JOIN KHOAHOC k ON bh.MaKhoaHoc = k.MaKhoaHoc
       LEFT JOIN BUOIHOC ls ON bh.MaBuoiHoc = ls.MaBuoiHoc
@@ -3507,14 +3491,12 @@ app.get("/qtv/baitap", async (req, res) => {
              e.TrangThaiDuyet AS TrangThai, 
              NULL AS KyNang, 
              NULL AS DangBai,
-             ISNULL(n.HoTen, n_gv.HoTen) AS TenGiangVien, 
+             n.HoTen AS TenGiangVien, 
              k.TenKhoaHoc, 
              k.TrinhDo AS CapDo,
              l.TenLop
       FROM BAIKIEMTRA e
       LEFT JOIN NGUOIDUNG n ON e.MaNguoiDung = n.MaNguoiDung
-      LEFT JOIN GIANGVIEN gv ON e.MaGiangVien = gv.MaGiangVien
-      LEFT JOIN NGUOIDUNG n_gv ON gv.MaNguoiDung = n_gv.MaNguoiDung
       LEFT JOIN BUOIHOC ls ON e.MaBuoiHoc = ls.MaBuoiHoc
       LEFT JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
       LEFT JOIN KHOAHOC k ON l.MaLop = k.MaKhoaHoc
@@ -4884,7 +4866,7 @@ app.get("/baigiang/list/all", async (req, res) => {
 // Clone bài tập
 app.post("/exercises/:id/clone", async (req, res) => {
   try {
-    const { MaBuoiHoc, MaBaiHoc } = req.body;
+    const { MaBuoiHoc, MaBaiHoc, MaNguoiDung } = req.body;
     if (!MaBuoiHoc) return res.status(400).json({ message: "Thiếu MaBuoiHoc" });
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
@@ -4902,24 +4884,43 @@ app.post("/exercises/:id/clone", async (req, res) => {
     const ex = orig.recordset[0];
     const today = new Date().toISOString().split('T')[0];
 
+    // Determine the cloner user
+    const clonerMaNguoiDung = MaNguoiDung || ex.MaNguoiDung || null;
+    let isQTV = true;
+    if (clonerMaNguoiDung) {
+      const gvResult = await pool.request()
+        .input("maNguoiDung", clonerMaNguoiDung)
+        .query("SELECT MaGiangVien FROM GIANGVIEN WHERE MaNguoiDung = @maNguoiDung");
+      if (gvResult.recordset.length > 0) {
+        isQTV = false;
+      }
+    }
+
     let targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
     if (!targetMaBaiHoc) {
       const bhResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
-        .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+        .query("SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC");
       if (bhResult.recordset.length > 0) {
         targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
       } else {
         const insertBh = await pool.request()
           .input("buoiHocId", MaBuoiHoc)
+          .input("MaNguoiDung", clonerMaNguoiDung)
           .query(`
-            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, MaGiangVien, TieuDe, NoiDung, TrangThai, MaBuoiHoc)
-            VALUES (1, 1, N'Bài giảng mặc định', '', 'published', @buoiHocId);
+            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
+            VALUES (1, N'Bài giảng mặc định', '', 'published', @buoiHocId, @MaNguoiDung);
             SELECT SCOPE_IDENTITY() AS MaBaiHoc;
           `);
         targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
       }
     }
+
+    const finalTrangThai = isQTV ? "published" : (ex.TrangThai || "draft");
+    const finalTrangThaiDuyet = 
+      finalTrangThai === "published" ? 'Đã duyệt' : 
+      (finalTrangThai === "rejected" ? 'Từ chối' : 
+      (finalTrangThai === "draft" ? 'Nháp' : 'Chờ duyệt'));
     
     await pool.request()
       .input("TieuDe", ex.TieuDe)
@@ -4932,16 +4933,17 @@ app.post("/exercises/:id/clone", async (req, res) => {
       .input("HienThiDapAn", ex.HienThiDapAn ? 1 : 0)
       .input("HocThuMienPhi", ex.HocThuMienPhi ? 1 : 0)
       .input("LaBaiKiemTra", ex.LaBaiKiemTra ? 1 : 0)
-      .input("TrangThai", ex.TrangThai || "draft")
+      .input("TrangThai", finalTrangThai)
+      .input("TrangThaiDuyet", finalTrangThaiDuyet)
       .input("KyNang", ex.KyNang || "")
-      .input("MaGiangVien", ex.MaGiangVien || null)
       .input("FileDinhKem", ex.FileDinhKem || null)
+      .input("MaNguoiDung", clonerMaNguoiDung)
       .input("HanNop", normalizeDeadline(ex.HanNop))
       .query(`
         INSERT INTO BAITAP 
-          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, KyNang, MaGiangVien, FileDinhKem, HanNop)
+          (TieuDe, DangBai, NoiDung, CauHoi, NgayTao, MaBaiHoc, LinkAmThanh, HienThiDapAn, HocThuMienPhi, LaBaiKiemTra, TrangThai, TrangThaiDuyet, KyNang, FileDinhKem, MaNguoiDung, HanNop)
         VALUES 
-          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @CreatedDate, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @KyNang, @MaGiangVien, @FileDinhKem, @HanNop)
+          (@TieuDe, @DangBai, @NoiDung, @CauHoi, @CreatedDate, @MaBaiHoc, @LinkAmThanh, @HienThiDapAn, @HocThuMienPhi, @LaBaiKiemTra, @TrangThai, @TrangThaiDuyet, @KyNang, @FileDinhKem, @MaNguoiDung, @HanNop)
       `);
       
     res.json({ message: "Sao chép bài tập thành công" });
@@ -5016,11 +5018,11 @@ app.post("/baigiang/:id/clone", async (req, res) => {
       .input("TrangThai", bg.TrangThai || "draft")
       .input("ThuTu", bg.ThuTu || 1)
       .input("MaKhoaHoc", bg.MaKhoaHoc)
-      .input("MaGiangVien", bg.MaGiangVien)
+      .input("MaNguoiDung", bg.MaNguoiDung)
       .input("MaBuoiHoc", MaBuoiHoc)
       .query(`
-        INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaGiangVien, MaBuoiHoc)
-        VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaGiangVien, @MaBuoiHoc)
+        INSERT INTO BAIHOCKHOAHOC (TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, ThuTu, MaKhoaHoc, MaNguoiDung, MaBuoiHoc)
+        VALUES (@TieuDe, @NoiDung, @FileUrl, @LoaiBaiHoc, @ThoiLuong, @TrangThai, @ThuTu, @MaKhoaHoc, @MaNguoiDung, @MaBuoiHoc)
       `);
       
     res.json({ message: "Sao chép bài giảng thành công" });

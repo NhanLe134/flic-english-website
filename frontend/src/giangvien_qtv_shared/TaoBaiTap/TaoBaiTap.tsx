@@ -605,12 +605,19 @@ const TaoBaiTap = () => {
     if (isProcessing) return;
     setIsProcessing(true);
     try {
+      const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+      let clonerMaNguoiDung = null;
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        clonerMaNguoiDung = user.MaNguoiDung || null;
+      }
       const res = await fetch(`http://14.225.192.252:5000/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           MaBuoiHoc: Number(id),
-          MaBaiHoc: Number(selectedMaBaiHoc)
+          MaBaiHoc: Number(selectedMaBaiHoc),
+          MaNguoiDung: clonerMaNguoiDung
         })
       });
       if (res.ok) {

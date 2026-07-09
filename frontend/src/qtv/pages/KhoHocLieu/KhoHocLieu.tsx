@@ -375,7 +375,7 @@ const KhoHocLieu = () => {
     if (!bgForm.title.trim()) { alert("Vui lòng nhập tiêu đề!"); return; }
     try {
       const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
-      await fetch(`${API}/baigiang`, {
+      const res = await fetch(`${API}/baigiang`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -392,11 +392,17 @@ const KhoHocLieu = () => {
           MaBuoiHoc: activeSessionId
         })
       });
+      
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Lỗi từ phía máy chủ");
+      }
+
       showToast("Đã thêm bài giảng mới!");
       setShowAddLectureModal(false);
       fetchData();
-    } catch {
-      alert("Lỗi khi lưu bài giảng");
+    } catch (err: any) {
+      alert("Lỗi khi lưu bài giảng: " + (err.message || err));
     }
   };
 
@@ -435,7 +441,7 @@ const KhoHocLieu = () => {
   const saveNewDoc = async () => {
     if (!docForm.title.trim()) { alert("Vui lòng nhập tiêu đề!"); return; }
     try {
-      await fetch(`${API}/tailieu`, {
+      const res = await fetch(`${API}/tailieu`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -447,11 +453,17 @@ const KhoHocLieu = () => {
           TrangThai: "Đã duyệt"
         })
       });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Lỗi từ phía máy chủ");
+      }
+
       showToast("Đã thêm tài liệu mới!");
       setShowAddDocModal(false);
       fetchData();
-    } catch {
-      alert("Lỗi khi lưu tài liệu");
+    } catch (err: any) {
+      alert("Lỗi khi lưu tài liệu: " + (err.message || err));
     }
   };
 
