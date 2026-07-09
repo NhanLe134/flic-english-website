@@ -15,9 +15,7 @@ import {
 
 const API =
   window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname.startsWith("192.168.") ||
-  window.location.hostname.startsWith("10.")
+  window.location.hostname === "127.0.0.1"
     ? `http://${window.location.hostname}:5000`
     : "http://14.225.192.252:5000";
 
@@ -491,7 +489,8 @@ const KhoHocLieu = () => {
   const openAddExercise = (sessionId: number, classId: number) => {
     navigate(`/QTV/create-exercise/${sessionId}`, {
       state: {
-        fromClassId: classId
+        fromClassId: classId,
+        fromPage: "kho-hoc-lieu"
       }
     });
   };

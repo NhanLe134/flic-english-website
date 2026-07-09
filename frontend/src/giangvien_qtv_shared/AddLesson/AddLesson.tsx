@@ -26,7 +26,6 @@ const AddLesson: React.FC = () => {
   const [name, setName] = useState("");
   const type = "Video";
   const duration = "";
-  const [lessonDate, setLessonDate] = useState("");
   const [moTa, setMoTa] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -175,7 +174,6 @@ const AddLesson: React.FC = () => {
 
   const handleAddLesson = async (status: "published" | "draft") => {
     if (!name) { alert("Vui lòng nhập tên bài giảng"); return; }
-    if (!lessonDate) { alert("Vui lòng chọn ngày dạy"); return; }
 
     try {
       setUploading(true);
@@ -279,14 +277,6 @@ const AddLesson: React.FC = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-
-          <label>Ngày dạy *</label>
-          <input
-            type="date"
-            value={lessonDate}
-            onChange={(e) => setLessonDate(e.target.value)}
-          />
-
 
           <label>Mô tả nội dung</label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, marginBottom: 16, background: "#fff" }}>

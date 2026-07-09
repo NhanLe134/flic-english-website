@@ -572,8 +572,9 @@ function MyCourses() {
                     type="text"
                     className="modal-form-input"
                     value={enrollName}
-                    onChange={(e) => setEnrollName(e.target.value)}
                     placeholder="Họ và tên sinh viên"
+                    disabled
+                    style={{ background: "#f1f5f9", cursor: "not-allowed", color: "#64748b" }}
                   />
                 </div>
 
@@ -583,8 +584,9 @@ function MyCourses() {
                     type="text"
                     className="modal-form-input"
                     value={enrollStudentId}
-                    onChange={(e) => setEnrollStudentId(e.target.value)}
                     placeholder="Mã sinh viên"
+                    disabled
+                    style={{ background: "#f1f5f9", cursor: "not-allowed", color: "#64748b" }}
                   />
                 </div>
 
