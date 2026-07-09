@@ -621,17 +621,20 @@ export default function CoursePageQTV() {
     setLoading(true)
     fetch(`${API}/admin/khoahoc`)
       .then(r => r.json())
-      .then(data => setCourses(data.map((c: any) => ({
-        id: c.MaKhoaHoc, title: c.TenKhoaHoc, desc: c.MoTa || '',
-        level: c.TrinhDo || '', status: c.TrangThai || 'Pending',
-        created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
-        category: c.DanhMuc || 'Luyện thi',
-        listening: !!c.Listening,
-        reading: !!c.Reading,
-        speaking: !!c.Speaking,
-        writing: !!c.Writing,
-        classCount: c.SoLop || 0
-      }))))
+      .then(data => {
+        const visibleData = Array.isArray(data) ? data.filter((c: any) => c.TrangThai === 'Hiển thị') : [];
+        setCourses(visibleData.map((c: any) => ({
+          id: c.MaKhoaHoc, title: c.TenKhoaHoc, desc: c.MoTa || '',
+          level: c.TrinhDo || '', status: c.TrangThai || 'Pending',
+          created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
+          category: c.DanhMuc || 'Luyện thi',
+          listening: !!c.Listening,
+          reading: !!c.Reading,
+          speaking: !!c.Speaking,
+          writing: !!c.Writing,
+          classCount: c.SoLop || 0
+        })));
+      })
       .catch(() => setToast('Lỗi tải danh sách khóa học'))
       .finally(() => setLoading(false))
   }

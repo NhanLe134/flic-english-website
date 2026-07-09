@@ -324,7 +324,7 @@ export default function ApproveAdmin() {
 
   const loadCourses = () => {
     setLoading(true);
-    fetch(`${API}/admin/khoahoc`)
+    fetch(`${API}/admin/khoahoc?all=true`)
       .then(r => r.json())
       .then(data => {
         setCourses(data.map((c: any) => ({
@@ -332,7 +332,7 @@ export default function ApproveAdmin() {
           title: c.TenKhoaHoc,
           desc: c.MoTa || '',
           level: c.TrinhDo || '',
-          status: c.TrangThai || 'Pending',
+          status: c.TrangThai || 'Ẩn',
           created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
           category: c.DanhMuc || 'Luyện thi',
           classCount: c.SoLop || 0,
@@ -555,8 +555,8 @@ export default function ApproveAdmin() {
 
   // ── Toggle Trạng thái hiển thị ──
   const toggleCourseVisibility = async (courseId: number, currentStatus: string) => {
-    const isVisible = currentStatus === 'Đã duyệt' || currentStatus === 'Hoạt động';
-    const newStatus = isVisible ? 'Ẩn' : 'Đã duyệt';
+    const isVisible = currentStatus === 'Hiển thị' || currentStatus === 'Đã duyệt' || currentStatus === 'Hoạt động';
+    const newStatus = isVisible ? 'Ẩn' : 'Hiển thị';
     try {
       await fetch(`${API}/admin/khoahoc/${courseId}/duyet`, {
         method: "PUT",
@@ -872,7 +872,7 @@ export default function ApproveAdmin() {
                 filteredCourses.map((course, index) => {
                   const isExpanded = expandedCourse === course.id;
                   const classes = classesMap[course.id] || [];
-                  const isVisible = course.status === 'Đã duyệt' || course.status === 'Hoạt động';
+                  const isVisible = course.status === 'Hiển thị' || course.status === 'Đã duyệt' || course.status === 'Hoạt động';
 
                   return (
                     <React.Fragment key={course.id}>
