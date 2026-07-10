@@ -1,4 +1,4 @@
-﻿import "./AccountAdmin.css";
+import "./AccountAdmin.css";
 import { useState, useEffect } from "react";
 
 const API = "http://14.225.192.252:5000";
@@ -199,6 +199,11 @@ export default function AccountAdmin() {
     const errors: { username?: string; fullname?: string; email?: string; password?: string } = {};
     if (!newUser.username.trim()) {
       errors.username = "Vui lòng nhập tên đăng nhập!";
+    } else {
+      const usernameExists = users.some(u => u.TenDangNhap?.toLowerCase().trim() === newUser.username.toLowerCase().trim());
+      if (usernameExists) {
+        errors.username = "Tên đăng nhập đã tồn tại!";
+      }
     }
     if (!newUser.fullname.trim()) {
       errors.fullname = "Vui lòng nhập họ và tên!";
@@ -210,6 +215,11 @@ export default function AccountAdmin() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newUser.email.trim())) {
         errors.email = "Email không đúng định dạng!";
+      } else {
+        const emailExists = users.some(u => u.Email?.toLowerCase().trim() === newUser.email.toLowerCase().trim());
+        if (emailExists) {
+          errors.email = "Email đã tồn tại!";
+        }
       }
     }
     if (!newUser.password.trim()) {
@@ -237,6 +247,16 @@ export default function AccountAdmin() {
         })
       });
       const data = await response.json();
+      
+      if (!response.ok) {
+        if (data && data.errorType) {
+          setAddErrors({ [data.errorType]: data.message });
+        } else {
+          showToast(data?.message || "Lỗi khi tạo tài khoản");
+        }
+        return;
+      }
+
       if (data && data.MaNguoiDung) {
         // Gửi quyền lên API nếu không phải Học Viên
         if (newUser.role !== "Học Viên" && newPermissions.length > 0) {
