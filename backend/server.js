@@ -2374,7 +2374,6 @@ app.get("/admin/khoahoc", async (req, res) => {
         kh.TrangThai,
         kh.NgayTao,
         kh.NgayDuyet,
-        kh.TrangThaiDuyet,
         (
           SELECT TOP 1 nd.HoTen
           FROM KHOAHOCCHITIET khct
