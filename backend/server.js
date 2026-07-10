@@ -3659,6 +3659,22 @@ app.post("/admin/users", async (req, res) => {
     const { TenDangNhap, HoTen, Email, MatKhau, VaiTro } = req.body
     const pool = await poolPromise
 
+    // 1. Kiểm tra Tên đăng nhập tồn tại
+    const checkUsername = await pool.request()
+      .input("username", TenDangNhap)
+      .query("SELECT MaNguoiDung FROM NGUOIDUNG WHERE TenDangNhap = @username");
+    if (checkUsername.recordset.length > 0) {
+      return res.status(400).json({ errorType: "username", message: "Tên đăng nhập đã tồn tại!" });
+    }
+
+    // 2. Kiểm tra Email tồn tại
+    const checkEmail = await pool.request()
+      .input("email", Email)
+      .query("SELECT MaNguoiDung FROM NGUOIDUNG WHERE Email = @email");
+    if (checkEmail.recordset.length > 0) {
+      return res.status(400).json({ errorType: "email", message: "Email đã tồn tại!" });
+    }
+
     let maVaiTro = 5; // Mặc định: Học viên chưa có lớp học
     if (VaiTro === "Giảng Viên") maVaiTro = 2;
     else if (VaiTro === "Quản Trị Nội Dung") maVaiTro = 4;
@@ -4605,6 +4621,16 @@ app.put("/classes/:id/active-buoihoc", async (req, res) => {
             UPDATE BUOIHOC
             SET TrangThai = N'Đã mở'
             WHERE MaLopHoc = @classId AND ThuTu <= @activeThuTu;
+
+            UPDATE BUOIHOC
+            SET TrangThai = N'Chưa mở'
+            WHERE MaLopHoc = @classId AND ThuTu > @activeThuTu;
+        END
+        ELSE
+        BEGIN
+            UPDATE BUOIHOC
+            SET TrangThai = N'Chưa mở'
+            WHERE MaLopHoc = @classId;
         END
       `)
     res.json({ message: "Cập nhật buổi học đang học thành công" })
@@ -4742,6 +4768,15 @@ app.get("/exercises/list/all", async (req, res) => {
                         k.NgayTao AS CreatedDate, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc, l.MaLopHoc AS FilterMaLopHoc
         FROM BAIKIEMTRA k
         JOIN BUOIHOC ls ON k.MaBuoiHoc = ls.MaBuoiHoc
+        JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
+
+        UNION ALL
+
+        SELECT DISTINCT lt.MaLuyenTapThem AS MaBaiTap, lt.Title AS Title, 'luyen-tap-them' AS Type, 
+                        0 AS IsExam,
+                        lt.CreatedDate, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc, l.MaLopHoc AS FilterMaLopHoc
+        FROM LUYENTAPTHEM lt
+        JOIN BUOIHOC ls ON lt.MaBuoiHoc = ls.MaBuoiHoc
         JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
       )
       SELECT DISTINCT MaBaiTap, Title, Type, IsExam, CreatedDate, TenLop, TenBuoiHoc, MaBuoiHoc, MaLopHoc 
