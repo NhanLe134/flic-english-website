@@ -685,6 +685,37 @@ function BaiGiangSV() {
                   >
                     <div id="youtube-player" style={{ width: "100%", height: "100%" }} />
                   </div>
+                  
+                  {/* Top transparent click blocker to disable uploader info and share links */}
+                  <div 
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "60px",
+                      background: "transparent",
+                      zIndex: 3,
+                      cursor: "default"
+                    }} 
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
+                  {/* Bottom transparent click blocker to disable Watch on YouTube and player links */}
+                  <div 
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "70px",
+                      background: "transparent",
+                      zIndex: 3,
+                      cursor: "default"
+                    }} 
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
                   {isQuizActive && renderQuizOverlay()}
                 </div>
               );

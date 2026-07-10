@@ -55,23 +55,6 @@ interface Document {
   NoiDung?: string;
 }
 
-const mapDangBaiToVi = (type: string): string => {
-  const t = (type || "").toLowerCase();
-  if (t === "Nghe audio trắc nghiệm" || t === "listening") return "Nghe trắc nghiệm";
-  if (t === "Hình ảnh chọn đáp án") return "Nghe chọn hình ảnh";
-  if (t === "Nghe chép chính tả") return "Nghe chép chính tả";
-  if (t === "Điền từ vào đoạn văn") return "Điền từ đoạn văn";
-  if (t === "Luyện phát âm (check phát âm tự động)") return "Luyện phát âm";
-  if (t === "Nói theo chủ đề (ghi âm nộp GV)") return "Nói theo chủ đề";
-  if (t === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "Đọc chia đôi màn hình";
-  if (t === "Nối từ") return "Bài tập từ vựng";
-  if (t === "Sắp xếp từ thành câu") return "Sắp xếp từ";
-  if (t === "Trắc nghiệm") return "Trắc nghiệm ngữ pháp";
-  if (t === "Viết đoạn văn ngắn") return "Tự luận viết";
-  if (t === "Sắp xếp câu thành đoạn văn") return "Sắp xếp câu";
-  if (t === "exam") return "Bài kiểm tra";
-  return type;
-};
 
 const KhoHocLieu = () => {
   const navigate = useNavigate();
@@ -539,7 +522,7 @@ const KhoHocLieu = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
             {groupedData.length === 0 ? (
               <div className={styles.emptyState} style={{ background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                Không tìm thấy lớp học hoặc học liệu nào.
+                Không tìm thấy học liệu nào.
               </div>
             ) : (
               groupedData.map(group => {
@@ -625,14 +608,21 @@ const KhoHocLieu = () => {
                                   ) : (
                                     session.exercises.map((item: any) => {
                                       const isEx = item.IsExam === 1 || item.Type === "exam";
+                                      const isLT = item.Type === "luyen-tap-them" || item.Type === "practice";
+                                      const badgeClass = isEx 
+                                        ? styles.badgeRed 
+                                        : (isLT ? styles.badgeOrange : styles.badgeBlue);
+                                      const badgeText = isEx 
+                                        ? "Bài KTra" 
+                                        : (isLT ? "LTThem" : "BTap");
                                       return (
                                         <div key={item.MaBaiTap} className={styles.itemRow}>
                                           <div className={styles.itemMain}>
                                             <div className={styles.itemDetails}>
                                               <p className={styles.itemTitle}>{item.Title}</p>
                                               <p className={styles.itemSubtitle}>
-                                                <span className={`${styles.badge} ${isEx ? styles.badgeRed : styles.badgeBlue}`}>
-                                                  {isEx ? "Bài kiểm tra" : mapDangBaiToVi(item.Type)}
+                                                <span className={`${styles.badge} ${badgeClass}`}>
+                                                  {badgeText}
                                                 </span>
                                               </p>
                                             </div>

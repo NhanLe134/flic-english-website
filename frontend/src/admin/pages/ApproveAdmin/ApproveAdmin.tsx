@@ -622,7 +622,7 @@ export default function ApproveAdmin() {
     }
 
     if (!classEditForm.maLop) {
-      errors.maLop = "Vui lòng chọn hoặc nhập 1 trình độ";
+      errors.maLop = "Vui lòng chọn trình độ lớp học";
       hasError = true;
     }
 
@@ -713,7 +713,7 @@ export default function ApproveAdmin() {
     }
 
     if (!newClassForm.maLop) {
-      errors.maLop = "Vui lòng chọn hoặc nhập 1 trình độ";
+      errors.maLop = "Vui lòng chọn trình độ lớp học";
       hasError = true;
     }
 
