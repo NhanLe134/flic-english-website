@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom"
 import TeacherLayout from "./giangvien/layout/TeacherLayout"
 import TrangChu from "./home_pages/TrangChu/TrangChu"
 import VeChuongToi from "./home_pages/VeChuongToi/VeChuongToi"
@@ -124,7 +124,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter basename={window.location.pathname.startsWith("/flic-english-website") ? "/flic-english-website" : ""}>
+    <HashRouter>
       <MobileNoticeProvider>
         <MobileNoticeTrigger />
         <Routes>
@@ -247,7 +247,7 @@ function App() {
       </Routes>
       <PopupXacThuc />
       </MobileNoticeProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

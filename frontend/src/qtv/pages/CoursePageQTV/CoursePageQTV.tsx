@@ -5,7 +5,13 @@ import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-const API = 'http://14.225.192.252:5000'
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5000`
+    : "http://14.225.192.252:5000";
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
 
 const START_TIME_OPTIONS = [
