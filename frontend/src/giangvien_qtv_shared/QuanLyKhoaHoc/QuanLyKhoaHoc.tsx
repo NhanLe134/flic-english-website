@@ -1,5 +1,5 @@
 import "./QuanLyKhoaHoc.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { formatScheduleOnlyDays } from "../../utils/schedule";
 
@@ -16,6 +16,11 @@ interface ClassItem {
 
 const QuanLyKhoaHoc = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId: string }>();
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const teacherIdStr = teacherId || `teacher${user.MaNguoiDung || ""}`;
+  const maTeacher = teacherIdStr.replace("teacher", "");
+
   const [search, setSearch] = useState("");
   const [classes, setClasses] = useState<ClassItem[]>([]);
 
@@ -98,7 +103,7 @@ const QuanLyKhoaHoc = () => {
                 <p className="students-count">{c.courseName}</p>
                 <button
                   className="detail-button"
-                  onClick={() => navigate(`/lessonlist/${c.id}`, { state: { tenKhoaHoc: c.courseName, tenLop: c.name } })}
+                  onClick={() => navigate(`/${teacherIdStr}/lophoc/${c.id}`, { state: { tenKhoaHoc: c.courseName, tenLop: c.name } })}
                 >
                   Xem chi tiết
                 </button>
