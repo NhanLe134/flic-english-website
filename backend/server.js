@@ -5511,6 +5511,10 @@ app.put("/dethi/:id/status", async (req, res) => {
 const initDb = async () => {
   try {
     const pool = await poolPromise
+    if (!pool) {
+      console.error("Database connection was not established. Skipping initialization queries.");
+      return;
+    }
     await pool.request().query(`
       IF NOT EXISTS (
           SELECT * FROM sys.columns 
