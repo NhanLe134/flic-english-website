@@ -85,7 +85,7 @@ const KhoHocLieu = () => {
   // Lecture creation / clone modal states
   const [showAddLectureModal, setShowAddLectureModal] = useState(false);
   const [bgTab, setBgTab] = useState<"create" | "reuse">("create");
-  const [bgForm, setBgForm] = useState({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: 1 });
+  const [bgForm, setBgForm] = useState({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: 1, isFree: false });
   const [allExistingBg, setAllExistingBg] = useState<any[]>([]);
 
   // Document creation / clone modal states
@@ -343,7 +343,7 @@ const KhoHocLieu = () => {
   // Lecture modal actions
   const openAddLecture = (sessionId: number, currentLecturesCount: number) => {
     setActiveSessionId(sessionId);
-    setBgForm({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: currentLecturesCount + 1 });
+    setBgForm({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: currentLecturesCount + 1, isFree: false });
     setBgTab("create");
     setShowAddLectureModal(true);
     fetch(`${API}/baigiang/list/all`)
@@ -370,7 +370,8 @@ const KhoHocLieu = () => {
           ThuTu: bgForm.order,
           MaKhoaHoc: null,
           MaGiangVien: user.MaNguoiDung || 1,
-          MaBuoiHoc: activeSessionId
+          MaBuoiHoc: activeSessionId,
+          IsFree: bgForm.isFree ? 1 : 0
         })
       });
       
@@ -756,6 +757,18 @@ const KhoHocLieu = () => {
                       }} />
                     </label>
                   </div>
+                </div>
+                <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: '4px 0' }}>
+                  <input 
+                    type="checkbox" 
+                    id="isFreeBg" 
+                    checked={bgForm.isFree} 
+                    onChange={e => setBgForm(p => ({...p, isFree: e.target.checked}))} 
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="isFreeBg" style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
+                    Cho phép học thử miễn phí (Free)
+                  </label>
                 </div>
                 <div className={styles.modalFooter}>
                   <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>

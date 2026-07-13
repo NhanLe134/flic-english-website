@@ -53,6 +53,7 @@ interface KhungBaiTapThuongProps {
   setIsListeningSTT: React.Dispatch<React.SetStateAction<Record<string | number, boolean>>>;
 
   handleSubmit: (answers: any) => void;
+  showAnswers?: boolean;
 }
 
 export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
@@ -92,7 +93,8 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
   setSpeechScores,
   isListeningSTT,
   setIsListeningSTT,
-  handleSubmit
+  handleSubmit,
+  showAnswers = false
 }) => {
 
   const questionPages = useMemo(() => {
@@ -193,6 +195,7 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
                         setIsListeningSTT={setIsListeningSTT}
                         questionsList={questionsList}
                         handleSubmit={handleSubmit}
+                        showAnswers={showAnswers}
                       />
                     </div>
                   );
@@ -241,6 +244,7 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
                       setIsListeningSTT={setIsListeningSTT}
                       questionsList={questionsList}
                       handleSubmit={handleSubmit}
+                      showAnswers={showAnswers}
                     />
                   </div>
                 );

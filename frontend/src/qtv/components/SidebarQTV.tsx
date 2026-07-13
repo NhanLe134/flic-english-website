@@ -83,7 +83,8 @@ const SidebarQTV = () => {
       lower.startsWith("/qtv/bai-giang") ||
       lower.startsWith("/qtv/bai-tap") ||
       lower.startsWith("/qtv/tai-lieu") ||
-      lower.startsWith("/qtv/baitap-detail")
+      lower.startsWith("/qtv/baitap-detail") ||
+      lower.startsWith("/quan-ly-ban-nhap")
     );
   };
 

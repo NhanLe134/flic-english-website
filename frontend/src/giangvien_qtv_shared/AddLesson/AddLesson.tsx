@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useRef, useState, useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import "./AddLesson.css";
 import {
   MDXEditor,
@@ -17,11 +17,52 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 
+const API_BASE = window.location.hostname === "localhost" ? "http://localhost:5000" : "http://14.225.192.252:5000";
+
 const AddLesson: React.FC = () => {
   const navigate = useNavigate();
   const { buoiHocId } = useParams();
+  const [searchParams] = useSearchParams();
+  const editDraftId = searchParams.get("editDraftId");
+  const [draftMaBuoiHoc, setDraftMaBuoiHoc] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!editDraftId) return;
+
+    fetch(`${API_BASE}/baigiang/detail/${editDraftId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setName(data.TieuDe || "");
+          setMoTa(data.NoiDung || "");
+          setLink(data.FileUrl || "");
+          setIsFree(data.IsFree === 1);
+          if (data.MaBuoiHoc) {
+            setDraftMaBuoiHoc(Number(data.MaBuoiHoc));
+          }
+        }
+      })
+      .catch(err => console.error("Lỗi tải chi tiết bản nháp bài giảng:", err));
+
+    fetch(`${API_BASE}/minitest/baigiang/${editDraftId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.CauHoi) {
+          try {
+            const questions = JSON.parse(data.CauHoi);
+            if (Array.isArray(questions) && questions.length > 0) {
+              setMinitestQuestions(questions);
+              setHasMinitest(true);
+            }
+          } catch (e) {
+            console.error("Lỗi parse câu hỏi MiniTest:", e);
+          }
+        }
+      })
+      .catch(err => console.error("Lỗi tải MiniTest của bản nháp:", err));
+  }, [editDraftId]);
 
   const [name, setName] = useState("");
   const type = "Video";
@@ -182,7 +223,7 @@ const AddLesson: React.FC = () => {
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
+        const uploadRes = await fetch(`${API_BASE}/upload`, {
           method: "POST",
           body: formData
         });
@@ -206,25 +247,33 @@ const AddLesson: React.FC = () => {
         ThuTu: 1,
         MaKhoaHoc: 1,
         MaGiangVien: user.MaNguoiDung || 1,
-        MaBuoiHoc: Number(buoiHocId),
+        MaBuoiHoc: (Number(buoiHocId) && Number(buoiHocId) !== 0) ? Number(buoiHocId) : (draftMaBuoiHoc || null),
         IsFree: isFree ? 1 : 0
       };
 
-      const res = await fetch("http://14.225.192.252:5000/baigiang", {
-        method: "POST",
+      const requestUrl = editDraftId 
+        ? `${API_BASE}/baigiang/${editDraftId}`
+        : `${API_BASE}/baigiang`;
+      const requestMethod = editDraftId ? "PUT" : "POST";
+
+      const res = await fetch(requestUrl, {
+        method: requestMethod,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLesson)
       });
       
       if (!res.ok) {
-        throw new Error("Không thể lưu bài giảng");
+        throw new Error(editDraftId ? "Không thể cập nhật bài giảng" : "Không thể lưu bài giảng");
       }
 
-      const resData = await res.json();
-      const createdMaBaiHoc = resData.MaBaiHoc;
+      let createdMaBaiHoc = editDraftId;
+      if (!editDraftId) {
+        const resData = await res.json();
+        createdMaBaiHoc = resData.MaBaiHoc;
+      }
 
       if (hasMinitest && createdMaBaiHoc) {
-        const minitestRes = await fetch("http://14.225.192.252:5000/minitest/create", {
+        const minitestRes = await fetch(`${API_BASE}/minitest/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -239,16 +288,25 @@ const AddLesson: React.FC = () => {
         }
       }
 
-      if (isTeacher) {
-        alert(
-          hasMinitest
-            ? "Gửi yêu cầu duyệt bài giảng và MiniTest thành công! Nội dung sẽ hiển thị sau khi được phê duyệt."
-            : "Gửi yêu cầu duyệt bài giảng thành công! Bài giảng sẽ hiển thị sau khi được phê duyệt."
-        );
+      if (status === "draft") {
+        alert(hasMinitest ? "Đã lưu bản nháp bài giảng và MiniTest thành công!" : "Đã lưu bản nháp bài giảng thành công!");
       } else {
-        alert(hasMinitest ? "Thêm bài giảng và MiniTest thành công!" : "Thêm bài giảng thành công!");
+        if (isTeacher) {
+          alert(
+            hasMinitest
+              ? "Gửi yêu cầu duyệt bài giảng và MiniTest thành công! Nội dung sẽ hiển thị sau khi được phê duyệt."
+              : "Gửi yêu cầu duyệt bài giảng thành công! Bài giảng sẽ hiển thị sau khi được phê duyệt."
+          );
+        } else {
+          alert(hasMinitest ? "Thêm bài giảng và MiniTest thành công!" : "Thêm bài giảng thành công!");
+        }
       }
-      navigate(-1);
+      
+      if (editDraftId) {
+        navigate("/quan-ly-ban-nhap");
+      } else {
+        navigate(-1);
+      }
 
     } catch (err) {
       console.log(err);
@@ -261,8 +319,14 @@ const AddLesson: React.FC = () => {
   return (
     <div className="al-wrapper">
 
-      <div className="back-btn" onClick={() => navigate(-1)}>← Quay lại</div>
-      <h1 className="page-title">Thêm bài giảng</h1>
+      <div className="back-btn" onClick={() => {
+        if (editDraftId) {
+          navigate("/quan-ly-ban-nhap");
+        } else {
+          navigate(-1);
+        }
+      }}>← Quay lại</div>
+      <h1 className="page-title">{editDraftId ? "Chỉnh sửa bản nháp bài giảng" : "Thêm bài giảng"}</h1>
 
       <div className="form-layout">
 

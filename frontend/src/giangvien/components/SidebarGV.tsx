@@ -37,7 +37,8 @@ const getActiveMenu = (pathname: string) => {
     pathname.startsWith("/cham-bai") ||
     pathname.startsWith("/documents") ||
     pathname.startsWith("/them-tai-lieu") ||
-    pathname.startsWith("/quan-ly-tai-lieu")
+    pathname.startsWith("/quan-ly-tai-lieu") ||
+    pathname.startsWith("/quan-ly-ban-nhap")
   ) return "/quan-ly-khoa-hoc";
 
   if (

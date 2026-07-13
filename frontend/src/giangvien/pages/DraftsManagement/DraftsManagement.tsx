@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend } from "react-icons/fi";
+import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend, FiEye } from "react-icons/fi";
 import "./DraftsManagement.css";
 
 interface DraftLesson {
@@ -23,6 +23,7 @@ interface DraftExercise {
   TenBuoiHoc: string;
   TenLop: string;
   TenKhoaHoc: string;
+  MaBuoiHoc?: number;
 }
 
 const DraftsManagement = () => {
@@ -173,7 +174,7 @@ const DraftsManagement = () => {
 
   return (
     <div className="dm-wrapper">
-      <span className="dm-back" onClick={() => navigate(-1)}>
+      <span className="dm-back" onClick={() => navigate("/lessonlist/18")}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
         Quay lại
       </span>
@@ -247,7 +248,24 @@ const DraftsManagement = () => {
               return (
                 <div key={id} className="dm-card">
                   <div className="dm-card-info">
-                    <h3>{title}</h3>
+                    <h3 
+                      style={{ cursor: "pointer", color: "#F95800" }}
+                      onClick={() => {
+                        if (item.MaBaiHoc) {
+                          navigate(`/them-bai-giang/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        } else {
+                          navigate(`/create-exercise/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        }
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.textDecoration = "underline";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.textDecoration = "none";
+                      }}
+                    >
+                      {title}
+                    </h3>
                     <div className="dm-card-meta">
                       <span className="dm-meta-tag">{typeLabel}</span>
                       <span>{extraLabel}</span>
@@ -266,6 +284,39 @@ const DraftsManagement = () => {
                     >
                       <FiTrash2 size={16} />
                       Xóa
+                    </button>
+                    <button
+                      className="dm-action-view"
+                      onClick={() => {
+                        if (item.MaBaiHoc) {
+                          navigate(`/them-bai-giang/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        } else {
+                          navigate(`/create-exercise/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        }
+                      }}
+                      style={{
+                        background: "#eff6ff",
+                        color: "#3b82f6",
+                        border: "1px solid #dbeafe",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.background = "#dbeafe";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.background = "#eff6ff";
+                      }}
+                    >
+                      <FiEye size={16} />
+                      Xem
                     </button>
                     <button
                       className="dm-action-submit"

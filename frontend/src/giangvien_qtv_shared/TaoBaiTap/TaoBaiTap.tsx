@@ -223,6 +223,7 @@ const TaoBaiTap = () => {
   const isPractice = searchParams.get("isPractice") === "true";
   const isMiniTest = searchParams.get("isMiniTest") === "true";
   const maBaiHocParam = searchParams.get("maBaiHoc");
+  const editDraftId = searchParams.get("editDraftId");
   const [sessionLectures, setSessionLectures] = useState<any[]>([]);
   const [selectedMaBaiHoc, setSelectedMaBaiHoc] = useState<number | "">(
     maBaiHocParam ? Number(maBaiHocParam) : ""
@@ -247,6 +248,7 @@ const TaoBaiTap = () => {
   }>({ show: false, title: "", message: "" });
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
+  const [deadlineError, setDeadlineError] = useState("");
   const [type] = useState(isMiniTest ? "Trắc nghiệm" : "Nghe audio trắc nghiệm");
   
   const [kyNang] = useState(isMiniTest ? "Viet" : "Nghe");
@@ -255,6 +257,7 @@ const TaoBaiTap = () => {
   const [isExam, setIsExam] = useState(false);
   const [deadline, setDeadline] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
+  const [draftMaBuoiHoc, setDraftMaBuoiHoc] = useState<number | null>(null);
 
   // States for Exam Builder
   const [examDuration, setExamDuration] = useState(50);
@@ -596,6 +599,64 @@ const TaoBaiTap = () => {
       .then(data => setAllExistingEx(data))
       .catch(err => console.log(err));
   }, []);
+
+  useEffect(() => {
+    if (!editDraftId) return;
+    fetch(`http://14.225.192.252:5000/baitap/${editDraftId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setTitle(data.Title || data.TieuDe || "");
+          setIsFree(data.IsFree === 1);
+          setIsExam(data.IsExam === 1 || data.Type === "exam");
+          if (data.Deadline) {
+            setDeadline(data.Deadline.split(".")[0]);
+          }
+          setShowAnswer(data.ShowAnswer === 1);
+          if (data.MaBaiHoc) {
+            setSelectedMaBaiHoc(Number(data.MaBaiHoc));
+          }
+          if (data.MaBuoiHoc) {
+            const buoiHocId = Number(data.MaBuoiHoc);
+            setDraftMaBuoiHoc(buoiHocId);
+            
+            // Load lesson details
+            fetch(`http://14.225.192.252:5000/buoihoc/${buoiHocId}`)
+              .then(res => res.json())
+              .then(lessonData => setLesson(Array.isArray(lessonData) ? lessonData[0] : lessonData))
+              .catch(err => console.error("Lỗi tải thông tin buổi học bản nháp:", err));
+
+            // Load session lectures
+            fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`)
+              .then(res => res.json())
+              .then(lecturesData => {
+                if (Array.isArray(lecturesData)) {
+                  const published = lecturesData.filter((bg: any) => bg.TrangThai === "published");
+                  setSessionLectures(published);
+                  if (!selectedMaBaiHoc && published.length > 0) {
+                    setSelectedMaBaiHoc(published[0].MaBaiHoc);
+                  }
+                }
+              })
+              .catch(err => console.error("Lỗi tải danh sách bài giảng bản nháp:", err));
+          }
+          if (data.Content) {
+            try {
+              const parsed = JSON.parse(data.Content);
+              if (parsed.examDuration) setExamDuration(parsed.examDuration);
+              if (parsed.examStartTime) setExamStartTime(parsed.examStartTime.split(".")[0]);
+              if (parsed.openingMode) setOpeningMode(parsed.openingMode);
+              if (parsed.sections) {
+                setExamSections(parsed.sections);
+              }
+            } catch (e) {
+              console.error("Lỗi parse Content bản nháp:", e);
+            }
+          }
+        }
+      })
+      .catch(err => console.error("Lỗi fetch chi tiết bản nháp:", err));
+  }, [editDraftId]);
 
   const handleReuseExercise = async (exerciseId: number) => {
     if (!selectedMaBaiHoc) {
@@ -1963,11 +2024,18 @@ const TaoBaiTap = () => {
     setExamSections(copy);
   };
 
-  /* ===== CREATE & POST BAITAP ===== */
   const handleCreate = async (statusOverride?: "draft" | "pending" | "published" | "practice") => {
     if (!title.trim()) {
       setTitleError("Vui lòng nhập tiêu đề");
       const el = document.querySelector(".exercise-title");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    const shouldShowDeadline = !isMiniTest && (!isExam || (isExam && openingMode === "scheduled"));
+    if (shouldShowDeadline && !deadline) {
+      setDeadlineError("Vui lòng chọn hạn nộp bài!");
+      const el = document.querySelector('input[type="datetime-local"]');
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
@@ -2045,8 +2113,13 @@ const TaoBaiTap = () => {
         return;
       }
 
-      const res = await fetch("http://14.225.192.252:5000/baitap/create", {
-        method: "POST",
+      const requestUrl = editDraftId 
+        ? `http://14.225.192.252:5000/baitap/${editDraftId}`
+        : "http://14.225.192.252:5000/baitap/create";
+      const requestMethod = editDraftId ? "PUT" : "POST";
+
+      const res = await fetch(requestUrl, {
+        method: requestMethod,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           Title:       title,
@@ -2055,7 +2128,7 @@ const TaoBaiTap = () => {
           Questions:   questionsStr,
           Vocabulary:  "", 
           CreatedDate: today,
-          MaBuoiHoc:    Number(id),
+          MaBuoiHoc:    (Number(id) && Number(id) !== 0) ? Number(id) : (draftMaBuoiHoc || null),
           MaBaiHoc:     isExam ? null : (selectedMaBaiHoc ? Number(selectedMaBaiHoc) : null),
           AudioUrl:    mainAudioUrl,
           ShowAnswer:  showAnswer ? 1 : 0,
@@ -2069,7 +2142,7 @@ const TaoBaiTap = () => {
       });
 
       if (!res.ok) {
-        throw new Error("Không thể tạo bài tập trên máy chủ");
+        throw new Error(editDraftId ? "Không thể cập nhật bài tập trên máy chủ" : "Không thể tạo bài tập trên máy chủ");
       }
 
       setSuccessMessage(
@@ -2078,29 +2151,35 @@ const TaoBaiTap = () => {
           : status === "practice"
           ? "Tạo bài luyện tập thêm thành công"
           : isTeacher
-          ? "Đã gửi yêu cầu duyệt bài tập đến QTV"
-          : "Tạo bài tập thành công"
+          ? (isExam ? "Đã gửi yêu cầu duyệt bài kiểm tra đến QTV" : "Đã gửi yêu cầu duyệt bài tập đến QTV")
+          : (isExam ? "Tạo bài kiểm tra thành công" : "Tạo bài tập thành công")
       );
       setShowSuccess(true);
-      const isQTVPath = location.pathname.startsWith("/QTV");
-      if (isQTVPath) {
-        if (location.state?.fromPage === "kho-hoc-lieu") {
-          setTimeout(() => {
-            navigate("/QTV/kho-hoc-lieu");
-          }, 1500);
-        } else {
-          setTimeout(() => {
-            navigate("/QTV/khoahoc", {
-              state: {
-                openClassId: fromClassId,
-                openCourseId: fromCourseId,
-                activeTab: "roadmap"
-              }
-            });
-          }, 1500);
-        }
+      if (editDraftId) {
+        setTimeout(() => {
+          navigate("/quan-ly-ban-nhap");
+        }, 1500);
       } else {
-        setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
+        const isQTVPath = location.pathname.startsWith("/QTV");
+        if (isQTVPath) {
+          if (location.state?.fromPage === "kho-hoc-lieu") {
+            setTimeout(() => {
+              navigate("/QTV/kho-hoc-lieu");
+            }, 1500);
+          } else {
+            setTimeout(() => {
+              navigate("/QTV/khoahoc", {
+                state: {
+                  openClassId: fromClassId,
+                  openCourseId: fromCourseId,
+                  activeTab: "roadmap"
+                }
+              });
+            }, 1500);
+          }
+        } else {
+          setTimeout(() => navigate(`/bai-tap/${id}`), 1500);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -2108,11 +2187,15 @@ const TaoBaiTap = () => {
     }
   };
 
-  if (!lesson) return <p>Đang tải...</p>;
+  if (!lesson && !editDraftId) return <p>Đang tải...</p>;
 
   return (
     <div className="ce-wrapper" style={isQTV ? { padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
       <div className="back" onClick={() => {
+        if (editDraftId) {
+          navigate("/quan-ly-ban-nhap");
+          return;
+        }
         if (isQTV) {
           if (location.state?.fromPage === "kho-hoc-lieu") {
             navigate("/QTV/kho-hoc-lieu");
@@ -2229,8 +2312,20 @@ const TaoBaiTap = () => {
                 }}>
                   <div style={{ flex: 1, paddingRight: "15px", textAlign: "left" }}>
                     <strong style={{ fontSize: "16px", color: "#000080", display: "block" }}>{ex.Title}</strong>
-                    <span style={{ fontSize: "12px", color: "#8b7e74" }}>
-                      Kỹ năng: {ex.KyNang || "—"} · Dạng: {ex.DangBai || "—"} · Lớp: {ex.TenLop} ({ex.TenBuoiHoc})
+                    <span style={{ fontSize: "12px", color: "#8b7e74", display: "flex", alignItems: "center", gap: "6px", marginTop: "4px" }}>
+                      Dạng bài: 
+                      <span style={{ 
+                        fontWeight: 600, 
+                        color: (ex.IsExam === 1 || ex.Type === "exam") ? "#ef4444" : ((ex.Type === "luyen-tap-them" || ex.Type === "practice") ? "#f97316" : "#3b82f6"),
+                        background: (ex.IsExam === 1 || ex.Type === "exam") ? "#fef2f2" : ((ex.Type === "luyen-tap-them" || ex.Type === "practice") ? "#fff7ed" : "#eff6ff"),
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                        border: (ex.IsExam === 1 || ex.Type === "exam") ? "1px solid #fee2e2" : ((ex.Type === "luyen-tap-them" || ex.Type === "practice") ? "1px solid #ffedd5" : "1px solid #dbeafe")
+                      }}>
+                        {(ex.IsExam === 1 || ex.Type === "exam") ? "Bài KTra" : ((ex.Type === "luyen-tap-them" || ex.Type === "practice") ? "LTThem" : "BTap")}
+                      </span>
+                      · Lớp: {ex.TenLop} ({ex.TenBuoiHoc})
                     </span>
                   </div>
                   <button
@@ -2406,6 +2501,9 @@ const TaoBaiTap = () => {
             </div>
           )) : null}
 
+          <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569", display: "block", marginBottom: "6px" }}>
+            Tiêu đề {isPractice ? "bài luyện tập thêm" : "bài tập / bài kiểm tra"} <span style={{ color: "#ef4444" }}>*</span>
+          </label>
           <input
             className="exercise-title"
             placeholder={isPractice ? "Tiêu đề bài luyện tập thêm" : "Tiêu đề bài tập / bài kiểm tra"}
@@ -2413,6 +2511,11 @@ const TaoBaiTap = () => {
             onChange={(e) => {
               setTitle(e.target.value);
               if (e.target.value.trim()) setTitleError("");
+            }}
+            style={{ 
+              marginTop: 0, 
+              border: titleError ? "1.5px solid #ef4444" : "1px solid #cbd5e1",
+              outline: "none"
             }}
           />
           {titleError && (
@@ -2470,14 +2573,29 @@ const TaoBaiTap = () => {
             <div>
               {(!isExam || (isExam && openingMode === "scheduled")) && (
                 <>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>Hạn nộp bài (Deadline)</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>
+                    Hạn nộp bài (Deadline) <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
                   <input
                     type="datetime-local"
                     className="exercise-type"
-                    style={{ width: '100%', marginTop: 0, marginBottom: 0 }}
+                    style={{ 
+                      width: '100%', 
+                      marginTop: 0, 
+                      marginBottom: 0,
+                      border: deadlineError ? "1.5px solid #ef4444" : "1px solid #cbd5e1"
+                    }}
                     value={deadline}
-                    onChange={e => setDeadline(e.target.value)}
+                    onChange={e => {
+                      setDeadline(e.target.value);
+                      if (e.target.value) setDeadlineError("");
+                    }}
                   />
+                  {deadlineError && (
+                    <p style={{ color: "#c5221f", fontStyle: "italic", fontSize: "12.5px", margin: "4px 0 10px 0", fontWeight: 500 }}>
+                      {deadlineError}
+                    </p>
+                  )}
                 </>
               )}
             </div>

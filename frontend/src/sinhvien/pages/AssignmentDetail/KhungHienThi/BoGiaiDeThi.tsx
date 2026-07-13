@@ -44,6 +44,7 @@ interface BoGiaiDeThiProps {
   stopRecording: (idx: number | string) => void;
   API: string;
   isReview?: boolean;
+  showAnswers?: boolean;
 }
 
 const renderReadingPassage = (text: string) => {
@@ -119,6 +120,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   stopRecording,
   API,
   isReview = false,
+  showAnswers = false
 }) => {
 
   const getSectionQuestionNumber = (sec: any, qIdx: number, subIdx?: number) => {
@@ -174,6 +176,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             isExam={true}
             examStarted={examStarted}
             isReview={isReview}
+            showAnswers={showAnswers}
           />
         </div>
       );
@@ -211,6 +214,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                   examStarted={examStarted}
                   isReview={isReview}
                   displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+                  showAnswers={showAnswers}
                 />
               ))}
             </div>
@@ -227,6 +231,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               examStarted={examStarted}
               isReview={isReview}
               displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
+              showAnswers={showAnswers}
             />
           )}
         </div>
@@ -379,6 +384,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                 examStarted={examStarted}
                 isReview={isReview}
                 displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+                showAnswers={showAnswers}
               />
             ))}
           </div>
@@ -398,6 +404,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
           examStarted={examStarted}
           isReview={isReview}
           displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
+          showAnswers={showAnswers}
         />
       );
     }

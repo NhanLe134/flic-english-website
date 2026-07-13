@@ -62,6 +62,7 @@ interface BoGiaoDienCauHoiProps {
   
   questionsList: any[];
   handleSubmit: (answers: any) => void;
+  showAnswers?: boolean;
 }
 
 export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
@@ -101,7 +102,8 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
   isListeningSTT,
   setIsListeningSTT,
   questionsList,
-  handleSubmit
+  handleSubmit,
+  showAnswers = false
 }) => {
   const questionType = exercise?.Type || "";
 
@@ -132,6 +134,7 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
         examStarted={examStarted}
         isReview={isReview}
         displayIdx={displayIdx}
+        showAnswers={showAnswers}
       />
     );
   };
@@ -395,6 +398,7 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
               examStarted={examStarted}
               isReview={isReview}
               displayIdx={getGlobalSubIdx(qIdx, subIdx)}
+              showAnswers={showAnswers}
             />
           ))}
         </div>

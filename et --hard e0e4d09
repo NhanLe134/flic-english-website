@@ -1,0 +1,108 @@
+[33mcb95dba[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{0}: pull origin dev: Fast-forward
+[33me0e4d09[m HEAD@{1}: commit: Anhthu: sua giao dien part 16
+[33med127e8[m HEAD@{2}: pull origin dev: Fast-forward
+[33m97e02d8[m HEAD@{3}: pull origin dev: Merge made by the 'ort' strategy.
+[33m85bffb0[m HEAD@{4}: commit: Anhthu: sua giao dien part 15
+[33mdd17448[m HEAD@{5}: pull origin dev: Fast-forward
+[33m3be69e3[m HEAD@{6}: commit (amend): anhthu: Sua loi merge code
+[33mf3c707c[m HEAD@{7}: commit (merge): anhthu: Sua loi merge code
+[33m3fd0e19[m HEAD@{8}: commit: Anhthu: sua all part 14
+[33meccf385[m HEAD@{9}: pull origin dev: Merge made by the 'ort' strategy.
+[33m7a3119c[m HEAD@{10}: commit: Anhthu: Sua all part 13
+[33m9a31839[m HEAD@{11}: pull origin dev: Fast-forward
+[33m3e9b482[m HEAD@{12}: reset: moving to HEAD
+[33m3e9b482[m HEAD@{13}: pull origin dev: Fast-forward
+[33m607d741[m HEAD@{14}: reset: moving to HEAD
+[33m607d741[m HEAD@{15}: pull origin dev: Fast-forward
+[33m842b470[m HEAD@{16}: commit: Sua giao dien part 12
+[33m5ff0463[m HEAD@{17}: pull origin dev: Fast-forward
+[33m7683880[m HEAD@{18}: reset: moving to HEAD
+[33m7683880[m HEAD@{19}: commit: anthu: fix loi
+[33m6601688[m HEAD@{20}: commit: Anhthu: sua giao dien part 12
+[33m953e50e[m HEAD@{21}: pull origin dev: Fast-forward
+[33mf215456[m HEAD@{22}: commit: athu: sua giao dien part 11
+[33mbc3c79d[m HEAD@{23}: reset: moving to bc3c79db24b5bb284ad2951745bfcb8c6d7268e4
+[33m2e6c4ce[m HEAD@{24}: pull: updating HEAD
+[33m2e6c4ce[m HEAD@{25}: pull origin dev: Fast-forward
+[33mfaae096[m HEAD@{26}: reset: moving to HEAD
+[33mfaae096[m HEAD@{27}: pull origin dev: Fast-forward
+[33m3ab1379[m HEAD@{28}: commit: Anhthu: Sưa giao dien part 10
+[33m79e2b92[m HEAD@{29}: pull origin dev: Fast-forward
+[33m90d9fe4[m HEAD@{30}: reset: moving to HEAD
+[33m90d9fe4[m HEAD@{31}: pull origin dev: Fast-forward
+[33m3133b3a[m HEAD@{32}: reset: moving to HEAD
+[33m3133b3a[m HEAD@{33}: pull origin dev: Merge made by the 'ort' strategy.
+[33m42c1609[m HEAD@{34}: commit: Anhthu: Sua giao dien part 9
+[33m032a981[m HEAD@{35}: pull origin dev: Fast-forward
+[33mee525b1[m HEAD@{36}: commit: Anhthu: Sua giao dien completed part 8
+[33mc027a2a[m HEAD@{37}: pull origin dev: Fast-forward
+[33m6c34e6a[m HEAD@{38}: pull origin dev: Fast-forward
+[33m2cc2d38[m HEAD@{39}: reset: moving to HEAD
+[33m2cc2d38[m HEAD@{40}: pull origin dev: Merge made by the 'ort' strategy.
+[33mc3917af[m HEAD@{41}: pull origin dev: Merge made by the 'ort' strategy.
+[33mf5c4cb4[m HEAD@{42}: commit: Anhthu: Sua giao dien part 7
+[33m5df7146[m HEAD@{43}: pull origin dev: Fast-forward
+[33m1669b9b[m HEAD@{44}: reset: moving to HEAD
+[33m1669b9b[m HEAD@{45}: pull origin dev: Fast-forward
+[33ma7813b0[m HEAD@{46}: commit: Anhthu: Sua giao dien part 5
+[33m19604e4[m HEAD@{47}: commit: Anhthu: Sua theo bug part 4
+[33m78b56de[m HEAD@{48}: pull origin dev: Fast-forward
+[33mc4e02d1[m HEAD@{49}: commit: Anhthu: Sua giao dien part 3
+[33mb941207[m HEAD@{50}: pull origin dev: Fast-forward
+[33mdd4f31f[m HEAD@{51}: reset: moving to HEAD
+[33mdd4f31f[m HEAD@{52}: commit: Anhthu: Giao dien GV vs QTND part 2
+[33m4c43d6b[m HEAD@{53}: pull origin dev: Fast-forward
+[33m8b2539d[m HEAD@{54}: reset: moving to HEAD
+[33m8b2539d[m HEAD@{55}: commit (merge): Anhthu: Sua merge code loi
+[33m2dcfd06[m HEAD@{56}: commit: AnhThu: Hoan thien dam bao chuc năng
+[33m790963c[m HEAD@{57}: pull origin dev: Fast-forward
+[33m21792b1[m HEAD@{58}: reset: moving to HEAD
+[33m21792b1[m HEAD@{59}: pull origin dev: Fast-forward
+[33m94cc1b8[m HEAD@{60}: reset: moving to HEAD
+[33m94cc1b8[m HEAD@{61}: commit: Anhthu: Day lan 2
+[33m9a3e174[m HEAD@{62}: commit: Anhthu: Done dieu chinh BT theo yeu cau mơi nhat
+[33m4b40256[m HEAD@{63}: pull origin dev: Fast-forward
+[33mf6e63b8[m HEAD@{64}: reset: moving to HEAD
+[33mf6e63b8[m HEAD@{65}: commit: Anhthu: Bô sung
+[33m161284e[m HEAD@{66}: commit: AnhThu: Chinh Sua part1
+[33m51b9919[m HEAD@{67}: pull origin dev: Fast-forward
+[33m4edad68[m HEAD@{68}: reset: moving to HEAD
+[33m4edad68[m HEAD@{69}: pull origin dev: Fast-forward
+[33md2dd7fe[m HEAD@{70}: reset: moving to HEAD
+[33md2dd7fe[m HEAD@{71}: pull origin dev: Fast-forward
+[33m6ebbe9f[m HEAD@{72}: reset: moving to HEAD
+[33m6ebbe9f[m HEAD@{73}: pull origin dev: Fast-forward
+[33m059fca5[m HEAD@{74}: reset: moving to HEAD
+[33m059fca5[m HEAD@{75}: pull origin dev: Fast-forward
+[33me9f6b40[m HEAD@{76}: commit: Anhthu: Sưa loi khong hien thi
+[33meaaee5a[m HEAD@{77}: commit: Anhthu: Update ChamBaiPage and CreateExercise
+[33m9e15c94[m HEAD@{78}: commit (merge): Anhthu:Xac nhan hoan thanh merge AssignmentDetail
+[33mf90210c[m HEAD@{79}: reset: moving to HEAD
+[33mf90210c[m HEAD@{80}: commit: Anhthu: Hoàn thien Các BT 150626
+[33m6d3e479[m HEAD@{81}: pull origin dev: Fast-forward
+[33mebfcae9[m HEAD@{82}: reset: moving to HEAD
+[33mebfcae9[m HEAD@{83}: commit: Anhthu: New QTVnd vs GV
+[33m08f0695[m HEAD@{84}: reset: moving to 08f0695
+[33m4493642[m HEAD@{85}: reset: moving to origin/dev
+[33m08f0695[m HEAD@{86}: commit: Push tam thoi QTVnd vs GV
+[33m84b69c0[m HEAD@{87}: pull origin dev: Fast-forward
+[33mbb3d2e2[m HEAD@{88}: reset: moving to HEAD
+[33mbb3d2e2[m HEAD@{89}: pull origin dev: Fast-forward
+[33mc830000[m HEAD@{90}: reset: moving to HEAD
+[33mc830000[m HEAD@{91}: reset: moving to HEAD~1
+[33m535ad12[m HEAD@{92}: pull origin dev: Fast-forward
+[33m01a4235[m HEAD@{93}: commit: AnhThu: Sưa 90% error merge code tai QTV
+[33m15d2301[m HEAD@{94}: commit: AnhThu: Sua cac loai BT va add Deadline BT
+[33m862d112[m HEAD@{95}: pull origin dev: Fast-forward
+[33m0394c62[m HEAD@{96}: commit: Anhthu: Fix loi du lieu admin
+[33m8b5b69e[m HEAD@{97}: commit: Fix gop code va npm build
+[33m6fc5deb[m HEAD@{98}: commit: Fix loi code vưa day
+[33ma636e5d[m HEAD@{99}: commit: Xong giao dien QTVnd va GVien
+[33m6e8ef40[m HEAD@{100}: pull origin dev: Merge made by the 'ort' strategy.
+[33mf12fa65[m HEAD@{101}: reset: moving to HEAD
+[33mf12fa65[m HEAD@{102}: pull origin dev: updating HEAD
+[33mf12fa65[m HEAD@{103}: pull origin dev: Merge made by the 'ort' strategy.
+[33m1d3744a[m HEAD@{104}: pull origin main: Fast-forward
+[33m26ade4a[m[33m ([m[1;32mmain[m[33m)[m HEAD@{105}: checkout: moving from dev to dev
+[33m26ade4a[m[33m ([m[1;32mmain[m[33m)[m HEAD@{106}: checkout: moving from main to dev
+[33m26ade4a[m[33m ([m[1;32mmain[m[33m)[m HEAD@{107}: clone: from https://github.com/NhanLe134/flic-english-website.git
