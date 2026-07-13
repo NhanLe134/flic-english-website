@@ -78,7 +78,7 @@ const TrangChu = () => {
         if (user.VaiTro === "Quản Trị Viên") {
           navigate("/admin/admin-dashboard", { replace: true });
         } else if (user.VaiTro === "Giảng Viên") {
-          navigate("/quan-ly-khoa-hoc", { replace: true });
+          navigate(`/teacher${user.MaNguoiDung}/lophoc`, { replace: true });
         } else if (user.VaiTro === "Quản Trị Nội Dung") {
           navigate("/QTV/khoahoc", { replace: true });
         } else if (user.VaiTro === "Học Viên") {

@@ -1,7 +1,7 @@
 import "./DocumentManagement.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiTrash2 } from "react-icons/fi";
 import { hasPermission } from "../../utils/permission";
 
 const API =
@@ -120,6 +120,8 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   };
 
   /* ===== LOAD DATA ===== */
+  const [lessonStatus, setLessonStatus] = useState<string>("");
+
   useEffect(() => {
     if (!buoiHocId) return;
     fetch(`${API}/tailieu/${buoiHocId}`)
@@ -130,8 +132,9 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
     fetch(`${API}/buoihoc/${buoiHocId}`)
       .then(res => res.json())
       .then(data => {
-        if (data && data.TrangThaiLopHoc) {
-          setClassStatus(data.TrangThaiLopHoc);
+        if (data) {
+          if (data.TrangThaiLopHoc) setClassStatus(data.TrangThaiLopHoc);
+          if (data.TrangThai) setLessonStatus(data.TrangThai);
         }
       })
       .catch(err => console.log(err));
@@ -184,7 +187,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
             <FiSearch size={16} />
           </button>
         </form>
-        {classStatus !== "Đã hoàn thành" && (hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
+        {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
           <>
             <button
               className="add-btn-reuse"
@@ -202,23 +205,26 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       {/* LIST */}
       <div className="doc-list">
         {filteredDocs.map(doc => (
-          <div key={doc.MaTaiLieu} className="doc-card">
+          <div
+            key={doc.MaTaiLieu}
+            className="doc-card"
+            onClick={() => handleViewDocumentDetail(doc)}
+            style={{ cursor: "pointer" }}
+          >
             <div className="doc-left">
               <h3 style={{ margin: 0 }}>{doc.TieuDe}</h3>
               <p className="doc-desc" style={{ marginTop: '4px' }}>{doc.MoTa}</p>
             </div>
-            <div className="doc-right">
+            <div className="doc-right" onClick={(e) => e.stopPropagation()}>
               <span className="doc-date">
                 ⏱ Cập nhật: {new Date(doc.NgayCapNhat).toLocaleDateString("vi-VN")}
               </span>
-              <button className="action-icon-btn detail-icon-btn" 
-                onClick={() => handleViewDocumentDetail(doc)}
-                title="Xem Chi Tiết">
-                <FiEye size={16} />
-              </button>
-              {classStatus !== "Đã hoàn thành" && (
+              {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
                 <button className="action-icon-btn delete-icon-btn" 
-                  onClick={() => handleOpenDelete(doc.MaTaiLieu)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDelete(doc.MaTaiLieu);
+                  }}
                   title="Xóa tài liệu">
                   <FiTrash2 size={16} />
                 </button>

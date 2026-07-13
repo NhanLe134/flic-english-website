@@ -33,7 +33,7 @@ const API =
 const ExerciseDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
+  const { id, buoiId, maLop, teacherId } = useParams();
   const isQTV = location.pathname.includes("/QTV");
 
   const [exercise, setExercise] = useState<any>(null);
@@ -55,7 +55,7 @@ const ExerciseDetail = () => {
 
   return (
     <div className="ed-wrapper" style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
-      <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
+      <div className="back" onClick={() => buoiId ? navigate(`/${teacherId}/lophoc/${maLop}/${buoiId}/bt`) : navigate(-1)}>← Quay lại</div>
 
       {/* TITLE BAR */}
       <div className="exercise-header">

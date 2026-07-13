@@ -56,6 +56,21 @@ async function isClassCompletedByBuoiHoc(pool, maBuoiHoc) {
   return false;
 }
 
+async function isBuoiHocCompleted(pool, maBuoiHoc) {
+  if (!maBuoiHoc) return false;
+  const res = await pool.request()
+    .input("maBuoiHoc", maBuoiHoc)
+    .query(`
+      SELECT TrangThai 
+      FROM BUOIHOC 
+      WHERE MaBuoiHoc = @maBuoiHoc
+    `);
+  if (res.recordset.length > 0) {
+    return res.recordset[0].TrangThai === 'Đã hoàn thành';
+  }
+  return false;
+}
+
 async function isClassCompletedByBaiTap(pool, maBaiTap) {
   if (!maBaiTap) return false;
   let targetId = maBaiTap;
@@ -1305,6 +1320,9 @@ app.post("/baigiang", async (req, res) => {
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể tạo bài giảng mới!" });
     }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể tạo bài giảng mới!" });
+    }
 
     let resolvedMaGiangVien = null;
     let isQTV = true;
@@ -1584,6 +1602,9 @@ app.post("/tailieu", async (req, res) => {
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm tài liệu mới!" });
+    }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm tài liệu mới!" });
     }
     await pool.request()
       .input("TieuDe", TieuDe)
@@ -2428,6 +2449,9 @@ app.post("/baitap/create", async (req, res) => {
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể tạo bài tập mới!" });
+    }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể tạo bài tập mới!" });
     }
     let resolvedMaGiangVien = null;
     let isQTV = true;
@@ -4465,10 +4489,17 @@ app.put("/classes/:id/active-buoihoc", async (req, res) => {
             DECLARE @activeThuTu INT;
             SELECT @activeThuTu = ThuTu FROM BUOIHOC WHERE MaBuoiHoc = @activeBuoiHocId;
 
+            -- Buổi học đang được chọn sẽ ở trạng thái 'Đang học'
             UPDATE BUOIHOC
-            SET TrangThai = N'Đã mở'
-            WHERE MaLopHoc = @classId AND ThuTu <= @activeThuTu;
+            SET TrangThai = N'Đang học'
+            WHERE MaBuoiHoc = @activeBuoiHocId;
 
+            -- Các buổi trước đó (tự động chuyển thành 'Đã hoàn thành')
+            UPDATE BUOIHOC
+            SET TrangThai = N'Đã hoàn thành'
+            WHERE MaLopHoc = @classId AND ThuTu < @activeThuTu;
+
+            -- Các buổi sau đó sẽ là 'Chưa mở'
             UPDATE BUOIHOC
             SET TrangThai = N'Chưa mở'
             WHERE MaLopHoc = @classId AND ThuTu > @activeThuTu;
@@ -4763,6 +4794,9 @@ app.post("/exercises/:id/clone", async (req, res) => {
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm bài tập!" });
     }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm bài tập!" });
+    }
     
     const orig = await pool.request()
       .input("id", req.params.id)
@@ -4852,6 +4886,9 @@ app.post("/tailieu/:id/clone", async (req, res) => {
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm tài liệu!" });
     }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm tài liệu!" });
+    }
     
     const orig = await pool.request()
       .input("id", req.params.id)
@@ -4888,6 +4925,9 @@ app.post("/baigiang/:id/clone", async (req, res) => {
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm bài giảng!" });
+    }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm bài giảng!" });
     }
     
     const orig = await pool.request()

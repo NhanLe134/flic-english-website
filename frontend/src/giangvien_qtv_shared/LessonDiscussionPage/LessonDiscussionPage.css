@@ -40,12 +40,11 @@
 }
 
 /* TABLE */
-.lesson-table {
+.ldp-wrapper .lesson-table {
   background: white;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid #eef2f6;
-  margin-bottom: 28px;
 }
 
 .lesson-table table {

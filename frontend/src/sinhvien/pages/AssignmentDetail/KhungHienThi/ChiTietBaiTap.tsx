@@ -450,7 +450,7 @@ function ChiTietBaiTap({
       )}
 
       {/* 7. Nút Nộp Bài góc dưới */}
-      {!submitted && !isReview && (
+      {!submitted && !isReview && !isPreview && (
         <button
           onClick={() => handleWrappedSubmit({
             mcAnswers, essayAnswers, recordedBlobs, recordedUrls: recorder.recordedUrls,
