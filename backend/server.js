@@ -2359,7 +2359,7 @@ app.get("/admin/stats", async (req, res) => {
 });
 app.get("/admin/khoahoc", async (req, res) => {
   try {
-    const showAll = req.query.all === "true" || req.query.all === true;
+    const showAll = req.query.all !== "false" && req.query.all !== false;
     const pool = await poolPromise;
     let queryStr = `
       SELECT 
