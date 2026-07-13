@@ -16,54 +16,55 @@ const menuItems = [
 
 const getActiveMenu = (pathname: string) => {
   if (
-    pathname.startsWith("/quan-ly-de-thi")
+    pathname.includes("/quan-ly-de-thi")
   ) return "/quan-ly-de-thi";
 
   if (
-    pathname.startsWith("/quan-ly-khoa-hoc") ||
-    pathname.startsWith("/khoa-hoc") ||
-    pathname.startsWith("/lessonlist") ||
-    pathname.startsWith("/class") ||
-    pathname.startsWith("/bai-tap") ||
-    pathname.startsWith("/create-exercise") ||
-    pathname.startsWith("/baitap-detail") ||
-    pathname.startsWith("/quan-ly-bai-giang") ||
-    pathname.startsWith("/lesson/") ||
-    pathname.startsWith("/lesson-discussion") ||
-    pathname.startsWith("/them-bai-hoc") ||
-    pathname.startsWith("/them-bai-giang") ||
-    pathname.startsWith("/bai-giang") ||
-    pathname.startsWith("/danh-sach-bai-nop") ||
-    pathname.startsWith("/cham-bai") ||
-    pathname.startsWith("/documents") ||
-    pathname.startsWith("/them-tai-lieu") ||
-    pathname.startsWith("/quan-ly-tai-lieu") ||
-    pathname.startsWith("/quan-ly-ban-nhap")
+    pathname.includes("/quan-ly-khoa-hoc") ||
+    pathname.includes("/lophoc") ||
+    pathname.includes("/khoa-hoc") ||
+    pathname.includes("/lessonlist") ||
+    pathname.includes("/class") ||
+    pathname.includes("/bai-tap") ||
+    pathname.includes("/create-exercise") ||
+    pathname.includes("/baitap-detail") ||
+    pathname.includes("/quan-ly-bai-giang") ||
+    pathname.includes("/lesson/") ||
+    pathname.includes("/lesson-discussion") ||
+    pathname.includes("/them-bai-hoc") ||
+    pathname.includes("/them-bai-giang") ||
+    pathname.includes("/bai-giang") ||
+    pathname.includes("/danh-sach-bai-nop") ||
+    pathname.includes("/cham-bai") ||
+    pathname.includes("/documents") ||
+    pathname.includes("/them-tai-lieu") ||
+    pathname.includes("/quan-ly-tai-lieu") ||
+    pathname.includes("/quan-ly-ban-nhap")
   ) return "/quan-ly-khoa-hoc";
 
   if (
-    pathname.startsWith("/thong-tin-ca-nhan") ||
-    pathname.startsWith("/edit-personal-info") ||
-    pathname.startsWith("/personal-info-view")
+    pathname.includes("/thong-tin-ca-nhan") ||
+    pathname.includes("/edit-personal-info") ||
+    pathname.includes("/personal-info-view")
   ) return "/thong-tin-ca-nhan";
 
   if (
-    pathname.startsWith("/danh-sach-hoc-vien") ||
-    pathname.startsWith("/them-hoc-vien") ||
-    pathname.startsWith("/xem-hoc-vien") ||
-    pathname.startsWith("/sua-hoc-vien")
+    pathname.includes("/danh-sach-hoc-vien") ||
+    pathname.includes("/them-hoc-vien") ||
+    pathname.includes("/xem-hoc-vien") ||
+    pathname.includes("/sua-hoc-vien")
   ) return "/danh-sach-hoc-vien";
 
   if (
-    pathname.startsWith("/quan-ly-ket-qua") ||
-    pathname.startsWith("/lesson-result") ||
-    pathname.startsWith("/ketqua") ||
-    pathname.startsWith("/xem-ket-qua") ||
-    pathname.startsWith("/sua-ket-qua")
+    pathname.includes("/quan-ly-ket-qua") ||
+    pathname.includes("/lesson-result") ||
+    pathname.includes("/ketqua") ||
+    pathname.includes("/xem-ket-qua") ||
+    pathname.includes("/sua-ket-qua")
   ) return "/quan-ly-ket-qua";
 
   if (
-    pathname.startsWith("/quan-ly-ban-nhap")
+    pathname.includes("/quan-ly-ban-nhap")
   ) return "/quan-ly-ban-nhap";
 
   return pathname;
@@ -143,9 +144,16 @@ const Sidebar = () => {
             key={item.path}
             onClick={() => {
               if (item.path === "/") {
-                setShowLogoutModal(true); // ← mở modal thay vì logout thẳng
+                setShowLogoutModal(true);
               } else {
-                navigate(item.path);
+                const userStr = sessionStorage.getItem("user");
+                const user = userStr ? JSON.parse(userStr) : {};
+                const teacherIdStr = `teacher${user.MaNguoiDung || ""}`;
+                if (item.path === "/quan-ly-khoa-hoc") {
+                  navigate(`/${teacherIdStr}/lophoc`);
+                } else {
+                  navigate(`/${teacherIdStr}${item.path}`);
+                }
               }
             }}
             className={activeMenu === item.path ? "active" : ""}

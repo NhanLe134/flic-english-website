@@ -74,7 +74,7 @@ const Login = ({ isModal = false, onClose }: LoginProps) => {
         }, 100);
       } else {
         if (vaiTro === "Quản Trị Viên")          navigate("/admin/admin-dashboard")
-        else if (vaiTro === "Giảng Viên")         navigate("/quan-ly-khoa-hoc")
+        else if (vaiTro === "Giảng Viên")         navigate(`/teacher${data.MaNguoiDung}/lophoc`)
         else if (vaiTro === "Quản Trị Nội Dung")  navigate("/QTV/khoahoc")
         else                                       navigate("/course-register")
       }

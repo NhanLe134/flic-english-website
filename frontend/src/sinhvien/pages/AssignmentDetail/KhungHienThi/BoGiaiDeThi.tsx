@@ -415,17 +415,19 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   return (
     <div>
       {/* Các tab phân phần thi */}
-      <div className="ad-exam-tabs">
-        {parsedContent.sections?.map((sec: any, sIdx: number) => (
-          <button
-            key={sIdx}
-            onClick={() => setActiveSectionIdx(sIdx)}
-            className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
-          >
-            {sec.title}
-          </button>
-        ))}
-      </div>
+      {parsedContent.sections && parsedContent.sections.length > 1 && (
+        <div className="ad-exam-tabs">
+          {parsedContent.sections?.map((sec: any, sIdx: number) => (
+            <button
+              key={sIdx}
+              onClick={() => setActiveSectionIdx(sIdx)}
+              className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
+            >
+              {sec.title}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Hiển thị phần thi được chọn */}
       {parsedContent.sections?.map((sec: any, sIdx: number) => {
@@ -437,7 +439,9 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             className="ad-section"
             style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}
           >
-            <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
+            {parsedContent.sections && parsedContent.sections.length > 1 && (
+              <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
+            )}
 
             {sec.type === "Viết đoạn văn ngắn" && (
               <div>
