@@ -9,8 +9,8 @@ const API =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname.startsWith("192.168.") ||
   window.location.hostname.startsWith("10.")
-    ? `http://${window.location.hostname}:5000`
-    : "http://14.225.192.252:5000";
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface LessonManagementProps {
   buoiHocIdProp?: string;
@@ -199,18 +199,18 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         fontSize: "12px",
                         fontWeight: 600,
                         background:
-                          l.TrangThai === "published" ? "#e8f5e9" :
-                          l.TrangThai === "pending" ? "#fff3e0" :
-                          l.TrangThai === "rejected" ? "#ffebee" : "#eee",
+                          (l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "#e8f5e9" :
+                          (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "#fff3e0" :
+                          (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "#ffebee" : "#eee",
                         color:
-                          l.TrangThai === "published" ? "#2e7d32" :
-                          l.TrangThai === "pending" ? "#F95800" :
-                          l.TrangThai === "rejected" ? "#c62828" : "#666"
+                          (l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "#2e7d32" :
+                          (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "#F95800" :
+                          (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "#c62828" : "#666"
                       }}
                     >
-                      {l.TrangThai === "published" ? "Đã duyệt" :
-                       l.TrangThai === "pending" ? "Chờ duyệt" :
-                       l.TrangThai === "rejected" ? "Từ chối" : l.TrangThai || "Nháp"}
+                      {(l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "Đã duyệt" :
+                       (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "Chờ duyệt" :
+                       (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "Từ chối" : "Lưu nháp"}
                     </span>
                   </td>
                   <td>

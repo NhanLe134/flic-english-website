@@ -182,7 +182,7 @@ const AddLesson: React.FC = () => {
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
+        const uploadRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
           method: "POST",
           body: formData
         });
@@ -196,11 +196,13 @@ const AddLesson: React.FC = () => {
       const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
       const isTeacher = vaiTroLower === "giảng viên";
 
+      const targetStatus = isTeacher ? (status === "draft" ? "Lưu nháp" : "Chờ duyệt") : (status === "draft" ? "Lưu nháp" : "Đã duyệt");
+
       const newLesson = {
         TieuDe: name,
         LoaiBaiHoc: type,
         ThoiLuong: duration ? duration + " phút" : "0 phút",
-        TrangThai: isTeacher ? (status === "draft" ? "draft" : "pending") : status,
+        TrangThai: targetStatus,
         NoiDung: moTa, // ← lưu Markdown
         FileUrl: fileUrl,
         ThuTu: 1,
@@ -210,7 +212,7 @@ const AddLesson: React.FC = () => {
         IsFree: isFree ? 1 : 0
       };
 
-      const res = await fetch("http://14.225.192.252:5000/baigiang", {
+      const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/baigiang", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLesson)
@@ -224,14 +226,14 @@ const AddLesson: React.FC = () => {
       const createdMaBaiHoc = resData.MaBaiHoc;
 
       if (hasMinitest && createdMaBaiHoc) {
-        const minitestRes = await fetch("http://14.225.192.252:5000/minitest/create", {
+        const minitestRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             MaBaiHoc: Number(createdMaBaiHoc),
             CauHoi: JSON.stringify(minitestQuestions),
             DiemDat: 100,
-            TrangThai: isTeacher ? (status === "draft" ? "draft" : "pending") : status
+            TrangThai: targetStatus
           })
         });
         if (!minitestRes.ok) {

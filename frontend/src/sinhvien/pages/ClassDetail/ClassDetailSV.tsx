@@ -25,8 +25,8 @@ const API =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname.startsWith("192.168.") ||
   window.location.hostname.startsWith("10.")
-    ? `http://${window.location.hostname}:5000`
-    : "http://14.225.192.252:5000";
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -300,7 +300,7 @@ export default function ClassDetailSV() {
       ]);
 
       const published = Array.isArray(baigiangData)
-        ? baigiangData.filter((b: any) => b.TrangThai === "published")
+        ? baigiangData.filter((b: any) => b.TrangThai === "published" || b.TrangThai === "Đã duyệt")
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
       let baitapData = Array.isArray(rawBaitapData)

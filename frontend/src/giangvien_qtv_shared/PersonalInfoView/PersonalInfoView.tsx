@@ -20,7 +20,7 @@ const PersonalInfoView = () => {
     const user = JSON.parse(userStr);
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`)
       .then(res => res.json())
       .then(info => setData(info))
       .catch(err => console.log(err));
@@ -28,7 +28,7 @@ const PersonalInfoView = () => {
 
   if (!data) return <p>Đang tải...</p>;
 
-  const displayAvatar = avatar || (data.AnhDaiDien ? (data.AnhDaiDien.startsWith("http") ? data.AnhDaiDien : `http://14.225.192.252:5000${data.AnhDaiDien}`) : null);
+  const displayAvatar = avatar || (data.AnhDaiDien ? (data.AnhDaiDien.startsWith("http") ? data.AnhDaiDien : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${data.AnhDaiDien}`) : null);
 
   return (
     <div className="piv-wrapper">

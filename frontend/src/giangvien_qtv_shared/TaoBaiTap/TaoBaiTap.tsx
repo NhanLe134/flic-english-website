@@ -512,7 +512,7 @@ const TaoBaiTap = () => {
 
   useEffect(() => {
     if (!maBaiHocParam) return;
-    fetch(`http://14.225.192.252:5000/baigiang/detail/${maBaiHocParam}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/detail/${maBaiHocParam}`)
       .then(res => res.json())
       .then(data => {
         setLecture(data);
@@ -523,7 +523,7 @@ const TaoBaiTap = () => {
       .catch(err => console.log("Lỗi tải thông tin bài giảng:", err));
 
     if (isMiniTest) {
-      fetch(`http://14.225.192.252:5000/minitest/baigiang/${maBaiHocParam}`)
+      fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/minitest/baigiang/${maBaiHocParam}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.CauHoi) {
@@ -544,7 +544,7 @@ const TaoBaiTap = () => {
   /* ===== LOAD LESSON ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setLesson(Array.isArray(data) ? data[0] : data))
       .catch(err => console.log(err));
@@ -553,11 +553,11 @@ const TaoBaiTap = () => {
   /* ===== LOAD SESSION LECTURES ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/baigiang/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${id}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const published = data.filter((bg: any) => bg.TrangThai === "published");
+          const published = data.filter((bg: any) => bg.TrangThai === "published" || bg.TrangThai === "Đã duyệt");
           setSessionLectures(published);
           if (!selectedMaBaiHoc && !maBaiHocParam && published.length > 0) {
             setSelectedMaBaiHoc(published[0].MaBaiHoc);
@@ -584,7 +584,7 @@ const TaoBaiTap = () => {
   useEffect(() => {
     // Fetch all existing exercises for cloning
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
-    let url = "http://14.225.192.252:5000/exercises/list/all";
+    let url = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/exercises/list/all";
     if (userStr) {
       const user = JSON.parse(userStr);
       if ((user.VaiTro || "").toLowerCase().trim() === "giảng viên" && user.MaNguoiDung) {
@@ -611,7 +611,7 @@ const TaoBaiTap = () => {
         const user = JSON.parse(userStr);
         clonerMaNguoiDung = user.MaNguoiDung || null;
       }
-      const res = await fetch(`http://14.225.192.252:5000/exercises/${exerciseId}/clone`, {
+      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/exercises/${exerciseId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -1386,7 +1386,7 @@ const TaoBaiTap = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://14.225.192.252:5000/upload", {
+    const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
       method: "POST",
       body: formData
     });
@@ -1982,7 +1982,11 @@ const TaoBaiTap = () => {
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
     const user = JSON.parse(userStr || "{}");
     const isTeacher = user.VaiTro === "Giảng Viên";
-    const status = statusOverride || (isPractice ? "practice" : (isTeacher ? "pending" : "published"));
+    let status: string = statusOverride || (isPractice ? "practice" : (isTeacher ? "pending" : "published"));
+    if (status === "draft") status = "Lưu nháp";
+    else if (status === "pending") status = "Chờ duyệt";
+    else if (status === "published") status = "Đã duyệt";
+    else if (status === "rejected") status = "Từ chối";
     const today = new Date().toISOString().split("T")[0];
 
     try {
@@ -2020,7 +2024,7 @@ const TaoBaiTap = () => {
       }
 
       if (isMiniTest) {
-        const res = await fetch("http://14.225.192.252:5000/minitest/create", {
+        const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/minitest/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2045,7 +2049,7 @@ const TaoBaiTap = () => {
         return;
       }
 
-      const res = await fetch("http://14.225.192.252:5000/baitap/create", {
+      const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/baitap/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4092,7 +4096,7 @@ const TaoBaiTap = () => {
                 {commonAudioUrl && (
                   <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
                     <p style={{ color: "green", fontSize: 13, fontWeight: "bold", margin: 0 }}>✓ Đã tải file nghe chung:</p>
-                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `http://14.225.192.252:5000${commonAudioUrl}`} controls style={{ height: 32 }} />
+                    <audio src={commonAudioUrl.startsWith("http") ? commonAudioUrl : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${commonAudioUrl}`} controls style={{ height: 32 }} />
                     <button
                       type="button"
                       onClick={() => setCommonAudioUrl("")}

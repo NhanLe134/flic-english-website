@@ -64,7 +64,7 @@ const LessonResultPage = () => {
     }
 
     // Verify lecturer permission
-    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(classes => {
         if (Array.isArray(classes)) {
@@ -80,11 +80,11 @@ const LessonResultPage = () => {
 
         // Fetch class data
         Promise.all([
-          fetch(`http://14.225.192.252:5000/classes/${id}/info`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/baocao/baitap-headers`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/baocao/diem-all`).then(r => r.json()),
-          fetch(`http://14.225.192.252:5000/classes/${id}/buoihoc`).then(r => r.json()),
+          fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/classes/${id}/info`).then(r => r.json()),
+          fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/lophoc/${id}/sinhvien/${maNguoiDung}`).then(r => r.json()),
+          fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baocao/baitap-headers`).then(r => r.json()),
+          fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baocao/diem-all`).then(r => r.json()),
+          fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/classes/${id}/buoihoc`).then(r => r.json()),
         ])
           .then(([info, sinhVienList, headers, grades, lessonsList]) => {
             setClassInfo(info);

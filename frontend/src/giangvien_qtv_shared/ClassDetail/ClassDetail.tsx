@@ -15,8 +15,8 @@ const API =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname.startsWith("192.168.") ||
   window.location.hostname.startsWith("10.")
-    ? `http://${window.location.hostname}:5000`
-    : "http://14.225.192.252:5000";
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const ClassDetail = () => {
   const navigate = useNavigate();
@@ -369,8 +369,8 @@ const ClassDetail = () => {
                           {typeLabel}
                         </span>
                         {!isPractice && (
-                          <span className={`content-status ${ex.TrangThai || "pending"}`} style={{ display: "inline-block" }}>
-                            {ex.TrangThai === "published" ? "Đã duyệt" : ex.TrangThai === "rejected" ? "Từ chối" : "Chờ duyệt"}
+                          <span className={`content-status ${(ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt") ? "published" : (ex.TrangThai === "rejected" || ex.TrangThai === "Từ chối") ? "rejected" : "pending"}`} style={{ display: "inline-block" }}>
+                            {(ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt") ? "Đã duyệt" : (ex.TrangThai === "rejected" || ex.TrangThai === "Từ chối") ? "Từ chối" : "Chờ duyệt"}
                           </span>
                         )}
 
@@ -378,7 +378,7 @@ const ClassDetail = () => {
                           if (!isExam) return null;
                           const isManual = parsedContent.openingMode === "manual";
                           const isOpened = !!parsedContent.isOpened;
-                          const isApproved = ex.TrangThai === "published";
+                          const isApproved = ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt";
 
                           if (!isApproved) return <span style={{ color: "#94a3b8", fontSize: "12px", fontWeight: 600 }}>Chờ duyệt đề</span>;
 

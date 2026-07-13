@@ -27,7 +27,6 @@ import EditPersonalInfo from "./giangvien_qtv_shared/EditPersonalInfo/EditPerson
 import StudentList from "./giangvien_qtv_shared/StudentList/StudentList"
 import AddStudent from "./giangvien_qtv_shared/AddStudent/AddStudent"
 import ExercisePage from "./giangvien_qtv_shared/ExercisePage/ExercisePage"
-import LessonDiscussionPage from "./giangvien_qtv_shared/LessonDiscussionPage/LessonDiscussionPage"
 import ViewStudent from "./giangvien_qtv_shared/ViewStudent/ViewStudent"
 import EditStudent from "./giangvien_qtv_shared/EditStudent/EditStudent"
 import QuanLyKetQuaHocTap from "./giangvien_qtv_shared/QuanLyKetQuaHocTap/QuanLyKetQuaHocTap"
@@ -172,7 +171,6 @@ function App() {
           <Route path="/quan-ly-ban-nhap" element={<DraftsManagement />} />
           {/* BÀI TẬP */}
           <Route path="/bai-tap/:id" element={<ExercisePage />} />
-          <Route path="/lesson-discussion/:id" element={<LessonDiscussionPage />} />
           {/* HỌC VIÊN */}
           <Route path="/danh-sach-hoc-vien" element={<StudentList />} />
           <Route path="/them-hoc-vien" element={<AddStudent />} />

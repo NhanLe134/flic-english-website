@@ -24,7 +24,7 @@ const ExercisePage = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (buoiHocData) => {
         const lessonObj = Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData;
@@ -32,12 +32,12 @@ const ExercisePage = () => {
         const maLopHoc = lessonObj.MaLopHoc;
 
         // Lấy số học viên thực tế từ SINHVIEN_LOPHOC
-        const countRes = await fetch(`http://14.225.192.252:5000/lophoc/${maLopHoc}/students/count`);
+        const countRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/lophoc/${maLopHoc}/students/count`);
         const countData = await countRes.json();
         setSoHocVien(countData.SoLuongHocVien || 0);
 
         // Lấy thông tin lớp (LichHoc và TrangThaiLopHoc)
-        const lopRes = await fetch(`http://14.225.192.252:5000/classes/${maLopHoc}/info`);
+        const lopRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/classes/${maLopHoc}/info`);
         const lopData = await lopRes.json();
         setLichHoc(formatScheduleOnlyDays(lopData.LichHoc) || "—");
         setTrangThaiLopHoc(lopData.TrangThaiLopHoc || "Đang học");
@@ -46,7 +46,7 @@ const ExercisePage = () => {
         const userStr = sessionStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
-          const gvRes = await fetch(`http://14.225.192.252:5000/giangvien/${user.MaNguoiDung}`);
+          const gvRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${user.MaNguoiDung}`);
           const gvData = await gvRes.json();
           setGiangVien(gvData.HoTen || "—");
         }
@@ -57,7 +57,7 @@ const ExercisePage = () => {
   /* ===== LOAD BAITAPS ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/baitap/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setExercises(data))
       .catch(err => console.log(err));
@@ -66,7 +66,7 @@ const ExercisePage = () => {
   /* ===== TOGGLE OPEN/CLOSE EXAM ===== */
   const handleToggleOpen = async (maBaiTap: number) => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/baitap/toggle-open", {
+      const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/baitap/toggle-open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBaiTap: maBaiTap })
@@ -101,7 +101,7 @@ const ExercisePage = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `http://14.225.192.252:5000/baitap/${selectedId}`;
+      const url = `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
@@ -325,7 +325,7 @@ const ExercisePage = () => {
 
                 const isManual = parsedContent.openingMode === "manual";
                 const isOpened = !!parsedContent.isOpened;
-                const isApproved = ex.TrangThai === "published";
+                const isApproved = ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt";
 
                 if (!isApproved) return null;
 

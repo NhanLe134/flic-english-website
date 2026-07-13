@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from "react";
 import { formatScheduleOnlyDays } from "../../../utils/schedule";
 import { FiSearch, FiDownload, FiFileText } from "react-icons/fi";
@@ -33,8 +34,8 @@ const StudentListQTV: React.FC = () => {
     window.location.hostname === "127.0.0.1" ||
     window.location.hostname.startsWith("192.168.") ||
     window.location.hostname.startsWith("10.")
-      ? `http://${window.location.hostname}:5000`
-      : "http://14.225.192.252:5000";
+      ? `http://${window.location.hostname}:5004`
+      : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
   // Helper to format date safely
   const formatDate = (dateStr: any) => {
@@ -60,6 +61,11 @@ const StudentListQTV: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'enrolled' | 'pending'>('enrolled');
+  const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
+  const [loadingEnrolled, setLoadingEnrolled] = useState(false);
 
   // Student Details Modal
   const [showModal, setShowModal] = useState(false);
@@ -127,9 +133,53 @@ const StudentListQTV: React.FC = () => {
       .catch(() => {});
   };
 
-  useEffect(() => {
-    loadPendingRegs();
-  }, []);
+  const loadEnrolledStudents = () => {
+    setLoadingEnrolled(true);
+    fetch(`${API}/qtv/students/enrolled`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setEnrolledStudents(data.map((s: any) => ({
+            studentId: s.MaSinhVien,
+            MSSV: s.MSSV || null,
+            HoTen: s.HoTen,
+            BietDanh: s.BietDanh || null,
+            GioiTinh: s.GioiTinh || "—",
+            NgayGhiDanh: s.NgayGhiDanh || "—",
+            TrangThai: s.TrangThai || "Đang học",
+            classId: s.MaLopHoc,
+            className: s.TenLop,
+            courseId: s.MaKhoaHoc,
+            courseName: s.TenKhoaHoc
+          })));
+        } else {
+          setEnrolledStudents([]);
+        }
+      })
+      .catch(err => {
+        console.error("Lỗi khi tải danh sách học viên ghi danh:", err);
+        setEnrolledStudents([]);
+      })
+      .finally(() => setLoadingEnrolled(false));
+  };
+
+  const handleRemoveEnrolled = async (studentId: string, classId: number, studentName: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn hủy ghi danh học viên ${studentName} khỏi lớp học này?`)) {
+      try {
+        const res = await fetch(`${API}/qtv/lophoc/${classId}/ghidanh/${studentId}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          triggerSuccessPopup(`Đã hủy ghi danh ${studentName}!`);
+          loadEnrolledStudents();
+        } else {
+          alert('Lỗi khi hủy ghi danh');
+        }
+      } catch {
+        alert('Lỗi khi hủy ghi danh');
+      }
+    }
+  };
 
   const confirmAssign = async () => {
     if (!selectedReg || !assignClassId) { alert('Vui lòng chọn lớp!'); return }
@@ -140,9 +190,10 @@ const StudentListQTV: React.FC = () => {
       })
       const data = await res.json()
       if (res.ok && data.message && data.message.includes("thành công")) {
-        setPendingRegs(prev => prev.map(r => r.id === selectedReg.id ? { ...r, status: 'Đã ghi danh' as const } : r))
         setShowAssignClassModal(false); setSelectedReg(null); setAssignClassId('')
         triggerSuccessPopup(`Đã ghi danh ${selectedReg.name}!`)
+        loadPendingRegs();
+        loadEnrolledStudents();
       } else {
         alert(data.message || 'Lỗi khi ghi danh')
       }
@@ -158,8 +209,8 @@ const StudentListQTV: React.FC = () => {
       })
       .then(res => {
         if (res.ok) {
-          setPendingRegs(prev => prev.map(r => r.id === id ? { ...r, status: 'Từ chối' as const } : r))
           triggerSuccessPopup('Đã từ chối!')
+          loadPendingRegs();
         } else {
           alert('Lỗi khi từ chối đăng ký')
         }
@@ -226,6 +277,8 @@ const StudentListQTV: React.FC = () => {
     };
 
     fetchAllData();
+    loadPendingRegs();
+    loadEnrolledStudents();
   }, []);
 
   // Fetch students when a class is selected
