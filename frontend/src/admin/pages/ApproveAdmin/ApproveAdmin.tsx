@@ -1383,7 +1383,7 @@ export default function ApproveAdmin() {
 
 
                 <div className="form-field-group">
-                  <label>Lịch học (Chọn các ngày học trong tuần)</label>
+                  <label>Lịch học (Chọn các ngày học trong tuần):</label>
                   <div className="weekday-selection-row">
                     {DAYS_OF_WEEK.map(d => {
                       const isSelected = newClassForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
@@ -1583,7 +1583,7 @@ export default function ApproveAdmin() {
 
 
                 <div className="form-field-group">
-                  <label>Lịch học (Chọn các ngày học trong tuần)</label>
+                  <label>Lịch học (Chọn các ngày học trong tuần):</label>
                   <div className="weekday-selection-row">
                     {DAYS_OF_WEEK.map(d => {
                       const isSelected = classEditForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
