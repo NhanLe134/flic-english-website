@@ -170,11 +170,11 @@ function App() {
 
 
           {/* PROFILE */}
-          <Route path="/personal-info-view" element={<CreatepersonalInfo />} />
+          <Route path="/:teacherId/personal-info-view" element={<CreatepersonalInfo />} />
           <Route path="/:teacherId/thong-tin-ca-nhan" element={<PersonalInfoView />} />
-          <Route path="/edit-personal-info" element={<EditPersonalInfo />} />
-          <Route path="/doi-mat-khau" element={<DoiMatKhau />} />
-          <Route path="/quan-ly-ban-nhap" element={<DraftsManagement />} />
+          <Route path="/:teacherId/edit-personal-info" element={<EditPersonalInfo />} />
+          <Route path="/:teacherId/doi-mat-khau" element={<DoiMatKhau />} />
+          <Route path="/:teacherId/quan-ly-ban-nhap" element={<DraftsManagement />} />
           {/* BÀI TẬP */}
           <Route path="/bai-tap/:id" element={<ExercisePage />} />
           {/* HỌC VIÊN */}

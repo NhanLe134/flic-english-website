@@ -1,5 +1,5 @@
-﻿import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import "./DoiMatKhau.css";
 
 // Component icon mắt tái sử dụng
@@ -58,6 +58,7 @@ const PasswordField = ({
 
 const DoiMatKhau = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId?: string }>();
   const [currentPassword, setCurrentPassword] = useState("");
   const [password,        setPassword]        = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -90,7 +91,7 @@ const DoiMatKhau = () => {
       const data = await res.json();
       if (!res.ok) { setError(data.message || "Có lỗi xảy ra"); return; }
       setShowPopup(true);
-      setTimeout(() => navigate("/thong-tin-ca-nhan"), 2000);
+      setTimeout(() => navigate(`/${teacherId}/thong-tin-ca-nhan`), 2000);
     } catch {
       setError("Không kết nối được server");
     } finally {
@@ -146,7 +147,7 @@ const DoiMatKhau = () => {
             {loading ? "Đang lưu..." : "Lưu"}
           </button>
 
-<button className="password-back-btn" onClick={() => navigate("/thong-tin-ca-nhan")}> 
+          <button className="password-back-btn" onClick={() => navigate(`/${teacherId}/thong-tin-ca-nhan`)}> 
             ← Quay lại
           </button>
 

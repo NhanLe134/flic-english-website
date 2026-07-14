@@ -501,16 +501,64 @@
   position: relative;
 }
 
-.gradient-orange {
-  background: linear-gradient(180deg, #F95800 0%, #FFB74D 100%);
+/* Card theme 1: Ms Linh (Blue Theme) */
+.teacher-card.gradient-orange {
+  background: #f0f7ff;
+}
+.teacher-card.gradient-orange .teacher-role,
+.teacher-card.gradient-orange .teacher-icon,
+.teacher-card.gradient-orange .teacher-specialty h4 {
+  color: #0052d4;
+}
+.teacher-card.gradient-orange .teacher-specialty ul li::before {
+  color: #0052d4;
+}
+.teacher-card.gradient-orange .teacher-highlights-box {
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 82, 212, 0.04);
+}
+.teacher-card.gradient-orange .teacher-card-top {
+  background: linear-gradient(to right, #0052d4, #4364f7, #6fb1fc);
 }
 
-.gradient-green {
-  background: linear-gradient(180deg, #538C44 0%, #C6CE50 100%);
+/* Card theme 2: Mr David (Orange Theme) */
+.teacher-card.gradient-green {
+  background: #fff7ed;
+}
+.teacher-card.gradient-green .teacher-role,
+.teacher-card.gradient-green .teacher-icon,
+.teacher-card.gradient-green .teacher-specialty h4 {
+  color: #ff4e00;
+}
+.teacher-card.gradient-green .teacher-specialty ul li::before {
+  color: #ff4e00;
+}
+.teacher-card.gradient-green .teacher-highlights-box {
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 78, 0, 0.04);
+}
+.teacher-card.gradient-green .teacher-card-top {
+  background: linear-gradient(to right, #ff4e00, #ffaa3a);
 }
 
-.gradient-red {
-  background: linear-gradient(180deg, #b33f00 0%, #F95800 100%);
+/* Card theme 3: Ms Huong (Purple Theme) */
+.teacher-card.gradient-red {
+  background: #fdf4ff;
+}
+.teacher-card.gradient-red .teacher-role,
+.teacher-card.gradient-red .teacher-icon,
+.teacher-card.gradient-red .teacher-specialty h4 {
+  color: #b022ff;
+}
+.teacher-card.gradient-red .teacher-specialty ul li::before {
+  color: #b022ff;
+}
+.teacher-card.gradient-red .teacher-highlights-box {
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(176, 34, 255, 0.04);
+}
+.teacher-card.gradient-red .teacher-card-top {
+  background: linear-gradient(to right, #b022ff, #ffb3f0);
 }
 
 /* ẢNH GIÁO VIÊN TRÒN */

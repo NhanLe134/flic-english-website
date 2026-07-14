@@ -1,11 +1,12 @@
-﻿import "./EditPersonalInfo.css";
+import "./EditPersonalInfo.css";
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
 import { FiCamera } from "react-icons/fi";
 
 const EditPersonalInfo = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId?: string }>();
   const { setAvatar } = useAvatar();
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
@@ -105,7 +106,7 @@ const EditPersonalInfo = () => {
       setAvatar(absoluteUrl);
 
       setShowPopup(true);
-      setTimeout(() => navigate("/thong-tin-ca-nhan"), 1500);
+      setTimeout(() => navigate(`/${teacherId}/thong-tin-ca-nhan`), 1500);
 
     } catch (err) {
       console.log(err);
@@ -124,7 +125,7 @@ const EditPersonalInfo = () => {
 
       <div className="epi-header-row">
         <h1>Thông tin cá nhân</h1>
-        <span className="back-btn" onClick={() => navigate("/thong-tin-ca-nhan")}>
+        <span className="back-btn" onClick={() => navigate(`/${teacherId}/thong-tin-ca-nhan`)}>
           ← Quay lại
         </span>
       </div>

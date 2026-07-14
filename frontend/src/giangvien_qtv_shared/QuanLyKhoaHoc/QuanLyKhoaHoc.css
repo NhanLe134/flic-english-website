@@ -27,10 +27,7 @@ body {
   font-size: 16px;
 }
 
-/* LAYOUT */
-.teacher-layout {
-  display: flex;
-}
+
 
 /* SIDEBAR */
 .teacher-sidebar {
@@ -66,12 +63,7 @@ body {
   color: white;
 }
 
-/* CONTENT CONTAINER */
-.teacher-content {
-  flex: 1;
-  padding: 24px 30px; /* Hơi co lại cho gọn */
-  box-sizing: border-box;
-}
+
 
 /* INNER LAYER CONTENT CARD */
 .qlkh-content-card {
