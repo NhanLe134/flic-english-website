@@ -18,9 +18,9 @@ const ViewStudent = () => {
 
     const trimmedId = id.trim();
     // Fetch student data
-    const fetchStudent = fetch(`http://14.225.192.252:5000/students/${trimmedId}`).then(res => res.json());
+    const fetchStudent = fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/students/${trimmedId}`).then(res => res.json());
     // Fetch courses data
-    const fetchCourses = fetch("http://14.225.192.252:5000/khoahoc").then(res => res.json());
+    const fetchCourses = fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/khoahoc").then(res => res.json());
 
     Promise.all([fetchStudent, fetchCourses])
       .then(([studentData, coursesData]) => {
@@ -45,7 +45,7 @@ const ViewStudent = () => {
     try {
       setSaving(true);
       const trimmedId = (id || "").trim();
-      const res = await fetch(`http://14.225.192.252:5000/students/${trimmedId}`, {
+      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/students/${trimmedId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

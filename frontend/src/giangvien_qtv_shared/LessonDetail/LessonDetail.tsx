@@ -5,12 +5,12 @@ import remarkGfm from "remark-gfm";
 import { FiArrowLeft, FiFileText, FiEdit, FiTrash2 } from "react-icons/fi";
 import "./LessonDetail.css";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const LessonDetail: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
+  const { id, buoiId, maLop, teacherId } = useParams();
   const isQTV = location.pathname.startsWith("/QTV");
   const [lesson, setLesson] = useState<any>(null);
   const [minitest, setMinitest] = useState<any>(null);
@@ -170,7 +170,7 @@ const LessonDetail: React.FC = () => {
   return (
     <div className="ld-wrapper" style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
 
-      <div className="back-btn" onClick={() => navigate(-1)}>
+      <div className="back-btn" onClick={() => buoiId ? navigate(`/${teacherId}/lophoc/${maLop}/${buoiId}/bg`) : navigate(-1)}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
         Quay lại
       </div>

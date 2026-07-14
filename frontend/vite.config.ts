@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/',
   server: {
+    port: 5005,
     host: true, // Cho phep lang nghe tat ca cac IP (0.0.0.0)
     allowedHosts: true, // Cho phep ngrok hoac bat ky ten mien nao truy cap
   }

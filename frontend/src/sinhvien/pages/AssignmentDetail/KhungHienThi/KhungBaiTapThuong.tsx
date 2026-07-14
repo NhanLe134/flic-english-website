@@ -10,7 +10,7 @@ import { FiVolume2 } from "react-icons/fi";
 import { CustomAudioPlayer } from "../../../components/CustomAudioPlayer/CustomAudioPlayer";
 import { BoGiaoDienCauHoi } from "./BoGiaoDienCauHoi";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface KhungBaiTapThuongProps {
   exercise: any;
@@ -53,6 +53,7 @@ interface KhungBaiTapThuongProps {
   setIsListeningSTT: React.Dispatch<React.SetStateAction<Record<string | number, boolean>>>;
 
   handleSubmit: (answers: any) => void;
+  showAnswers?: boolean;
 }
 
 export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
@@ -92,7 +93,8 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
   setSpeechScores,
   isListeningSTT,
   setIsListeningSTT,
-  handleSubmit
+  handleSubmit,
+  showAnswers = false
 }) => {
 
   const questionPages = useMemo(() => {
@@ -193,6 +195,7 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
                         setIsListeningSTT={setIsListeningSTT}
                         questionsList={questionsList}
                         handleSubmit={handleSubmit}
+                        showAnswers={showAnswers}
                       />
                     </div>
                   );
@@ -241,6 +244,7 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
                       setIsListeningSTT={setIsListeningSTT}
                       questionsList={questionsList}
                       handleSubmit={handleSubmit}
+                      showAnswers={showAnswers}
                     />
                   </div>
                 );

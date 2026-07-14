@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
 import { hasPermission } from "../../utils/permission";
 
@@ -9,8 +9,8 @@ const API =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname.startsWith("192.168.") ||
   window.location.hostname.startsWith("10.")
-    ? `http://${window.location.hostname}:5000`
-    : "http://14.225.192.252:5000";
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface LessonManagementProps {
   buoiHocIdProp?: string;
@@ -19,7 +19,7 @@ interface LessonManagementProps {
 
 const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEmbedded }) => {
   const navigate = useNavigate();
-  const { buoiHocId: paramBuoiHocId } = useParams();
+  const { buoiHocId: paramBuoiHocId, maLop, teacherId } = useParams();
   const buoiHocId = buoiHocIdProp || paramBuoiHocId;
 
   const [lessons, setLessons] = useState<any[]>([]);
@@ -79,6 +79,8 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     }
   };
 
+  const [lessonStatus, setLessonStatus] = useState<string>("");
+
   useEffect(() => {
     if (!buoiHocId) return;
     fetch(`${API}/baigiang/${buoiHocId}`)
@@ -89,8 +91,9 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     fetch(`${API}/buoihoc/${buoiHocId}`)
       .then(res => res.json())
       .then(data => {
-        if (data && data.TrangThaiLopHoc) {
-          setClassStatus(data.TrangThaiLopHoc);
+        if (data) {
+          if (data.TrangThaiLopHoc) setClassStatus(data.TrangThaiLopHoc);
+          if (data.TrangThai) setLessonStatus(data.TrangThai);
         }
       })
       .catch(err => console.log(err));
@@ -155,7 +158,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <FiSearch size={16} />
           </button>
         </form>
-        {classStatus !== "Đã hoàn thành" && hasPermission("LECTURE_CREATE") && (
+        {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && hasPermission("LECTURE_CREATE") && (
           <>
             <button
               className="add-btn-reuse"
@@ -186,7 +189,11 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             {lessons
               .filter(l => l.TieuDe?.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((l, index) => (
-                <tr key={l.MaBaiHoc}>
+                <tr
+                  key={l.MaBaiHoc}
+                  onClick={() => navigate(`/${teacherId}/lophoc/${maLop}/buoi${buoiHocId}/bg/${l.MaBaiHoc}/view`)}
+                  style={{ cursor: "pointer" }}
+                >
                   <td>{index + 1}</td>
                   <td>{l.TieuDe}</td>
                   <td>{l.ThoiLuong}</td>
@@ -199,38 +206,39 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         fontSize: "12px",
                         fontWeight: 600,
                         background:
-                          l.TrangThai === "published" ? "#e8f5e9" :
-                          l.TrangThai === "pending" ? "#fff3e0" :
-                          l.TrangThai === "rejected" ? "#ffebee" : "#eee",
+                          (l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "#e8f5e9" :
+                          (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "#fff3e0" :
+                          (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "#ffebee" : "#eee",
                         color:
-                          l.TrangThai === "published" ? "#2e7d32" :
-                          l.TrangThai === "pending" ? "#F95800" :
-                          l.TrangThai === "rejected" ? "#c62828" : "#666"
+                          (l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "#2e7d32" :
+                          (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "#F95800" :
+                          (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "#c62828" : "#666"
                       }}
                     >
-                      {l.TrangThai === "published" ? "Đã duyệt" :
-                       l.TrangThai === "pending" ? "Chờ duyệt" :
-                       l.TrangThai === "rejected" ? "Từ chối" : l.TrangThai || "Nháp"}
+                      {(l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "Đã duyệt" :
+                       (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "Chờ duyệt" :
+                       (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "Từ chối" : "Lưu nháp"}
                     </span>
                   </td>
                   <td>
-                    <div className="action-buttons">
-                      <button className="action-icon-btn detail-icon-btn"
-                        onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}
-                        title="Xem chi tiết">
-                        <FiEye size={16} />
-                      </button>
-                      {classStatus !== "Đã hoàn thành" && (
+                    <div className="action-buttons" onClick={(e) => e.stopPropagation()}>
+                      {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
                         <button className="action-btn minitest-btn"
-                          onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`);
+                          }}
                           title="Tạo MiniTest">
                           <FiPlus size={14} style={{ marginRight: 4 }} />
                           <span>MiniTest</span>
                         </button>
                       )}
-                      {classStatus !== "Đã hoàn thành" && (
+                      {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
                         <button className="action-icon-btn delete-icon-btn"
-                          onClick={() => handleDeleteClick(l.MaBaiHoc)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(l.MaBaiHoc);
+                          }}
                           title="Xóa bài học">
                           <FiTrash2 size={16} />
                         </button>

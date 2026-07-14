@@ -44,6 +44,7 @@ interface BoGiaiDeThiProps {
   stopRecording: (idx: number | string) => void;
   API: string;
   isReview?: boolean;
+  showAnswers?: boolean;
 }
 
 const renderReadingPassage = (text: string) => {
@@ -119,6 +120,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   stopRecording,
   API,
   isReview = false,
+  showAnswers = false
 }) => {
 
   const getSectionQuestionNumber = (sec: any, qIdx: number, subIdx?: number) => {
@@ -174,6 +176,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             isExam={true}
             examStarted={examStarted}
             isReview={isReview}
+            showAnswers={showAnswers}
           />
         </div>
       );
@@ -211,6 +214,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                   examStarted={examStarted}
                   isReview={isReview}
                   displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+                  showAnswers={showAnswers}
                 />
               ))}
             </div>
@@ -227,6 +231,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
               examStarted={examStarted}
               isReview={isReview}
               displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
+              showAnswers={showAnswers}
             />
           )}
         </div>
@@ -379,6 +384,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                 examStarted={examStarted}
                 isReview={isReview}
                 displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx, subIdx)}
+                showAnswers={showAnswers}
               />
             ))}
           </div>
@@ -398,6 +404,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
           examStarted={examStarted}
           isReview={isReview}
           displayIdx={getSectionQuestionNumber(parsedContent.sections[sIdx], qIdx)}
+          showAnswers={showAnswers}
         />
       );
     }
@@ -408,17 +415,19 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   return (
     <div>
       {/* Các tab phân phần thi */}
-      <div className="ad-exam-tabs">
-        {parsedContent.sections?.map((sec: any, sIdx: number) => (
-          <button
-            key={sIdx}
-            onClick={() => setActiveSectionIdx(sIdx)}
-            className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
-          >
-            {sec.title}
-          </button>
-        ))}
-      </div>
+      {parsedContent.sections && parsedContent.sections.length > 1 && (
+        <div className="ad-exam-tabs">
+          {parsedContent.sections?.map((sec: any, sIdx: number) => (
+            <button
+              key={sIdx}
+              onClick={() => setActiveSectionIdx(sIdx)}
+              className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
+            >
+              {sec.title}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Hiển thị phần thi được chọn */}
       {parsedContent.sections?.map((sec: any, sIdx: number) => {
@@ -430,7 +439,9 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             className="ad-section"
             style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}
           >
-            <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
+            {parsedContent.sections && parsedContent.sections.length > 1 && (
+              <h3 style={{ color: "#F95800", marginTop: 0, marginBottom: 15 }}>{sec.title}</h3>
+            )}
 
             {sec.type === "Viết đoạn văn ngắn" && (
               <div>

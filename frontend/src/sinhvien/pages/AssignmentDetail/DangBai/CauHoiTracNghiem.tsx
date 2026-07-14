@@ -14,6 +14,7 @@ interface CauHoiTracNghiemProps {
   examStarted: boolean;
   isReview?: boolean; // Che do xem lai bai tap da nop
   displayIdx?: number;
+  showAnswers?: boolean;
 }
 
 export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
@@ -28,6 +29,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
   examStarted,
   isReview = false,
   displayIdx,
+  showAnswers = false
 }) => {
   // Khoa de lay cau tra loi da chon cua sinh vien
   const key = subIdxPrefix !== undefined ? `${subIdxPrefix}_${qIdx}` : qIdx;
@@ -115,7 +117,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
             }
           } else {
             // Che do binh thuong khi lam bai hoac da nop bai kieu cu
-            const isCorrectOpt = submitted && opt.label === q.correct;
+            const isCorrectOpt = (submitted || showAnswers) && opt.label === q.correct;
             const isWrongOpt = submitted && isChosen && opt.label !== q.correct;
             optionClass = isCorrectOpt ? "correct" : isWrongOpt ? "wrong" : isChosen ? "chosen" : "";
           }
@@ -143,7 +145,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
           );
         })}
       </div>
-      {(submitted || isReview) && (
+      {(submitted || isReview || showAnswers) && (
         <div className="ad-explanation">
           <p className="correct-ans" style={{ margin: "4px 0", color: "#16a34a", fontWeight: "600" }}>
             Đáp án đúng: {q.correct}

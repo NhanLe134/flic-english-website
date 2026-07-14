@@ -8,8 +8,8 @@ const API =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname.startsWith("192.168.") ||
   window.location.hostname.startsWith("10.")
-    ? `http://${window.location.hostname}:5000`
-    : "http://14.225.192.252:5000";
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 
 const DAYS_OF_WEEK = [
@@ -1835,12 +1835,12 @@ export default function ApproveAdmin() {
                   <div className="class-detail-skills-list">
                     {courseSkillsList.map(skill => {
                       const skillId = getSkillId(skill);
-                      const assignment = selectedClassAssignments.find((a: any) => a.MaKyNang === skillId);
+                      const assignment: any = selectedClassAssignments.find((a: any) => a.MaKyNang === skillId);
                       return (
                         <div key={skill} className="class-detail-skill-row">
                           <span className="class-detail-skill-name">{skill}</span>
                           <span style={{ color: assignment ? '#0f172a' : '#94a3b8', fontStyle: assignment ? 'normal' : 'italic' }}>
-                            {assignment ? assignment.HoTen : 'Chưa phân công'}
+                            {assignment ? (assignment.TenGiangVien || assignment.HoTen) : 'Chưa phân công'}
                           </span>
                         </div>
                       );

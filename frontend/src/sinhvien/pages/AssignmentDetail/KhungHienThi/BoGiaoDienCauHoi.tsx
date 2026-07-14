@@ -20,7 +20,7 @@ import { VietDoanVan } from "../DangBai/VietDoanVan";
 import { TimLoiSai } from "../DangBai/TimLoiSai";
 import { NoiTu } from "../DangBai/NoiTu";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface BoGiaoDienCauHoiProps {
   q: any;
@@ -62,6 +62,7 @@ interface BoGiaoDienCauHoiProps {
   
   questionsList: any[];
   handleSubmit: (answers: any) => void;
+  showAnswers?: boolean;
 }
 
 export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
@@ -101,7 +102,8 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
   isListeningSTT,
   setIsListeningSTT,
   questionsList,
-  handleSubmit
+  handleSubmit,
+  showAnswers = false
 }) => {
   const questionType = exercise?.Type || "";
 
@@ -132,6 +134,7 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
         examStarted={examStarted}
         isReview={isReview}
         displayIdx={displayIdx}
+        showAnswers={showAnswers}
       />
     );
   };
@@ -395,6 +398,7 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
               examStarted={examStarted}
               isReview={isReview}
               displayIdx={getGlobalSubIdx(qIdx, subIdx)}
+              showAnswers={showAnswers}
             />
           ))}
         </div>

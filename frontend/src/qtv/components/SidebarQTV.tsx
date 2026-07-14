@@ -25,7 +25,7 @@ const SidebarQTV = () => {
   useEffect(() => {
     const checkNotifications = async () => {
       try {
-        const API = 'http://14.225.192.252:5000';
+        const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + '';
 
         // 1. Check pending students (Yêu cầu ghi danh)
         fetch(`${API}/dangky/pending?t=${Date.now()}`)
@@ -83,7 +83,8 @@ const SidebarQTV = () => {
       lower.startsWith("/qtv/bai-giang") ||
       lower.startsWith("/qtv/bai-tap") ||
       lower.startsWith("/qtv/tai-lieu") ||
-      lower.startsWith("/qtv/baitap-detail")
+      lower.startsWith("/qtv/baitap-detail") ||
+      lower.startsWith("/quan-ly-ban-nhap")
     );
   };
 

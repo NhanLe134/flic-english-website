@@ -4,9 +4,13 @@ import { FiPlay, FiPause, FiSettings, FiRotateCcw } from "react-icons/fi";
 import "./TestExamPage.css";
 
 const BASE = import.meta.env.BASE_URL;
-const API = window.location.hostname === "localhost"
-  ? "http://14.225.192.252:5000"
-  : `http://${window.location.hostname}:5000`;
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : "http://14.225.192.252:5004";
 
 const resolveUrl = (url: string | undefined) => {
   if (!url) return "";
@@ -1270,9 +1274,13 @@ export default function TestExamPage() {
     const viewParam = searchParams.get("view");
     const subIdParam = searchParams.get("submissionId");
     if (viewParam === "results" && subIdParam) {
-      const fetchAPI = window.location.hostname === "localhost"
-        ? "http://14.225.192.252:5000"
-        : `http://${window.location.hostname}:5000`;
+      const fetchAPI =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname.startsWith("192.168.") ||
+        window.location.hostname.startsWith("10.")
+          ? `http://${window.location.hostname}:5004`
+          : "http://14.225.192.252:5004";
       
       fetch(`${fetchAPI}/dethi/submissions`)
         .then(res => res.json())

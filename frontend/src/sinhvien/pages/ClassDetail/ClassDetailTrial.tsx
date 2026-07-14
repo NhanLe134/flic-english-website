@@ -14,7 +14,7 @@ import {
   FaLock
 } from "react-icons/fa";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -223,7 +223,7 @@ export default function ClassDetailTrial() {
       ]);
 
       const published = Array.isArray(baigiangData)
-        ? baigiangData.filter((b: any) => b.TrangThai === "published" && (b.IsFree === 1 || b.IsFree === true))
+        ? baigiangData.filter((b: any) => (b.TrangThai === "published" || b.TrangThai === "Đã duyệt") && (b.IsFree === 1 || b.IsFree === true))
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
       let baitapData = Array.isArray(rawBaitapData)

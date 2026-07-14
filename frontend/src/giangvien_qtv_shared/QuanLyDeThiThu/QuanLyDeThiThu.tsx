@@ -17,7 +17,7 @@ import {
   FiX
 } from "react-icons/fi";
 
-const API = window.location.hostname === "localhost" ? "http://localhost:5000" : "http://14.225.192.252:5000";
+const API = window.location.hostname === "localhost" ? "http://localhost:5004" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface CauHoi {
   id: number;
@@ -499,7 +499,7 @@ const QuanLyDeThiThu = () => {
   const getMediaUrl = (url?: string) => {
     if (!url) return "";
     if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
-    return `http://14.225.192.252:5000${url}`;
+    return `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${url}`;
   };
 
   // Modals & Active objects
@@ -2943,11 +2943,11 @@ D. Visiting friends
                           background: "#fff4ec", color: "#F95800", padding: "3px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700
                         }}>{test.LoaiBai}</span>
                         <span className={`cd-test-badge-status ${test.TrangThai}`} style={{
-                          background: test.TrangThai === "published" ? "#e6f4ea" : "#f1f5f9",
-                          color: test.TrangThai === "published" ? "#137333" : "#475569",
+                          background: (test.TrangThai === "published" || test.TrangThai === "Đã duyệt") ? "#e6f4ea" : "#f1f5f9",
+                          color: (test.TrangThai === "published" || test.TrangThai === "Đã duyệt") ? "#137333" : "#475569",
                           padding: "3px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700
                         }}>
-                          {test.TrangThai === "published" ? "Hoạt động" : "Nháp"}
+                          {(test.TrangThai === "published" || test.TrangThai === "Đã duyệt") ? "Hoạt động" : "Nháp"}
                         </span>
                       </div>
 

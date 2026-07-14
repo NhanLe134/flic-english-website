@@ -32,14 +32,14 @@ const CourseDetail = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://14.225.192.252:5000/course-detail/${id}/classes/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/course-detail/${id}/classes/${maNguoiDung}`)
       .then((res) => res.json())
       .then(async (data) => {
         const mapped = await Promise.all(
           data.map(async (c: any) => {
             let soLuong = 0;
             try {
-              const res = await fetch(`http://14.225.192.252:5000/lophoc/${c.MaLopHoc}/students/count`);
+              const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/lophoc/${c.MaLopHoc}/students/count`);
               const json = await res.json();
               soLuong = json?.SoLuongHocVien ?? 0;
             } catch (_) { }
@@ -58,7 +58,7 @@ const CourseDetail = () => {
       })
       .catch((err) => console.log(err));
 
-    fetch("http://14.225.192.252:5000/teacher/submissions/pending-count")
+    fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/teacher/submissions/pending-count")
       .then(res => res.json())
       .then(data => setPendingCount(data.count))
       .catch(err => console.log(err));

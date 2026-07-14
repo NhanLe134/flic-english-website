@@ -247,3 +247,10 @@
   color: #666;
   font-size: 14px;
 }
+
+/* Widen draft details view container */
+.dm-preview-wrapper .ad-content {
+  max-width: 100% !important;
+  margin: 20px 0 !important;
+  padding: 0 !important;
+}

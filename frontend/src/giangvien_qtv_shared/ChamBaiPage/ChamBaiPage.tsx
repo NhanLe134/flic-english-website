@@ -2,7 +2,7 @@ import "./ChamBaiPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const ChamBaiPage = () => {
   const navigate = useNavigate();
@@ -17,13 +17,13 @@ const ChamBaiPage = () => {
 
   useEffect(() => {
     if (!maBaiNop) return;
-    fetch(`http://14.225.192.252:5000/bainop/${maBaiNop}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/bainop/${maBaiNop}`)
       .then(res => res.json())
       .then(data => {
         setBaiNop(data);
         if (data.Diem !== null && data.Diem !== undefined) setDiem(data.Diem.toString());
         if (data.NhanXet) setNhanXet(data.NhanXet);
-        return fetch(`http://14.225.192.252:5000/baitap/${data.MaBaiTap}`);
+        return fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${data.MaBaiTap}`);
       })
       .then(res => res.json())
       .then(data => setExercise(data))
@@ -36,7 +36,7 @@ const ChamBaiPage = () => {
     if (isNaN(diemSo) || diemSo < 0 || diemSo > 10) { alert("Điểm phải từ 0 đến 10"); return; }
     setLoading(true);
     try {
-      await fetch(`http://14.225.192.252:5000/bainop/${maBaiNop}/cham`, {
+      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/bainop/${maBaiNop}/cham`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Diem: diemSo, NhanXet: nhanXet })

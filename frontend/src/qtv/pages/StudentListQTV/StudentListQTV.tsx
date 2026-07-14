@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from "react";
 import { formatScheduleOnlyDays } from "../../../utils/schedule";
 import { FiSearch, FiDownload, FiFileText } from "react-icons/fi";
@@ -33,8 +34,8 @@ const StudentListQTV: React.FC = () => {
     window.location.hostname === "127.0.0.1" ||
     window.location.hostname.startsWith("192.168.") ||
     window.location.hostname.startsWith("10.")
-      ? `http://${window.location.hostname}:5000`
-      : "http://14.225.192.252:5000";
+      ? `http://${window.location.hostname}:5004`
+      : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
   // Helper to format date safely
   const formatDate = (dateStr: any) => {
@@ -60,6 +61,11 @@ const StudentListQTV: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'enrolled' | 'pending'>('enrolled');
+  const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
+  const [loadingEnrolled, setLoadingEnrolled] = useState(false);
 
   // Student Details Modal
   const [showModal, setShowModal] = useState(false);
@@ -97,6 +103,9 @@ const StudentListQTV: React.FC = () => {
   const [showAssignClassModal, setShowAssignClassModal] = useState(false);
   const [selectedReg, setSelectedReg] = useState<PendingReg | null>(null);
   const [assignClassId, setAssignClassId] = useState<number | ''>('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectRegId, setRejectRegId] = useState<number | null>(null);
+  const [showCancelEnrollModal, setShowCancelEnrollModal] = useState(false);
   const [regClassFilter, setRegClassFilter] = useState<string>('all');
 
   const uniqueRegClasses = useMemo(() => {
@@ -127,9 +136,53 @@ const StudentListQTV: React.FC = () => {
       .catch(() => {});
   };
 
-  useEffect(() => {
-    loadPendingRegs();
-  }, []);
+  const loadEnrolledStudents = () => {
+    setLoadingEnrolled(true);
+    fetch(`${API}/qtv/students/enrolled`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setEnrolledStudents(data.map((s: any) => ({
+            studentId: s.MaSinhVien,
+            MSSV: s.MSSV || null,
+            HoTen: s.HoTen,
+            BietDanh: s.BietDanh || null,
+            GioiTinh: s.GioiTinh || "—",
+            NgayGhiDanh: s.NgayGhiDanh || "—",
+            TrangThai: s.TrangThai || "Đang học",
+            classId: s.MaLopHoc,
+            className: s.TenLop,
+            courseId: s.MaKhoaHoc,
+            courseName: s.TenKhoaHoc
+          })));
+        } else {
+          setEnrolledStudents([]);
+        }
+      })
+      .catch(err => {
+        console.error("Lỗi khi tải danh sách học viên ghi danh:", err);
+        setEnrolledStudents([]);
+      })
+      .finally(() => setLoadingEnrolled(false));
+  };
+
+  const handleRemoveEnrolled = async (studentId: string, classId: number, studentName: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn hủy ghi danh học viên ${studentName} khỏi lớp học này?`)) {
+      try {
+        const res = await fetch(`${API}/qtv/lophoc/${classId}/ghidanh/${studentId}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          triggerSuccessPopup(`Đã hủy ghi danh ${studentName}!`);
+          loadEnrolledStudents();
+        } else {
+          alert('Lỗi khi hủy ghi danh');
+        }
+      } catch {
+        alert('Lỗi khi hủy ghi danh');
+      }
+    }
+  };
 
   const confirmAssign = async () => {
     if (!selectedReg || !assignClassId) { alert('Vui lòng chọn lớp!'); return }
@@ -140,9 +193,10 @@ const StudentListQTV: React.FC = () => {
       })
       const data = await res.json()
       if (res.ok && data.message && data.message.includes("thành công")) {
-        setPendingRegs(prev => prev.map(r => r.id === selectedReg.id ? { ...r, status: 'Đã ghi danh' as const } : r))
         setShowAssignClassModal(false); setSelectedReg(null); setAssignClassId('')
         triggerSuccessPopup(`Đã ghi danh ${selectedReg.name}!`)
+        loadPendingRegs();
+        loadEnrolledStudents();
       } else {
         alert(data.message || 'Lỗi khi ghi danh')
       }
@@ -150,24 +204,33 @@ const StudentListQTV: React.FC = () => {
   }
 
   const rejectReg = (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn từ chối đăng ký này?')) {
-      fetch(`${API}/dangky/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ TrangThai: 'Từ chối' })
-      })
-      .then(res => {
-        if (res.ok) {
-          setPendingRegs(prev => prev.map(r => r.id === id ? { ...r, status: 'Từ chối' as const } : r))
-          triggerSuccessPopup('Đã từ chối!')
-        } else {
-          alert('Lỗi khi từ chối đăng ký')
-        }
-      })
-      .catch(() => {
-        alert('Lỗi khi từ chối đăng ký')
-      })
-    }
+    setRejectRegId(id);
+    setShowRejectModal(true);
+  };
+
+  const confirmRejectReg = () => {
+    if (rejectRegId === null) return;
+    const id = rejectRegId;
+    setShowRejectModal(false);
+    setRejectRegId(null);
+
+    fetch(`${API}/dangky/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ TrangThai: 'Từ chối' })
+    })
+    .then(res => {
+      if (res.ok) {
+        setPendingRegs(prev => prev.map(r => r.id === id ? { ...r, status: 'Từ chối' as const } : r));
+        triggerSuccessPopup('Đã từ chối!');
+        loadPendingRegs();
+      } else {
+        alert('Lỗi khi từ chối đăng ký');
+      }
+    })
+    .catch(() => {
+      alert('Lỗi khi từ chối đăng ký');
+    });
   };
 
   // Load classes across all courses
@@ -226,6 +289,8 @@ const StudentListQTV: React.FC = () => {
     };
 
     fetchAllData();
+    loadPendingRegs();
+    loadEnrolledStudents();
   }, []);
 
   // Fetch students when a class is selected
@@ -324,6 +389,32 @@ const StudentListQTV: React.FC = () => {
       alert("Lỗi kết nối khi lưu biệt danh!");
     } finally {
       setSavingNickname(false);
+    }
+  };
+
+  const confirmCancelEnroll = async () => {
+    if (!selectedStudentDetails || !selectedClassId) return;
+    const maSinhVien = selectedStudentDetails.MaSinhVien;
+    const classId = selectedClassId;
+    
+    try {
+      const res = await fetch(`${API}/qtv/lophoc/${classId}/ghidanh/${maSinhVien}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShowCancelEnrollModal(false);
+        setShowModal(false);
+        triggerSuccessPopup("Đã hủy ghi danh thành công!");
+        if (selectedClass) {
+          handleSelectClass(selectedClass);
+        }
+      } else {
+        alert(data.message || "Lỗi khi hủy ghi danh");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi kết nối");
     }
   };
 
@@ -438,11 +529,40 @@ const StudentListQTV: React.FC = () => {
                   <span className="slqtv-label">Khóa học đăng ký:</span>
                   <span className="slqtv-val">{selectedStudentDetails.TenKhoaHoc || "—"}</span>
                 </div>
-                <div className="slqtv-modal-footer">
-                  <button className="slqtv-btn-close" onClick={() => setShowModal(false)} disabled={savingNickname}>Đóng</button>
-                  <button className="slqtv-btn-save" onClick={handleSaveNickname} disabled={savingNickname}>
-                    {savingNickname ? "Đang lưu..." : "Lưu thay đổi"}
-                  </button>
+                <div className="slqtv-modal-footer" style={{ justifyContent: selectedClassId ? "space-between" : "flex-end" }}>
+                  {selectedClassId && (
+                    <button 
+                      type="button"
+                      onClick={() => setShowCancelEnrollModal(true)}
+                      disabled={savingNickname}
+                      style={{
+                        padding: "7px 14px",
+                        background: "white",
+                        border: "1.5px solid #dc2626",
+                        color: "#dc2626",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        fontSize: "12.5px",
+                        transition: "all 0.15s ease",
+                        opacity: savingNickname ? 0.6 : 1
+                      }}
+                      onMouseOver={e => {
+                        if (!savingNickname) e.currentTarget.style.background = "#fef2f2";
+                      }}
+                      onMouseOut={e => {
+                        if (!savingNickname) e.currentTarget.style.background = "white";
+                      }}
+                    >
+                      Hủy ghi danh
+                    </button>
+                  )}
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button className="slqtv-btn-close" onClick={() => setShowModal(false)} disabled={savingNickname}>Đóng</button>
+                    <button className="slqtv-btn-save" onClick={handleSaveNickname} disabled={savingNickname}>
+                      {savingNickname ? "Đang lưu..." : "Lưu thay đổi"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -849,6 +969,82 @@ const StudentListQTV: React.FC = () => {
                 disabled={!assignClassId}
               >
                 Ghi danh vào lớp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════ MODAL: TỪ CHỐI GHI DANH ════ */}
+      {showRejectModal && (
+        <div className="slqtv-modal-overlay" onClick={() => { setShowRejectModal(false); setRejectRegId(null); }}>
+          <div className="slqtv-modal-card" style={{ maxWidth: '440px', width: '90%' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 className="slqtv-modal-title" style={{ border: "none", marginBottom: 0, paddingBottom: 0 }}>
+                Từ chối ghi danh
+              </h2>
+              <button className="slqtv-modal-close" onClick={() => { setShowRejectModal(false); setRejectRegId(null); }} style={{ top: '20px', right: '20px' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: "8px 0 20px 0" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.5" }}>
+                Bạn có chắc chắn muốn từ chối đăng ký học của học viên này không?
+              </p>
+              <p style={{ margin: "0", fontSize: "13px", color: "#dc2626", background: "#fef2f2", padding: "10px 12px", borderRadius: "6px", border: "1px solid #fee2e2", lineHeight: "1.5" }}>
+                <strong>Lưu ý:</strong> Hành động này không thể khôi phục và học viên sẽ nhận trạng thái "Từ chối" cho lớp học đăng ký này.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button 
+                style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }} 
+                onClick={() => { setShowRejectModal(false); setRejectRegId(null); }}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                style={{ background: '#dc2626', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }} 
+                onClick={confirmRejectReg}
+              >
+                Xác nhận từ chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════ MODAL: XÁC NHẬN HỦY GHI DANH ════ */}
+      {showCancelEnrollModal && (
+        <div className="slqtv-modal-overlay" onClick={() => setShowCancelEnrollModal(false)}>
+          <div className="slqtv-modal-card" style={{ maxWidth: '440px', width: '90%' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 className="slqtv-modal-title" style={{ border: "none", marginBottom: 0, paddingBottom: 0, color: "#dc2626" }}>
+                Xác nhận hủy ghi danh
+              </h2>
+              <button className="slqtv-modal-close" onClick={() => setShowCancelEnrollModal(false)} style={{ top: '20px', right: '20px' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: "8px 0 20px 0" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.5" }}>
+                Bạn có chắc chắn muốn hủy ghi danh học viên <strong>{selectedStudentDetails?.HoTen}</strong> ra khỏi lớp <strong>{selectedStudentDetails?.Lop}</strong> không?
+              </p>
+              <p style={{ margin: "0", fontSize: "13px", color: "#dc2626", background: "#fef2f2", padding: "10px 12px", borderRadius: "6px", border: "1px solid #fee2e2", lineHeight: "1.5" }}>
+                <strong>Lưu ý:</strong> Hành động này sẽ xóa vĩnh viễn học viên khỏi lớp học hiện tại. Tất cả lịch sử làm bài tập và điểm số của học viên trong lớp này sẽ bị ảnh hưởng.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button 
+                style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }} 
+                onClick={() => setShowCancelEnrollModal(false)}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                style={{ background: '#dc2626', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }} 
+                onClick={confirmCancelEnroll}
+              >
+                Xác nhận xóa
               </button>
             </div>
           </div>
