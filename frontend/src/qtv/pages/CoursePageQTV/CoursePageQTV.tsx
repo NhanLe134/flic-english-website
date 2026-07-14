@@ -1232,14 +1232,14 @@ export default function CoursePageQTV() {
                   <tr><td colSpan={4} className={styles.empty}>Không có khóa học nào</td></tr>
                 ) : filtered.map(c => (
                   <React.Fragment key={c.id}>
-                    <tr>
+                    <tr onClick={() => toggleExpandCourse(c.id)} style={{ cursor: "pointer" }}>
                       <td>
                         <div className={styles.courseTitle}>{c.title}</div>
                         <div className={styles.courseCat}>{c.category} · {c.desc.slice(0,50)}{c.desc.length > 50 ? '...' : ''}</div>
                       </td>
                       <td><span className={styles.levelText}>{c.level}</span></td>
                       <td>
-                        <button className={styles.classBadgeBtn} onClick={() => toggleExpandCourse(c.id)}>
+                        <button className={styles.classBadgeBtn} onClick={(e) => { e.stopPropagation(); toggleExpandCourse(c.id); }}>
                           <FiChevronDown style={{ marginRight: 4, transform: expandedCourse === c.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                           {classesMap[c.id] ? classesMap[c.id].length : c.classCount} lớp
                         </button>

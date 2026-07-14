@@ -1392,8 +1392,24 @@ app.post("/baigiang", async (req, res) => {
       }
     }
 
-    const finalTrangThai = isQTV ? "Đã duyệt" : normalizeTrangThai(TrangThai);
-    const finalTrangThaiDuyet = finalTrangThai;
+    let finalTrangThai = "draft";
+    let finalTrangThaiDuyet = "Lưu nháp";
+    if (isQTV) {
+      finalTrangThai = "published";
+      finalTrangThaiDuyet = "Đã duyệt";
+    } else {
+      const statusLower = (TrangThai || "").toLowerCase().trim();
+      if (statusLower === "published" || statusLower === "đã duyệt" || statusLower === "hoạt động") {
+        finalTrangThai = "published";
+        finalTrangThaiDuyet = "Đã duyệt";
+      } else if (statusLower === "pending" || statusLower === "chờ duyệt") {
+        finalTrangThai = "pending";
+        finalTrangThaiDuyet = "Chờ duyệt";
+      } else if (statusLower === "rejected" || statusLower === "từ chối" || statusLower === "ẩn") {
+        finalTrangThai = "rejected";
+        finalTrangThaiDuyet = "Từ chối";
+      }
+    }
 
     const result = await pool.request()
       .input("TieuDe", TieuDe)
@@ -1489,11 +1505,24 @@ app.put("/baigiang/:id/status", async (req, res) => {
     if (await isClassCompletedByBaiHoc(pool, req.params.id)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thay đổi trạng thái duyệt bài giảng!" });
     }
-    const normalized = normalizeTrangThai(TrangThai);
+    let dbTrangThai = "draft";
+    let dbTrangThaiDuyet = "Lưu nháp";
+    const statusLower = (TrangThai || "").toLowerCase().trim();
+    if (statusLower === "published" || statusLower === "đã duyệt" || statusLower === "hoạt động") {
+      dbTrangThai = "published";
+      dbTrangThaiDuyet = "Đã duyệt";
+    } else if (statusLower === "pending" || statusLower === "chờ duyệt") {
+      dbTrangThai = "pending";
+      dbTrangThaiDuyet = "Chờ duyệt";
+    } else if (statusLower === "rejected" || statusLower === "từ chối" || statusLower === "ẩn") {
+      dbTrangThai = "rejected";
+      dbTrangThaiDuyet = "Từ chối";
+    }
+
     await pool.request()
       .input("id", req.params.id)
-      .input("TrangThai", normalized)
-      .input("TrangThaiDuyet", normalized)
+      .input("TrangThai", dbTrangThai)
+      .input("TrangThaiDuyet", dbTrangThaiDuyet)
       .query(`UPDATE BAIHOCKHOAHOC SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiHoc = @id`);
     res.json({ message: "Cập nhật thành công" });
   } catch (err) { res.status(500).send(err.message); }
@@ -4794,8 +4823,10 @@ app.post("/exercises/:id/clone", async (req, res) => {
       }
     }
 
-    let targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
-    if (!targetMaBaiHoc) {
+    let targetMaBaiHoc = null;
+    if (req.body.hasOwnProperty("MaBaiHoc")) {
+      targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
+    } else {
       const bhResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
         .query("SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC");

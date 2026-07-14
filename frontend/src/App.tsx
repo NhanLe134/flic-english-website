@@ -213,6 +213,7 @@ function App() {
           <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
           <Route path="bai-giang/:id" element={<LessonDetail />} />
+          <Route path="them-bai-giang/:buoiHocId" element={<AddLesson />} />
           <Route path="baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
           <Route path="danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="cham-bai/:maBaiNop" element={<ChamBaiPage />} />
