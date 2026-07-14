@@ -502,7 +502,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  zIndex: 1001;
+  z-index: 1001;
 }
 
 .custom-dialog-container {
