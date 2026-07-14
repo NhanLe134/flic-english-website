@@ -64,6 +64,21 @@ async function isClassCompletedByBuoiHoc(pool, maBuoiHoc) {
   return false;
 }
 
+async function isBuoiHocCompleted(pool, maBuoiHoc) {
+  if (!maBuoiHoc) return false;
+  const res = await pool.request()
+    .input("maBuoiHoc", maBuoiHoc)
+    .query(`
+      SELECT TrangThai 
+      FROM BUOIHOC 
+      WHERE MaBuoiHoc = @maBuoiHoc
+    `);
+  if (res.recordset.length > 0) {
+    return res.recordset[0].TrangThai === 'Đã hoàn thành';
+  }
+  return false;
+}
+
 async function isClassCompletedByBaiTap(pool, maBaiTap) {
   if (!maBaiTap) return false;
   let targetId = maBaiTap;
@@ -1202,17 +1217,51 @@ app.get("/baitap/:id", async (req, res) => {
 
 app.put("/baitap/:id", async (req, res) => {
   try {
-    const { Questions } = req.body;
+    const { Title, Type, Content, Questions, Vocabulary, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai } = req.body;
     const pool = await poolPromise;
     if (await isClassCompletedByBaiTap(pool, req.params.id)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể chỉnh sửa bài tập!" });
     }
-    await pool.request()
-      .input("id", parseInt(req.params.id))
-      .input("CauHoi", Questions)
-      .query(`UPDATE BAITAP SET CauHoi = @CauHoi WHERE MaBaiTap = @id`);
-    res.json({ message: "Cập nhật thành công" });
-  } catch (err) { res.status(500).send("Lỗi server"); }
+    if (Title !== undefined || Content !== undefined) {
+      await pool.request()
+        .input("id", parseInt(req.params.id))
+        .input("TieuDe", Title || "")
+        .input("DangBai", DangBai || Type || "")
+        .input("Content", Content || "")
+        .input("CauHoi", Questions || "")
+        .input("TuVung", Vocabulary || "")
+        .input("AudioUrl", AudioUrl || "")
+        .input("ShowAnswer", ShowAnswer !== undefined ? ShowAnswer : 0)
+        .input("IsFree", IsFree !== undefined ? IsFree : 0)
+        .input("IsExam", IsExam !== undefined ? IsExam : 0)
+        .input("TrangThai", TrangThai || "draft")
+        .input("KyNang", KyNang || "Tổng hợp")
+        .query(`
+          UPDATE BAITAP 
+          SET TieuDe = @TieuDe,
+              DangBai = @DangBai,
+              Content = @Content,
+              CauHoi = @CauHoi,
+              TuVung = @TuVung,
+              AudioUrl = @AudioUrl,
+              ShowAnswer = @ShowAnswer,
+              IsFree = @IsFree,
+              IsExam = @IsExam,
+              TrangThai = @TrangThai,
+              KyNang = @KyNang
+          WHERE MaBaiTap = @id
+        `);
+    } else {
+      await pool.request()
+        .input("id", parseInt(req.params.id))
+        .input("CauHoi", Questions)
+        .query(`UPDATE BAITAP SET CauHoi = @CauHoi WHERE MaBaiTap = @id`);
+    }
+    res.json({ success: true, message: "Cập nhật thành công" });
+  } catch (err) { 
+    console.error("Lỗi PUT /baitap/:id:", err);
+    res.status(500).send("Lỗi server: " + err.message); 
+  }
 });
 app.delete("/baitap/:id", async (req, res) => {
   try {
@@ -1288,7 +1337,7 @@ app.get("/baigiang/detail/:id", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input("id", req.params.id)
-      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl, MaBuoiHoc FROM BAIHOCKHOAHOC WHERE MaBaiHoc = @id`); // ← thêm FileUrl
+      .query(`SELECT MaBaiHoc, TieuDe, LoaiBaiHoc, ThoiLuong, TrangThai, NoiDung, FileUrl, MaBuoiHoc, IsFree FROM BAIHOCKHOAHOC WHERE MaBaiHoc = @id`); // ← thêm FileUrl
     res.json(result.recordset[0]);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -1309,6 +1358,9 @@ app.post("/baigiang", async (req, res) => {
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể tạo bài giảng mới!" });
+    }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể tạo bài giảng mới!" });
     }
 
     let resolvedMaGiangVien = null;
@@ -1389,6 +1441,47 @@ app.delete("/baigiang/:id", async (req, res) => {
     res.json({ message: "Xóa thành công" });
   } catch (err) { res.status(500).send(err.message); }
 });
+
+// ── PUT /baigiang/:id ──
+app.put("/baigiang/:id", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, TrangThaiDuyet, ThuTu, MaKhoaHoc, MaBuoiHoc, IsFree } = req.body;
+    const id = req.params.id;
+
+    await pool.request()
+      .input("id", id)
+      .input("TieuDe", TieuDe)
+      .input("NoiDung", NoiDung || "")
+      .input("FileUrl", FileUrl || "")
+      .input("LoaiBaiHoc", LoaiBaiHoc)
+      .input("ThoiLuong", ThoiLuong)
+      .input("TrangThai", TrangThai)
+      .input("TrangThaiDuyet", TrangThaiDuyet || "Đã duyệt")
+      .input("ThuTu", ThuTu || 1)
+      .input("MaKhoaHoc", MaKhoaHoc || 1)
+      .input("MaBuoiHoc", MaBuoiHoc)
+      .input("IsFree", IsFree !== undefined ? IsFree : 0)
+      .query(`
+        UPDATE BAIHOCKHOAHOC
+        SET TieuDe = @TieuDe,
+            NoiDung = @NoiDung,
+            FileUrl = @FileUrl,
+            LoaiBaiHoc = @LoaiBaiHoc,
+            ThoiLuong = @ThoiLuong,
+            TrangThai = @TrangThai,
+            TrangThaiDuyet = @TrangThaiDuyet,
+            ThuTu = @ThuTu,
+            MaKhoaHoc = @MaKhoaHoc,
+            MaBuoiHoc = @MaBuoiHoc,
+            IsFree = @IsFree
+        WHERE MaBaiHoc = @id
+      `);
+
+    res.json({ message: "Cập nhật bài giảng thành công" });
+  } catch (err) { res.status(500).send(err.message); }
+});
+
 app.put("/baigiang/:id/status", async (req, res) => {
   try {
     const { TrangThai } = req.body;
@@ -1449,6 +1542,9 @@ app.post("/tailieu", async (req, res) => {
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm tài liệu mới!" });
     }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm tài liệu mới!" });
+    }
     await pool.request()
       .input("TieuDe", TieuDe)
       .input("MoTa", MoTa || "")
@@ -1492,7 +1588,7 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
       .input("maNguoiDung", maNguoiDung)
       .query(`
         SELECT 
-          b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai,
+          b.MaBaiHoc, b.TieuDe, b.LoaiBaiHoc, b.ThoiLuong, b.TrangThai, b.MaBuoiHoc,
           bh.TenBuoiHoc, lh.TenLop, COALESCE(kh.TenKhoaHoc, kh2.TenKhoaHoc) AS TenKhoaHoc
         FROM BAIHOCKHOAHOC b
         LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
@@ -1511,7 +1607,7 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
         SELECT 
           bt.MaBaiTap, bt.TieuDe AS Title, bt.DangBai AS Type, 
           CONVERT(varchar, bt.NgayTao, 103) AS CreatedDate, bt.TrangThai,
-          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc, bt.MaBuoiHoc
         FROM BAITAP bt
         LEFT JOIN BAIHOCKHOAHOC b ON bt.MaBaiHoc = b.MaBaiHoc
         LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
@@ -1529,7 +1625,7 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
         SELECT 
           bk.MaBaiKiemTra AS MaBaiTap, bk.TenBai AS Title, 'Exam' AS Type, 
           CONVERT(varchar, bk.NgayBatDau, 103) AS CreatedDate, bk.TrangThai,
-          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc, bk.MaBuoiHoc
         FROM BAIKIEMTRA bk
         LEFT JOIN BUOIHOC bh ON bk.MaBuoiHoc = bh.MaBuoiHoc
         LEFT JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc
@@ -2223,7 +2319,7 @@ app.get("/admin/stats", async (req, res) => {
 });
 app.get("/admin/khoahoc", async (req, res) => {
   try {
-    const showAll = req.query.all === "true" || req.query.all === true;
+    const showAll = req.query.all !== "false" && req.query.all !== false;
     const pool = await poolPromise;
     let queryStr = `
       SELECT 
@@ -2292,6 +2388,9 @@ app.post("/baitap/create", async (req, res) => {
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể tạo bài tập mới!" });
+    }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể tạo bài tập mới!" });
     }
     let resolvedMaGiangVien = null;
     let isQTV = true;
@@ -4363,10 +4462,17 @@ app.put("/classes/:id/active-buoihoc", async (req, res) => {
             DECLARE @activeThuTu INT;
             SELECT @activeThuTu = ThuTu FROM BUOIHOC WHERE MaBuoiHoc = @activeBuoiHocId;
 
+            -- Buổi học đang được chọn sẽ ở trạng thái 'Đang học'
             UPDATE BUOIHOC
-            SET TrangThai = N'Đã mở'
-            WHERE MaLopHoc = @classId AND ThuTu <= @activeThuTu;
+            SET TrangThai = N'Đang học'
+            WHERE MaBuoiHoc = @activeBuoiHocId;
 
+            -- Các buổi trước đó (tự động chuyển thành 'Đã hoàn thành')
+            UPDATE BUOIHOC
+            SET TrangThai = N'Đã hoàn thành'
+            WHERE MaLopHoc = @classId AND ThuTu < @activeThuTu;
+
+            -- Các buổi sau đó sẽ là 'Chưa mở'
             UPDATE BUOIHOC
             SET TrangThai = N'Chưa mở'
             WHERE MaLopHoc = @classId AND ThuTu > @activeThuTu;
@@ -4661,6 +4767,9 @@ app.post("/exercises/:id/clone", async (req, res) => {
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm bài tập!" });
     }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm bài tập!" });
+    }
     
     const orig = await pool.request()
       .input("id", req.params.id)
@@ -4750,6 +4859,9 @@ app.post("/tailieu/:id/clone", async (req, res) => {
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm tài liệu!" });
     }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm tài liệu!" });
+    }
     
     const orig = await pool.request()
       .input("id", req.params.id)
@@ -4786,6 +4898,9 @@ app.post("/baigiang/:id/clone", async (req, res) => {
     const pool = await poolPromise;
     if (await isClassCompletedByBuoiHoc(pool, MaBuoiHoc)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thêm bài giảng!" });
+    }
+    if (await isBuoiHocCompleted(pool, MaBuoiHoc)) {
+      return res.status(400).json({ message: "Buổi học đã hoàn thành, không thể thêm bài giảng!" });
     }
     
     const orig = await pool.request()
@@ -5411,6 +5526,10 @@ app.put("/dethi/:id/status", async (req, res) => {
 const initDb = async () => {
   try {
     const pool = await poolPromise
+    if (!pool) {
+      console.error("Database connection was not established. Skipping initialization queries.");
+      return;
+    }
     await pool.request().query(`
       IF NOT EXISTS (
           SELECT * FROM sys.columns 

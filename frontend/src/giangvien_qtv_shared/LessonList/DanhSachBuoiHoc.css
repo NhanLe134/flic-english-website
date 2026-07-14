@@ -1,0 +1,579 @@
+/* Bố cục trang danh sách buổi học */
+.lesson-wrapper {
+  min-height: 100vh;
+  font-family: Inter, Roboto, sans-serif;
+}
+
+/* Nút quay lại */
+.lesson-back {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.lesson-back:hover {
+  color: #f95800;
+}
+
+/* Tiêu đề chính */
+.lesson-header {
+  margin-bottom: 24px;
+}
+
+.lesson-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.lesson-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+}
+
+/* Thanh hành động (Tìm kiếm + Nút bấm) */
+.action-bar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Form tìm kiếm */
+.search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  width: 320px;
+  height: 40px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.search-container:focus-within {
+  border-color: #f95800;
+  box-shadow: 0 0 0 3px rgba(249, 88, 0, 0.15);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  padding: 0 16px;
+  font-size: 14px;
+  width: 100%;
+  height: 100%;
+  color: #334155;
+}
+
+.search-button {
+  background: #f95800;
+  border: none;
+  color: #ffffff;
+  width: 44px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.search-button:hover {
+  background: #e04f00;
+}
+
+/* Nút quản lý bản nháp */
+.drafts-btn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  border: 1.5px solid #f95800;
+  background: #ffffff;
+  color: #f95800;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.drafts-btn:hover {
+  background: #fff4ec;
+}
+
+/* Nút tạo buổi học */
+.create-lesson-btn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background: #f95800;
+  border: none;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.create-lesson-btn:hover {
+  background: #e04f00;
+}
+
+/* Bảng hiển thị thông tin */
+.table-responsive {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.lesson-table th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px 20px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.lesson-table td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+/* Thiết lập dòng của buổi đang mở/đang học */
+.lesson-row {
+  transition: background-color 0.2s ease;
+}
+
+.lesson-row:hover {
+  background-color: #f8fafc;
+}
+
+/* Nổi bật dòng đang hoạt động (Đang học) */
+.lesson-row.active-row {
+  background-color: #fffaf0; /* Nền màu vàng cam nhạt */
+  border-left: 4px solid #f95800; /* Viền cam bên trái nổi bật */
+}
+
+/* Cột số thứ tự */
+.col-order {
+  text-align: center;
+  font-weight: 700;
+  color: #475569;
+  font-size: 15px;
+}
+
+/* Cột tên buổi học */
+.col-name {
+  font-weight: 600;
+}
+
+.lesson-title-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playing-icon {
+  color: #f95800;
+  animation: pulse-animation 1.5s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+.lesson-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Cột mô tả buổi học */
+.col-desc {
+  max-width: 400px;
+  word-wrap: break-word;
+}
+
+.lesson-desc-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Cột trạng thái */
+.col-status {
+  text-align: center;
+}
+
+/* Badge biểu thị trạng thái */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.status-badge.opened {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.closed {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+/* Badge biểu thị buổi đang học */
+.active-learning-badge {
+  background-color: #ffebe0;
+  color: #d94100;
+  border: 1.5px solid #ffccb3;
+  margin-bottom: 4px;
+}
+
+.status-badge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Nút tắt kích hoạt buổi */
+.btn-deactivate {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-deactivate:hover {
+  color: #ef4444;
+}
+
+/* Nút Mở buổi */
+.btn-status-toggle {
+  background: transparent;
+  color: #64748b;
+  border: 1.5px dashed #cbd5e1;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-status-toggle:hover {
+  color: #f95800;
+  border-color: #f95800;
+  background-color: #fff4ec;
+}
+
+/* Cột thao tác */
+.col-actions {
+  text-align: center;
+}
+
+.actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-view-detail {
+  background-color: #f95800;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-view-detail:hover {
+  background-color: #e04f00;
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.empty-row {
+  text-align: center;
+  color: #94a3b8;
+  padding: 40px !important;
+  font-size: 14px;
+}
+
+/* CSS cho modal cũ dùng lại */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  padding: 24px;
+}
+
+.modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.modal-top h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.form-group input,
+.form-group textarea {
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #f95800;
+}
+
+.req {
+  color: #ef4444;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-outline {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  color: #475569;
+}
+
+.btn-primary {
+  background: #f95800;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* CSS cho hộp thoại thông báo/xác nhận tùy chỉnh */
+.custom-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  zIndex: 1001;
+}
+
+.custom-dialog-container {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.custom-dialog-container h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.dialog-main-message {
+  font-size: 14px;
+  color: #475569;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+.dialog-sub-message {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.btn-dialog-cancel {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-dialog-confirm {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-dialog-close {
+  background: #f95800;
+  color: #ffffff;
+  border: none;
+  padding: 10px 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}

@@ -9,7 +9,7 @@
 .teacher-content {
   flex: 1;
   min-width: 0;
-  padding: 32px;
+  padding: 0;
   background: #ffffff;
   box-sizing: border-box;
   overflow-x: hidden;

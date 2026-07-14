@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
 import { hasPermission } from "../../utils/permission";
 
@@ -19,7 +19,7 @@ interface LessonManagementProps {
 
 const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEmbedded }) => {
   const navigate = useNavigate();
-  const { buoiHocId: paramBuoiHocId } = useParams();
+  const { buoiHocId: paramBuoiHocId, maLop, teacherId } = useParams();
   const buoiHocId = buoiHocIdProp || paramBuoiHocId;
 
   const [lessons, setLessons] = useState<any[]>([]);
@@ -79,6 +79,8 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     }
   };
 
+  const [lessonStatus, setLessonStatus] = useState<string>("");
+
   useEffect(() => {
     if (!buoiHocId) return;
     fetch(`${API}/baigiang/${buoiHocId}`)
@@ -89,8 +91,9 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
     fetch(`${API}/buoihoc/${buoiHocId}`)
       .then(res => res.json())
       .then(data => {
-        if (data && data.TrangThaiLopHoc) {
-          setClassStatus(data.TrangThaiLopHoc);
+        if (data) {
+          if (data.TrangThaiLopHoc) setClassStatus(data.TrangThaiLopHoc);
+          if (data.TrangThai) setLessonStatus(data.TrangThai);
         }
       })
       .catch(err => console.log(err));
@@ -155,7 +158,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <FiSearch size={16} />
           </button>
         </form>
-        {classStatus !== "Đã hoàn thành" && hasPermission("LECTURE_CREATE") && (
+        {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && hasPermission("LECTURE_CREATE") && (
           <>
             <button
               className="add-btn-reuse"
@@ -186,7 +189,11 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             {lessons
               .filter(l => l.TieuDe?.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((l, index) => (
-                <tr key={l.MaBaiHoc}>
+                <tr
+                  key={l.MaBaiHoc}
+                  onClick={() => navigate(`/${teacherId}/lophoc/${maLop}/buoi${buoiHocId}/bg/${l.MaBaiHoc}/view`)}
+                  style={{ cursor: "pointer" }}
+                >
                   <td>{index + 1}</td>
                   <td>{l.TieuDe}</td>
                   <td>{l.ThoiLuong}</td>
@@ -214,23 +221,24 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                     </span>
                   </td>
                   <td>
-                    <div className="action-buttons">
-                      <button className="action-icon-btn detail-icon-btn"
-                        onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}
-                        title="Xem chi tiết">
-                        <FiEye size={16} />
-                      </button>
-                      {classStatus !== "Đã hoàn thành" && (
+                    <div className="action-buttons" onClick={(e) => e.stopPropagation()}>
+                      {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
                         <button className="action-btn minitest-btn"
-                          onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`);
+                          }}
                           title="Tạo MiniTest">
                           <FiPlus size={14} style={{ marginRight: 4 }} />
                           <span>MiniTest</span>
                         </button>
                       )}
-                      {classStatus !== "Đã hoàn thành" && (
+                      {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
                         <button className="action-icon-btn delete-icon-btn"
-                          onClick={() => handleDeleteClick(l.MaBaiHoc)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(l.MaBaiHoc);
+                          }}
                           title="Xóa bài học">
                           <FiTrash2 size={16} />
                         </button>

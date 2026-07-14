@@ -30,6 +30,9 @@ const ClassDetail = () => {
   const [exercises, setExercises] = useState<any[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showToggleModal, setShowToggleModal] = useState(false);
+  const [toggleExId, setToggleExId] = useState<number | null>(null);
+  const [toggleCurrentState, setToggleCurrentState] = useState<boolean>(false);
 
   useEffect(() => {
     if (!id) return;
@@ -55,7 +58,18 @@ const ClassDetail = () => {
 
   if (!lesson) return <p>Đang tải dữ liệu...</p>;
 
-  const handleToggleOpen = async (maBaiTap: number) => {
+  const handleToggleOpenClick = (maBaiTap: number, currentOpened: boolean) => {
+    setToggleExId(maBaiTap);
+    setToggleCurrentState(currentOpened);
+    setShowToggleModal(true);
+  };
+
+  const handleConfirmToggleOpen = async () => {
+    if (toggleExId === null) return;
+    const maBaiTap = toggleExId;
+    setShowToggleModal(false);
+    setToggleExId(null);
+
     try {
       const res = await fetch(`${API}/baitap/toggle-open`, {
         method: "POST",
@@ -384,37 +398,53 @@ const ClassDetail = () => {
 
                           return (
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{
-                                fontSize: "12px",
-                                fontWeight: 600,
-                                color: isManual ? (isOpened ? "#16a34a" : "#64748b") : "#b45309",
-                                background: isManual ? (isOpened ? "#dcfce7" : "#f1f5f9") : "#fef3c7",
-                                padding: "4px 8px",
-                                borderRadius: "6px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                whiteSpace: "nowrap"
-                              }}>
-                                {isManual ? (isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề ") : "🕒 Tự động mở theo lịch"}
-                              </span>
-                              {isApproved && isManual && lesson?.TrangThaiLopHoc !== "Đã hoàn thành" && (
+                              {isManual && lesson?.TrangThaiLopHoc !== "Đã hoàn thành" ? (
                                 <button
-                                  onClick={() => handleToggleOpen(ex.MaBaiTap)}
+                                  type="button"
+                                  onClick={() => handleToggleOpenClick(ex.MaBaiTap, isOpened)}
+                                  title={isOpened ? "Nhấp để đóng đề thi" : "Nhấp để mở đề thi"}
                                   style={{
-                                    background: isOpened ? "#fff" : "#F95800",
-                                    color: isOpened ? "#64748b" : "#fff",
-                                    border: isOpened ? "1.5px solid #cbd5e1" : "none",
-                                    padding: "3px 8px",
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                    color: isOpened ? "#16a34a" : "#64748b",
+                                    background: isOpened ? "#dcfce7" : "#f1f5f9",
+                                    border: isOpened ? "1px solid #bbf7d0" : "1px solid #cbd5e1",
+                                    padding: "4px 8px",
                                     borderRadius: "6px",
-                                    fontSize: "11px",
-                                    fontWeight: "700",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    whiteSpace: "nowrap",
                                     cursor: "pointer",
                                     transition: "all 0.2s ease"
                                   }}
+                                  onMouseOver={e => {
+                                    e.currentTarget.style.opacity = "0.85";
+                                    e.currentTarget.style.transform = "translateY(-1px)";
+                                  }}
+                                  onMouseOut={e => {
+                                    e.currentTarget.style.opacity = "1";
+                                    e.currentTarget.style.transform = "none";
+                                  }}
                                 >
-                                  {isOpened ? "Khóa" : "Mở"}
+                                  {isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề"}
                                 </button>
+                              ) : (
+                                <span style={{
+                                  fontSize: "12px",
+                                  fontWeight: 600,
+                                  color: isManual ? (isOpened ? "#16a34a" : "#64748b") : "#b45309",
+                                  background: isManual ? (isOpened ? "#dcfce7" : "#f1f5f9") : "#fef3c7",
+                                  border: isManual ? (isOpened ? "1px solid #bbf7d0" : "1px solid #cbd5e1") : "1px solid #fde68a",
+                                  padding: "4px 8px",
+                                  borderRadius: "6px",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  whiteSpace: "nowrap"
+                                }}>
+                                  {isManual ? (isOpened ? "🔓 Đang mở đề" : "🔒 Đang đóng đề") : "🕒 Tự động mở theo lịch"}
+                                </span>
                               )}
                             </div>
                           );
@@ -557,6 +587,71 @@ const ClassDetail = () => {
                   }}
                 >
                   Xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showToggleModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => { setShowToggleModal(false); setToggleExId(null); }}>
+          <div style={{
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>
+                {toggleCurrentState ? "Đóng đề thi/bài tập" : "Mở đề thi/bài tập"}
+              </span>
+              <button 
+                type="button" 
+                onClick={() => { setShowToggleModal(false); setToggleExId(null); }} 
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}
+              >
+                &times;
+              </button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                {toggleCurrentState 
+                  ? "Bạn có chắc chắn muốn đóng đề thi/bài tập này không?" 
+                  : "Bạn có chắc chắn muốn mở đề thi/bài tập này không?"
+                }
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                {toggleCurrentState 
+                  ? "Lưu ý: Học viên sẽ không thể truy cập làm bài sau khi đóng đề." 
+                  : "Lưu ý: Học viên sẽ có thể truy cập làm bài ngay sau khi mở đề."
+                }
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowToggleModal(false); setToggleExId(null); }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmToggleOpen}
+                  style={{
+                    padding: "8px 16px", 
+                    background: toggleCurrentState ? "#c20e0e" : "#F95800", 
+                    color: "white", 
+                    border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  {toggleCurrentState ? "Đóng đề" : "Mở đề"}
                 </button>
               </div>
             </div>

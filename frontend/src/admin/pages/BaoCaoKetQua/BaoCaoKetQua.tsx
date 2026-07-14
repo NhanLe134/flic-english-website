@@ -81,13 +81,13 @@ const pillColor = (d: number | null) => {
 }
 
 export default function BaoCaoKetQua() {
-  const [allData, setAllData]           = useState<StudentResult[]>([])
-  const [loading, setLoading]           = useState(true)
-  const [searchText, setSearchText]     = useState('')
-  const [filterClass, setFilterClass]   = useState('')
+  const [allData, setAllData] = useState<StudentResult[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchText, setSearchText] = useState('')
+  const [filterClass, setFilterClass] = useState('')
   const [filterCourse, setFilterCourse] = useState('Tất cả khóa học')
-  const [rawHeaders, setRawHeaders]     = useState<ExerciseHeader[]>([])
-  const [allLessons, setAllLessons]     = useState<LessonInfo[]>([])
+  const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
+  const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [teachers, setTeachers] = useState<string[]>([])
   const [loadingTeachers, setLoadingTeachers] = useState(false)
@@ -239,7 +239,7 @@ export default function BaoCaoKetQua() {
         if (classLessons.length > 0) {
           const activeLesson = classLessons.find(l => l.MaBuoiHoc === classLessons[0]?.ActiveBuoiHocId)
           const activeThuTu = activeLesson ? activeLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
-          
+
           if (activeThuTu !== null && activeThuTu > 0) {
             classLessons.forEach(l => {
               if (l.ThuTu !== null && l.ThuTu <= activeThuTu) {
@@ -291,16 +291,16 @@ export default function BaoCaoKetQua() {
 
   const filtered = useMemo(() => {
     return allData.filter(s => {
-      const matchSearch  = !searchText || s.studentName.toLowerCase().includes(searchText.toLowerCase()) || s.studentId.toLowerCase().includes(searchText.toLowerCase())
-      
+      const matchSearch = !searchText || s.studentName.toLowerCase().includes(searchText.toLowerCase()) || s.studentId.toLowerCase().includes(searchText.toLowerCase())
+
       let matchContext = true
       if (viewMode === 'class') {
         matchContext = s.className === filterClass
       } else if (viewMode === 'lecturer') {
         matchContext = s.classId !== null && lecturerClassIds.includes(s.classId)
       }
-      
-      const matchCourse  = filterCourse === "Tất cả khóa học" || s.courseName === filterCourse
+
+      const matchCourse = filterCourse === "Tất cả khóa học" || s.courseName === filterCourse
       return matchSearch && matchContext && matchCourse
     })
   }, [allData, searchText, filterClass, filterCourse, viewMode, lecturerClassIds])
@@ -339,9 +339,9 @@ export default function BaoCaoKetQua() {
 
     const total = filtered.length
     return [
-      { name: 'Trung bình (<5)', value: trungBinhCount, color: '#ef4444', percent: total ? Math.round(trungBinhCount/total*100) : 0 },
-      { name: 'Khá (5-8)', value: khaCount, color: '#f59e0b', percent: total ? Math.round(khaCount/total*100) : 0 },
-      { name: 'Giỏi (≥8)', value: gioiCount, color: '#10b981', percent: total ? Math.round(gioiCount/total*100) : 0 }
+      { name: 'Trung bình (<5)', value: trungBinhCount, color: '#ef4444', percent: total ? Math.round(trungBinhCount / total * 100) : 0 },
+      { name: 'Khá (5-8)', value: khaCount, color: '#f59e0b', percent: total ? Math.round(khaCount / total * 100) : 0 },
+      { name: 'Giỏi (≥8)', value: gioiCount, color: '#10b981', percent: total ? Math.round(gioiCount / total * 100) : 0 }
     ]
   }, [filtered])
 
@@ -399,7 +399,7 @@ export default function BaoCaoKetQua() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1>Báo cáo kết quả học tập</h1>
+          <h1>Báo cáo kết quả học tập và giảng dạy</h1>
           <p>Xem và xuất điểm bài tập của từng học viên theo lớp, khóa học</p>
         </div>
         <button className={styles.exportBtn} onClick={downloadCSV}>
@@ -518,7 +518,7 @@ export default function BaoCaoKetQua() {
       {viewMode !== 'summary' && (
         <div className={styles.filters}>
           <div className={styles.searchBox}>
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Tìm tên hoặc mã học viên..." />
           </div>
 
@@ -571,9 +571,9 @@ export default function BaoCaoKetQua() {
                       <td className={styles.boldText}>{s.mssv || '—'}</td>
                       <td>
                         <span className={`${styles.pill} ${s.status === 'Đang học' ? styles.pillGreen :
-                            s.status === 'Hoàn thành' ? styles.pillBlue :
-                              s.status === 'Tạm dừng' ? styles.pillYellow :
-                                styles.pillRed
+                          s.status === 'Hoàn thành' ? styles.pillBlue :
+                            s.status === 'Tạm dừng' ? styles.pillYellow :
+                              styles.pillRed
                           }`}>
                           {s.status}
                         </span>
@@ -594,8 +594,8 @@ export default function BaoCaoKetQua() {
                         }
 
                         return (
-                          <td 
-                            key={b} 
+                          <td
+                            key={b}
                             className={styles.scoreCell}
                           >
                             {avg !== null ? (

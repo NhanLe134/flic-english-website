@@ -10,7 +10,7 @@ const API = (window.location.hostname === "localhost" || window.location.hostnam
 const LessonDetail: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
+  const { id, buoiId, maLop, teacherId } = useParams();
   const isQTV = location.pathname.startsWith("/QTV");
   const [lesson, setLesson] = useState<any>(null);
   const [minitest, setMinitest] = useState<any>(null);
@@ -170,7 +170,7 @@ const LessonDetail: React.FC = () => {
   return (
     <div className="ld-wrapper" style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
 
-      <div className="back-btn" onClick={() => navigate(-1)}>
+      <div className="back-btn" onClick={() => buoiId ? navigate(`/${teacherId}/lophoc/${maLop}/${buoiId}/bg`) : navigate(-1)}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
         Quay lại
       </div>

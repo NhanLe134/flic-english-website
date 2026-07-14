@@ -36,6 +36,7 @@ interface ChiTietBaiTapProps {
   isModal?: boolean;
   isPreview?: boolean;
   onClose?: () => void;
+  showAnswers?: boolean;
 }
 
 function ChiTietBaiTap({
@@ -44,7 +45,8 @@ function ChiTietBaiTap({
   overrideClassId,
   isModal = false,
   isPreview = false,
-  onClose
+  onClose,
+  showAnswers = false
 }: ChiTietBaiTapProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -403,6 +405,7 @@ function ChiTietBaiTap({
               stopRecording={stopRecording}
               API={API}
               isReview={isPreview ? false : isReview}
+              showAnswers={showAnswers}
             />
           )}
         </div>
@@ -414,6 +417,7 @@ function ChiTietBaiTap({
           submitted={submitted}
           isOverdue={false}
           isExam={isExam}
+          showAnswers={showAnswers}
           examStarted={examStarted}
           isReview={isReview}
           isModal={isModal}
@@ -450,7 +454,7 @@ function ChiTietBaiTap({
       )}
 
       {/* 7. Nút Nộp Bài góc dưới */}
-      {!submitted && !isReview && (
+      {!submitted && !isReview && !isPreview && (
         <button
           onClick={() => handleWrappedSubmit({
             mcAnswers, essayAnswers, recordedBlobs, recordedUrls: recorder.recordedUrls,

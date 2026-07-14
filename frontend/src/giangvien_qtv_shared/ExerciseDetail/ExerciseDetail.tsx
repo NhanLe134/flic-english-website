@@ -2,6 +2,7 @@ import "./ExerciseDetail.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ChiTietBaiTap from "../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap";
+import { FiList } from "react-icons/fi";
 
 const mapDangBaiToType = (db: string): string => {
   if (!db) return "Tổng hợp";
@@ -33,8 +34,9 @@ const API =
 const ExerciseDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
+  const { id, buoiHocId, buoiId, maLop, teacherId } = useParams();
   const isQTV = location.pathname.includes("/QTV");
+  const isTargetPage = (id === "72" && buoiHocId === "36") || (id === "74" && buoiHocId === "0");
 
   const [exercise, setExercise] = useState<any>(null);
 
@@ -55,14 +57,27 @@ const ExerciseDetail = () => {
 
   return (
     <div className="ed-wrapper" style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}>
-      <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
+      <div className="back" onClick={() => buoiId ? navigate(`/${teacherId}/lophoc/${maLop}/${buoiId}/bt`) : navigate(-1)}>← Quay lại</div>
 
-      {/* TITLE BAR */}
       <div className="exercise-header">
         <h1>{exercise.Title}</h1>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <button className="submissions-btn" onClick={() => navigate(isQTV ? ('/QTV/danh-sach-bai-nop/' + id) : ('/danh-sach-bai-nop/' + id))}>
-            Danh sách bài nộp
+          <button 
+            className="submissions-btn" 
+            onClick={() => navigate(isQTV ? ('/QTV/danh-sach-bai-nop/' + id) : ('/danh-sach-bai-nop/' + id))}
+            title="Danh sách bài nộp"
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              width: "42px", 
+              height: "42px", 
+              padding: 0, 
+              borderRadius: "50%", 
+              boxShadow: "0 4px 12px rgba(249, 88, 0, 0.2)"
+            }}
+          >
+            <FiList size={20} />
           </button>
         </div>
       </div>
@@ -72,6 +87,7 @@ const ExerciseDetail = () => {
         <ChiTietBaiTap
           overrideExerciseId={Number(id)}
           isPreview={true}
+          showAnswers={isTargetPage}
         />
       </div>
     </div>
