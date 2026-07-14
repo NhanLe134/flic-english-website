@@ -134,7 +134,7 @@ const AddLesson: React.FC = () => {
         return;
       }
 
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
       
