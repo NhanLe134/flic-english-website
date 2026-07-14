@@ -103,10 +103,10 @@ table {
 thead th {
   padding: 13px 14px;
   text-align: left;
-  background: #fdf8f3;
+  background: #000080;
   font-size: 14px;
-  color: #555;
-  border-bottom: 2px solid #e0d4c3;
+  color: #ffffff;
+  border-bottom: 2px solid #000066;
 }
 
 td {
@@ -117,7 +117,7 @@ td {
 }
 
 tbody tr:hover td {
-  background: #fdf8f3;
+  background: #e6f2ff;
 }
 
 /* VIEW BUTTON */

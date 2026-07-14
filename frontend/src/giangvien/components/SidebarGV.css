@@ -68,22 +68,7 @@
   font-size: 16px;
 }
 
-.avatar-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
 
-.sidebar-avatar-wrapper:hover .avatar-overlay {
-  opacity: 1;
-}
 
 .teacher-info {
   display: flex;

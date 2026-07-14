@@ -10,13 +10,6 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.piv-edit-btn:hover {
-  background: #e04f00;
-  border-color: #e04f00;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.2);
-}
-
 .piv-edit-btn:active {
   transform: translateY(0);
 }
@@ -63,10 +56,6 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.piv-sidebar-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-}
 
 .piv-avatar-wrapper {
   width: 80px; /* Thu nhỏ ảnh đại diện */
@@ -82,9 +71,6 @@
   transition: border-color 0.2s ease;
 }
 
-.piv-sidebar-card:hover .piv-avatar-wrapper {
-  border-color: #F95800;
-}
 
 .piv-avatar-wrapper img {
   width: 100%;
@@ -165,10 +151,6 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.piv-info-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-}
 
 .piv-info-card h3 {
   margin: 0 0 8px; /* Giảm margin-bottom */

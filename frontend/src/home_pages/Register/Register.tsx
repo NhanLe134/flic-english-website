@@ -1,5 +1,3 @@
-import "./Register.css";
-import Nav from "../../components/Nav/Nav";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -145,196 +143,167 @@ const Register = ({ isModal = false }: RegisterProps) => {
     }
   };
 
-  const cardContent = (
-    <div className="register-card">
-      {!isModal && <h2 className="register-title">Đăng ký tài khoản</h2>}
-
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
+  return (
+    <div className="auth-form-container">
+      {error && <div className="auth-alert-error">{error}</div>}
+      {success && <div className="auth-alert-success">{success}</div>}
 
       <form onSubmit={handleSubmit} className="form-wrapper" noValidate>
-        <label>Email <span>*</span></label>
-        <input
-          type="email"
-          name="email"
-          placeholder="Nhập địa chỉ email"
-          value={form.email}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          style={{ borderColor: errors.email ? "#ef4444" : undefined }}
-        />
-        {errors.email && (
-          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
-            {errors.email}
-          </span>
-        )}
-
-        <label>Họ và tên <span>*</span></label>
-        <input
-          type="text"
-          name="name"
-          placeholder="Nhập họ và tên đầy đủ"
-          value={form.name}
-          onChange={handleChange}
-          style={{ borderColor: errors.name ? "#ef4444" : undefined }}
-        />
-        {errors.name && (
-          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
-            {errors.name}
-          </span>
-        )}
-
-        <label>Tên đăng nhập <span>*</span></label>
-        <input
-          type="text"
-          name="username"
-          placeholder="Nhập tên đăng nhập"
-          value={form.username}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          style={{ borderColor: errors.username ? "#ef4444" : undefined }}
-        />
-        {errors.username && (
-          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
-            {errors.username}
-          </span>
-        )}
-
-        <label>Mật khẩu <span>*</span></label>
-        <div style={{ position: "relative", width: "100%" }}>
-          <input
-            type={showPass ? "text" : "password"}
-            name="password"
-            placeholder="Nhập mật khẩu"
-            value={form.password}
-            onChange={handleChange}
-            style={{ paddingRight: 44, borderColor: errors.password ? "#ef4444" : undefined }}
-          />
-          <button
-            type="button"
-            className="eye-btn"
-            onClick={() => setShowPass(!showPass)}
-            tabIndex={-1}
-            style={{
-              position: "absolute",
-              right: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              color: "#aaa",
-              display: "flex",
-              alignItems: "center",
-              zIndex: 1
-            }}
-          >
-            {showPass ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
+        <div className="auth-input-group">
+          <div className="auth-input-wrapper">
+            <span className="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
               </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            )}
-          </button>
+            </span>
+            <input
+              type="email"
+              name="email"
+              placeholder="Địa chỉ email"
+              value={form.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={errors.email ? "input-error" : ""}
+            />
+          </div>
+          {errors.email && <span className="error-message">{errors.email}</span>}
         </div>
-        {errors.password && (
-          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
-            {errors.password}
-          </span>
-        )}
 
-        <label>Nhập lại mật khẩu <span>*</span></label>
-        <div style={{ position: "relative", width: "100%" }}>
-          <input
-            type={showConfirmPass ? "text" : "password"}
-            name="confirmPassword"
-            placeholder="Nhập lại mật khẩu xác nhận"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            style={{ paddingRight: 44, borderColor: errors.confirmPassword ? "#ef4444" : undefined }}
-          />
-          <button
-            type="button"
-            className="eye-btn"
-            onClick={() => setShowConfirmPass(!showConfirmPass)}
-            tabIndex={-1}
-            style={{
-              position: "absolute",
-              right: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              color: "#aaa",
-              display: "flex",
-              alignItems: "center",
-              zIndex: 1
-            }}
-          >
-            {showConfirmPass ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
+        <div className="auth-input-group">
+          <div className="auth-input-wrapper">
+            <span className="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
+                <line x1="7" y1="8" x2="11" y2="8"/>
+                <line x1="7" y1="12" x2="13" y2="12"/>
+                <circle cx="16" cy="14" r="2"/>
               </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            )}
-          </button>
+            </span>
+            <input
+              type="text"
+              name="name"
+              placeholder="Họ và tên"
+              value={form.name}
+              onChange={handleChange}
+              className={errors.name ? "input-error" : ""}
+            />
+          </div>
+          {errors.name && <span className="error-message">{errors.name}</span>}
         </div>
-        {errors.confirmPassword && (
-          <span style={{ color: "#ef4444", fontSize: "13px", fontStyle: "italic", marginTop: "4px", display: "block" }}>
-            {errors.confirmPassword}
-          </span>
-        )}
 
-        <button type="submit" className="register-submit-btn" disabled={loading}>
+        <div className="auth-input-group">
+          <div className="auth-input-wrapper">
+            <span className="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input
+              type="text"
+              name="username"
+              placeholder="Tên đăng nhập"
+              value={form.username}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={errors.username ? "input-error" : ""}
+            />
+          </div>
+          {errors.username && <span className="error-message">{errors.username}</span>}
+        </div>
+
+        <div className="auth-input-group">
+          <div className="auth-input-wrapper">
+            <span className="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input
+              type={showPass ? "text" : "password"}
+              name="password"
+              placeholder="Mật khẩu"
+              value={form.password}
+              onChange={handleChange}
+              className={errors.password ? "input-error" : ""}
+            />
+            <button
+              type="button"
+              className="eye-btn"
+              onClick={() => setShowPass(!showPass)}
+              tabIndex={-1}
+            >
+              {showPass ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              )}
+            </button>
+          </div>
+          {errors.password && <span className="error-message">{errors.password}</span>}
+        </div>
+
+        <div className="auth-input-group">
+          <div className="auth-input-wrapper">
+            <span className="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input
+              type={showConfirmPass ? "text" : "password"}
+              name="confirmPassword"
+              placeholder="Nhập lại mật khẩu"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              className={errors.confirmPassword ? "input-error" : ""}
+            />
+            <button
+              type="button"
+              className="eye-btn"
+              onClick={() => setShowConfirmPass(!showConfirmPass)}
+              tabIndex={-1}
+            >
+              {showConfirmPass ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              )}
+            </button>
+          </div>
+          {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+        </div>
+
+        <button type="submit" className="auth-submit-btn" disabled={loading}>
           {loading ? "Đang đăng ký..." : "Đăng ký"}
         </button>
 
-        <p style={{ textAlign: "center", marginTop: 16, fontSize: 14, color: "#666" }}>
+        <p className="auth-switch-link">
           Đã có tài khoản?{" "}
-          <Link replace to={isModal ? "?auth=login" : "/login"} style={{ color: "#000080", fontWeight: 600, textDecoration: "none" }}>
+          <Link replace to={isModal ? "?auth=login" : "/login"}>
             Đăng nhập ngay
           </Link>
         </p>
       </form>
     </div>
   );
-
-  if (isModal) {
-    return cardContent;
-  }
-
-  return (
-    <div>
-      <Nav />
-      <div className="register-page">
-        {cardContent}
-      </div>
-    </div>
-  );
 };
 
 export default Register;
-

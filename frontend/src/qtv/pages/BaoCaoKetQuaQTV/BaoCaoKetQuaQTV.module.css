@@ -10,14 +10,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 24px 32px 10px;
+  padding: 0;
   margin-bottom: 20px;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  padding: 0 32px 32px 32px;
+  padding: 0;
 }
 
 
@@ -93,16 +93,7 @@ svg:active {
   align-items: center;
   gap: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
   text-align: left;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 24px rgba(245, 130, 32, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
-  border-color: rgba(245, 130, 32, 0.3);
 }
 
 .cardIconContainer {
@@ -113,11 +104,6 @@ svg:active {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-
-.card:hover .cardIconContainer {
-  transform: scale(1.08);
 }
 
 .cardUsers .cardIconContainer {
@@ -279,13 +265,13 @@ svg:active {
 }
 
 .tableWrap::-webkit-scrollbar-thumb {
-  background-color: rgba(245, 130, 32, 0.35);
+  background-color: rgba(0, 0, 128, 0.35);
   border-radius: 10px;
   transition: background-color 0.2s;
 }
 
 .tableWrap::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(245, 130, 32, 0.7);
+  background-color: rgba(0, 0, 128, 0.7);
 }
 
 
@@ -298,28 +284,27 @@ svg:active {
 
 
 .table thead tr {
-  background: #fafafa;
-  border-bottom: 2px solid #f0f0f0;
+  background: #000080;
+  border-bottom: 2px solid #000066;
 }
 
-
-.table th {
+.table thead th {
+  background: #000080;
   padding: 10px 8px;
   text-align: left;
   font-size: 12px;
   font-weight: 700;
-  color: #888;
+  color: #ffffff;
   white-space: nowrap;
   box-sizing: border-box;
 }
-
 
 .thArrow {
   width: 36px;
 }
 
 
-.table td {
+.table tbody tr td {
   padding: 10px 8px;
   border-bottom: 1px solid #f3f3f3;
   font-size: 13px;
@@ -334,9 +319,8 @@ svg:active {
   transition: background .15s;
 }
 
-
-.row:hover {
-  background: #f0f7ff;
+.row:hover td {
+  background: #e6f2ff;
 }
 
 
@@ -797,7 +781,7 @@ svg:active {
 }
 
 .subRowCell:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #e6f2ff;
 }
 
 /* Custom scrollbar for review modal content and its internal scrollable elements */
@@ -823,4 +807,159 @@ svg:active {
 .reviewModalContent *::-webkit-scrollbar-thumb:hover,
 .reviewModalContent::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 130, 32, 0.7);
+}
+
+.successOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+}
+
+.successBox {
+  background: white;
+  padding: 40px 60px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.successIconCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #2ecc71;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 15px;
+}
+
+.successIconSpan {
+  font-size: 28px;
+  color: #2ecc71;
+}
+
+.successText {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.reviewModalBody {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Helper classes for static styles */
+.thArrowCell {
+  padding: 0 8px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.tdArrowCell {
+  padding: 0 8px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.arrowIcon {
+  font-size: 10px;
+  color: #666;
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.arrowIconExpanded {
+  transform: rotate(90deg);
+}
+
+.tenHVText {
+  margin: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.subRowCellEmpty {
+  border-bottom: none;
+}
+
+.subRowCellContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.subRowCellTextWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1;
+}
+
+.subRowCellTitle {
+  font-weight: 600;
+  font-size: 12px;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.subRowCellBadgeWrap {
+  flex-shrink: 0;
+}
+
+.pendingBadgeMini {
+  background: #ffe6cc;
+  color: #d35400;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.noExCell {
+  text-align: center;
+  color: #bbb;
+  font-size: 12.5px;
+  padding: 12px;
+  border-bottom: none;
+}
+
+.loadingText {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.selectGroup {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.warningIcon {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.cardWarning {
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.fontWeight700 {
+  font-weight: 700;
 }

@@ -10,7 +10,7 @@
 .content {
   flex: 1;
   min-width: 0;          /* ← quan trọng nhất, cho phép co lại trong flex */
-  padding: 0;
+  padding: 24px 30px;
   background: #ffffff;
   box-sizing: border-box;
   overflow-x: hidden;    /* ← chặn scroll ngang ở content */
