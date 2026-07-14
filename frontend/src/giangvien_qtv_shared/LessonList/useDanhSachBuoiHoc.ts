@@ -20,9 +20,9 @@ const layDiaChiAPI = () => {
     tenMien.startsWith("192.168.") ||
     tenMien.startsWith("10.")
   ) {
-    return `http://${tenMien}:5000`;
+    return `http://${tenMien}:5004`;
   }
-  return "http://14.225.192.252:5000";
+  return "http://14.225.192.252:5004";
 };
 
 export const API = layDiaChiAPI();
