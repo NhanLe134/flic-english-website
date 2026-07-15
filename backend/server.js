@@ -247,6 +247,9 @@ const upload = multer({
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
       "audio/mpeg", "audio/wav", "audio/mp4", "audio/x-m4a", "audio/webm", "audio/ogg", "audio/webm;codecs=opus", "audio/ogg;codecs=opus",
       "video/mp4", "video/webm", "video/ogg", "video/quicktime",
       "application/octet-stream"
@@ -4703,7 +4706,7 @@ app.get("/tailieu/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
+      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NoiDung, t.FileUrl, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM TAILIEU t
       JOIN BUOIHOC ls ON t.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc

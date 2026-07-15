@@ -2088,8 +2088,8 @@ D. Visiting friends
                               }}
                               style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", background: "white" }}
                             >
-                              <option value="Letter">Letter</option>
-                              <option value="Email">Email</option>
+                              <option value="Letter">Email/Letter</option>
+                              <option value="Email">Essay</option>
                             </select>
                           </div>
 
