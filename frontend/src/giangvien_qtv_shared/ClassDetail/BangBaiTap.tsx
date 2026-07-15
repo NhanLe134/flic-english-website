@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiTrash2, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiTrash2, FiEye, FiEyeOff, FiFilter } from "react-icons/fi";
 import { hasPermission } from "../../utils/permission";
 
 // Định nghĩa kiểu dữ liệu cho bài tập nhận vào
@@ -24,6 +24,18 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
   const navigate = useNavigate();
   const { maLop, teacherId } = useParams<{ maLop?: string; teacherId?: string }>();
 
+  const [sortState, setSortState] = useState<"none" | "asc" | "desc">("none");
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  const sortedExercises = React.useMemo(() => {
+    if (sortState === "none") return filteredExercises;
+    return [...filteredExercises].sort((a, b) => {
+      const valA = a.DiemTB !== undefined && a.DiemTB !== null ? Number(a.DiemTB) : 0;
+      const valB = b.DiemTB !== undefined && b.DiemTB !== null ? Number(b.DiemTB) : 0;
+      return sortState === "asc" ? valA - valB : valB - valA;
+    });
+  }, [filteredExercises, sortState]);
+
   const coTheThaoTacMo =
     lesson?.TrangThaiLopHoc !== "Đã hoàn thành" && lesson?.TrangThai !== "Đã hoàn thành";
 
@@ -38,14 +50,92 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
             <th style={{ width: "110px", textAlign: "center" }}>Mở đề</th>
             <th style={{ width: "110px", textAlign: "center" }}>Trạng thái</th>
             <th style={{ width: "120px", textAlign: "center" }}>Tỉ lệ nộp</th>
-            <th style={{ width: "120px", textAlign: "center" }}>Điểm TB</th>
+            <th style={{ width: "135px", textAlign: "center", position: "relative" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", justifyContent: "center", width: "100%" }}>
+                Điểm TB
+                <span 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (showSortDropdown) {
+                      setShowSortDropdown(false);
+                      setSortState("none");
+                    } else {
+                      setShowSortDropdown(true);
+                    }
+                  }}
+                  style={{ 
+                    cursor: "pointer", 
+                    display: "inline-flex", 
+                    alignItems: "center", 
+                    padding: "2px", 
+                    borderRadius: "4px",
+                    background: sortState !== "none" ? "#fff4ec" : "transparent"
+                  }}
+                  title="Sắp xếp điểm"
+                >
+                  <FiFilter style={{ color: sortState !== "none" ? "#F95800" : "#64748b", fontSize: "14px" }} />
+                </span>
+
+                {showSortDropdown && (
+                  <div style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: "10px",
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                    zIndex: 1000,
+                    minWidth: "120px",
+                    padding: "4px 0",
+                    marginTop: "6px",
+                    textAlign: "left"
+                  }}>
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSortState("asc");
+                        setShowSortDropdown(false);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: "12px",
+                        color: sortState === "asc" ? "#F95800" : "#334155",
+                        cursor: "pointer",
+                        fontWeight: sortState === "asc" ? 600 : 400,
+                        background: sortState === "asc" ? "#fff4ec" : "transparent"
+                      }}
+                    >
+                      Tăng dần
+                    </div>
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSortState("desc");
+                        setShowSortDropdown(false);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: "12px",
+                        color: sortState === "desc" ? "#F95800" : "#334155",
+                        cursor: "pointer",
+                        fontWeight: sortState === "desc" ? 600 : 400,
+                        background: sortState === "desc" ? "#fff4ec" : "transparent"
+                      }}
+                    >
+                      Giảm dần
+                    </div>
+                  </div>
+                )}
+              </div>
+            </th>
             {coTheThaoTacMo && (
               <th style={{ width: "100px", textAlign: "center" }}>Thao tác</th>
             )}
           </tr>
         </thead>
         <tbody>
-          {filteredExercises.length === 0 ? (
+          {sortedExercises.length === 0 ? (
             <tr>
               <td
                 colSpan={coTheThaoTacMo ? 8 : 7}
@@ -55,7 +145,7 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
               </td>
             </tr>
           ) : (
-            filteredExercises.map((ex: any) => {
+            sortedExercises.map((ex: any) => {
               let parsedContent: any = {};
               try {
                 if (ex.Content) parsedContent = JSON.parse(ex.Content);
