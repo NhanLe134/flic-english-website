@@ -564,9 +564,7 @@ const TaoBaiTap = () => {
         if (Array.isArray(data)) {
           const published = data.filter((bg: any) => bg.TrangThai === "published" || bg.TrangThai === "Đã duyệt");
           setSessionLectures(published);
-          if (!selectedMaBaiHoc && !maBaiHocParam && published.length > 0) {
-            setSelectedMaBaiHoc(published[0].MaBaiHoc);
-          }
+
         }
       })
       .catch(err => console.error("Lỗi tải danh sách bài giảng:", err));
@@ -635,9 +633,7 @@ const TaoBaiTap = () => {
                 if (Array.isArray(lecturesData)) {
                   const published = lecturesData.filter((bg: any) => bg.TrangThai === "published");
                   setSessionLectures(published);
-                  if (!selectedMaBaiHoc && published.length > 0) {
-                    setSelectedMaBaiHoc(published[0].MaBaiHoc);
-                  }
+
                 }
               })
               .catch(err => console.error("Lỗi tải danh sách bài giảng bản nháp:", err));
@@ -661,10 +657,6 @@ const TaoBaiTap = () => {
   }, [editDraftId]);
 
   const handleReuseExercise = async (exerciseId: number) => {
-    if (!selectedMaBaiHoc) {
-      alert("Vui lòng chọn bài giảng để gắn với bài tập này!");
-      return;
-    }
     if (isProcessing) return;
     setIsProcessing(true);
     try {
@@ -679,7 +671,7 @@ const TaoBaiTap = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           MaBuoiHoc: Number(id),
-          MaBaiHoc: Number(selectedMaBaiHoc),
+          MaBaiHoc: selectedMaBaiHoc ? Number(selectedMaBaiHoc) : null,
           MaNguoiDung: clonerMaNguoiDung
         })
       });
@@ -2042,12 +2034,7 @@ const TaoBaiTap = () => {
       return;
     }
 
-    if (!isExam && !selectedMaBaiHoc) {
-      alert("Vui lòng chọn bài giảng để gắn với bài tập này!");
-      const el = document.querySelector(".exercise-title");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
+
 
     const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
     const user = JSON.parse(userStr || "{}");
@@ -2533,7 +2520,7 @@ const TaoBaiTap = () => {
           {!isExam && (
             <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
               <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>
-                Bài giảng gắn kèm <span style={{ color: "#ef4444" }}>*</span>
+                Bài giảng gắn kèm (Tùy chọn)
               </label>
               <select
                 className="exercise-type"
@@ -2553,22 +2540,18 @@ const TaoBaiTap = () => {
                 value={selectedMaBaiHoc}
                 onChange={e => setSelectedMaBaiHoc(e.target.value ? Number(e.target.value) : "")}
               >
-                <option value="">-- Chọn bài giảng (Bắt buộc) --</option>
+                <option value="">-- Không gắn kèm bài giảng --</option>
                 {sessionLectures.map((lec: any) => (
                   <option key={lec.MaBaiHoc} value={lec.MaBaiHoc}>
                     {lec.TieuDe} ({lec.LoaiBaiHoc})
                   </option>
                 ))}
               </select>
-              {sessionLectures.length === 0 ? (
+              {sessionLectures.length === 0 && (
                 <p style={{ color: "#ef4444", fontSize: "12px", margin: "2px 0 0 0", fontStyle: "italic", fontWeight: 500 }}>
                   ⚠️ Buổi học này chưa có bài giảng nào được xuất bản. Vui lòng tạo bài giảng trước khi tạo bài tập!
                 </p>
-              ) : !selectedMaBaiHoc ? (
-                <p style={{ color: "#ef4444", fontSize: "12px", margin: "2px 0 0 0", fontStyle: "italic", fontWeight: 500 }}>
-                  * Bắt buộc chọn bài giảng để gắn kèm bài tập này.
-                </p>
-              ) : null}
+              )}
             </div>
           )}
 

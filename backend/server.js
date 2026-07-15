@@ -1217,12 +1217,12 @@ app.get("/baitap/:id", async (req, res) => {
 
 app.put("/baitap/:id", async (req, res) => {
   try {
-    const { Title, Type, Content, Questions, Vocabulary, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai } = req.body;
+    const { Title, Type, Content, Questions, Vocabulary, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai, MaBaiHoc } = req.body;
     const pool = await poolPromise;
     if (await isClassCompletedByBaiTap(pool, req.params.id)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể chỉnh sửa bài tập!" });
     }
-    if (Title !== undefined || Content !== undefined) {
+    if (Title !== undefined || Content !== undefined || MaBaiHoc !== undefined) {
       await pool.request()
         .input("id", parseInt(req.params.id))
         .input("TieuDe", Title || "")
@@ -1236,6 +1236,7 @@ app.put("/baitap/:id", async (req, res) => {
         .input("IsExam", IsExam !== undefined ? IsExam : 0)
         .input("TrangThai", TrangThai || "draft")
         .input("KyNang", KyNang || "Tổng hợp")
+        .input("MaBaiHoc", MaBaiHoc ? parseInt(MaBaiHoc, 10) : null)
         .query(`
           UPDATE BAITAP 
           SET TieuDe = @TieuDe,
@@ -1248,7 +1249,8 @@ app.put("/baitap/:id", async (req, res) => {
               IsFree = @IsFree,
               IsExam = @IsExam,
               TrangThai = @TrangThai,
-              KyNang = @KyNang
+              KyNang = @KyNang,
+              MaBaiHoc = @MaBaiHoc
           WHERE MaBaiTap = @id
         `);
     } else {
@@ -2465,29 +2467,32 @@ app.post("/baitap/create", async (req, res) => {
 
       res.json({ message: "Thêm bài kiểm tra thành công" });
     } else {
-      let targetMaBaiHoc = MaBaiHoc;
-
-      if (!targetMaBaiHoc && MaBuoiHoc) {
-        const bhResult = await pool.request()
-          .input("buoiHocId", MaBuoiHoc)
-          .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
-        if (bhResult.recordset.length > 0) {
-          targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-        } else {
-          const insertBh = await pool.request()
+      let targetMaBaiHoc = undefined;
+      if (req.body.hasOwnProperty("MaBaiHoc")) {
+        targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc, 10) : null;
+      } else {
+        if (MaBuoiHoc) {
+          const bhResult = await pool.request()
             .input("buoiHocId", MaBuoiHoc)
-            .input("MaNguoiDung", MaGiangVien || null)
-            .input("TrangThai", isQTV ? "published" : "published")
-            .query(`
-              INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
-              VALUES (1, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
-              SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-            `);
-          targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+            .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+          if (bhResult.recordset.length > 0) {
+            targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+          } else {
+            const insertBh = await pool.request()
+              .input("buoiHocId", MaBuoiHoc)
+              .input("MaNguoiDung", MaGiangVien || null)
+              .input("TrangThai", isQTV ? "published" : "published")
+              .query(`
+                INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
+                VALUES (1, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
+                SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+              `);
+            targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+          }
         }
       }
 
-      if (!targetMaBaiHoc) {
+      if (targetMaBaiHoc === undefined) {
         return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
       }
 
@@ -4794,8 +4799,10 @@ app.post("/exercises/:id/clone", async (req, res) => {
       }
     }
 
-    let targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
-    if (!targetMaBaiHoc) {
+    let targetMaBaiHoc = undefined;
+    if (req.body.hasOwnProperty("MaBaiHoc")) {
+      targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc, 10) : null;
+    } else {
       const bhResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
         .query("SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC");
