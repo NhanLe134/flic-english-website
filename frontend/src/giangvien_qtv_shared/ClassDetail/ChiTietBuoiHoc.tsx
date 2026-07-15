@@ -195,7 +195,7 @@ const ChiTietBuoiHoc = () => {
               </button>
             </form>
 
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value as any)}>
+            <select className="filter-select" value={filterType} onChange={(e) => setFilterType(e.target.value as any)}>
               <option value="all">Tất cả bài</option>
               <option value="homework">Bài tập</option>
               <option value="exam">Bài kiểm tra</option>
@@ -206,7 +206,7 @@ const ChiTietBuoiHoc = () => {
             {buoiHoc?.TrangThaiLopHoc !== "Đã hoàn thành" &&
               buoiHoc?.TrangThai !== "Đã hoàn thành" &&
               (hasPermission("BAITAP_CREATE") || hasPermission("QUIZ_CREATE")) && (
-                <button className="ep-add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
+                <button className="add-btn" onClick={() => navigate(`/create-exercise/${id}`)}>
                   + Tạo BT/KT
                 </button>
               )}
@@ -215,19 +215,8 @@ const ChiTietBuoiHoc = () => {
               buoiHoc?.TrangThai !== "Đã hoàn thành" &&
               hasPermission("EXTRA_PRACTICE_CREATE") && (
                 <button
-                  className="ep-add-btn"
+                  className="add-btn-reuse"
                   onClick={() => navigate(`/create-exercise/${id}?isPractice=true`)}
-                  style={{
-                    background: "#fff",
-                    color: "#F95800",
-                    border: "1.5px solid #F95800",
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = "#fff4ec";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = "#fff";
-                  }}
                 >
                   + Tạo bài LTT
                 </button>

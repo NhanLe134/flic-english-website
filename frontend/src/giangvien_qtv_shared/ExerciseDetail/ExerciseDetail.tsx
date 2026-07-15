@@ -83,7 +83,7 @@ const ExerciseDetail = () => {
       </div>
 
       {/* RENDER THE FORM DIRECTLY USING CHITIETBAITAP (PREVIEW MODAL VIEW) */}
-      <div className="exercise-detail-card" style={{ padding: 0, border: "none", background: "transparent" }}>
+      <div className="exercise-detail-card" style={{ padding: 0, border: "none", background: "transparent", boxShadow: "none" }}>
         <ChiTietBaiTap
           overrideExerciseId={Number(id)}
           isPreview={true}

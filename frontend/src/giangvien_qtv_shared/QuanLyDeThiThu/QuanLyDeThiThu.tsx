@@ -3027,10 +3027,10 @@ D. Visiting friends
 
           <div className="cd-modal-card" style={{
             background: "#fff", borderRadius: "16px", padding: "32px", width: "100%", maxWidth: "700px",
-            maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #cbd5e1"
+            maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #cbd5e1"
           }} onClick={(e) => e.stopPropagation()}>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #cbd5e1", paddingBottom: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #cbd5e1", paddingBottom: "12px", flexShrink: 0 }}>
               <div>
                 <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1e293b", margin: 0 }}>Xem trước đề thi</h2>
                 <p style={{ margin: "2px 0 0 0", color: "#64748b", fontSize: "13px" }}>
@@ -3040,7 +3040,8 @@ D. Visiting friends
               <button onClick={() => setShowPreviewModal(false)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }}><FiX size={20} /></button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div className="cd-modal-body" style={{ overflowY: "auto", flexGrow: 1, paddingRight: "8px", boxSizing: "border-box" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               <div>
                 <h4 style={{ color: "#F95800", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px" }}>1. Listening Section</h4>
                 {(!previewTest.kyNang?.listening?.parts || previewTest.kyNang.listening.parts.length === 0) ? (
@@ -3142,8 +3143,9 @@ D. Visiting friends
                 ))}
               </div>
             </div>
+            </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", borderTop: "1px solid #cbd5e1", paddingTop: "14px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", borderTop: "1px solid #cbd5e1", paddingTop: "14px", flexShrink: 0 }}>
               <button
                 onClick={() => setShowPreviewModal(false)}
                 style={{ padding: "8px 20px", background: "#F95800", color: "white", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer" }}

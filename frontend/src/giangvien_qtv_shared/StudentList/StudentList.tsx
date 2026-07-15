@@ -143,17 +143,17 @@ const StudentList: React.FC = () => {
             <option key={lop} value={lop}>{lop}</option>
           ))}
         </select>
-      </div>
 
-      {/* Stats */}
-      <div className="sl-stats-row">
-        <div className="sl-stat-card">
-          <span className="sl-stat-label">Tổng học viên:</span>
-          <span className="sl-stat-value">{filteredStudents.length}</span>
-        </div>
-        <div className="sl-stat-card">
-          <span className="sl-stat-label">Số lớp:</span>
-          <span className="sl-stat-value">{danhSachLop.length}</span>
+        {/* Stats (moved inside and aligned to the right) */}
+        <div className="sl-stats-row">
+          <div className="sl-stat-card">
+            <span className="sl-stat-label">Tổng học viên:</span>
+            <span className="sl-stat-value">{filteredStudents.length}</span>
+          </div>
+          <div className="sl-stat-card">
+            <span className="sl-stat-label">Số lớp:</span>
+            <span className="sl-stat-value">{danhSachLop.length}</span>
+          </div>
         </div>
       </div>
 

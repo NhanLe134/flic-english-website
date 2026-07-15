@@ -32,12 +32,13 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
       <table className="exercise-table">
         <thead>
           <tr>
-            <th style={{ width: "120px", textAlign: "center" }}>Loại bài</th>
+            <th style={{ width: "110px", textAlign: "center" }}>Loại bài</th>
             <th>Tên bài tập</th>
-            <th style={{ width: "130px", textAlign: "center" }}>Duyệt đề</th>
-            <th style={{ width: "130px", textAlign: "center" }}>Mở đề</th>
-            <th style={{ width: "130px", textAlign: "center" }}>Trạng thái</th>
-            <th style={{ width: "150px", textAlign: "center" }}>Cập nhật</th>
+            <th style={{ width: "110px", textAlign: "center" }}>Duyệt đề</th>
+            <th style={{ width: "110px", textAlign: "center" }}>Mở đề</th>
+            <th style={{ width: "110px", textAlign: "center" }}>Trạng thái</th>
+            <th style={{ width: "120px", textAlign: "center" }}>Tỉ lệ nộp</th>
+            <th style={{ width: "120px", textAlign: "center" }}>Điểm TB</th>
             {coTheThaoTacMo && (
               <th style={{ width: "100px", textAlign: "center" }}>Thao tác</th>
             )}
@@ -47,7 +48,7 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
           {filteredExercises.length === 0 ? (
             <tr>
               <td
-                colSpan={coTheThaoTacMo ? 7 : 6}
+                colSpan={coTheThaoTacMo ? 8 : 7}
                 className="empty-row"
               >
                 Chưa có bài tập nào cho buổi học này.
@@ -98,7 +99,7 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
                     <span
                       className="type-label"
                       style={{
-                        fontSize: "13px",
+                        fontSize: "12px",
                         fontWeight: "600",
                         color: "#475569",
                         display: "inline-block",
@@ -137,7 +138,7 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
                   </td>
 
                   {/* Cột Mở đề (Thủ công hay tự động) */}
-                  <td className="col-mode" style={{ textAlign: "center", fontSize: "13px", fontWeight: "500" }}>
+                  <td className="col-mode" style={{ textAlign: "center", fontSize: "12px", fontWeight: "500" }}>
                     {isExam ? (
                       parsedContent.openingMode === "manual" ? "Thủ công" : "Tự động"
                     ) : !isPractice ? (
@@ -211,11 +212,18 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
                     })()}
                   </td>
 
-                  {/* Cột Ngày cập nhật */}
-                  <td className="col-date" style={{ textAlign: "center", fontSize: "13px", color: "#64748b" }}>
-                    {ex.CreatedDate
-                      ? new Date(ex.CreatedDate).toLocaleDateString("vi-VN")
-                      : "—"}
+                  {/* Cột Tỉ lệ nộp */}
+                  <td className="col-submit-rate" style={{ textAlign: "center", fontSize: "12.5px", fontWeight: "500", color: "#475569" }}>
+                    {ex.TiLeNop !== null && ex.TiLeNop !== undefined
+                      ? `${ex.TiLeNop}%`
+                      : "0%"}
+                  </td>
+
+                  {/* Cột Điểm TB */}
+                  <td className="col-avg-score" style={{ textAlign: "center", fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>
+                    {ex.DiemTB !== null && ex.DiemTB !== undefined
+                      ? ex.DiemTB
+                      : 0}
                   </td>
 
                   {/* Cột Thao tác xóa */}
