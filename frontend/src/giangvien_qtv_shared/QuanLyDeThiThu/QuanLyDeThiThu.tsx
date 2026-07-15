@@ -1121,21 +1121,10 @@ D. Visiting friends
 
     setImportingPartIdx(partIdx);
 
-    if (file.name.endsWith(".docx")) {
-      const simulatedQuestions = [
-        { id: 1, noiDung: "What time does the meeting start?", luaChon: ["A. 8:00 AM", "B. 8:30 AM", "C. 9:00 AM", "D. 9:30 AM"], dapAn: "C" },
-        { id: 2, noiDung: "Where is the speaker going?", luaChon: ["A. School", "B. Hospital", "C. Airport", "D. Office"], dapAn: "D" },
-        { id: 3, noiDung: "What does the speaker suggest?", luaChon: ["A. Staying home", "B. Going shopping", "C. Watching TV", "D. Visiting friends"], dapAn: "B" }
-      ];
-      setImportedQuestions(simulatedQuestions);
-      setImportErrors([]);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    const parseTextContent = (text: string) => {
+      // Normalize to NFC (composed form) to resolve decomposed character encoding issues (NFD) commonly produced by Word editors
+      const normalizedText = (text || "").normalize("NFC");
+      const lines = normalizedText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
       const parsedList: CauHoi[] = [];
       const errorsList: string[] = [];
 
@@ -1169,27 +1158,27 @@ D. Visiting friends
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        if (line.match(/^(?:Câu|Cau)\s*\d+/i)) {
+        if (line.match(/^\s*(?:Câu|Cau)\s*\d+/i)) {
           if (currentQ.noiDung) {
             validateAndPush(currentQ, qIndex);
             qIndex++;
           }
-          const match = line.match(/^(?:Câu|Cau)\s*(\d+)\s*:\s*(.*)$/i);
+          const match = line.match(/^\s*(?:Câu|Cau)\s*(\d+)\s*[:.：\-]?\s*(.*)$/i);
           currentQ = {
             id: match ? parseInt(match[1]) : qIndex,
-            noiDung: match ? match[2] : line.replace(/^(?:Câu|Cau)\s*\d+\s*:\s*/i, ""),
+            noiDung: match ? match[2] : line.replace(/^\s*(?:Câu|Cau)\s*\d+\s*[:.：\-]?\s*/i, ""),
             luaChon: []
           };
-        } else if (line.match(/^A\./i) || line.match(/^A\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^B\./i) || line.match(/^B\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^C\./i) || line.match(/^C\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^D\./i) || line.match(/^D\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^(?:Đáp án|Dap an|Đáp án đúng)\s*:/i)) {
-          const match = line.match(/(?:Đáp án|Dap an|Đáp án đúng)\s*:\s*([A-D])/i);
+        } else if (line.match(/^\s*A\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^A\s*[\.):：\-\s]\s*/i, "A. "));
+        } else if (line.match(/^\s*B\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^B\s*[\.):：\-\s]\s*/i, "B. "));
+        } else if (line.match(/^\s*C\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^C\s*[\.):：\-\s]\s*/i, "C. "));
+        } else if (line.match(/^\s*[DĐ]\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^[DĐ]\s*[\.):：\-\s]\s*/i, "D. "));
+        } else if (line.match(/(?:đáp\s*án|dap\s*an|đáp|dap|ans|key)\s*[:：]\s*([A-D])/i)) {
+          const match = line.match(/(?:đáp\s*án|dap\s*an|đáp|dap|ans|key)\s*[:：]\s*([A-D])/i);
           if (match) {
             currentQ.dapAn = match[1].toUpperCase();
           } else {
@@ -1204,6 +1193,30 @@ D. Visiting friends
 
       setImportedQuestions(parsedList);
       setImportErrors(errorsList);
+    };
+
+    if (file.name.endsWith(".docx")) {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const mammothModule = await import("mammoth");
+          const arrayBuffer = evt.target?.result as ArrayBuffer;
+          const result = await mammothModule.extractRawText({ arrayBuffer });
+          const text = result.value;
+          parseTextContent(text);
+        } catch (err) {
+          console.error("Lỗi khi đọc file Word:", err);
+          alert("Lỗi khi đọc file Word.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      parseTextContent(text);
     };
     reader.readAsText(file);
   };
@@ -2088,8 +2101,8 @@ D. Visiting friends
                               }}
                               style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", background: "white" }}
                             >
-                              <option value="Letter">Letter</option>
-                              <option value="Email">Email</option>
+                              <option value="Letter">Email/Letter</option>
+                              <option value="Email">Essay</option>
                             </select>
                           </div>
 

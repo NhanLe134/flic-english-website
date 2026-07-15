@@ -247,6 +247,9 @@ const upload = multer({
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
       "audio/mpeg", "audio/wav", "audio/mp4", "audio/x-m4a", "audio/webm", "audio/ogg", "audio/webm;codecs=opus", "audio/ogg;codecs=opus",
       "video/mp4", "video/webm", "video/ogg", "video/quicktime",
       "application/octet-stream"
@@ -1444,8 +1447,24 @@ app.post("/baigiang", async (req, res) => {
       }
     }
 
-    const finalTrangThai = isQTV ? "Đã duyệt" : normalizeTrangThai(TrangThai);
-    const finalTrangThaiDuyet = finalTrangThai;
+    let finalTrangThai = "draft";
+    let finalTrangThaiDuyet = "Lưu nháp";
+    if (isQTV) {
+      finalTrangThai = "published";
+      finalTrangThaiDuyet = "Đã duyệt";
+    } else {
+      const statusLower = (TrangThai || "").toLowerCase().trim();
+      if (statusLower === "published" || statusLower === "đã duyệt" || statusLower === "hoạt động") {
+        finalTrangThai = "published";
+        finalTrangThaiDuyet = "Đã duyệt";
+      } else if (statusLower === "pending" || statusLower === "chờ duyệt") {
+        finalTrangThai = "pending";
+        finalTrangThaiDuyet = "Chờ duyệt";
+      } else if (statusLower === "rejected" || statusLower === "từ chối" || statusLower === "ẩn") {
+        finalTrangThai = "rejected";
+        finalTrangThaiDuyet = "Từ chối";
+      }
+    }
 
     const result = await pool.request()
       .input("TieuDe", TieuDe)
@@ -1541,11 +1560,24 @@ app.put("/baigiang/:id/status", async (req, res) => {
     if (await isClassCompletedByBaiHoc(pool, req.params.id)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể thay đổi trạng thái duyệt bài giảng!" });
     }
-    const normalized = normalizeTrangThai(TrangThai);
+    let dbTrangThai = "draft";
+    let dbTrangThaiDuyet = "Lưu nháp";
+    const statusLower = (TrangThai || "").toLowerCase().trim();
+    if (statusLower === "published" || statusLower === "đã duyệt" || statusLower === "hoạt động") {
+      dbTrangThai = "published";
+      dbTrangThaiDuyet = "Đã duyệt";
+    } else if (statusLower === "pending" || statusLower === "chờ duyệt") {
+      dbTrangThai = "pending";
+      dbTrangThaiDuyet = "Chờ duyệt";
+    } else if (statusLower === "rejected" || statusLower === "từ chối" || statusLower === "ẩn") {
+      dbTrangThai = "rejected";
+      dbTrangThaiDuyet = "Từ chối";
+    }
+
     await pool.request()
       .input("id", req.params.id)
-      .input("TrangThai", normalized)
-      .input("TrangThaiDuyet", normalized)
+      .input("TrangThai", dbTrangThai)
+      .input("TrangThaiDuyet", dbTrangThaiDuyet)
       .query(`UPDATE BAIHOCKHOAHOC SET TrangThai = @TrangThai, TrangThaiDuyet = @TrangThaiDuyet WHERE MaBaiHoc = @id`);
     res.json({ message: "Cập nhật thành công" });
   } catch (err) { res.status(500).send(err.message); }
@@ -4726,7 +4758,7 @@ app.get("/tailieu/list/all", async (req, res) => {
     const { maNguoiDung } = req.query;
     const pool = await poolPromise;
     let query = `
-      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
+      SELECT DISTINCT t.MaTaiLieu, t.TieuDe, t.MoTa, t.NoiDung, t.FileUrl, t.NgayCapNhat, l.TenLop, ls.TenBuoiHoc, ls.MaBuoiHoc, l.MaLopHoc
       FROM TAILIEU t
       JOIN BUOIHOC ls ON t.MaBuoiHoc = ls.MaBuoiHoc
       JOIN LOPHOC l ON ls.MaLopHoc = l.MaLopHoc
@@ -4846,8 +4878,10 @@ app.post("/exercises/:id/clone", async (req, res) => {
       }
     }
 
-    let targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
-    if (!targetMaBaiHoc) {
+    let targetMaBaiHoc = null;
+    if (req.body.hasOwnProperty("MaBaiHoc")) {
+      targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc) : null;
+    } else {
       const bhResult = await pool.request()
         .input("buoiHocId", MaBuoiHoc)
         .query("SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC");

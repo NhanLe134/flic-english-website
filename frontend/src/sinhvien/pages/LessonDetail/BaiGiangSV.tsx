@@ -65,7 +65,21 @@ function BaiGiangSV() {
 
   const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
   const [baiGiang, setBaiGiang] = useState<any>(null);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [showBackBtn, setShowBackBtn] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientX < window.innerWidth / 2 && e.clientY < window.innerHeight / 2) {
+        setShowBackBtn(true);
+      } else {
+        setShowBackBtn(false);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   // Minitest & Progress states
   const [progress, setProgress] = useState<{ DaXemVideo: number; DaDatMinitest: number }>({ DaXemVideo: 0, DaDatMinitest: 0 });
@@ -548,20 +562,10 @@ function BaiGiangSV() {
 
   return (
     <div className="ld2-content anim-fade-in" style={{ backgroundColor: "#f8fafc" }}>
-      {/* Nút Quay lại */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
-        <span
-          className="ld2-link"
-          style={{
-            cursor: "pointer",
-            color: "#F95800",
-            fontWeight: 800,
-            fontSize: "14px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.2s"
-          }}
+      {/* Floating Back button overlay */}
+      {showBackBtn && (
+        <button 
+          className="ad-back-overlay" 
           onClick={() => {
             if (location.pathname.includes("/hoc-thu-sv/")) {
               navigate(`/hoc-thu-sv/${classId}/${lessonId}/bg`);
@@ -570,16 +574,118 @@ function BaiGiangSV() {
             } else {
               navigate(-1);
             }
+          }} 
+          title="Quay lại"
+          style={{
+            position: "fixed",
+            top: "90px",
+            left: "50px",
+            width: "44px",
+            height: "44px",
+            borderRadius: "50%",
+            background: "#F95800",
+            border: "1px solid #F95800",
+            boxShadow: "0 4px 14px rgba(249, 88, 0, 0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#ffffff",
+            cursor: "pointer",
+            zIndex: 10000,
+            transition: "all 0.2s ease",
+            backdropFilter: "blur(4px)"
+          }}
+          onMouseOver={e => {
+            e.currentTarget.style.background = "#ffffff";
+            e.currentTarget.style.color = "#F95800";
+            e.currentTarget.style.borderColor = "#F95800";
+            e.currentTarget.style.boxShadow = "0 4px 14px rgba(249, 88, 0, 0.2)";
+            e.currentTarget.style.transform = "scale(1.05)";
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.background = "#F95800";
+            e.currentTarget.style.color = "#ffffff";
+            e.currentTarget.style.borderColor = "#F95800";
+            e.currentTarget.style.boxShadow = "0 4px 14px rgba(249, 88, 0, 0.35)";
+            e.currentTarget.style.transform = "scale(1)";
           }}
         >
-          ← Quay lại danh sách bài học
-        </span>
-      </div>
+          <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="18" width="18" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: "1px" }}>
+            <path d="M9 17L2 10l7-7"></path>
+            <path d="M2 10h12a7 7 0 0 1 7 7v1"></path>
+          </svg>
+        </button>
+      )}
 
       {/* Grid Layout 2 Cột */}
       <div className="ld2-layout-grid">
         {/* Cột chính bên trái: Video + Giáo trình lý thuyết + Bài tập tự luyện */}
+
+        
         <div className="ld2-main-col">
+          <div className="ld2-premium-card" style={{ marginTop: "10px", padding: "20px" }}>
+            {/* Nội dung bài giảng */}
+            {noiDung && (
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ color: "#000080", margin: "0 0 16px 0", fontSize: "16px", fontWeight: 800 }}>
+                  Nội dung bài giảng
+                </h4>
+                <div style={{ 
+                  lineHeight: 1.8, 
+                  color: "#334155", 
+                  maxHeight: isContentExpanded ? "none" : "150px", 
+                  overflow: "hidden", 
+                  position: "relative",
+                  transition: "max-height 0.3s ease"
+                }}>
+                  {noiDung.trimStart().startsWith("<") ? (
+                    <div dangerouslySetInnerHTML={{ __html: noiDung }} />
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {unescapeMarkdown(noiDung).replace(/\n/g, "  \n")}
+                    </ReactMarkdown>
+                  )}
+                  
+                  {!isContentExpanded && noiDung.length > 300 && (
+                    <div style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "60px",
+                      background: "linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1))",
+                      pointerEvents: "none"
+                    }} />
+                  )}
+                </div>
+                
+                {noiDung.length > 300 && (
+                  <button
+                    onClick={() => setIsContentExpanded(!isContentExpanded)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#F95800",
+                      fontWeight: 700,
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      padding: "8px 0 0 0",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      outline: "none"
+                    }}
+                  >
+                    {isContentExpanded ? "Thu gọn ↑" : "Xem thêm ↓"}
+                  </button>
+                )}
+
+                {/* Line separator if there's content and video */}
+                {(mediaType === "youtube" || mediaType === "drive" || mediaType === "document" || fileUrl) && (
+                  <hr style={{ border: 0, borderTop: "1px solid #e2e8f0", margin: "20px 0 10px 0" }} />
+                )}
+              </div>
+            )}
           {/* Khung chứa Video Player */}
           {(() => {
             const getGoogleDrivePreviewUrl = (url: string): string => {
@@ -1180,30 +1286,14 @@ function BaiGiangSV() {
             );
           })()}
 
-          {/* Giáo trình lý thuyết */}
-          {noiDung && (
-            <div className="ld2-premium-card" style={{ marginTop: "10px" }}>
-              <h4 style={{ color: "#000080", margin: "0 0 16px 0", fontSize: "16px", fontWeight: 800 }}>
-                Lý thuyết & Giáo trình
-              </h4>
-              <div style={{ lineHeight: 1.8, color: "#334155" }}>
-                {noiDung.trimStart().startsWith("<") ? (
-                  <div dangerouslySetInnerHTML={{ __html: noiDung }} />
-                ) : (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {unescapeMarkdown(noiDung)}
-                  </ReactMarkdown>
-                )}
-              </div>
-            </div>
-          )}
+          </div>
 
         </div>
 
         {/* Cột bên phải: Tiêu đề + Minitest */}
         <div className="ld2-sidebar-col">
           {/* Hộp Tiêu đề Bài giảng */}
-          <div className="ld2-premium-card" style={{ padding: "20px" }}>
+          <div className="ld2-premium-card" style={{ marginTop: "10px", padding: "20px" }}>
             <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#000080", margin: "0 0 8px 0" }}>
               {baiGiang.TieuDe}
             </h2>

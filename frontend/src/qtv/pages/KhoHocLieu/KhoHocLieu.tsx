@@ -12,6 +12,21 @@ import {
   FiChevronDown, 
   FiChevronRight 
 } from "react-icons/fi";
+import {
+  MDXEditor,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  markdownShortcutPlugin,
+  tablePlugin,
+  toolbarPlugin,
+  BoldItalicUnderlineToggles,
+  ListsToggle,
+  BlockTypeSelect,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
+
 
 const API =
   window.location.hostname === "localhost" ||
@@ -86,6 +101,7 @@ const KhoHocLieu = () => {
   const [showAddLectureModal, setShowAddLectureModal] = useState(false);
   const [bgTab, setBgTab] = useState<"create" | "reuse">("create");
   const [bgForm, setBgForm] = useState({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: 1, isFree: false });
+  const [editorKey, setEditorKey] = useState(0);
   const [allExistingBg, setAllExistingBg] = useState<any[]>([]);
 
   // Document creation / clone modal states
@@ -231,7 +247,15 @@ const KhoHocLieu = () => {
       : null;
 
     if (fileUrl) {
-      window.open(fileUrl, "_blank");
+      const extension = fileUrl.split('.').pop()?.toLowerCase();
+      const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
+      const isLocal = fileUrl.includes("localhost") || fileUrl.includes("127.0.0.1") || fileUrl.includes("192.168.") || fileUrl.includes("10.");
+      
+      if (isOfficeDoc && !isLocal) {
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, "_blank");
+      } else {
+        window.open(fileUrl, "_blank");
+      }
     } else {
       const newWindow = window.open("", "_blank");
       if (newWindow) {
@@ -459,6 +483,7 @@ const KhoHocLieu = () => {
   const openAddLecture = (sessionId: number, currentLecturesCount: number) => {
     setActiveSessionId(sessionId);
     setBgForm({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: currentLecturesCount + 1, isFree: false });
+    setEditorKey(p => p + 1);
     setBgTab("create");
     setShowAddLectureModal(true);
     fetch(`${API}/baigiang/list/all`)
@@ -843,8 +868,31 @@ const KhoHocLieu = () => {
                   <input value={bgForm.title} onChange={e => setBgForm(p => ({...p, title: e.target.value}))} placeholder="VD: Lesson 1: Grammar basics" />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Mô tả nội dung</label>
-                  <textarea value={bgForm.content} onChange={e => setBgForm(p => ({...p, content: e.target.value}))} placeholder="Nhập mô tả hoặc nội dung bài học..." rows={5} />
+                  <label>Nội dung bài giảng</label>
+                  <div style={{ border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
+                    <MDXEditor
+                      key={editorKey}
+                      markdown={bgForm.content}
+                      onChange={val => setBgForm(p => ({...p, content: val}))}
+                      plugins={[
+                        headingsPlugin(),
+                        listsPlugin(),
+                        quotePlugin(),
+                        thematicBreakPlugin(),
+                        tablePlugin(),
+                        markdownShortcutPlugin(),
+                        toolbarPlugin({
+                          toolbarContents: () => (
+                            <>
+                              <BlockTypeSelect />
+                              <BoldItalicUnderlineToggles />
+                              <ListsToggle />
+                            </>
+                          )
+                        })
+                      ]}
+                    />
+                  </div>
                 </div>
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>
