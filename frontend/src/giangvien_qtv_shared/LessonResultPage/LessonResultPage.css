@@ -1,10 +1,6 @@
 .lrp-wrapper {
   font-family: "Segoe UI", Arial, sans-serif;
-  width: auto;
-  margin-left: -20px;
-  margin-right: -20px;
-  padding: 0;
-  box-sizing: border-box;
+  width: 100%;
 }
 
 /* HEADER ROW */
@@ -192,7 +188,7 @@ tr.lrp-row:hover td {
 
 /* Details sub-rows row hover */
 tr:not(.lrp-row):hover td {
-  background-color: #f0f7ff !important;
+  background-color: transparent !important;
 }
 
 .lrp-code-cell {

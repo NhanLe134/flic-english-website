@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from "react"
+import { useParams } from "react-router-dom"
 import styles from "./BaoCaoKetQuaQTV.module.css"
 import { FiSearch, FiUsers, FiAward, FiAlertCircle } from "react-icons/fi"
 import * as XLSX from "xlsx"
@@ -57,6 +58,7 @@ interface Props {
 }
 
 const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
+  const { id } = useParams<{ id?: string }>()
   const [data, setData]             = useState<HocVien[]>([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState("")
@@ -65,6 +67,15 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const [filterTT, setFilterTT]     = useState("Tất cả trạng thái")
   const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
+
+  useEffect(() => {
+    if (id && allLessons.length > 0) {
+      const found = allLessons.find(l => l.MaLopHoc === Number(id));
+      if (found && found.TenLop) {
+        setFilterLop(found.TenLop);
+      }
+    }
+  }, [id, allLessons]);
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedStudents, setExpandedStudents] = useState<Set<number>>(new Set())
   const [showExportModal, setShowExportModal] = useState(false)
@@ -413,8 +424,8 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             </div>
           </div>
 
-          <div className={`${styles.card} ${styles.cardCompleted}`} style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
-            <div className={styles.cardIconContainer} style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' }}>
+          <div className={`${styles.card} ${styles.cardCompleted} ${styles.cardWarning}`}>
+            <div className={`${styles.cardIconContainer} ${styles.warningIcon}`}>
               <FiAlertCircle size={18} />
             </div>
             <div className={styles.cardContent}>
@@ -453,7 +464,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
           <select className={styles.select} value={filterKhoa} onChange={e => setFilterKhoa(e.target.value)}>
             {khoaList.map(k => <option key={k}>{k}</option>)}
           </select>
-          <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+          <div className={styles.selectGroup}>
             <select className={styles.select} value={filterLop} onChange={e => setFilterLop(e.target.value)}>
               {lopList.map(l => <option key={l}>{l}</option>)}
             </select>
@@ -466,25 +477,25 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
         {/* TABLE */}
         <div className={styles.tableWrap}>
           {loading ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#999' }}>Đang tải dữ liệu...</div>
+            <div className={styles.loadingText}>Đang tải dữ liệu...</div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ width: '40px', minWidth: '40px', maxWidth: '40px', padding: '0 8px', textAlign: 'center', boxSizing: 'border-box' }}></th>
-                  <th style={{ width: '120px', minWidth: '120px', maxWidth: '120px', boxSizing: 'border-box' }}>MÃ SINH VIÊN</th>
-                  <th style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>HỌ TÊN</th>
-                  <th style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>TRẠNG THÁI</th>
+                  <th style={{ width: '40px', minWidth: '40px', maxWidth: '40px' }}></th>
+                  <th style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }}>MÃ SINH VIÊN</th>
+                  <th style={{ width: '160px', minWidth: '160px', maxWidth: '160px' }}>HỌ TÊN</th>
+                  <th style={{ width: '110px', minWidth: '110px', maxWidth: '110px' }}>TRẠNG THÁI</th>
                   {uniqueBuois.map(b => {
                     return (
-                      <th key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
+                      <th key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                           <span>BUỔI {b}</span>
                         </div>
                       </th>
                     )
                   })}
-                  <th style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}>ĐIỂM TB</th>
+                  <th style={{ width: '90px', minWidth: '90px', maxWidth: '90px' }}>ĐIỂM TB</th>
                   <th></th> {/* Dummy column to absorb extra space and prevent column stretching */}
                 </tr>
               </thead>
@@ -505,18 +516,19 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                         <tr 
                           className={styles.row}
                           onClick={() => toggleExpandStudent(hv.id)}
-                          style={{ cursor: 'pointer' }}
                         >
-                          <td style={{ width: '40px', minWidth: '40px', maxWidth: '40px', padding: '0 8px', textAlign: 'center', boxSizing: 'border-box' }}>
-                            <span style={{ fontSize: '10px', color: '#666', display: 'inline-block', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>
+                          <td className={styles.tdArrowCell} style={{ width: '40px', minWidth: '40px', maxWidth: '40px' }}>
+                            <span 
+                              className={`${styles.arrowIcon} ${isExpanded ? styles.arrowIconExpanded : ''}`}
+                            >
                               ▶
                             </span>
                           </td>
-                          <td className={styles.maHV} style={{ width: '120px', minWidth: '120px', maxWidth: '120px', boxSizing: 'border-box' }}>{hv.maHV}</td>
-                          <td style={{ width: '160px', minWidth: '160px', maxWidth: '160px', boxSizing: 'border-box' }}>
-                            <p className={styles.tenHV} style={{ margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{hv.hoTen}</p>
+                          <td className={styles.maHV} style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }}>{hv.maHV}</td>
+                          <td style={{ width: '160px', minWidth: '160px', maxWidth: '160px' }}>
+                            <p className={`${styles.tenHV} ${styles.tenHVText}`}>{hv.hoTen}</p>
                           </td>
-                          <td style={{ width: '110px', minWidth: '110px', maxWidth: '110px', boxSizing: 'border-box' }}>
+                          <td style={{ width: '110px', minWidth: '110px', maxWidth: '110px' }}>
                             <span className={`${styles.trangThai} ${trangThaiColor[hv.trangThai] || ''}`}>
                               {hv.trangThai}
                             </span>
@@ -526,29 +538,29 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                             const hvActiveThuTu = hvActiveLesson ? hvActiveLesson.ThuTu : Math.max(...classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number), 0)
 
                             if (hvActiveThuTu === null || b > hvActiveThuTu) {
-                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>—</td>
+                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth }}>—</td>
                             }
 
                             const res = getBuoiStatusOrAvg(hv, b)
                             const hasExs = activeHeaders.some(h => h.ThuTu === b && h.TenLop === hv.lopKhoaHoc)
                             if (!hasExs) {
-                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>—</td>
+                              return <td key={b} className={styles.emptyVal} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth }}>—</td>
                             }
                             return (
-                              <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}>
+                              <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth }}>
                                 {res.status === "graded" ? (
                                   <span className={`${styles.diemBadge} ${diemColor(res.val as number)}`}>{res.val}</span>
                                 ) : res.status === "pending" ? (
-                                  <span className={styles.diemBadge} style={{ background: '#ffe6cc', color: '#d35400', fontSize: '11px', fontWeight: 600 }}>Cần chấm</span>
+                                  <span className={`${styles.diemBadge} ${styles.pendingBadgeMini}`}>{res.val}</span>
                                 ) : (
                                   <span className={styles.chuaNop}>Chưa nộp</span>
                                 )}
                               </td>
                             )
                           })}
-                          <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}>
+                          <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px' }}>
                             {hv.diemTB !== null ? (
-                              <span className={`${styles.diemBadge} ${diemColor(hv.diemTB)}`} style={{ fontWeight: 700 }}>
+                              <span className={`${styles.diemBadge} ${diemColor(hv.diemTB)} ${styles.fontWeight700}`}>
                                 {hv.diemTB}
                               </span>
                             ) : (
@@ -560,12 +572,12 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                         {isExpanded && (
                           maxExCount > 0 ? (
                             Array.from({ length: maxExCount }).map((_, i) => (
-                              <tr key={`sub-${hv.id}-${i}`} style={{ background: '#fbfbfb' }}>
-                                <td colSpan={4}></td>
+                              <tr key={`sub-${hv.id}-${i}`} className={styles.subRow}>
+                                <td colSpan={4} className={styles.subRowCellEmpty}></td>
                                 {uniqueBuois.map(b => {
                                   const exList = exercisesByBuoi[b] || []
                                   const ex = exList[i]
-                                  if (!ex) return <td key={b} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth, boxSizing: 'border-box' }}></td>
+                                  if (!ex) return <td key={b} className={styles.subRowCellEmpty} style={{ width: buoiColWidth, minWidth: buoiColWidth, maxWidth: buoiColWidth }}></td>
 
                                   const scoreVal = hv.rawScores[ex.MaBaiTap]
                                   const wasSubmitted = scoreVal !== null && scoreVal !== undefined;
@@ -578,25 +590,22 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                                         }
                                       }}
                                       style={{ 
-                                        padding: '6px 8px', 
-                                        borderBottom: '1px solid #f3f4f6', 
                                         width: buoiColWidth, 
                                         minWidth: buoiColWidth, 
                                         maxWidth: buoiColWidth, 
-                                        boxSizing: 'border-box',
                                         cursor: wasSubmitted ? 'pointer' : 'default'
                                       }}
-                                      className={wasSubmitted ? styles.subRowCell : undefined}
+                                      className={`${styles.subRowCell} ${wasSubmitted ? styles.subRowCellClickable : ''}`}
                                     >
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', width: '100%', overflow: 'hidden' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, flex: 1 }}>
-                                          <span style={{ fontWeight: 600, fontSize: '12px', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }} title={ex.TenBai}>{ex.TenBai}</span>
+                                      <div className={styles.subRowCellContent}>
+                                        <div className={styles.subRowCellTextWrap}>
+                                          <span className={styles.subRowCellTitle} title={ex.TenBai}>{ex.TenBai}</span>
                                         </div>
-                                        <div style={{ flexShrink: 0 }}>
+                                        <div className={styles.subRowCellBadgeWrap}>
                                           {scoreVal !== null && typeof scoreVal === 'number' ? (
                                             <span className={`${styles.diemBadgeMini} ${diemColor(scoreVal)}`}>{scoreVal}</span>
                                           ) : scoreVal === 'Cần chấm' ? (
-                                            <span className={styles.diemBadgeMini} style={{ background: '#ffe6cc', color: '#d35400', fontSize: '11px', fontWeight: 600 }}>Cần chấm</span>
+                                            <span className={`${styles.diemBadgeMini} ${styles.pendingBadgeMini}`}>{scoreVal}</span>
                                           ) : (
                                             <span className={styles.chuaNopMini}>Chưa</span>
                                           )}
@@ -605,14 +614,14 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
                                     </td>
                                   )
                                 })}
-                                <td style={{ width: '90px', minWidth: '90px', maxWidth: '90px', boxSizing: 'border-box' }}></td>
-                                <td></td> {/* Dummy column */}
+                                <td className={styles.subRowCellEmpty} style={{ width: '90px', minWidth: '90px', maxWidth: '90px' }}></td>
+                                <td className={styles.subRowCellEmpty}></td> {/* Dummy column */}
                               </tr>
                             ))
                           ) : (
-                            <tr style={{ background: '#fbfbfb' }}>
-                              <td colSpan={4}></td>
-                              <td colSpan={uniqueBuois.length + 2} style={{ textAlign: 'center', color: '#bbb', fontSize: '12.5px', padding: '12px' }}>
+                            <tr className={styles.subRow}>
+                              <td colSpan={4} className={styles.subRowCellEmpty}></td>
+                              <td colSpan={uniqueBuois.length + 2} className={styles.noExCell}>
                                 Không có bài tập nào.
                               </td>
                             </tr>
@@ -683,23 +692,12 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
       )}
 
       {showSuccess && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-          background: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center",
-          alignItems: "center", zIndex: 1100
-        }}>
-          <div style={{
-            background: "white", padding: "40px 60px", borderRadius: "16px",
-            textAlign: "center", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)"
-          }}>
-            <div style={{
-              width: "60px", height: "60px", borderRadius: "50%",
-              border: "3px solid #2ecc71", display: "flex", justifyContent: "center",
-              alignItems: "center", margin: "0 auto 15px"
-            }}>
-              <span style={{ fontSize: 28, color: "#2ecc71" }}>✔</span>
+        <div className={styles.successOverlay}>
+          <div className={styles.successBox}>
+            <div className={styles.successIconCircle}>
+              <span className={styles.successIconSpan}>✔</span>
             </div>
-            <p style={{ margin: 0, fontWeight: 600, color: "#333" }}>Tải file báo cáo thành công</p>
+            <p className={styles.successText}>Tải file báo cáo thành công</p>
           </div>
         </div>
       )}
@@ -710,7 +708,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
             <button className={styles.reviewModalCloseBtn} onClick={handleCloseReview} title="Đóng">
               &times;
             </button>
-            <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+            <div className={styles.reviewModalBody}>
               <ChiTietBaiTap 
                 overrideExerciseId={selectedReview.exerciseId}
                 overrideStudentId={selectedReview.studentId}

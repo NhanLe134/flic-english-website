@@ -1,12 +1,13 @@
+/* PopupXacThuc.css - Clean, modular design from scratch (NO !IMPORTANT used) */
+
 .auth-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   height: 100dvh;
-  /* Dynamic viewport height cho thiết bị di động (tránh lỗi thanh địa chỉ Safari iOS) */
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -20,64 +21,55 @@
 
 .auth-modal-card-wrapper {
   position: relative;
-  background: white;
-  /* Mảng nền trắng cố định lên thẻ wrapper */
-  border-radius: 24px;
-  width: 500px;
+  background: #ffffff;
+  border-radius: 28px;
+  width: 480px;
   max-width: calc(100vw - 30px);
-  max-height: 85vh;
-  /* Giới hạn chiều cao 85vh ở tất cả các thiết bị */
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 0;
-  /* Xóa padding ngoài để form tự cuộn */
+  padding: 40px;
   overflow: hidden;
-  /* Giúp bo tròn 24px hoạt động đúng */
 }
 
-/* KHỐI HEADER CỐ ĐỊNH - Căn giữa dọc, xếp dòng thẳng hàng giữa Title và Nút Close */
+/* HEADER SECTION */
 .auth-modal-header {
   position: relative;
-  /* Để button absolute close đính đúng góc phải */
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Căn giữa tiêu đề */
   width: 100%;
-  padding: 24px 36px 12px 36px;
-  /* Khoảng cách lề trên và lề trái/phải đều nhau 36px */
+  padding-bottom: 20px;
   box-sizing: border-box;
-  background: white;
+  background: #ffffff;
   z-index: 10;
 }
 
-/* Tiêu đề header chính - căn giữa tuyệt đối */
 .auth-modal-header-title {
-  font-size: 22px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 24px;
   font-weight: 700;
   color: #000080;
   margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  letter-spacing: 0.5px;
+  text-transform: uppercase;
   text-align: center;
-  /* Căn giữa chữ */
   width: 100%;
+  letter-spacing: 0.5px;
 }
 
-/* Nút Close X mới - nằm ở mép phải tuyệt đối của header, giữ nguyên vị trí cũ */
+/* Close Button (X) */
 .auth-modal-close-btn-new {
   position: absolute;
-  right: 36px;
-  /* Căn sát lề phải bằng với padding của header */
-  top: 50%;
-  transform: translateY(-50%);
+  right: -20px;
+  top: -20px;
   background: none;
   border: none;
   font-size: 28px;
   font-weight: 300;
-  color: #aaa;
+  color: #94a3b8;
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -86,32 +78,27 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  transition: color 0.2s, transform 0.2s, background-color 0.2s;
+  transition: all 0.2s;
   box-sizing: border-box;
+  z-index: 12;
 }
 
 .auth-modal-close-btn-new:hover {
-  color: #f58220;
+  color: #F95800;
   background-color: #fdf8f3;
-  transform: translateY(-50%) rotate(90deg);
-  /* Giữ nguyên translateY khi hover */
+  transform: rotate(90deg);
 }
 
-/* KHỐI BODY CUỘN SCROLL ĐỘC LẬP */
+/* BODY CONTAINER WITH INTERNAL SCROLLBAR */
 .auth-modal-body {
   overflow-y: auto;
-  /* Cho phép cuộn riêng */
   flex-grow: 1;
-  padding: 0 36px 30px 36px;
-  /* Padding trái phải cân đối 36px giúp form đều nhau */
+  padding: 0 4px;
   box-sizing: border-box;
 }
 
-/* Custom Scrollbar giống như ảnh bạn gửi (mỏng, cân đối) */
-/* Thiết kế scrollbar siêu mỏng, tinh tế tông cam thương hiệu */
 .auth-modal-body::-webkit-scrollbar {
   width: 4px;
-  /* Mỏng nhẹ, tinh tế hơn */
 }
 
 .auth-modal-body::-webkit-scrollbar-track {
@@ -119,62 +106,258 @@
 }
 
 .auth-modal-body::-webkit-scrollbar-thumb {
-  background-color: rgba(245, 130, 32, 0.35);
-  /* Màu cam thương hiệu FLIC trong suốt nhẹ */
+  background-color: rgba(0, 82, 156, 0.2);
   border-radius: 10px;
+}
+
+/* FORM WRAPPER & INPUT GROUPS */
+.auth-form-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+div.auth-modal-card-wrapper .auth-input-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+div.auth-modal-card-wrapper .auth-input-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 14px;
+}
+
+div.auth-modal-card-wrapper .auth-input-wrapper input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px 12px 44px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  font-size: 15px;
+  color: #334155;
+  outline: none;
+  transition: all 0.2s;
+  margin-top: 0;
+}
+
+div.auth-modal-card-wrapper .auth-input-wrapper input:focus {
+  border-color: #00529c;
+  box-shadow: 0 0 0 3px rgba(0, 82, 156, 0.08);
+}
+
+/* DOM Icon positioning on top of inputs inside wrapper */
+div.auth-modal-card-wrapper .auth-input-wrapper .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Eye visibility toggle btn inside wrapper */
+div.auth-modal-card-wrapper .auth-input-wrapper .eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+  height: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  transition: color 0.15s;
+}
+
+div.auth-modal-card-wrapper .auth-input-wrapper .eye-btn:hover {
+  color: #475569;
+}
+
+/* Force Autofill backgrounds to white in Chrome/Safari */
+div.auth-modal-card-wrapper input:-webkit-autofill,
+div.auth-modal-card-wrapper input:-webkit-autofill:hover, 
+div.auth-modal-card-wrapper input:-webkit-autofill:focus, 
+div.auth-modal-card-wrapper input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset;
+  -webkit-text-fill-color: #334155;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Errors */
+div.auth-modal-card-wrapper .auth-input-wrapper input.input-error {
+  border-color: #ef4444;
+}
+
+div.auth-modal-card-wrapper .auth-input-group .error-message {
+  color: #ef4444;
+  font-size: 13px;
+  font-style: italic;
+  margin-top: 4px;
+  text-align: left;
+  display: block;
+}
+
+div.auth-modal-card-wrapper .login-error-message {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 14px;
+  text-align: left;
+  font-style: italic;
+}
+
+/* Submit buttons */
+div.auth-modal-card-wrapper .auth-submit-btn {
+  background: #F95800;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 24px;
+  width: 100%;
+}
+
+div.auth-modal-card-wrapper .auth-submit-btn:hover {
+  background: #e04f00;
+  transform: translateY(-1px);
+}
+
+div.auth-modal-card-wrapper .auth-submit-btn:active {
+  transform: translateY(0);
+}
+
+div.auth-modal-card-wrapper .auth-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Switch & Forgot Links */
+div.auth-modal-card-wrapper .auth-switch-link {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 18px;
+  margin-bottom: 0;
+}
+
+div.auth-modal-card-wrapper .auth-switch-link a {
+  color: #000080;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+div.auth-modal-card-wrapper .auth-switch-link a:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+div.auth-modal-card-wrapper .auth-forgot-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  color: #000080;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+  transition: opacity 0.15s;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+div.auth-modal-card-wrapper .auth-forgot-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* Alerts Success/Error */
+.auth-alert-error,
+.auth-alert-success {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.auth-alert-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.auth-alert-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.auth-back-login-btn {
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
   transition: background-color 0.2s;
 }
 
-.auth-modal-body::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(245, 130, 32, 0.7);
-  /* Đậm hơn khi di chuột vào */
+.auth-back-login-btn:hover {
+  background: #15803d;
 }
 
+/* ANIMATION KEYFRAMES */
 @keyframes authModalFadeIn {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
 }
 
-@keyframes authModalSlideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* responsive */
+/* RESPONSIVE DESIGN */
 @media (max-width: 576px) {
   .auth-modal-backdrop {
     padding: 10px;
     align-items: center;
-    /* Luôn căn giữa chiều cao (vh) giống desktop */
-    height: 100dvh;
   }
 
   .auth-modal-card-wrapper {
-    max-height: 80vh;
-    /* Giới hạn chiều cao tối đa 80vh ở màn hình điện thoại */
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-height: 85vh;
+    border-radius: 20px;
     width: 100%;
+    padding: 24px;
   }
 
   .auth-modal-header {
-    padding: 20px 24px 8px 24px;
-  }
-
-  .auth-modal-body {
-    padding: 0 24px 20px 24px;
+    padding-bottom: 14px;
   }
 
   .auth-modal-header-title {
@@ -182,25 +365,24 @@
   }
 
   .auth-modal-close-btn-new {
+    right: -10px;
+    top: -10px;
     font-size: 24px;
-    right: 24px;
-    /* Sát lề phải khớp padding header mobile */
   }
 }
 
+/* Confirm modal overrides */
 .confirm-modal-backdrop {
-  z-index: 999999 !important;
-  /* Đảm bảo đè lên trên tất cả mọi thứ bao gồm navbar, sidebar và các modal khác */
+  z-index: 999999;
 }
 
 .confirm-modal-card {
-  width: 450px !important;
-  border-radius: 16px !important;
-  animation: authModalSlideUp 0.25s ease-out;
+  width: 450px;
+  border-radius: 16px;
 }
 
 .confirm-modal-body {
-  padding: 10px 30px 24px 30px !important;
+  padding: 10px 30px 24px 30px;
   text-align: center;
 }
 
@@ -242,13 +424,11 @@
 
 .confirm-btn-ok {
   background-color: #F95800;
-  /* Matching brand color #F95800 */
-  color: #fff;
-  box-shadow: 0 4px 6px rgba(249, 88, 0, 0.2);
+  color: #ffffff;
+  box-shadow: 0 4px 6px rgba(249, 88, 0, 0.15);
 }
 
 .confirm-btn-ok:hover {
   background-color: #e04f00;
-  /* Darker orange for hover */
-  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(249, 88, 0, 0.25);
 }

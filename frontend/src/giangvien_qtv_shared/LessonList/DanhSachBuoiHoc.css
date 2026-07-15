@@ -158,16 +158,16 @@
 }
 
 .lesson-table th {
-  background: #f1f5f9;
-  color: #475569;
+  background: #000080;
+  color: #ffffff;
   font-weight: 600;
-  font-size: 14px;
-  padding: 16px 20px;
-  border-bottom: 2px solid #e2e8f0;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-bottom: 2px solid #000066;
 }
 
 .lesson-table td {
-  padding: 18px 20px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -192,12 +192,15 @@
   text-align: center;
   font-weight: 700;
   color: #475569;
-  font-size: 15px;
+  font-size: 13px;
+  width: 80px;
+  white-space: nowrap;
 }
 
 /* Cột tên buổi học */
 .col-name {
   font-weight: 600;
+  width: 250px;
 }
 
 .lesson-title-cell {
@@ -228,19 +231,19 @@
 }
 
 .lesson-name {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 600;
   color: #1e293b;
 }
 
 /* Cột mô tả buổi học */
 .col-desc {
-  max-width: 400px;
+  width: auto;
   word-wrap: break-word;
 }
 
 .lesson-desc-text {
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
   margin: 0;
   line-height: 1.4;
@@ -249,6 +252,8 @@
 /* Cột trạng thái */
 .col-status {
   text-align: center;
+  width: 140px;
+  white-space: nowrap;
 }
 
 /* Badge biểu thị trạng thái */
@@ -326,6 +331,8 @@
 /* Cột thao tác */
 .col-actions {
   text-align: center;
+  width: 100px;
+  white-space: nowrap;
 }
 
 .actions-group {

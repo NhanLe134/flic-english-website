@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import "./AddLesson.css";
 import {
   MDXEditor,
@@ -21,6 +21,8 @@ const API_BASE = (window.location.hostname === "localhost" || window.location.ho
 
 const AddLesson: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isQTV = location.pathname.startsWith("/QTV");
   const { buoiHocId } = useParams();
   const [searchParams] = useSearchParams();
   const editDraftId = searchParams.get("editDraftId");
@@ -42,6 +44,7 @@ const AddLesson: React.FC = () => {
           if (data.MaBuoiHoc) {
             setDraftMaBuoiHoc(Number(data.MaBuoiHoc));
           }
+          setEditorKey(prev => prev + 1);
         }
       })
       .catch(err => console.error("Lỗi tải chi tiết bản nháp bài giảng:", err));
@@ -68,6 +71,7 @@ const AddLesson: React.FC = () => {
   const type = "Video";
   const duration = "";
   const [moTa, setMoTa] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -134,7 +138,7 @@ const AddLesson: React.FC = () => {
         return;
       }
 
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
       
@@ -304,7 +308,9 @@ const AddLesson: React.FC = () => {
         }
       }
       
-      if (editDraftId) {
+      if (isQTV) {
+        navigate(-1);
+      } else if (editDraftId) {
         navigate("/quan-ly-ban-nhap");
       } else {
         navigate(-1);
@@ -322,7 +328,9 @@ const AddLesson: React.FC = () => {
     <div className="al-wrapper">
 
       <div className="back-btn" onClick={() => {
-        if (editDraftId) {
+        if (isQTV) {
+          navigate(-1);
+        } else if (editDraftId) {
           navigate("/quan-ly-ban-nhap");
         } else {
           navigate(-1);
@@ -344,9 +352,10 @@ const AddLesson: React.FC = () => {
             onChange={(e) => setName(e.target.value)}
           />
 
-          <label>Mô tả nội dung</label>
+          <label>Nội dung bài giảng</label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, marginBottom: 16, background: "#fff" }}>
             <MDXEditor
+              key={editorKey}
               markdown={moTa}
               onChange={setMoTa}
               plugins={[
@@ -378,7 +387,7 @@ const AddLesson: React.FC = () => {
                 onChange={e => setIsFree(e.target.checked)}
                 style={{ width: 18, height: 18, accentColor: '#F95800', cursor: 'pointer', margin: 0 }}
               />
-              <span>Cho phép học thử miễn phí (Free)</span>
+              <span>Cho phép học thử miễn phí </span>
             </label>
           </div>
 
@@ -657,18 +666,20 @@ Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hi�
               </>
             ) : (
               <>
-                <button
-                  className="draft-btn"
-                  disabled={uploading}
-                  onClick={() => handleAddLesson("draft")}
-                >
-                  {uploading ? "Đang lưu..." : "Lưu nháp"}
-                </button>
+                {!isQTV && (
+                  <button
+                    className="draft-btn"
+                    disabled={uploading}
+                    onClick={() => handleAddLesson("draft")}
+                  >
+                    {uploading ? "Đang lưu..." : "Lưu nháp"}
+                  </button>
+                )}
                 <button
                   className="publish-btn"
                   disabled={uploading}
                   onClick={() => handleAddLesson("published")}
-                  style={{ background: "#F95800" }}
+                  style={{ background: "#F95800", width: isQTV ? "100%" : undefined }}
                 >
                   {uploading ? "Đang lưu..." : "Xuất bản ngay"}
                 </button>

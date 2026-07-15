@@ -72,7 +72,7 @@ const getActiveMenu = (pathname: string) => {
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { avatar, handleUpload } = useAvatar();
+  const { avatar } = useAvatar();
 
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
@@ -121,15 +121,22 @@ const Sidebar = () => {
         <img src={import.meta.env.BASE_URL + "flic_logo_full.png"} alt="logo" />
       </div>
 
-      <div className="teacher-profile">
-        <label className="avatar-wrapper sidebar-avatar-wrapper" title="Đổi ảnh">
-          <input type="file" accept="image/*" onChange={handleUpload} hidden />
+      <div
+        className="teacher-profile"
+        onClick={() => {
+          const userStr = sessionStorage.getItem("user");
+          const user = userStr ? JSON.parse(userStr) : {};
+          navigate(`/teacher${user.MaNguoiDung || ""}/thong-tin-ca-nhan`);
+        }}
+        style={{ cursor: "pointer" }}
+        title="Xem thông tin cá nhân"
+      >
+        <div className="avatar-wrapper sidebar-avatar-wrapper" style={{ cursor: "pointer" }}>
           {avatar
             ? <img src={avatar} alt="avatar" className="avatar-img" />
             : <div className="avatar-placeholder">{initials}</div>
           }
-          <div className="avatar-overlay">📷</div>
-        </label>
+        </div>
 
         <div className="teacher-info">
           <h4 className="teacher-name">{teacherInfo?.HoTen || "Đang tải..."}</h4>

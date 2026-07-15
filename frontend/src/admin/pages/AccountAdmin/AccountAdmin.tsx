@@ -360,7 +360,7 @@ export default function AccountAdmin() {
                       {u.VaiTro || "—"}
                     </span>
                   </td>
-                  <td>
+                  <td className="user-status">
                     <span className={`status-badge ${isActive(u.TrangThai) ? "active" : "locked"}`}>
                       {isActive(u.TrangThai) ? "Hoạt động" : "Khóa"}
                     </span>

@@ -118,6 +118,24 @@
   animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Custom scrollbar for preview test modal */
+.cd-modal-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cd-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cd-modal-body::-webkit-scrollbar-thumb {
+  background: #a2c2e8;
+  border-radius: 10px;
+}
+
+.cd-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #000080;
+}
+
 @keyframes modalFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

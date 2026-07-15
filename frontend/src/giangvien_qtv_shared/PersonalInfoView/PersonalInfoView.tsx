@@ -1,11 +1,12 @@
-﻿import "./PersonalInfoView.css";
-import { useNavigate } from "react-router-dom";
+import "./PersonalInfoView.css";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAvatar } from "../../context/AvatarContext";
 import { FiAward, FiBriefcase, FiUser, FiMail, FiPhone } from "react-icons/fi";
 
 const PersonalInfoView = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId?: string }>();
   const { avatar } = useAvatar();
   const [data, setData] = useState<any>(null);
 
@@ -34,7 +35,7 @@ const PersonalInfoView = () => {
     <div className="piv-wrapper">
       <div className="piv-header-row">
         <h1>Thông tin cá nhân</h1>
-        <button className="piv-edit-btn" onClick={() => navigate("/edit-personal-info")}>
+        <button className="piv-edit-btn" onClick={() => navigate(`/${teacherId}/edit-personal-info`)}>
           Sửa thông tin
         </button>
       </div>

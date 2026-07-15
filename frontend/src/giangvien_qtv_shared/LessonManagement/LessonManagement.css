@@ -41,75 +41,21 @@
 
 /* TOOLBAR */
 .lm-wrapper .shared-tab-toolbar {
-  background: #ffffff !important;
+  background: transparent !important;
   border: none !important;
-  border-radius: 12px !important;
-  padding: 12px 16px !important;
+  border-radius: 0 !important;
+  padding: 12px 0 !important;
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+  box-shadow: none !important;
+  margin-top: 8px !important;
   margin-bottom: 20px !important;
 }
 
-.lm-wrapper .shared-tab-toolbar .search-container {
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 8px !important;
-  height: 38px !important;
-  max-width: 300px !important;
-  box-shadow: none !important;
-  transition: all 0.2s ease !important;
-  margin: 0 !important;
-}
+/* Sử dụng định kiểu chung cho ô tìm kiếm và bộ lọc của shared-tab-toolbar từ ChiTietBuoiHoc.css */
 
-.lm-wrapper .shared-tab-toolbar .search-container:hover {
-  border-color: #cbd5e1 !important;
-}
 
-.lm-wrapper .shared-tab-toolbar .search-input {
-  font-size: 13.5px !important;
-  padding: 0 12px !important;
-}
-
-.lm-wrapper .shared-tab-toolbar .search-button {
-  background: transparent !important;
-  color: #64748b !important;
-  border: none !important;
-  padding: 0 12px !important;
-  min-width: 40px !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  transition: color 0.2s ease !important;
-}
-
-.lm-wrapper .shared-tab-toolbar .search-button:hover {
-  color: #000080 !important;
-}
-
-.lm-wrapper .shared-tab-toolbar .search-button svg {
-  stroke: currentColor;
-}
-
-.lm-wrapper .shared-tab-toolbar .filter-select {
-  height: 38px !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 8px !important;
-  font-size: 13.5px !important;
-  font-weight: 500 !important;
-  color: #475569 !important;
-  padding: 0 12px !important;
-  background-color: #ffffff !important;
-  transition: all 0.2s ease !important;
-  outline: none !important;
-  box-sizing: border-box !important;
-}
-
-.lm-wrapper .shared-tab-toolbar .filter-select:hover {
-  border-color: #cbd5e1 !important;
-}
 
 .lm-wrapper .shared-tab-toolbar .add-btn {
   height: 38px !important;

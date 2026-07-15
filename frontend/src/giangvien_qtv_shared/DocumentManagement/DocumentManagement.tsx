@@ -36,7 +36,15 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       : null;
 
     if (fileUrl) {
-      window.open(fileUrl, "_blank");
+      const extension = fileUrl.split('.').pop()?.toLowerCase();
+      const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
+      const isLocal = fileUrl.includes("localhost") || fileUrl.includes("127.0.0.1") || fileUrl.includes("192.168.") || fileUrl.includes("10.");
+      
+      if (isOfficeDoc && !isLocal) {
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, "_blank");
+      } else {
+        window.open(fileUrl, "_blank");
+      }
     } else {
       const newWindow = window.open("", "_blank");
       if (newWindow) {

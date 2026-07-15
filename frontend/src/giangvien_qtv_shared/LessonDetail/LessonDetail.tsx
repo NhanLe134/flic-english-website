@@ -187,6 +187,30 @@ const LessonDetail: React.FC = () => {
         }}>
           {lesson.TrangThai === 'published' ? 'Đã duyệt' : lesson.TrangThai === 'pending' ? 'Chờ duyệt' : 'Từ chối'}
         </span>
+        {isQTV && (
+          <button
+            style={{
+              background: "#F95800",
+              color: "#ffffff",
+              border: "none",
+              padding: "6px 14px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              marginLeft: "auto"
+            }}
+            onClick={() => {
+              navigate(`/QTV/them-bai-giang/${lesson.MaBuoiHoc}?editDraftId=${id}`);
+            }}
+          >
+            <FiEdit size={14} />
+            Sửa 
+          </button>
+        )}
       </div>
 
       {noiDung && (

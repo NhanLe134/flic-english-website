@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend, FiEye } from "react-icons/fi";
 import "./DraftsManagement.css";
 
@@ -28,6 +28,7 @@ interface DraftExercise {
 
 const DraftsManagement = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId?: string }>();
   const [activeTab, setActiveTab] = useState<"lessons" | "exercises" | "exams">("lessons");
   const [lessons, setLessons] = useState<DraftLesson[]>([]);
   const [exercises, setExercises] = useState<DraftExercise[]>([]);
@@ -174,7 +175,7 @@ const DraftsManagement = () => {
 
   return (
     <div className="dm-wrapper">
-      <span className="dm-back" onClick={() => navigate("/lessonlist/18")}>
+      <span className="dm-back" onClick={() => teacherId ? navigate(`/${teacherId}/lophoc`) : navigate(-1)}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
         Quay lại
       </span>

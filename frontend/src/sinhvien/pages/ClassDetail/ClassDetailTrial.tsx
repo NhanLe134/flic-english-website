@@ -517,7 +517,14 @@ export default function ClassDetailTrial() {
                                             onClick={() => {
                                               if (isLoggedIn) {
                                                 if (t.FileUrl) {
-                                                  window.open(docUrl, "_blank");
+                                                  const extension = docUrl.split('.').pop()?.toLowerCase();
+                                                  const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
+                                                  const isLocal = docUrl.includes("localhost") || docUrl.includes("127.0.0.1") || docUrl.includes("192.168.") || docUrl.includes("10.");
+                                                  if (isOfficeDoc && !isLocal) {
+                                                    window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(docUrl)}`, "_blank");
+                                                  } else {
+                                                    window.open(docUrl, "_blank");
+                                                  }
                                                 } else {
                                                   navigate(`/doc-detail/${t.MaTaiLieu}`);
                                                 }

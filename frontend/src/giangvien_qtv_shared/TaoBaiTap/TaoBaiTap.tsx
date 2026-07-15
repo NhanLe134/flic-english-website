@@ -746,7 +746,7 @@ const TaoBaiTap = () => {
             passage = qMatch[1].trim();
             questionsText = qMatch[2].trim();
           } else {
-            const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+            const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
             const parts = block.split(qBoundary);
             if (parts.length > 0) {
               passage = parts[0].trim();
@@ -755,7 +755,7 @@ const TaoBaiTap = () => {
           }
 
           const subQuestions: any[] = [];
-          const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+          const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
           const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
 
           for (const qBlock of qBlocks) {
@@ -802,7 +802,7 @@ const TaoBaiTap = () => {
           passage = qMatch[1].trim();
           questionsText = qMatch[2].trim();
         } else {
-          const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+          const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
           const parts = text.split(qBoundary);
           if (parts.length > 0) {
             passage = parts[0].trim();
@@ -814,7 +814,7 @@ const TaoBaiTap = () => {
         passage = passage.replace(/^\[(?:Bài đọc|Reading|Passage)\]\s*/i, "").trim();
 
         const subQuestions: any[] = [];
-        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
         const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
 
         for (const qBlock of qBlocks) {
@@ -914,7 +914,7 @@ const TaoBaiTap = () => {
           .replace(/^(?:Nhóm|Group|Ngữ cảnh|Context|Dialogue|Đoạn hội thoại|Audio|Passage|Bài đọc|Prompt)\s*\d*\s*[\.\:\-]\s*/im, "")
           .trim();
 
-        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+        const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
         const qBlocks = questionsText.split(qBoundary).map(b => b.trim()).filter(Boolean);
         const subQuestions: any[] = [];
 
@@ -1002,7 +1002,7 @@ const TaoBaiTap = () => {
 
     // Dạng Tìm lỗi sai (writing-find-mistakes)
     if (targetType === "Tìm lỗi sai") {
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
 
@@ -1071,7 +1071,7 @@ const TaoBaiTap = () => {
 
     // 3. Dạng trắc nghiệm phẳng (writing-tense-mcq)
     if (targetType === "Trắc nghiệm") {
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
       
@@ -2548,8 +2548,8 @@ const TaoBaiTap = () => {
                 ))}
               </select>
               {sessionLectures.length === 0 && (
-                <p style={{ color: "#ef4444", fontSize: "12px", margin: "2px 0 0 0", fontStyle: "italic", fontWeight: 500 }}>
-                  ⚠️ Buổi học này chưa có bài giảng nào được xuất bản. Vui lòng tạo bài giảng trước khi tạo bài tập!
+                <p style={{ color: "#475569", fontSize: "12px", margin: "2px 0 0 0", fontStyle: "italic", fontWeight: 500 }}>
+                  ℹ️ Buổi học này chưa có bài giảng nào được xuất bản. Bài tập sẽ được tạo mà không gắn kèm bài giảng.
                 </p>
               )}
             </div>
