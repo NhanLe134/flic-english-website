@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom"
 import TeacherLayout from "./giangvien/layout/TeacherLayout"
 import TrangChu from "./home_pages/TrangChu/TrangChu"
 import VeChuongToi from "./home_pages/VeChuongToi/VeChuongToi"
@@ -11,8 +11,8 @@ import PopupXacThuc from "./components/PopupXacThuc/PopupXacThuc"
 import QuanLyKhoaHoc from "./giangvien_qtv_shared/QuanLyKhoaHoc/QuanLyKhoaHoc"
 import ResetSuccess from "./home_pages/ResetSuccess/ResetSuccess"
 import CourseDetail from "./giangvien_qtv_shared/CourseDetail/CourseDetail"
-import LessonList from "./giangvien_qtv_shared/LessonList/LessonList"
-import ClassDetail from "./giangvien_qtv_shared/ClassDetail/ClassDetail"
+import DanhSachBuoiHoc from "./giangvien_qtv_shared/LessonList/DanhSachBuoiHoc"
+import ChiTietBuoiHoc from "./giangvien_qtv_shared/ClassDetail/ChiTietBuoiHoc"
 import TaoBaiTap from "./giangvien_qtv_shared/TaoBaiTap/TaoBaiTap"
 import ExerciseDetail from "./giangvien_qtv_shared/ExerciseDetail/ExerciseDetail"
 import LessonManagement from "./giangvien_qtv_shared/LessonManagement/LessonManagement"
@@ -27,7 +27,6 @@ import EditPersonalInfo from "./giangvien_qtv_shared/EditPersonalInfo/EditPerson
 import StudentList from "./giangvien_qtv_shared/StudentList/StudentList"
 import AddStudent from "./giangvien_qtv_shared/AddStudent/AddStudent"
 import ExercisePage from "./giangvien_qtv_shared/ExercisePage/ExercisePage"
-import LessonDiscussionPage from "./giangvien_qtv_shared/LessonDiscussionPage/LessonDiscussionPage"
 import ViewStudent from "./giangvien_qtv_shared/ViewStudent/ViewStudent"
 import EditStudent from "./giangvien_qtv_shared/EditStudent/EditStudent"
 import QuanLyKetQuaHocTap from "./giangvien_qtv_shared/QuanLyKetQuaHocTap/QuanLyKetQuaHocTap"
@@ -78,6 +77,7 @@ import TestExamPage from "./sinhvien/pages/TestExamPage"
 import ClassDetailTrial from "./sinhvien/pages/ClassDetail/ClassDetailTrial"
 import NavTuDong from "./components/NavTuDong/NavTuDong"
 import Footer from "./components/Footer/Footer"
+import { MobileNoticeProvider, useMobileNotice } from "./context/MobileNoticeContext"
 
 const ClassDetailTrialPublic = () => {
   return (
@@ -94,6 +94,27 @@ const ClassDetailTrialPublic = () => {
 };
 
 
+const MobileNoticeTrigger = () => {
+  const { showMobileNotice } = useMobileNotice();
+  useEffect(() => {
+    const handleShow = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const role = customEvent.detail?.role || "Học Viên";
+      showMobileNotice(role);
+    };
+    window.addEventListener("show-mobile-notice", handleShow);
+    return () => {
+      window.removeEventListener("show-mobile-notice", handleShow);
+    };
+  }, [showMobileNotice]);
+  return null;
+};
+
+const NavigateTeacherToLopHoc = () => {
+  const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+  return <Navigate to={`/teacher${user.MaNguoiDung || ""}/lophoc`} replace />;
+};
+
 function App() {
   useEffect(() => {
     try {
@@ -107,9 +128,10 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter basename="/flic-english-website">
-      <Routes>
-        {/* PUBLIC */}
+    <HashRouter>
+      <MobileNoticeProvider>
+        <MobileNoticeTrigger />
+        <Routes>
         <Route path="/" element={<TrangChu />} />
         <Route path="/about" element={<VeChuongToi />} />
         <Route path="/courses" element={<CoursesPageHome />} />
@@ -130,40 +152,40 @@ function App() {
         {/* GIẢNG VIÊN */}
         {/* GIẢNG VIÊN - bọc trong TeacherLayout */}
         <Route element={<TeacherLayout />}>
-          <Route path="/quan-ly-khoa-hoc" element={<QuanLyKhoaHoc />} />
-          <Route path="/quan-ly-de-thi" element={<QuanLyDeThiThu />} />
+          <Route path="/quan-ly-khoa-hoc" element={<NavigateTeacherToLopHoc />} />
+          <Route path="/:teacherId/lophoc" element={<QuanLyKhoaHoc />} />
+          <Route path="/:teacherId/lophoc/:id" element={<DanhSachBuoiHoc />} />
+          <Route path="/:teacherId/lophoc/:maLop/:buoiId/:tab?" element={<ChiTietBuoiHoc />} />
+          <Route path="/:teacherId/lophoc/:maLop/:buoiId/bt/:id/view" element={<ExerciseDetail />} />
+          <Route path="/:teacherId/lophoc/:maLop/:buoiId/bg/:id/view" element={<LessonDetail />} />
+          <Route path="/:teacherId/quan-ly-de-thi/:tab?/:subId?" element={<QuanLyDeThiThu />} />
           <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
-          <Route path="/lessonlist/:id" element={<LessonList />} />
-          <Route path="/class/:id" element={<ClassDetail />} />
           <Route path="/create-exercise/:id" element={<TaoBaiTap />} />
-          <Route path="/baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
           <Route path="/danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="/cham-bai/:maBaiNop" element={<ChamBaiPage />} />
           <Route path="/quan-ly-bai-giang/:buoiHocId" element={<LessonManagement />} />
-          <Route path="/bai-giang/:id" element={<LessonDetail />} />
           <Route path="/them-bai-giang/:buoiHocId" element={<AddLesson />} />
           <Route path="/documents/:buoiHocId" element={<DocumentManagement />} />
           <Route path="/them-tai-lieu/:buoiHocId" element={<AddDocument />} />
 
 
           {/* PROFILE */}
-          <Route path="/personal-info-view" element={<CreatepersonalInfo />} />
-          <Route path="/thong-tin-ca-nhan" element={<PersonalInfoView />} />
-          <Route path="/edit-personal-info" element={<EditPersonalInfo />} />
-          <Route path="/doi-mat-khau" element={<DoiMatKhau />} />
-          <Route path="/quan-ly-ban-nhap" element={<DraftsManagement />} />
+          <Route path="/:teacherId/personal-info-view" element={<CreatepersonalInfo />} />
+          <Route path="/:teacherId/thong-tin-ca-nhan" element={<PersonalInfoView />} />
+          <Route path="/:teacherId/edit-personal-info" element={<EditPersonalInfo />} />
+          <Route path="/:teacherId/doi-mat-khau" element={<DoiMatKhau />} />
+          <Route path="/:teacherId/quan-ly-ban-nhap" element={<DraftsManagement />} />
           {/* BÀI TẬP */}
           <Route path="/bai-tap/:id" element={<ExercisePage />} />
-          <Route path="/lesson-discussion/:id" element={<LessonDiscussionPage />} />
           {/* HỌC VIÊN */}
-          <Route path="/danh-sach-hoc-vien" element={<StudentList />} />
+          <Route path="/:teacherId/danh-sach-hoc-vien" element={<StudentList />} />
           <Route path="/them-hoc-vien" element={<AddStudent />} />
           <Route path="/xem-hoc-vien/:id" element={<ViewStudent />} />
           <Route path="/sua-hoc-vien/:id" element={<EditStudent />} />
 
 
           {/* KẾT QUẢ */}
-          <Route path="/quan-ly-ket-qua" element={<QuanLyKetQuaHocTap />} />
+          <Route path="/:teacherId/quan-ly-ket-qua" element={<QuanLyKetQuaHocTap />} />
           <Route path="/lesson-result/:id" element={<LessonResultPage />} />
           <Route path="/ketqua/:id" element={<ChiTietKetQua />} />
           <Route path="/xem-ket-qua/:id" element={<KetQuaHocTapHocVien />} />
@@ -188,10 +210,13 @@ function App() {
           <Route path="hocvien" element={<StudentListQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
           <Route path="create-exercise/:id" element={<TaoBaiTap />} />
-          <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
+          <Route path="quan-ly-de-thi/:tab?/:subId?" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
           <Route path="bai-giang/:id" element={<LessonDetail />} />
+          <Route path="them-bai-giang/:buoiHocId" element={<AddLesson />} />
           <Route path="baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
+          <Route path="danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
+          <Route path="cham-bai/:maBaiNop" element={<ChamBaiPage />} />
         </Route>
 
         {/*Sinh viên*/}
@@ -226,7 +251,8 @@ function App() {
         </Route>
       </Routes>
       <PopupXacThuc />
-    </BrowserRouter>
+      </MobileNoticeProvider>
+    </HashRouter>
   )
 }
 

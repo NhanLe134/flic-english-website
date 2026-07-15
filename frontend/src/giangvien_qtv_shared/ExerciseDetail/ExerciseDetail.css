@@ -196,7 +196,7 @@
 }
 
 .ed-wrapper th {
-  background: #4c8c4a;
+  background: #000080;
   color: white;
   padding: 10px;
   text-align: left;
@@ -354,4 +354,25 @@
 @keyframes scaleIn {
   from { transform: scale(0.7); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Custom override for student view layout inside teacher detail view */
+.ed-wrapper .ad-content {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  zoom: 0.85;
+}
+
+.ed-wrapper .ad-content .ad-title {
+  display: none !important;
+}
+
+.ed-wrapper .ad-content .ad-info-card {
+  margin-top: 10px !important;
+  margin-bottom: 15px !important;
+}
+
+.ed-wrapper .ad-back-overlay {
+  display: none !important;
 }

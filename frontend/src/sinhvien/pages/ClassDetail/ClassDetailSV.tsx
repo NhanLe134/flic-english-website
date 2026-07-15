@@ -16,10 +16,17 @@ import {
   FaFileAlt,
   FaPencilAlt,
   FaClipboardCheck,
-  FaInfoCircle
+  FaInfoCircle,
+  FaLock
 } from "react-icons/fa";
 
-const API = "http://14.225.192.252:5000";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -47,6 +54,7 @@ interface Lesson {
   NgayKetThuc: string;
   ThuTu: number;
   TrangThaiDuyet: string;
+  TrangThai?: string;
 }
 
 const getExerciseDeadline = (ex: any) => {
@@ -98,6 +106,7 @@ export default function ClassDetailSV() {
   const [pendingReview, setPendingReview] = useState<{ sub: any; selectedExercise: any } | null>(null);
 
   const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
+  const [maSinhVien, setMaSinhVien] = useState<number | null>(null);
   const [lessonDetails, setLessonDetails] = useState<Record<number, {
     loading: boolean;
     baiGiangs: any[];
@@ -139,8 +148,13 @@ export default function ClassDetailSV() {
         const myClasses = Array.isArray(myClassesRes) ? myClassesRes : [];
         const enrolledClass = myClasses.find((c: any) => c.MaLopHoc === Number(classId));
 
-        if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành')) {
+        if (!enrolledClass || (enrolledClass.TrangThai !== 'Đang học' && enrolledClass.TrangThai !== 'Đã hoàn thành' && enrolledClass.TrangThai !== 'Hoàn thành')) {
           setError("Bạn không có quyền truy cập lớp học này hoặc yêu cầu ghi danh của bạn đang chờ duyệt.");
+          return;
+        }
+
+        if (infoRes && infoRes.TrangThaiLopHoc === "Chưa bắt đầu") {
+          setError("Lớp học chưa bắt đầu. Bạn không thể truy cập lớp học này.");
           return;
         }
 
@@ -151,8 +165,10 @@ export default function ClassDetailSV() {
         }
 
         if (Array.isArray(lessonsRes)) {
-          // Sort lessons by ThuTu ascending
-          const sorted = [...lessonsRes].sort((a, b) => a.ThuTu - b.ThuTu);
+          // Filter out sessions that are "Chờ mở" and sort lessons by ThuTu ascending
+          const sorted = [...lessonsRes]
+            .filter((l: any) => l.TrangThai !== "Chờ mở")
+            .sort((a, b) => a.ThuTu - b.ThuTu);
           setLessons(sorted);
         } else {
           setLessons([]);
@@ -244,6 +260,24 @@ export default function ClassDetailSV() {
       return;
     }
 
+    // Resolve student info first if not resolved
+    let resolvedMaSV = maSinhVien;
+    if (!resolvedMaSV) {
+      try {
+        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+        const userId = user.MaNguoiDung;
+        if (userId) {
+          const svRes = await fetch(`${API}/students/by-user/${userId}`).then(r => r.json());
+          if (svRes && svRes.MaSinhVien) {
+            resolvedMaSV = svRes.MaSinhVien;
+            setMaSinhVien(svRes.MaSinhVien);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     setLessonDetails(prev => ({
       ...prev,
       [lessonId]: {
@@ -266,7 +300,7 @@ export default function ClassDetailSV() {
       ]);
 
       const published = Array.isArray(baigiangData)
-        ? baigiangData.filter((b: any) => b.TrangThai === "published")
+        ? baigiangData.filter((b: any) => b.TrangThai === "published" || b.TrangThai === "Đã duyệt")
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
       let baitapData = Array.isArray(rawBaitapData)
@@ -281,11 +315,29 @@ export default function ClassDetailSV() {
 
       const activeBaiHoc = published.length > 0 ? published[0].MaBaiHoc : null;
 
+      // Fetch progress for each published lecture in parallel
+      const baiGiangsWithProgress = await Promise.all(
+        published.map(async (b: any) => {
+          if (resolvedMaSV) {
+            try {
+              const prog = await fetch(`${API}/student/progress/minitest/${b.MaBaiHoc}/${resolvedMaSV}`).then(r => r.json());
+              return {
+                ...b,
+                completed: prog.DaXemVideo === 1
+              };
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          return { ...b, completed: false };
+        })
+      );
+
       setLessonDetails(prev => ({
         ...prev,
         [lessonId]: {
           loading: false,
-          baiGiangs: published,
+          baiGiangs: baiGiangsWithProgress,
           taiLieus,
           practices,
           exams,
@@ -481,14 +533,18 @@ export default function ClassDetailSV() {
           <div className="cd-timeline-list">
             {[...lessons].reverse().map((lesson, indexInReversed) => {
               const idx = (lessons.length - 1) - indexInReversed;
-              const isCompleted = idx < completedCount;
-              const isCurrent = idx === completedCount;
-              const isExpanded = expandedLessonId === lesson.MaLesson;
+              const isLocked = lesson.TrangThai === "Chờ mở";
+              const isCompleted = !isLocked && idx < completedCount;
+              const isCurrent = !isLocked && idx === completedCount;
+              const isExpanded = !isLocked && expandedLessonId === lesson.MaLesson;
 
               let markerClass = "cd-timeline-marker cd-marker-upcoming";
               let markerContent: React.ReactNode = idx + 1;
 
-              if (isCompleted) {
+              if (isLocked) {
+                markerClass = "cd-timeline-marker cd-marker-upcoming";
+                markerContent = <FaLock size={10} />;
+              } else if (isCompleted) {
                 markerClass = "cd-timeline-marker cd-marker-completed";
                 markerContent = <FaCheck size={12} />;
               } else if (isCurrent) {
@@ -501,7 +557,7 @@ export default function ClassDetailSV() {
               return (
                 <div
                   key={lesson.MaLesson}
-                  className={`cd-timeline-item ${isCurrent ? "current-item" : ""}`}
+                  className={`cd-timeline-item ${isCurrent ? "current-item" : ""} ${isLocked ? "locked-item" : ""}`}
                 >
                   {/* Timeline node marker */}
                   <div className={markerClass}>{markerContent}</div>
@@ -511,24 +567,29 @@ export default function ClassDetailSV() {
                     {/* Header (clickable to toggle) */}
                     <div
                       className="cd-session-card"
-                      onClick={() => handleToggleLesson(lesson.MaLesson)}
-                      style={{ cursor: "pointer" }}
+                      onClick={() => !isLocked && handleToggleLesson(lesson.MaLesson)}
+                      style={{ cursor: isLocked ? "not-allowed" : "pointer", opacity: isLocked ? 0.7 : 1 }}
                     >
                       <div className="cd-session-left">
                         <h4 className="cd-session-title">{lesson.TenLesson}</h4>
+                        {isLocked && <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "600", color: "#ef4444", background: "#fee2e2", padding: "2px 6px", borderRadius: "4px" }}>Chờ mở</span>}
                       </div>
                       <div className="cd-session-right">
                         <span className="cd-session-date">
                           <FaCalendarAlt size={12} />
                           {formatDate(lesson.NgayBatDau)}
                         </span>
-                        <FaChevronRight
-                          className="cd-session-chevron"
-                          style={{
-                            transform: isExpanded ? "rotate(90deg)" : "none",
-                            transition: "transform 0.2s ease"
-                          }}
-                        />
+                        {!isLocked ? (
+                          <FaChevronRight
+                            className="cd-session-chevron"
+                            style={{
+                              transform: isExpanded ? "rotate(90deg)" : "none",
+                              transition: "transform 0.2s ease"
+                            }}
+                          />
+                        ) : (
+                          <FaLock size={12} style={{ color: "#94a3b8" }} />
+                        )}
                       </div>
                     </div>
 
@@ -591,7 +652,7 @@ export default function ClassDetailSV() {
                                               <th style={{ textAlign: "center" }}>#</th>
                                               <th>Tên bài giảng</th>
                                               <th style={{ textAlign: "center" }}>Loại</th>
-                                              <th style={{ textAlign: "center" }}>Thời lượng</th>
+                                              <th style={{ textAlign: "center" }}>Trạng thái</th>
                                               <th style={{ textAlign: "center" }}>Hành động</th>
                                             </tr>
                                           </thead>
@@ -601,7 +662,20 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{b.TieuDe}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{b.LoaiBaiHoc}</span></td>
-                                                <td style={{ textAlign: "center" }}>{b.ThoiLuong || "—"}</td>
+                                                <td style={{ textAlign: "center" }}>
+                                                  <span style={{
+                                                    display: "inline-block",
+                                                    padding: "4px 10px",
+                                                    borderRadius: "20px",
+                                                    fontSize: "12px",
+                                                    fontWeight: 600,
+                                                    background: b.completed ? "#e8f5e9" : "#f1f5f9",
+                                                    color: b.completed ? "#2e7d32" : "#64748b",
+                                                    border: b.completed ? "1px solid #c8e6c9" : "1px solid #e2e8f0"
+                                                  }}>
+                                                    {b.completed ? "Đã hoàn thành" : "Chưa xem"}
+                                                  </span>
+                                                </td>
                                                 <td style={{ textAlign: "center" }}>
                                                   <button
                                                     className="ld2-open-btn"
@@ -679,8 +753,9 @@ export default function ClassDetailSV() {
                                         </thead>
                                         <tbody>
                                           {detail.practices.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -689,6 +764,13 @@ export default function ClassDetailSV() {
                                                 score = Math.max(...scores).toString();
                                               }
                                             }
+
+                                            const lastSub = exSubmissions.length > 0 ? exSubmissions[exSubmissions.length - 1] : null;
+                                            const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+                                            const dlStr = getExerciseDeadline(ex);
+                                            const overdue = isDeadlineOverdue(dlStr);
+                                            const isLocked = attempts >= 3 || hasReviewed || overdue;
+
                                             return (
                                               <tr
                                                 key={ex.MaBaiTap}
@@ -699,16 +781,17 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Practice"}</span></td>
-                                                {(() => {
-                                                  const dlStr = getExerciseDeadline(ex);
-                                                  const overdue = isDeadlineOverdue(dlStr);
-                                                  return (
-                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
-                                                      {formatDeadline(dlStr)}
-                                                    </td>
-                                                  );
-                                                })()}
-                                                <td style={{ textAlign: "center" }}>{attempts}</td>
+                                                <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                  {formatDeadline(dlStr)}
+                                                </td>
+                                                <td style={{
+                                                  textAlign: "center",
+                                                  color: isLocked ? "#ef4444" : "inherit",
+                                                  fontWeight: isLocked ? 600 : "normal"
+                                                }}>
+                                                  {attempts}
+                                                  {isLocked && <FaLock style={{ marginLeft: "6px", fontSize: "12px", color: "#ef4444", verticalAlign: "middle" }} />}
+                                                </td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
                                               </tr>
                                             );
@@ -742,8 +825,9 @@ export default function ClassDetailSV() {
                                         </thead>
                                         <tbody>
                                           {detail.exams.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -752,6 +836,13 @@ export default function ClassDetailSV() {
                                                 score = Math.max(...scores).toString();
                                               }
                                             }
+
+                                            const lastSub = exSubmissions.length > 0 ? exSubmissions[exSubmissions.length - 1] : null;
+                                            const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
+                                            const dlStr = getExerciseDeadline(ex);
+                                            const overdue = isDeadlineOverdue(dlStr);
+                                            const isLocked = attempts >= 3 || hasReviewed || overdue;
+
                                             return (
                                               <tr
                                                 key={ex.MaBaiTap}
@@ -762,18 +853,18 @@ export default function ClassDetailSV() {
                                                 <td style={{ textAlign: "center" }}>{i + 1}</td>
                                                 <td><strong>{ex.Title}</strong></td>
                                                 <td style={{ textAlign: "center" }}><span className="ld2-type-badge">{mapTypeToSkillName(ex.Type) || "Exam"}</span></td>
-                                                {(() => {
-                                                  const dlStr = getExerciseDeadline(ex);
-                                                  const overdue = isDeadlineOverdue(dlStr);
-                                                  return (
-                                                    <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
-                                                      {formatDeadline(dlStr)}
-                                                    </td>
-                                                  );
-                                                })()}
-                                                <td style={{ textAlign: "center" }}>{attempts}</td>
+                                                <td style={{ textAlign: "center", color: overdue ? "#ef4444" : "inherit", fontWeight: overdue ? 600 : "normal" }}>
+                                                  {formatDeadline(dlStr)}
+                                                </td>
+                                                <td style={{
+                                                  textAlign: "center",
+                                                  color: isLocked ? "#ef4444" : "inherit",
+                                                  fontWeight: isLocked ? 600 : "normal"
+                                                }}>
+                                                  {attempts}
+                                                  {isLocked && <FaLock style={{ marginLeft: "6px", fontSize: "12px", color: "#ef4444", verticalAlign: "middle" }} />}
+                                                </td>
                                                 <td style={{ textAlign: "center" }}>{score !== "" ? score : ""}</td>
-
                                               </tr>
                                             );
                                           })}
@@ -880,38 +971,34 @@ export default function ClassDetailSV() {
               const lastSub = exSubs.length > 0 ? exSubs[exSubs.length - 1] : null;
               const attemptsCount = lastSub ? (lastSub.SoLanLamBai || 1) : 0;
               const hasReviewed = lastSub ? (lastSub.DaXemGiaiThich === 1) : false;
-
-              const isMaxAttempt = attemptsCount >= 3;
-              const isDisabled = isMaxAttempt || hasReviewed;
-
+              const isClassCompleted = info?.TrangThaiLopHoc === "Đã hoàn thành";
               let buttonText = "Làm bài";
-              let tooltipText = "";
               if (attemptsCount > 0) {
                 buttonText = "Làm lại";
-              }
-              if (isMaxAttempt) {
-                tooltipText = "Bạn đã đạt giới hạn làm bài (tối đa 3 lần).";
-              } else if (hasReviewed) {
-                tooltipText = "Bạn đã xem giải thích đáp án, không thể làm lại.";
               }
 
               return (
                 <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", alignItems: "center" }}>
-                  {tooltipText && (
-                    <span style={{ color: "#ef4444", fontSize: "12px", fontWeight: "600" }}>
-                      {tooltipText}
-                    </span>
-                  )}
                   <button
                     className="ld2-open-btn"
                     style={{
                       padding: "10px 20px",
-                      opacity: isDisabled ? 0.5 : 1,
-                      cursor: isDisabled ? "not-allowed" : "pointer",
-                      backgroundColor: isDisabled ? "#cbd5e1" : "#f95800"
+                      cursor: "pointer",
+                      backgroundColor: "#f95800"
                     }}
-                    disabled={isDisabled}
                     onClick={() => {
+                      if (isClassCompleted) {
+                        alert("Lớp học đã hoàn thành, không thể làm lại bài tập này.");
+                        return;
+                      }
+                      if (attemptsCount >= 3) {
+                        alert("Bạn đã đạt giới hạn làm bài (tối đa 3 lần).");
+                        return;
+                      }
+                      if (hasReviewed) {
+                        alert("Bạn đã xem kết quả bài tập, không thể làm lại bài tập này.");
+                        return;
+                      }
                       const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
                       navigate(`/MyCourses/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}`);
                       setSelectedExercise(null);
@@ -965,14 +1052,22 @@ export default function ClassDetailSV() {
                     try {
                       const userStr = sessionStorage.getItem("user") || localStorage.getItem("user");
                       const userObj = JSON.parse(userStr || "{}");
-                      await fetch(`http://14.225.192.252:5000/bainop/xem-giai-thich`, {
+                      await fetch(`${API}/bainop/xem-giai-thich`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          MaSinhVien: userObj.MaSinhVien || userObj.MaNguoiDung,
+                          MaSinhVien: sub.MaSinhVien || userObj.MaSinhVien || userObj.MaNguoiDung,
                           MaBaiTap: selEx.MaBaiTap
                         })
                       });
+
+                      // Cập nhật state cục bộ để giao diện nhận biết tức thì trạng thái đã xem giải thích
+                      setSubmissions(prev => prev.map(item => {
+                        if (String(item.MaBaiTap) === String(selEx.MaBaiTap)) {
+                          return { ...item, DaXemGiaiThich: 1 };
+                        }
+                        return item;
+                      }));
                     } catch (e) {
                       console.error("Error setting review flag:", e);
                     }

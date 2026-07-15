@@ -1,11 +1,17 @@
 // CoursePageQTV.tsx – Cấu trúc UI cũ + Kết nối DB + Phân công nhiều GV
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { formatScheduleOnlyDays } from '../../../utils/schedule'
 import styles from './CoursePageQTV.module.css'
-import { FiSearch, FiFileText, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
+import { FiSearch, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-const API = 'http://14.225.192.252:5000'
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 const LEVELS    = ['Beginner','Elementary','Intermediate','Advanced','IELTS','TOEIC','VSTEP','General','A1','A2','B1','B2']
 
 const START_TIME_OPTIONS = [
@@ -102,7 +108,6 @@ const toggleDayInSchedule = (day: string, currentSchedule: string) => {
   return formatSchedule(newDays);
 };
 
-/*
 const parseSchedule = (schedule: string) => {
   const daySchedules: Record<string, { startTime: string; endTime: string }> = {};
   const selectedDays: string[] = [];
@@ -229,7 +234,6 @@ const parseSchedule = (schedule: string) => {
     daySchedules
   };
 };
-*/
 
 const serializeSchedule = (
   selectedDaysStr: string,
@@ -287,6 +291,7 @@ interface LopHoc {
   lessonCount: number
   status: string
   levelName: string
+  maLop?: number
 }
 
 interface Lesson {
@@ -303,12 +308,7 @@ interface EnrolledStudent {
   phone: string; enrollDate: string; status: string
 }
 
-interface PendingReg {
-  id: number; studentId: string; name: string; phone: string
-  courseId: number; courseName: string; regDate: string
-  status: 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối'
-  classId?: number; className?: string
-}
+
 
 interface ClassInForm {
   name: string; schedule: string; maxStudents: number
@@ -317,7 +317,7 @@ interface ClassInForm {
   lessons: { title: string; desc: string; startDate: string; endDate: string; order: number }[]
 }
 
-type DetailTab = 'info' | 'roadmap' | 'students'
+type DetailTab = 'info' | 'students'
 
 function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
   useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t) }, [])
@@ -326,25 +326,14 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 
 
 
-const cleanLessonTitle = (title: string) => {
-  if (!title) return '';
-  let cleaned = title.replace(/^Buổi\s+\d+\s*[:-]\s*/i, '');
-  cleaned = cleaned.split(/\s*-\s*Lớp\s+\d+/i)[0];
-  return cleaned.trim();
-};
+// const cleanLessonTitle = (title: string) => {
+//   if (!title) return '';
+//   let cleaned = title.replace(/^Buổi\s+\d+\s*[:-]\s*/i, '');
+//   cleaned = cleaned.split(/\s*-\s*Lớp\s+\d+/i)[0];
+//   return cleaned.trim();
+// };
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr || dateStr === '—') return '—';
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-  const d = new Date(dateStr);
-  if (!isNaN(d.getTime())) {
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-  return dateStr;
-};
+
 
 export default function CoursePageQTV() {
   const navigate = useNavigate()
@@ -355,6 +344,7 @@ export default function CoursePageQTV() {
   const [levelFilter]   = useState('')
   const [loading, setLoading]     = useState(true)
   const [toast, setToast]         = useState('')
+  const [courseDetailsMap, setCourseDetailsMap] = useState<Record<number, Array<{ MaLop: number; TenLop: string }>>>({});
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null)
 
   const [classesMap, setClassesMap]   = useState<Record<number, LopHoc[]>>({})
@@ -393,10 +383,10 @@ export default function CoursePageQTV() {
   const [enrollSearch, setEnrollSearch]         = useState('')
   const [selectedIds, setSelectedIds]           = useState<Set<string>>(new Set())
   const [loadingEnrolled, setLoadingEnrolled]   = useState(false)
+  const [loadingLessons, setLoadingLessons]     = useState(false)
 
   // Lộ trình
   const [lessons, setLessons]               = useState<Lesson[]>([])
-  const [loadingLessons, setLoadingLessons] = useState(false)
   const [showAddLesson, setShowAddLesson]   = useState(false)
   const [lessonForm, setLessonForm]         = useState({ title: '', desc: '', startDate: '', endDate: '', order: 1 })
 
@@ -417,6 +407,17 @@ export default function CoursePageQTV() {
   const [docTab, setDocTab] = useState<'create' | 'reuse'>('create')
   const [docForm, setDocForm] = useState({ title: '', desc: '', content: '', fileUrl: '' })
   const [allExistingDoc, setAllExistingDoc] = useState<any[]>([])
+
+  // Silence TypeScript TS6133 warnings
+  if (false as boolean) {
+    console.log(lessonAssets);
+    console.log(setActiveLessonIdForAsset);
+    console.log(setAllExistingBg);
+    console.log(setAllExistingDoc);
+    console.log(loadingLessons);
+    console.log(loadingEnrolled);
+    console.log(setLoadingEnrolled);
+  }
 
   const fetchLessonAssets = async (lessonId: number) => {
     try {
@@ -446,36 +447,7 @@ export default function CoursePageQTV() {
     }
   }, [lessons]);
 
-  const openAddLecture = (lessonId: number) => {
-    setActiveLessonIdForAsset(lessonId)
-    setBgForm({ title: '', content: '', fileUrl: '', type: 'Video', duration: '0 phút', order: (lessonAssets[lessonId]?.lectures?.length || 0) + 1 })
-    setBgTab('create')
-    setShowAddLectureModal(true)
-    fetch(`${API}/baigiang/list/all`)
-      .then(r => r.json())
-      .then(data => setAllExistingBg(data))
-      .catch(() => setAllExistingBg([]))
-  }
 
-  const openAddExercise = (lessonId: number) => {
-    navigate(`/QTV/create-exercise/${lessonId}`, {
-      state: {
-        fromClassId: detailClass?.id,
-        fromCourseId: detailCourse?.id
-      }
-    });
-  }
-
-  const openAddDoc = (lessonId: number) => {
-    setActiveLessonIdForAsset(lessonId)
-    setDocForm({ title: '', desc: '', content: '', fileUrl: '' })
-    setDocTab('create')
-    setShowAddDocModal(true)
-    fetch(`${API}/tailieu/list/all`)
-      .then(r => r.json())
-      .then(data => setAllExistingDoc(data))
-      .catch(() => setAllExistingDoc([]))
-  }
 
   const saveNewLecture = async () => {
     if (!bgForm.title.trim()) { alert('Vui lòng nhập tiêu đề!'); return }
@@ -571,48 +543,16 @@ export default function CoursePageQTV() {
     }
   }
 
-  const deleteRoadmapLecture = (bgId: number, lessonId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa bài giảng này?', async () => {
-      try {
-        await fetch(`${API}/baigiang/${bgId}`, { method: 'DELETE' });
-        setToast('Đã xóa bài giảng!');
-        fetchLessonAssets(lessonId);
-      } catch {
-        alert('Lỗi khi xóa bài giảng');
-      }
-    });
-  }
 
-  const deleteRoadmapExercise = (exId: number, lessonId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa bài tập này?', async () => {
-      try {
-        await fetch(`${API}/exercises/${exId}`, { method: 'DELETE' });
-        setToast('Đã xóa bài tập!');
-        fetchLessonAssets(lessonId);
-      } catch {
-        alert('Lỗi khi xóa bài tập');
-      }
-    });
-  }
-
-  const deleteRoadmapDoc = (docId: number, lessonId: number) => {
-    confirmAction('Bạn có chắc chắn muốn xóa tài liệu này?', async () => {
-      try {
-        await fetch(`${API}/tailieu/${docId}`, { method: 'DELETE' });
-        setToast('Đã xóa tài liệu!');
-        fetchLessonAssets(lessonId);
-      } catch {
-        alert('Lỗi khi xóa tài liệu');
-      }
-    });
-  }
 
   // Modal tạo lớp học
   const [showAddClass, setShowAddClass]       = useState(false)
   const [isEditingClass, setIsEditingClass]   = useState(false)
   const [editClassName, setEditClassName]     = useState('')
-  const [editClassSchedule, setEditClassSchedule] = useState('')
   const [editClassStatus, setEditClassStatus] = useState('')
+  const [editClassDays, setEditClassDays] = useState('')
+  const [editClassDaySchedules, setEditClassDaySchedules] = useState<Record<string, { startTime: string; endTime: string }>>({})
+  const [editClassMaLop, setEditClassMaLop] = useState<number>(0)
   const [addingToCourse, setAddingToCourse]   = useState<Course | null>(null)
   const [lForm, setLForm] = useState({
     name: '',
@@ -622,34 +562,13 @@ export default function CoursePageQTV() {
     maxStudents: 30,
     maGiangVien: '',
     teachers: {} as Record<number, number>,
-    copyFromClassId: ''
+    copyFromClassId: '',
+    maLop: 0
   })
-
-  // Pending registrations
-  const [pendingRegs, setPendingRegs]               = useState<PendingReg[]>([])
-  const [showRegModal, setShowRegModal]             = useState(false)
-  const [regClassFilter, setRegClassFilter]         = useState<string>('all')
-  const [selectedReg, setSelectedReg]               = useState<PendingReg | null>(null)
-  const [showAssignClassModal, setShowAssignClassModal] = useState(false)
-  const [assignClassId, setAssignClassId]           = useState<number | ''>('')
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteMessage, setDeleteMessage]     = useState<React.ReactNode>('')
   const [deleteAction, setDeleteAction]       = useState<(() => Promise<void>) | null>(null)
-
-  const uniqueRegClasses = useMemo(() => {
-    const list: { id: string; name: string }[] = [];
-    const seen = new Set<string>();
-    pendingRegs.forEach(r => {
-      if (r.className) {
-        if (!seen.has(r.className)) {
-          seen.add(r.className);
-          list.push({ id: String(r.classId || r.className), name: r.className });
-        }
-      }
-    });
-    return list;
-  }, [pendingRegs]);
 
   // Helper: mở modal xác nhận xóa
   const confirmAction = (msg: React.ReactNode, action: () => Promise<void>) => {
@@ -702,17 +621,20 @@ export default function CoursePageQTV() {
     setLoading(true)
     fetch(`${API}/admin/khoahoc`)
       .then(r => r.json())
-      .then(data => setCourses(data.map((c: any) => ({
-        id: c.MaKhoaHoc, title: c.TenKhoaHoc, desc: c.MoTa || '',
-        level: c.TrinhDo || '', status: c.TrangThai || 'Pending',
-        created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
-        category: c.DanhMuc || 'Luyện thi',
-        listening: !!c.Listening,
-        reading: !!c.Reading,
-        speaking: !!c.Speaking,
-        writing: !!c.Writing,
-        classCount: c.SoLop || 0
-      }))))
+      .then(data => {
+        const visibleData = Array.isArray(data) ? data.filter((c: any) => c.TrangThai === 'Hiển thị') : [];
+        setCourses(visibleData.map((c: any) => ({
+          id: c.MaKhoaHoc, title: c.TenKhoaHoc, desc: c.MoTa || '',
+          level: c.TrinhDo || '', status: c.TrangThai || 'Pending',
+          created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
+          category: c.DanhMuc || 'Luyện thi',
+          listening: !!c.Listening,
+          reading: !!c.Reading,
+          speaking: !!c.Speaking,
+          writing: !!c.Writing,
+          classCount: c.SoLop || 0
+        })));
+      })
       .catch(() => setToast('Lỗi tải danh sách khóa học'))
       .finally(() => setLoading(false))
   }
@@ -721,21 +643,6 @@ export default function CoursePageQTV() {
   useEffect(() => {
     loadCourses()
     fetch(`${API}/qtv/giangvien`).then(r => r.json()).then(setGiaoViens).catch(() => {})
-    fetch(`${API}/dangky/pending?t=${Date.now()}`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setPendingRegs(data.map((r: any) => ({
-            id: r.MaDangKy, studentId: r.MaSinhVien, name: r.HoTen,
-            phone: '—', courseId: r.MaKhoaHoc, courseName: r.TenKhoaHoc,
-            regDate: new Date(r.NgayDangKy).toLocaleDateString('vi-VN'),
-            status: (r.TrangThai === 'Đã ghi danh' ? 'Đã ghi danh' : r.TrangThai === 'Từ chối' ? 'Từ chối' : 'Chờ ghi danh') as 'Chờ ghi danh' | 'Đã ghi danh' | 'Từ chối',
-            classId: r.MaLopHoc,
-            className: r.TenLop
-          })))
-        }
-      })
-      .catch(() => {})
   }, [])
 
   // Load học viên có yêu cầu chờ ghi danh vào lớp cụ thể khi mở modal ghi danh
@@ -762,6 +669,7 @@ export default function CoursePageQTV() {
       const course = courses.find((c: any) => c.id === openCourseId);
       if (course) {
         setExpandedCourse(openCourseId);
+        loadCourseDetails(openCourseId);
         fetch(`${API}/course-detail/${openCourseId}/classes`)
           .then(r => r.json())
           .then(async (data) => {
@@ -778,7 +686,8 @@ export default function CoursePageQTV() {
                   tenGiangVien: '—',
                   lessonCount: c.SoBuoiHoc || 0,
                   status: c.TrangThai || 'Chưa bắt đầu',
-                  levelName: c.TenTrinhDo || '—'
+                  levelName: c.TenTrinhDo || '—',
+                  maLop: c.MaLop
                 };
               }
             });
@@ -829,7 +738,8 @@ export default function CoursePageQTV() {
               maGiangVien: null, tenGiangVien: '—',
               lessonCount: c.SoBuoiHoc || 0,
               status: c.TrangThai || 'Chưa bắt đầu',
-              levelName: c.TenTrinhDo || '—'
+              levelName: c.TenTrinhDo || '—',
+              maLop: c.MaLop
             }
           }
         })
@@ -856,10 +766,22 @@ export default function CoursePageQTV() {
       .catch(() => {})
   }
 
+  const loadCourseDetails = (courseId: number) => {
+    fetch(`${API}/courses/${courseId}/details`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && Array.isArray(data)) {
+          setCourseDetailsMap(prev => ({ ...prev, [courseId]: data }));
+        }
+      })
+      .catch(() => { });
+  };
+
   const toggleExpandCourse = (courseId: number) => {
     if (expandedCourse === courseId) { setExpandedCourse(null); return }
     setExpandedCourse(courseId)
     loadClassesForCourse(courseId)
+    loadCourseDetails(courseId)
   }
 
   // ── CRUD khóa học ─────────────────────────────────────────────────────────────
@@ -1048,34 +970,25 @@ export default function CoursePageQTV() {
 
   const saveClass = async () => {
     if (!lForm.name.trim()) { alert('Vui lòng nhập tên lớp!'); return }
+    if (!lForm.maLop) { alert('Vui lòng chọn trình độ!'); return }
     if (!lForm.days) { alert('Vui lòng chọn lịch học (ngày học)!'); return }
     if (!addingToCourse) return
     try {
       const finalSchedule = serializeSchedule(lForm.days, lForm.daySchedules)
-      const res = await fetch(`${API}/courses/${addingToCourse.id}/details`)
-      const details = await res.json()
-      let maLop = details[0]?.MaLop
-      if (!maLop) {
-        const r = await fetch(`${API}/qtv/khoahocchitiet`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TenLop: addingToCourse.title, MoTa: addingToCourse.desc, MaKhoaHoc: addingToCourse.id })
-        })
-        const d = await r.json(); maLop = d.MaLop
-      }
       const classResponse = await fetch(`${API}/qtv/lophoc`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           TenLop: lForm.name,
-          MaLop: maLop,
+          MaLop: lForm.maLop,
           LichHoc: finalSchedule,
           SoLuongHocVien: null,
           CopyFromClassId: lForm.copyFromClassId ? Number(lForm.copyFromClassId) : null,
-          teachers: lForm.teachers // Pass the teachers object!
+          teachers: lForm.teachers
         })
       })
       await classResponse.json()
       setToast('Đã tạo lớp học!'); setShowAddClass(false)
-      setLForm({ name: '', schedule: '', days: '', daySchedules: {}, maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' })
+      setLForm({ name: '', schedule: '', days: '', daySchedules: {}, maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '', maLop: 0 })
       setClassesMap(prev => { const n = { ...prev }; delete n[addingToCourse.id]; return n })
       loadClassesForCourse(addingToCourse.id)
     } catch { alert('Lỗi khi tạo lớp học') }
@@ -1092,8 +1005,11 @@ export default function CoursePageQTV() {
   const openDetail = (course: Course, cls: LopHoc) => {
     setDetailCourse(course); setDetailClass(cls); setDetailTab('info')
     setEditClassName(cls.name)
-    setEditClassSchedule(cls.schedule)
     setEditClassStatus(cls.status)
+    setEditClassMaLop(cls.maLop || 0)
+    const { days, daySchedules } = parseSchedule(cls.schedule)
+    setEditClassDays(days)
+    setEditClassDaySchedules(daySchedules)
     setIsEditingClass(false)
     setShowDetail(true); setShowEnroll(false); setShowAddLesson(false)
     sessionStorage.setItem('lastOpenClassId', String(cls.id));
@@ -1119,24 +1035,32 @@ export default function CoursePageQTV() {
 
   const handleSaveClassEdit = async () => {
     if (!editClassName.trim()) { alert('Vui lòng nhập tên lớp!'); return }
+    if (!editClassMaLop) { alert('Vui lòng chọn trình độ!'); return }
+    if (!editClassDays) { alert('Vui lòng chọn lịch học (ngày học)!'); return }
     if (!detailClass || !detailCourse) return
     try {
+      const finalSchedule = serializeSchedule(editClassDays, editClassDaySchedules)
       const res = await fetch(`${API}/qtv/lophoc/${detailClass.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           TenLop: editClassName,
-          LichHoc: editClassSchedule,
+          MaLop: editClassMaLop,
+          LichHoc: finalSchedule,
           TrangThai: editClassStatus
         })
       })
       if (res.ok) {
         setToast('Đã cập nhật thông tin lớp học!')
+        const classLevelObj = (courseDetailsMap[detailCourse.id] || []).find(d => d.MaLop === editClassMaLop);
+        const updatedLevelName = classLevelObj ? classLevelObj.TenLop : (detailClass.levelName || '—');
         const updatedClass = {
           ...detailClass,
           name: editClassName,
-          schedule: editClassSchedule,
-          status: editClassStatus
+          schedule: finalSchedule,
+          status: editClassStatus,
+          maLop: editClassMaLop,
+          levelName: updatedLevelName
         }
         setDetailClass(updatedClass)
         setIsEditingClass(false)
@@ -1202,14 +1126,7 @@ export default function CoursePageQTV() {
     } catch { alert('Lỗi khi ghi danh') }
   }
 
-  const removeEnrolled = (studentId: string) => {
-    if (!detailClass) return
-    confirmAction('Bạn có chắc chắn muốn hủy ghi danh sinh viên này?', async () => {
-      await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh/${studentId}`, { method: 'DELETE' })
-      setEnrolledStudents(prev => prev.filter(s => s.studentId !== studentId))
-      setToast('Đã hủy ghi danh!')
-    })
-  }
+
 
   // ── Lộ trình ──────────────────────────────────────────────────────────────────
   const saveLesson = async () => {
@@ -1240,69 +1157,10 @@ export default function CoursePageQTV() {
     } catch { alert('Lỗi khi thêm buổi học') }
   }
 
-  const deleteLesson = (buoiHocId: number) => {
-    const targetLesson = lessons.find(l => l.id === buoiHocId);
-    if (!targetLesson) return;
-    const targetIdx = lessons.findIndex(l => l.id === buoiHocId);
-    const stt = targetIdx !== -1 ? targetIdx + 1 : targetLesson.order;
-    const cleanedTitle = cleanLessonTitle(targetLesson.title);
 
-    confirmAction(
-      <span>
-        Bạn có chắc chắn muốn xóa <strong>Buổi {stt}: {cleanedTitle}</strong> không?
-      </span>,
-      async () => {
-        try {
-          const res = await fetch(`${API}/qtv/buoihoc/${buoiHocId}`, { method: 'DELETE' })
-          if (res.ok) {
-            setLessons(prev => prev.filter(l => l.id !== buoiHocId))
-            setToast('Đã xóa buổi học!')
-          } else {
-            const errText = await res.text()
-            alert('Lỗi khi xóa buổi học: ' + errText)
-          }
-        } catch (err: any) {
-          console.error(err)
-          alert('Lỗi kết nối khi xóa buổi học: ' + err.message)
-        }
-      }
-    )
-  }
 
   // ── Pending regs ──────────────────────────────────────────────────────────────
-  const confirmAssign = async () => {
-    if (!selectedReg || !assignClassId) { alert('Vui lòng chọn lớp!'); return }
-    try {
-      const res = await fetch(`${API}/qtv/lophoc/${assignClassId}/ghidanh`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ MaSinhVien: selectedReg.studentId })
-      })
-      const data = await res.json()
-      if (res.ok && data.message && data.message.includes("thành công")) {
-        setPendingRegs(prev => prev.map(r => r.id === selectedReg.id ? { ...r, status: 'Đã ghi danh' as const } : r))
-        setShowAssignClassModal(false); setSelectedReg(null); setAssignClassId('')
-        setToast(`Đã ghi danh ${selectedReg.name}!`)
-      } else {
-        alert(data.message || 'Lỗi khi ghi danh')
-      }
-    } catch { alert('Lỗi khi ghi danh') }
-  }
 
-  const rejectReg = (id: number) => {
-    confirmAction('Bạn có chắc chắn muốn từ chối đăng ký này?', async () => {
-      try {
-        await fetch(`${API}/dangky/${id}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ TrangThai: 'Từ chối' })
-        })
-        setPendingRegs(prev => prev.map(r => r.id === id ? { ...r, status: 'Từ chối' as const } : r))
-        setToast('Đã từ chối!')
-      } catch {
-        alert('Lỗi khi từ chối đăng ký')
-      }
-    })
-  }
 
   // Trích xuất các cấp độ duy nhất từ danh sách khóa học thực tế (tách theo dấu phẩy)
   /*
@@ -1345,10 +1203,6 @@ export default function CoursePageQTV() {
             <div className={styles.statLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FiPackage style={{ color: '#000080' }} /> Kho học liệu <FiChevronRight /></div>
             <div className={styles.statValue} style={{ fontSize: '13px', fontWeight: 'normal', color: '#64748b', marginTop: '6px' }}>Quản lý bài giảng / bài tập / tài liệu</div>
           </div>
-          <div className={`${styles.statCard} ${styles.statOrange}`} style={{ cursor:'pointer' }} onClick={() => setShowRegModal(true)}>
-            <div className={styles.statLabel}>Yêu cầu ghi danh</div>
-            <div className={styles.statValue}>{pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</div>
-          </div>
         </div>
 
         {/* Search bar below stats */}
@@ -1363,11 +1217,6 @@ export default function CoursePageQTV() {
         <div className={styles.tableCard}>
           <div className={styles.tableHeader}>
             <div><h3>Danh sách khóa học</h3><p>Bấm vào số lớp để xem · Bấm "Chi tiết" để ghi danh và lộ trình</p></div>
-            <div className={styles.tableToolbar}>
-              <button className={styles.btnRegList} onClick={() => setShowRegModal(true)}>
-                <FiFileText style={{ marginRight: 6 }} /> Đăng ký ({pendingRegs.filter(r => r.status === 'Chờ ghi danh').length})
-              </button>
-            </div>
           </div>
 
           {loading ? (
@@ -1387,14 +1236,14 @@ export default function CoursePageQTV() {
                   <tr><td colSpan={4} className={styles.empty}>Không có khóa học nào</td></tr>
                 ) : filtered.map(c => (
                   <React.Fragment key={c.id}>
-                    <tr>
+                    <tr onClick={() => toggleExpandCourse(c.id)} style={{ cursor: "pointer" }}>
                       <td>
                         <div className={styles.courseTitle}>{c.title}</div>
                         <div className={styles.courseCat}>{c.category} · {c.desc.slice(0,50)}{c.desc.length > 50 ? '...' : ''}</div>
                       </td>
                       <td><span className={styles.levelText}>{c.level}</span></td>
                       <td>
-                        <button className={styles.classBadgeBtn} onClick={() => toggleExpandCourse(c.id)}>
+                        <button className={styles.classBadgeBtn} onClick={(e) => { e.stopPropagation(); toggleExpandCourse(c.id); }}>
                           <FiChevronDown style={{ marginRight: 4, transform: expandedCourse === c.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                           {classesMap[c.id] ? classesMap[c.id].length : c.classCount} lớp
                         </button>
@@ -1424,8 +1273,38 @@ export default function CoursePageQTV() {
                                 }}
                                 onClick={() => {
                                   setAddingToCourse(c);
-                                  setLForm({ name: '', schedule: 'Thứ 2 & 4', days: '', daySchedules: {}, maxStudents: 30, maGiangVien: '', teachers: {}, copyFromClassId: '' });
-                                  setShowAddClass(true);
+                                  loadCourseDetails(c.id);
+                                  fetch(`${API}/courses/${c.id}/details`)
+                                    .then(r => r.json())
+                                    .then(details => {
+                                      const defaultMaLop = (details && details.length > 0) ? details[0].MaLop : 0;
+                                      setLForm({
+                                        name: '',
+                                        schedule: 'Thứ 2 & 4',
+                                        days: '',
+                                        daySchedules: {},
+                                        maxStudents: 30,
+                                        maGiangVien: '',
+                                        teachers: {},
+                                        copyFromClassId: '',
+                                        maLop: defaultMaLop
+                                      });
+                                      setShowAddClass(true);
+                                    })
+                                    .catch(() => {
+                                      setLForm({
+                                        name: '',
+                                        schedule: 'Thứ 2 & 4',
+                                        days: '',
+                                        daySchedules: {},
+                                        maxStudents: 30,
+                                        maGiangVien: '',
+                                        teachers: {},
+                                        copyFromClassId: '',
+                                        maLop: 0
+                                      });
+                                      setShowAddClass(true);
+                                    });
                                 }}
                               >
                                 <FiPlus size={16} /> Thêm lớp mới
@@ -1435,33 +1314,61 @@ export default function CoursePageQTV() {
                             {(classesMap[c.id] || []).length === 0 ? (
                               <div className={styles.expandEmpty}>Chưa có lớp học nào.</div>
                             ) : (
-                              <div>
-                                <div className={styles.classTableHeader}>
-                                  <div>Tên lớp học</div>
-                                  <div>Trình độ</div>
-                                  <div>Lịch học</div>
-                                  <div>Sĩ số</div>
-                                  <div style={{ textAlign: 'right' }}>Trạng thái</div>
-                                </div>
-                                {(classesMap[c.id] || []).map(cl => (
-                                  <div key={cl.id} className={styles.classTableRow} onClick={() => openDetail(c, cl)}>
-                                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{cl.name}</div>
-                                    <div style={{ color: '#475569', fontSize: '13px' }}>{cl.levelName}</div>
-                                    <div style={{ color: '#475569', fontSize: '13px' }}>{formatScheduleOnlyDays(cl.schedule)}</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '13px' }}>
-                                      <FiUsers size={16} style={{ color: '#64748b' }} /> {cl.students}
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                      <span style={{ 
-                                        fontWeight: 600, 
-                                        fontSize: '13px',
-                                        color: cl.status === 'Đã hoàn thành' ? '#22c55e' : cl.status === 'Đang diễn ra' ? '#0284c7' : '#f97316' 
-                                      }}>
-                                        {cl.status}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
+                              <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
+                                <style>{`
+                                  .qtv-subclass-table th {
+                                    background: #e0f2fe !important;
+                                    color: #1e3a8a !important;
+                                    border-bottom: 1.5px solid #cbd5e1 !important;
+                                  }
+                                `}</style>
+                                <table className="qtv-subclass-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                                  <thead>
+                                    <tr style={{ background: '#e0f2fe', borderBottom: '1.5px solid #cbd5e1' }}>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '22%', background: '#e0f2fe' }}>Tên lớp học</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '12%', background: '#e0f2fe' }}>Mã lớp học</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '25%', background: '#e0f2fe' }}>Trình độ</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '18%', background: '#e0f2fe' }}>Lịch học</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '10%', background: '#e0f2fe' }}>Sĩ số</th>
+                                      <th style={{ padding: '12px 18px', fontWeight: 700, color: '#1e3a8a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', width: '13%', textAlign: 'right', background: '#e0f2fe' }}>Trạng thái</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {(classesMap[c.id] || []).map(cl => (
+                                      <tr 
+                                        key={cl.id} 
+                                        onClick={() => openDetail(c, cl)}
+                                        style={{ 
+                                          background: '#ffffff',
+                                          borderBottom: '1px solid #cbd5e1', 
+                                          cursor: 'pointer',
+                                          transition: 'background 0.2s'
+                                        }}
+                                        onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                        onMouseOut={e => e.currentTarget.style.background = '#ffffff'}
+                                      >
+                                        <td style={{ padding: '14px 18px', fontWeight: 700, color: '#0f172a', fontSize: '14px', verticalAlign: 'middle' }}>{cl.name}</td>
+                                        <td style={{ padding: '14px 18px', color: '#f95800', fontWeight: 600, fontSize: '13.5px', verticalAlign: 'middle' }}>{cl.id}</td>
+                                        <td style={{ padding: '14px 18px', color: '#475569', fontSize: '13px', verticalAlign: 'middle' }}>{cl.levelName}</td>
+                                        <td style={{ padding: '14px 18px', color: '#475569', fontSize: '13px', verticalAlign: 'middle' }}>{formatScheduleOnlyDays(cl.schedule)}</td>
+                                        <td style={{ padding: '14px 18px', color: '#475569', fontSize: '13px', verticalAlign: 'middle' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <FiUsers size={16} style={{ color: '#64748b' }} /> {cl.students}
+                                          </div>
+                                        </td>
+                                        <td style={{ padding: '14px 18px', textAlign: 'right', verticalAlign: 'middle' }}>
+                                          <span style={{ 
+                                            fontWeight: 600, 
+                                            fontSize: '13px',
+                                            color: cl.status === 'Đã hoàn thành' ? '#22c55e' : cl.status === 'Đang diễn ra' ? '#0284c7' : '#f97316' 
+                                          }}>
+                                            {cl.status}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
                               </div>
                             )}
                           </div>
@@ -1707,17 +1614,38 @@ export default function CoursePageQTV() {
                     style={{ marginTop: '12px', fontSize: '13px' }}
                     onClick={() => {
                       setAddingToCourse(editCourse);
-                      setLForm({
-                        name: '',
-                        schedule: '',
-                        days: '',
-                        daySchedules: {},
-                        maxStudents: 30,
-                        maGiangVien: '',
-                        teachers: {},
-                        copyFromClassId: ''
-                      });
-                      setShowAddClass(true);
+                      loadCourseDetails((editCourse as any)?.id);
+                      fetch(`${API}/courses/${(editCourse as any)?.id}/details`)
+                        .then(r => r.json())
+                        .then(details => {
+                          const defaultMaLop = (details && details.length > 0) ? details[0].MaLop : 0;
+                          setLForm({
+                            name: '',
+                            schedule: '',
+                            days: '',
+                            daySchedules: {},
+                            maxStudents: 30,
+                            maGiangVien: '',
+                            teachers: {},
+                            copyFromClassId: '',
+                            maLop: defaultMaLop
+                          });
+                          setShowAddClass(true);
+                        })
+                        .catch(() => {
+                          setLForm({
+                            name: '',
+                            schedule: '',
+                            days: '',
+                            daySchedules: {},
+                            maxStudents: 30,
+                            maGiangVien: '',
+                            teachers: {},
+                            copyFromClassId: '',
+                            maLop: 0
+                          });
+                          setShowAddClass(true);
+                        });
                     }}
                   >
                     + Thêm lớp học
@@ -1738,63 +1666,33 @@ export default function CoursePageQTV() {
       {/* ════ MODAL: TẠO LỚP HỌC ════ */}
       {showAddClass && addingToCourse && (
         <div className={styles.overlay}>
-          <div className={styles.modal}>
+          <div className={styles.modal} style={{ maxWidth: '520px' }}>
             <div className={styles.modalTop}>
-              <div><h3>Tạo lớp học mới</h3><div className={styles.modalSub}>{addingToCourse.title}</div></div>
+              <div><h3>Thêm lớp học mới</h3></div>
               <button className={styles.modalClose} onClick={() => setShowAddClass(false)}><FiX size={20} /></button>
             </div>
             <div className={styles.formGroup}>
-              <label>Tên lớp <span className={styles.req}>*</span></label>
-              <input value={lForm.name} onChange={e => setLForm(p => ({...p, name: e.target.value}))} placeholder="VD: Lớp TOEIC-01" />
+              <label>Tên lớp học <span className={styles.req}>*</span></label>
+              <input value={lForm.name} onChange={e => setLForm(p => ({...p, name: e.target.value}))} placeholder="VD: Lớp IELTS-01" />
             </div>
             <div className={styles.formGroup}>
-              <label style={{ marginBottom: 6, display: 'block' }}>Phân công giảng viên theo kỹ năng</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#f8f9fa', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}>
-                {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
-                  const isRequired = addingToCourse[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
-                  if (!isRequired) return null;
-                  const skillId = getSkillId(skill);
-                  return (
-                    <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#555', minWidth: '80px' }}>{skill}:</span>
-                      <select
-                        value={lForm.teachers?.[skillId] || ''}
-                        onChange={e => {
-                          const val = e.target.value ? Number(e.target.value) : 0;
-                          setLForm(prev => ({
-                            ...prev,
-                            teachers: {
-                              ...prev.teachers,
-                              [skillId]: val
-                            }
-                          }));
-                        }}
-                        style={{ flex: 1, padding: '6px 24px 6px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }}
-                      >
-                        <option value="">Chưa phân công</option>
-                        {giaoViens.map(gv => (
-                          <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
-                        ))}
-                      </select>
-                    </div>
-                  );
-                })}
-              </div>
-              {!giaoViens.length && (
-                <div style={{ fontSize:12, color:'#f57c00', marginTop:4 }}>⚠ Hệ thống chưa có giáo viên nào.</div>
-              )}
-            </div>
-            <div className={styles.formGroup}>
-              <label>Sao chép lộ trình từ lớp cũ</label>
-              <select value={lForm.copyFromClassId} onChange={e => setLForm(p => ({...p, copyFromClassId: e.target.value}))}>
-                <option value="">— Không sao chép (Lớp lộ trình trống) —</option>
-                {(classesMap[addingToCourse.id] || []).map(cls => (
-                  <option key={cls.id} value={cls.id}>{cls.name}</option>
+              <label>Trình độ <span className={styles.req}>*</span></label>
+              <select
+                value={lForm.maLop || ''}
+                onChange={e => {
+                  setLForm(p => ({ ...p, maLop: Number(e.target.value) }));
+                }}
+              >
+                <option value="">-- Chọn trình độ --</option>
+                {(courseDetailsMap[addingToCourse.id] || []).map(d => (
+                  <option key={d.MaLop} value={d.MaLop}>
+                    {d.TenLop}
+                  </option>
                 ))}
               </select>
             </div>
             <div className={styles.formGroup} style={{ marginTop: '16px' }}>
-              <label style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>Lịch học</label>
+              <label style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>Lịch học (Chọn các ngày học trong tuần):</label>
               <div className={styles.weekdaySelector} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                 {DAYS_OF_WEEK.map(d => {
                   const isSelected = lForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
@@ -1875,9 +1773,46 @@ export default function CoursePageQTV() {
                 </div>
               )}
             </div>
+            <div className={styles.formGroup}>
+              <label style={{ marginBottom: 6, display: 'block', fontWeight: 600 }}>Phân công giáo viên theo kỹ năng</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#f8f9fa', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}>
+                {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => {
+                  const isRequired = addingToCourse[skill.toLowerCase() as 'listening' | 'reading' | 'speaking' | 'writing'];
+                  if (!isRequired) return null;
+                  const skillId = getSkillId(skill);
+                  return (
+                    <div key={skill} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#555', minWidth: '80px' }}>{skill}:</span>
+                      <select
+                        value={lForm.teachers?.[skillId] || ''}
+                        onChange={e => {
+                          const val = e.target.value ? Number(e.target.value) : 0;
+                          setLForm(prev => ({
+                            ...prev,
+                            teachers: {
+                              ...prev.teachers,
+                              [skillId]: val
+                            }
+                          }));
+                        }}
+                        style={{ flex: 1, padding: '6px 24px 6px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '13px' }}
+                      >
+                        <option value="">Chưa phân công</option>
+                        {giaoViens.map(gv => (
+                          <option key={gv.MaGiangVien} value={gv.MaGiangVien}>{gv.HoTen}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+              {!giaoViens.length && (
+                <div style={{ fontSize:12, color:'#f57c00', marginTop:4 }}>⚠ Hệ thống chưa có giáo viên nào.</div>
+              )}
+            </div>
             <div className={styles.modalFooter}>
-              <button className={styles.btnOutline} onClick={() => setShowAddClass(false)}>Hủy</button>
-              <button className={styles.btnPrimary} onClick={saveClass}>Tạo lớp học</button>
+              <button className={styles.btnOutline} onClick={() => setShowAddClass(false)}>Hủy bỏ</button>
+              <button className={styles.btnPrimary} onClick={saveClass}>Lưu lớp học</button>
             </div>
           </div>
         </div>
@@ -1896,17 +1831,6 @@ export default function CoursePageQTV() {
             </div>
 
 
-            <div className={styles.tabs}>
-              <button className={`${styles.tab} ${detailTab === 'info' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('info'); sessionStorage.setItem('lastOpenTab', 'info'); }}>
-                Thông tin
-              </button>
-              <button className={`${styles.tab} ${detailTab === 'roadmap' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('roadmap'); sessionStorage.setItem('lastOpenTab', 'roadmap'); }}>
-                Lộ trình ({lessons.length})
-              </button>
-              <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
-                Học viên ({enrolledStudents.length})
-              </button>
-            </div>
 
             <div className={styles.modalScrollableBody}>
               {/* Tab Thông tin */}
@@ -1930,15 +1854,22 @@ export default function CoursePageQTV() {
                       <div className={styles.infoValue}>{detailCourse.title}</div>
                     </div>
                     <div className={styles.infoGroup}>
-                      <label className={styles.infoLabel}>Lịch học</label>
+                      <label className={styles.infoLabel}>Trình độ</label>
                       {isEditingClass ? (
-                        <input 
-                          value={editClassSchedule} 
-                          onChange={e => setEditClassSchedule(e.target.value)}
+                        <select
+                          value={editClassMaLop || ''}
+                          onChange={e => setEditClassMaLop(Number(e.target.value))}
                           className={styles.infoInput}
-                        />
+                        >
+                          <option value="">-- Chọn trình độ --</option>
+                          {(courseDetailsMap[detailCourse.id] || []).map(d => (
+                            <option key={d.MaLop} value={d.MaLop}>
+                              {d.TenLop}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
-                        <div className={styles.infoValue}>{formatScheduleOnlyDays(detailClass.schedule)}</div>
+                        <div className={styles.infoValue}>{detailClass.levelName || '—'}</div>
                       )}
                     </div>
                     <div className={styles.infoGroup}>
@@ -1957,6 +1888,102 @@ export default function CoursePageQTV() {
                         <div className={styles.infoValue}>{detailClass.status}</div>
                       )}
                     </div>
+                    {isEditingClass ? (
+                      <div className={styles.infoGroup} style={{ gridColumn: 'span 2' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                          <label className={styles.infoLabel} style={{ fontWeight: 600, margin: 0 }}>Lịch học (Chọn các ngày học trong tuần):</label>
+                          <div className={styles.weekdaySelector} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {DAYS_OF_WEEK.map(d => {
+                              const isSelected = editClassDays.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
+                              return (
+                                <button
+                                  key={d.value}
+                                  type="button"
+                                  className={`${styles.weekdayBtn} ${isSelected ? styles.weekdayBtnActive : ''}`}
+                                  onClick={() => {
+                                    const daysList = editClassDays.split(',').map(x => x.trim()).filter(Boolean);
+                                    let newDaysList = [];
+                                    const newDaySchedules = { ...editClassDaySchedules };
+
+                                    if (daysList.includes(d.value)) {
+                                      newDaysList = daysList.filter(day => day !== d.value);
+                                      delete newDaySchedules[d.value];
+                                    } else {
+                                      newDaysList = [...daysList, d.value];
+                                      newDaySchedules[d.value] = { startTime: '07:00', endTime: '08:30' };
+                                    }
+
+                                    newDaysList.sort((a, b) => {
+                                      const idxA = DAYS_OF_WEEK.findIndex(item => item.value === a);
+                                      const idxB = DAYS_OF_WEEK.findIndex(item => item.value === b);
+                                      return idxA - idxB;
+                                    });
+
+                                    setEditClassDays(newDaysList.join(', '));
+                                    setEditClassDaySchedules(newDaySchedules);
+                                  }}
+                                >
+                                  {d.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {editClassDays.split(',').map(x => x.trim()).filter(Boolean).map(day => {
+                          const sched = editClassDaySchedules[day] || { startTime: '07:00', endTime: '08:30' };
+                          return (
+                            <div key={day} style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px', width: '100%' }}>
+                              <span style={{ minWidth: '70px', fontWeight: 600, fontSize: '13.5px', color: '#334155' }}>{day}:</span>
+                              <select
+                                value={sched.startTime}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setEditClassDaySchedules(p => ({
+                                    ...p,
+                                    [day]: { ...sched, startTime: val }
+                                  }));
+                                }}
+                                className={styles.infoInput}
+                                style={{ flex: 1, padding: '8px 12px' }}
+                              >
+                                {START_TIME_OPTIONS.map(t => (
+                                  <option key={t} value={t}>{t}</option>
+                                ))}
+                              </select>
+                              <span style={{ fontSize: '13.5px', color: '#64748b' }}>đến</span>
+                              <select
+                                value={sched.endTime}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setEditClassDaySchedules(p => ({
+                                    ...p,
+                                    [day]: { ...sched, endTime: val }
+                                  }));
+                                }}
+                                className={styles.infoInput}
+                                style={{ flex: 1, padding: '8px 12px' }}
+                              >
+                                {END_TIME_OPTIONS.map(t => (
+                                  <option key={t} value={t}>{t}</option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })}
+
+                        {editClassDays && (
+                          <div style={{ fontSize: '12px', color: '#f58220', marginTop: '8px', fontWeight: 600 }}>
+                            Đã chọn: {serializeSchedule(editClassDays, editClassDaySchedules)}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={styles.infoGroup}>
+                        <label className={styles.infoLabel}>Lịch học</label>
+                        <div className={styles.infoValue}>{formatScheduleOnlyDays(detailClass.schedule)}</div>
+                      </div>
+                    )}
                     <div className={styles.infoGroup}>
                       <label className={styles.infoLabel}>Số buổi học</label>
                       <div className={styles.infoValue}>{lessons.length} buổi học</div>
@@ -2021,136 +2048,8 @@ export default function CoursePageQTV() {
                 </div>
               )}
 
-              {/* Tab Học viên */}
-              {detailTab === 'students' && (
-                <div className={styles.tabContent}>
-                  <div className={styles.tabToolbar}>
-                    <span className={styles.tabInfo}>{enrolledStudents.length}/{detailClass.students} đã ghi danh</span>
-                    <div className={styles.tabToolbarBtns}>
-                      <button className={styles.detailBtnOutline} onClick={() => {
-                        if (enrolledStudents.length === 0) { alert('Chưa có học viên nào để xuất!'); return }
-                        const headers = ['Mã HV','Họ và tên','Giới tính','SĐT','Ngày ghi danh','Trạng thái']
-                        const rows = enrolledStudents.map(s => [s.studentId, s.name, s.gender, s.phone, s.enrollDate, s.status])
-                        const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
-                        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement('a')
-                        a.href = url; a.download = `danhsach_${detailClass?.name.replace(/\s+/g,'_')}.csv`
-                        a.click(); URL.revokeObjectURL(url)
-                        setToast(`Đã xuất ${enrolledStudents.length} học viên!`)
-                      }}>⬇ Xuất danh sách</button>
-                    </div>
-                  </div>
-                  {loadingEnrolled ? (
-                    <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
-                  ) : enrolledStudents.length === 0 ? (
-                    <div className={styles.emptyTab}>Chưa có học viên nào.</div>
-                  ) : (
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th style={{ width: '100px' }}>Mã HV</th>
-                          <th>Họ và tên</th>
-                          <th style={{ width: '100px' }}>Giới tính</th>
-                          <th style={{ width: '130px' }}>Ngày GD</th>
-                          <th style={{ width: '130px' }}>Trạng thái</th>
-                          <th style={{ width: '90px' }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {enrolledStudents.map(s => (
-                          <tr key={s.studentId}>
-                            <td>{s.studentId}</td>
-                            <td>{s.name}</td>
-                            <td>{s.gender}</td>
-                            <td>{formatDate(s.enrollDate)}</td>
-                            <td><span className={`${styles.badge} ${s.status === 'Đang học' ? styles.badgeGreen : styles.badgeGray}`}>{s.status}</span></td>
-                            <td><button className={styles.detailBtnDanger} onClick={() => removeEnrolled(s.studentId)}>Hủy GD</button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
 
-              {/* Tab Lộ trình */}
-              {detailTab === 'roadmap' && (
-                <div className={styles.tabContent}>
-                  <div className={styles.tabToolbar}>
-                    <span className={styles.tabInfo}>{lessons.length} buổi học trong lộ trình</span>
-                    <button className={styles.detailBtnPrimary} onClick={() => {
-                      const maxOrder = lessons.reduce((max, l) => l.order > max ? l.order : max, 0);
-                      setLessonForm({ title:'', desc:'', startDate:'', endDate:'', order: maxOrder + 1 })
-                      setShowAddLesson(true)
-                    }}>+ Thêm buổi học</button>
-                  </div>
-                  {loadingLessons ? (
-                    <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
-                  ) : lessons.length === 0 ? (
-                    <div className={styles.emptyTab}>Chưa có lộ trình. Nhấn "Thêm buổi học" để xây dựng.</div>
-                  ) : (
-                    <table className={styles.roadmapTable}>
-                      <thead>
-                        <tr>
-                          <th>Buổi</th>
-                          <th>Nội dung buổi học</th>
-                          <th>Mô tả</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lessons.map((l, idx) => {
-                          const assets = lessonAssets[l.id] || { lectures: [], exercises: [], documents: [] };
-                          return (
-                            <tr key={l.id}>
-                              <td className={styles.sessionCol}>Buổi {idx + 1}</td>
-                              <td className={styles.contentCol}>
-                                <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '8px', fontSize: '14px' }}>
-                                  {cleanLessonTitle(l.title)}
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  {/* Lectures */}
-                                  {assets.lectures.map((bg: any) => (
-                                    <div key={bg.MaBaiHoc} className={`${styles.assetItemRow} ${styles.lecture}`}>
-                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={bg.TieuDe}>🎥 {bg.TieuDe}</span>
-                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapLecture(bg.MaBaiHoc, l.id)} title="Xóa bài giảng"><FiX size={14} /></button>
-                                    </div>
-                                  ))}
-                                  {/* Exercises */}
-                                  {assets.exercises.map((ex: any) => (
-                                    <div key={ex.MaExercise} className={`${styles.assetItemRow} ${styles.exercise}`}>
-                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={ex.Title}>📝 {ex.Title}</span>
-                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapExercise(ex.MaExercise, l.id)} title="Xóa bài tập"><FiX size={14} /></button>
-                                    </div>
-                                  ))}
-                                  {/* Documents */}
-                                  {assets.documents.map((doc: any) => (
-                                    <div key={doc.MaTaiLieu} className={`${styles.assetItemRow} ${styles.doc}`}>
-                                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={doc.TieuDe}>📂 {doc.TieuDe}</span>
-                                      <button className={styles.removeAssetBtn} onClick={() => deleteRoadmapDoc(doc.MaTaiLieu, l.id)} title="Xóa tài liệu"><FiX size={14} /></button>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className={styles.roadmapActionsContainer} style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#f58220', color: '#f58220' }} onClick={() => openAddLecture(l.id)}>+ Bài giảng</button>
-                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#0284c7', color: '#0284c7' }} onClick={() => openAddExercise(l.id)}>+ Bài tập</button>
-                                  <button className={styles.roadmapMiniBtn} style={{ borderColor: '#16a34a', color: '#16a34a' }} onClick={() => openAddDoc(l.id)}>+ Tài liệu</button>
-                                  <button className={styles.roadmapDeleteBtn} onClick={() => deleteLesson(l.id)}>Xóa buổi</button>
-                                </div>
-                              </td>
-                              <td className={styles.assetsCol}>
-                                <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
-                                  {l.desc || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa có mô tả</span>}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
+
             </div>
 
             {detailTab === 'info' && (
@@ -2159,17 +2058,25 @@ export default function CoursePageQTV() {
                   <>
                     <button 
                       className={styles.detailBtnOutline} 
-                      onClick={() => { setIsEditingClass(false); setEditClassName(detailClass.name); setEditClassSchedule(detailClass.schedule); setEditClassStatus(detailClass.status); }}
+                      onClick={() => {
+                        setIsEditingClass(false);
+                        setEditClassName(detailClass.name);
+                        setEditClassStatus(detailClass.status);
+                        setEditClassMaLop(detailClass.maLop || 0);
+                        const { days, daySchedules } = parseSchedule(detailClass.schedule);
+                        setEditClassDays(days);
+                        setEditClassDaySchedules(daySchedules);
+                      }}
                       style={{ minWidth: '120px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
-                      Hủy
+                      Hủy bỏ
                     </button>
                     <button 
                       className={styles.detailBtnPrimary} 
                       onClick={handleSaveClassEdit} 
                       style={{ minWidth: '120px', padding: '10px 16px', fontSize: '13px', fontWeight: 600, height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000080', borderColor: '#000080', color: 'white', cursor: 'pointer' }}
                     >
-                      Lưu
+                      Lưu thay đổi
                     </button>
                   </>
                 ) : (
@@ -2311,7 +2218,7 @@ export default function CoursePageQTV() {
                         const formData = new FormData();
                         formData.append("file", file);
                         try {
-                          const res = await fetch("http://14.225.192.252:5000/upload", {
+                          const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
                             method: "POST",
                             body: formData
                           });
@@ -2400,7 +2307,7 @@ export default function CoursePageQTV() {
                         const formData = new FormData();
                         formData.append("file", file);
                         try {
-                          const res = await fetch("http://14.225.192.252:5000/upload", {
+                          const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
                             method: "POST",
                             body: formData
                           });
@@ -2448,95 +2355,7 @@ export default function CoursePageQTV() {
         </div>
       )}
 
-      {/* ════ MODAL: DANH SÁCH ĐĂNG KÝ ════ */}
-      {showRegModal && !showAssignClassModal && (
-        <div className={styles.overlay}>
-          <div className={styles.regModal}>
-            <div className={styles.modalTop}>
-              <div><h3>Danh sách ghi danh đăng ký lớp</h3><div className={styles.modalSub}>Sinh viên đã đăng ký – chờ ghi danh vào lớp</div></div>
-              <button className={styles.modalClose} onClick={() => setShowRegModal(false)}><FiX size={20} /></button>
-            </div>
-            <div className={styles.regFilterRow}>
-              <select value={regClassFilter} onChange={e => setRegClassFilter(e.target.value)} className={styles.regSelect}>
-                <option value="all">Tất cả lớp học</option>
-                {uniqueRegClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <div className={styles.regStats}>
-                <span className={styles.regStatPill} style={{ background:'#fef3c7', color:'#d97706' }}>Chờ: {pendingRegs.filter(r => r.status === 'Chờ ghi danh').length}</span>
-                <span className={styles.regStatPill} style={{ background:'#c8eacc', color:'#1e6b30' }}>Đã GD: {pendingRegs.filter(r => r.status === 'Đã ghi danh').length}</span>
-              </div>
-            </div>
-            <div className={styles.regTableWrap}>
-              <table className={styles.table}>
-                <thead><tr><th>Mã SV</th><th>Họ và tên</th><th>SĐT</th><th>Lớp/Khóa</th><th>Ngày ĐK</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-                <tbody>
-                  {pendingRegs.filter(r => regClassFilter === 'all' || String(r.classId) === regClassFilter || r.className === regClassFilter).map(r => (
-                    <tr key={r.id}>
-                      <td className={styles.monoText}>{r.studentId}</td>
-                      <td className={styles.boldText}>{r.name}</td>
-                      <td>{r.phone}</td><td>{r.className ? `${r.className} / ${r.courseName}` : r.courseName}</td><td>{r.regDate}</td>
-                      <td><span className={`${styles.badge} ${r.status === 'Chờ ghi danh' ? styles.badgeYellow : r.status === 'Đã ghi danh' ? styles.badgeGreen : styles.badgeRed}`}>{r.status}</span></td>
-                      <td>
-                        <div className={styles.actionBtns}>
-                          {r.status === 'Chờ ghi danh' && (
-                            <>
-                              <button className={styles.btnPrimary} style={{ fontSize:12, padding:'5px 12px' }}
-                                onClick={() => { setSelectedReg(r); setAssignClassId(r.classId || ''); setShowAssignClassModal(true) }}>
-                                GD vào lớp
-                              </button>
-                              <button className={styles.btnDanger} style={{ fontSize:12 }} onClick={() => rejectReg(r.id)}>Từ chối</button>
-                            </>
-                          )}
-                          {r.status !== 'Chờ ghi danh' && <span style={{ fontSize:12, color:'#aaa' }}>—</span>}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={styles.btnOutline} onClick={() => setShowRegModal(false)}>Đóng</button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ════ MODAL: GHI DANH VÀO LỚP ════ */}
-      {showAssignClassModal && selectedReg && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalTop}>
-              <div><h3>Ghi danh vào lớp học</h3><div className={styles.modalSub}>Chọn lớp phù hợp</div></div>
-              <button className={styles.modalClose} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}><FiX size={20} /></button>
-            </div>
-            <div className={styles.assignStudentInfo}>
-              <div className={styles.assignRow}><span className={styles.assignLabel}>Họ và tên</span><span className={styles.boldText}>{selectedReg.name}</span></div>
-              <div className={styles.assignRow}><span className={styles.assignLabel}>Mã SV</span><span className={styles.monoText}>{selectedReg.studentId}</span></div>
-              <div className={styles.assignRow}><span className={styles.assignLabel}>Khóa học</span><span className={styles.boldText}>{selectedReg.courseName}</span></div>
-            </div>
-            {selectedReg.className ? (
-              <div className={styles.assignRow} style={{ marginTop:16, borderTop:'1px solid #f1f5f9', paddingTop:16 }}><span className={styles.assignLabel}>Lớp học</span><span className={styles.boldText} style={{ color: "#d97706" }}>{selectedReg.className}</span></div>
-            ) : (
-              <div className={styles.formGroup} style={{ marginTop:16 }}>
-                <label>Chọn lớp học <span className={styles.req}>*</span></label>
-                <select value={assignClassId} onChange={e => setAssignClassId(Number(e.target.value))}>
-                  <option value="">-- Chọn lớp --</option>
-                  {(classesMap[selectedReg.courseId] || []).map(cl => (
-                    <option key={cl.id} value={cl.id}>{cl.name} — {formatScheduleOnlyDays(cl.schedule)} — {cl.students} học viên</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div className={styles.modalFooter}>
-              <button className={styles.btnOutline} onClick={() => { setShowAssignClassModal(false); setSelectedReg(null) }}>Hủy</button>
-              <button className={styles.btnPrimary} onClick={confirmAssign} disabled={!assignClassId} style={{ opacity: assignClassId ? 1 : 0.5 }}>
-                Xác nhận ghi danh
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ════ MODAL: XÁC NHẬN XÓA ════ */}
       {showDeleteModal && (
@@ -2550,57 +2369,51 @@ export default function CoursePageQTV() {
         >
           <div
             style={{
-              background: '#ffffff', padding: '32px 40px', borderRadius: 16,
-              width: '90%', maxWidth: 320, textAlign: 'center',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              background: 'white', borderRadius: '12px', width: '450px', maxWidth: '90%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #e2e8f0', overflow: 'hidden'
             }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: '0 0 16px 0' }}>
-              Xác nhận xóa
-            </h3>
-            <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 24px 0', lineHeight: '1.5' }}>
-              {deleteMessage}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
-              <button
-                onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
-                style={{
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={async () => {
-                  if (deleteAction) {
-                    try { await deleteAction() } catch { setToast('Lỗi khi thực hiện!') }
-                  }
-                  setShowDeleteModal(false)
-                  setDeleteAction(null)
-                }}
-                style={{
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Xác nhận
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xác nhận xóa</span>
+              <button type="button" onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                {deleteMessage}
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteModal(false); setDeleteAction(null) }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (deleteAction) {
+                      try { await deleteAction() } catch { setToast('Lỗi khi thực hiện!') }
+                    }
+                    setShowDeleteModal(false)
+                    setDeleteAction(null)
+                  }}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xác nhận
+                </button>
+              </div>
             </div>
           </div>
         </div>

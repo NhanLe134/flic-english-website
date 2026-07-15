@@ -13,7 +13,13 @@ import {
 } from "react-icons/fa";
 import { FiFileText, FiX } from "react-icons/fi";
 
-const API = "http://14.225.192.252:5000";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 function pctColor(pct: number) {
   if (pct >= 90) return "#22c55e";
@@ -117,7 +123,9 @@ function MyCourses() {
         fetch(`${API}/classes/${classId}/tailieu`).then(r => r.json())
       ]);
 
-      const lessonsList = Array.isArray(lessonsRes) ? lessonsRes : [];
+      const lessonsList = Array.isArray(lessonsRes)
+        ? lessonsRes.filter((l: any) => l.TrangThai !== "Chờ mở")
+        : [];
       const exercisesList = Array.isArray(exercisesRes)
         ? exercisesRes.map((ex: any) => ({
             ...ex,
@@ -564,8 +572,9 @@ function MyCourses() {
                     type="text"
                     className="modal-form-input"
                     value={enrollName}
-                    onChange={(e) => setEnrollName(e.target.value)}
                     placeholder="Họ và tên sinh viên"
+                    disabled
+                    style={{ background: "#f1f5f9", cursor: "not-allowed", color: "#64748b" }}
                   />
                 </div>
 
@@ -575,8 +584,9 @@ function MyCourses() {
                     type="text"
                     className="modal-form-input"
                     value={enrollStudentId}
-                    onChange={(e) => setEnrollStudentId(e.target.value)}
                     placeholder="Mã sinh viên"
+                    disabled
+                    style={{ background: "#f1f5f9", cursor: "not-allowed", color: "#64748b" }}
                   />
                 </div>
 

@@ -1,11 +1,12 @@
-﻿import "./EditPersonalInfo.css";
+import "./EditPersonalInfo.css";
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
 import { FiCamera } from "react-icons/fi";
 
 const EditPersonalInfo = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId?: string }>();
   const { setAvatar } = useAvatar();
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const EditPersonalInfo = () => {
     const user = JSON.parse(userStr);
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
         setFormData({
@@ -55,7 +56,7 @@ const EditPersonalInfo = () => {
         const formDataUpload = new FormData();
         formDataUpload.append("file", file);
 
-        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
+        const uploadRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
           method: "POST",
           body: formDataUpload
         });
@@ -80,7 +81,7 @@ const EditPersonalInfo = () => {
     const maNguoiDung = user.MaNguoiDung;
 
     try {
-      await fetch(`http://14.225.192.252:5000/giangvien/${maNguoiDung}`, {
+      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -101,11 +102,11 @@ const EditPersonalInfo = () => {
       user.AnhDaiDien = formData.avatar;
       sessionStorage.setItem("user", JSON.stringify(user));
       
-      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://14.225.192.252:5000${formData.avatar}`) : null;
+      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${formData.avatar}`) : null;
       setAvatar(absoluteUrl);
 
       setShowPopup(true);
-      setTimeout(() => navigate("/thong-tin-ca-nhan"), 1500);
+      setTimeout(() => navigate(`/${teacherId}/thong-tin-ca-nhan`), 1500);
 
     } catch (err) {
       console.log(err);
@@ -117,14 +118,14 @@ const EditPersonalInfo = () => {
     ? formData.HoTen.split(" ").pop()?.charAt(0).toUpperCase()
     : "?";
 
-  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `http://14.225.192.252:5000${formData.avatar}`) : "";
+  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${formData.avatar}`) : "";
 
   return (
     <div className="epi-wrapper">
 
       <div className="epi-header-row">
         <h1>Thông tin cá nhân</h1>
-        <span className="back-btn" onClick={() => navigate("/thong-tin-ca-nhan")}>
+        <span className="back-btn" onClick={() => navigate(`/${teacherId}/thong-tin-ca-nhan`)}>
           ← Quay lại
         </span>
       </div>

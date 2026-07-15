@@ -1,11 +1,38 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./KhoHocLieu.module.css";
-import { FiSearch, FiAlertTriangle } from "react-icons/fi";
+import { 
+  FiSearch, 
+  FiX, 
+  FiPlus, 
+  FiTrash2, 
+  FiVideo, 
+  FiFileText, 
+  FiFolder, 
+  FiChevronDown, 
+  FiChevronRight 
+} from "react-icons/fi";
+import {
+  MDXEditor,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  markdownShortcutPlugin,
+  tablePlugin,
+  toolbarPlugin,
+  BoldItalicUnderlineToggles,
+  ListsToggle,
+  BlockTypeSelect,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
 
-const API = "http://14.225.192.252:5000";
 
-type ActiveTab = "baigiang" | "baitap" | "tailieu";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface Lecture {
   MaBaiHoc: number;
@@ -14,6 +41,8 @@ interface Lecture {
   ThoiLuong: string;
   TenLop: string;
   TenBuoiHoc: string;
+  MaBuoiHoc: number;
+  MaLopHoc: number;
 }
 
 interface Exercise {
@@ -24,6 +53,8 @@ interface Exercise {
   CreatedDate: string;
   TenLop: string;
   TenBuoiHoc: string;
+  MaBuoiHoc: number;
+  MaLopHoc: number;
 }
 
 interface Document {
@@ -33,33 +64,21 @@ interface Document {
   NgayCapNhat: string;
   TenLop: string;
   TenBuoiHoc: string;
+  MaBuoiHoc: number;
+  MaLopHoc: number;
+  FileUrl?: string;
+  NoiDung?: string;
 }
 
-const mapDangBaiToVi = (type: string): string => {
-  const t = (type || "").toLowerCase();
-  if (t === "Nghe audio trắc nghiệm" || t === "listening") return "Nghe trắc nghiệm";
-  if (t === "Hình ảnh chọn đáp án") return "Nghe chọn hình ảnh";
-  if (t === "Nghe chép chính tả") return "Nghe chép chính tả";
-  if (t === "Điền từ vào đoạn văn") return "Điền từ đoạn văn";
-  if (t === "Luyện phát âm (check phát âm tự động)") return "Luyện phát âm";
-  if (t === "Nói theo chủ đề (ghi âm nộp GV)") return "Nói theo chủ đề";
-  if (t === "Trắc nghiệm đọc hiểu (chia đôi màn hình)") return "Đọc chia đôi màn hình";
-  if (t === "Nối từ") return "Bài tập từ vựng";
-  if (t === "Sắp xếp từ thành câu") return "Sắp xếp từ";
-  if (t === "Trắc nghiệm") return "Trắc nghiệm ngữ pháp";
-  if (t === "Viết đoạn văn ngắn") return "Tự luận viết";
-  if (t === "Sắp xếp câu thành đoạn văn") return "Sắp xếp câu";
-  if (t === "exam") return "Bài kiểm tra";
-  return type;
-};
 
 const KhoHocLieu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isQTV = location.pathname.startsWith("/QTV");
-  const [activeTab, setActiveTab] = useState<ActiveTab>("baigiang");
   
   // Data lists
+  const [allClasses, setAllClasses] = useState<{ MaLopHoc: number; TenLop: string }[]>([]);
+  const [classSessions, setClassSessions] = useState<Record<number, { MaBuoiHoc: number; TenBuoiHoc: string; MoTa: string; ThuTu: number }[]>>({});
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -71,7 +90,143 @@ const KhoHocLieu = () => {
   const [toast, setToast] = useState("");
   
   // Delete confirm modal
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; type: ActiveTab; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; type: "baigiang" | "baitap" | "tailieu"; title: string } | null>(null);
+
+  // Session creation modal states
+  const [showAddSessionModal, setShowAddSessionModal] = useState(false);
+  const [targetClassId, setTargetClassId] = useState<number | null>(null);
+  const [sessionForm, setSessionForm] = useState({ title: "", desc: "", order: 1 });
+
+  // Lecture creation / clone modal states
+  const [showAddLectureModal, setShowAddLectureModal] = useState(false);
+  const [bgTab, setBgTab] = useState<"create" | "reuse">("create");
+  const [bgForm, setBgForm] = useState({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: 1, isFree: false });
+  const [editorKey, setEditorKey] = useState(0);
+  const [allExistingBg, setAllExistingBg] = useState<any[]>([]);
+
+  // Document creation / clone modal states
+  const [showAddDocModal, setShowAddDocModal] = useState(false);
+  const [docTab, setDocTab] = useState<"create" | "reuse">("create");
+  const [docForm, setDocForm] = useState({ title: "", desc: "", content: "", fileUrl: "" });
+  const [allExistingDoc, setAllExistingDoc] = useState<any[]>([]);
+
+  // Active session for new assets
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+
+  const [hasMinitest, setHasMinitest] = useState(false);
+  const [minitestQuestions, setMinitestQuestions] = useState<any[]>([
+    { question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }
+  ]);
+
+  const addMinitestQuestion = () => {
+    setMinitestQuestions([
+      ...minitestQuestions,
+      { question: "", answers: ["", "", "", ""], correct: "A", explanation: "" }
+    ]);
+  };
+
+  const removeMinitestQuestion = (index: number) => {
+    if (minitestQuestions.length > 1) {
+      setMinitestQuestions(minitestQuestions.filter((_, i) => i !== index));
+    } else {
+      alert("MiniTest cần có ít nhất 1 câu hỏi.");
+    }
+  };
+
+  const updateQuestionField = (index: number, field: string, value: any) => {
+    const copy = [...minitestQuestions];
+    copy[index] = { ...copy[index], [field]: value };
+    setMinitestQuestions(copy);
+  };
+
+  const updateQuestionAnswer = (qIndex: number, aIndex: number, value: string) => {
+    const copy = [...minitestQuestions];
+    const answers = [...copy[qIndex].answers];
+    answers[aIndex] = value;
+    copy[qIndex] = { ...copy[qIndex], answers };
+    setMinitestQuestions(copy);
+  };
+
+  const handleMinitestFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      let text = "";
+      if (file.name.endsWith(".docx")) {
+        const arrayBuffer = await file.arrayBuffer();
+        const mammothModule = await import("mammoth");
+        const extractRawText = mammothModule.extractRawText || mammothModule.default?.extractRawText;
+        if (!extractRawText) {
+          throw new Error("Mammoth library did not export extractRawText");
+        }
+        const result = await extractRawText({ arrayBuffer });
+        text = result.value;
+      } else {
+        text = await file.text();
+      }
+
+      if (!text.trim()) {
+        alert("File trống hoặc không đọc được nội dung.");
+        return;
+      }
+
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
+      const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
+      const parsed: any[] = [];
+      
+      for (const block of qBlocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) continue;
+
+        let questionText = "";
+        let answers = ["", "", "", ""];
+        let correct = "A";
+        let explanation = "";
+
+        for (let line of lines) {
+          if (/^[A]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[0] = line.match(/^[A]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[B]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[1] = line.match(/^[B]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[C]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[2] = line.match(/^[C]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^[D]\s*[\.\:\)]\s*(.*)/i.test(line)) {
+            answers[3] = line.match(/^[D]\s*[\.\:\)]\s*(.*)/i)![1].trim();
+          } else if (/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i.test(line)) {
+            correct = line.match(/^(Đáp án đúng|Correct|Key|Đáp án|Chọn)\s*[\.\:\-]?\s*([A-D])/i)![2].toUpperCase();
+          } else if (/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i.test(line)) {
+            explanation = line.match(/^(Giải thích|Explanation)\s*[\.\:\-]?\s*(.*)/i)![2].trim();
+          } else {
+            if (answers.every(a => !a)) {
+              if (questionText) questionText += "\n";
+              questionText += line;
+            } else {
+              if (explanation) {
+                explanation += "\n" + line;
+              }
+            }
+          }
+        }
+        
+        questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
+        parsed.push({
+          question: questionText,
+          answers,
+          correct,
+          explanation
+        });
+      }
+
+      if (parsed.length > 0) {
+        setMinitestQuestions(parsed);
+      } else {
+        alert("Không tìm thấy câu hỏi hợp lệ trong file.");
+      }
+    } catch (err: any) {
+      alert("Lỗi khi đọc file: " + err.message);
+    }
+  };
 
   const [collapsedClasses, setCollapsedClasses] = useState<Record<string, boolean>>({});
 
@@ -82,21 +237,25 @@ const KhoHocLieu = () => {
     }));
   };
 
-  const extractSessionNumber = (sessionStr: string): number => {
-    if (!sessionStr) return 0;
-    const match = sessionStr.match(/(?:buổi|buoi|session)\s*(\d+)/i) || sessionStr.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-  };
+
 
   const handleViewDocumentDetail = (doc: any) => {
     const fileUrl = doc.FileUrl
-      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://14.225.192.252:5000${doc.FileUrl}`)
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `${API}${doc.FileUrl}`)
       : doc.NoiDung?.includes("File: /uploads/")
-      ? `http://14.225.192.252:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      ? `${API}${doc.NoiDung.split("File: ")[1]?.trim()}`
       : null;
 
     if (fileUrl) {
-      window.open(fileUrl, "_blank");
+      const extension = fileUrl.split('.').pop()?.toLowerCase();
+      const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
+      const isLocal = fileUrl.includes("localhost") || fileUrl.includes("127.0.0.1") || fileUrl.includes("192.168.") || fileUrl.includes("10.");
+      
+      if (isOfficeDoc && !isLocal) {
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, "_blank");
+      } else {
+        window.open(fileUrl, "_blank");
+      }
     } else {
       const newWindow = window.open("", "_blank");
       if (newWindow) {
@@ -132,6 +291,27 @@ const KhoHocLieu = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // 1. Fetch all classes
+      const classesData = await fetch(`${API}/student/all-classes`).then(r => r.json());
+      const classesListResult = Array.isArray(classesData) ? classesData : [];
+      setAllClasses(classesListResult);
+
+      // 2. Fetch sessions for each class in parallel
+      const sessionsMap: Record<number, any[]> = {};
+      await Promise.all(
+        classesListResult.map(async (cls: any) => {
+          try {
+            const sData = await fetch(`${API}/classes/${cls.MaLopHoc}/buoihoc`).then(r => r.json());
+            sessionsMap[cls.MaLopHoc] = Array.isArray(sData) ? sData : [];
+          } catch (err) {
+            console.error("Error fetching sessions for class", cls.MaLopHoc, err);
+            sessionsMap[cls.MaLopHoc] = [];
+          }
+        })
+      );
+      setClassSessions(sessionsMap);
+
+      // 3. Fetch all assets
       const [lectRes, exRes, docRes] = await Promise.all([
         fetch(`${API}/baigiang/list/all`).then(r => r.json()),
         fetch(`${API}/exercises/list/all`).then(r => r.json()),
@@ -160,99 +340,60 @@ const KhoHocLieu = () => {
 
   // Get distinct classes list for filtering
   const classesList = useMemo(() => {
-    const classNamesSet = new Set<string>();
-    lectures.forEach(l => { if (l.TenLop) classNamesSet.add(l.TenLop); });
-    exercises.forEach(e => { if (e.TenLop) classNamesSet.add(e.TenLop); });
-    documents.forEach(d => { if (d.TenLop) classNamesSet.add(d.TenLop); });
-    return Array.from(classNamesSet).sort();
-  }, [lectures, exercises, documents]);
+    return allClasses.map(c => c.TenLop).filter(Boolean).sort();
+  }, [allClasses]);
 
-  // Tab Filtering & Search
-  const filteredLectures = useMemo(() => {
-    return lectures.filter(item => {
-      const matchSearch = item.TieuDe?.toLowerCase().includes(search.toLowerCase());
-      const matchClass = !selectedClass || item.TenLop === selectedClass;
-      return matchSearch && matchClass;
-    });
-  }, [lectures, search, selectedClass]);
-
-  const filteredExercises = useMemo(() => {
-    return exercises.filter(item => {
-      const matchSearch = item.Title?.toLowerCase().includes(search.toLowerCase());
-      const matchClass = !selectedClass || item.TenLop === selectedClass;
-      return matchSearch && matchClass;
-    });
-  }, [exercises, search, selectedClass]);
-
-  const filteredDocuments = useMemo(() => {
-    return documents.filter(item => {
-      const matchSearch = item.TieuDe?.toLowerCase().includes(search.toLowerCase());
-      const matchClass = !selectedClass || item.TenLop === selectedClass;
-      return matchSearch && matchClass;
-    });
-  }, [documents, search, selectedClass]);
-
+  // Group all assets under each class and session
   const groupedData = useMemo(() => {
-    let items: any[] = [];
-    if (activeTab === "baigiang") items = filteredLectures;
-    else if (activeTab === "baitap") items = filteredExercises;
-    else if (activeTab === "tailieu") items = filteredDocuments;
+    const result: any[] = [];
+    
+    allClasses.forEach(cls => {
+      // Filter by selectedClass dropdown
+      if (selectedClass && cls.TenLop !== selectedClass) return;
 
-    const groups: Record<string, Record<string, any[]>> = {};
+      const sessionsData = classSessions[cls.MaLopHoc] || [];
+      const sortedSessions = [...sessionsData].sort((a, b) => a.ThuTu - b.ThuTu);
 
-    items.forEach(item => {
-      const className = item.TenLop || "Chưa xếp lớp";
-      const sessionName = item.TenBuoiHoc || "Chưa xếp buổi";
+      const matchedSessions: any[] = [];
+      let totalAssetsCount = 0;
 
-      if (!groups[className]) {
-        groups[className] = {};
-      }
-      if (!groups[className][sessionName]) {
-        groups[className][sessionName] = [];
-      }
-      groups[className][sessionName].push(item);
+      sortedSessions.forEach(sess => {
+        // Find assets for this session
+        const sessLectures = lectures.filter(l => Number(l.MaBuoiHoc) === Number(sess.MaBuoiHoc) && (!search || l.TieuDe?.toLowerCase().includes(search.toLowerCase())));
+        const sessExercises = exercises.filter(e => Number(e.MaBuoiHoc) === Number(sess.MaBuoiHoc) && (!search || e.Title?.toLowerCase().includes(search.toLowerCase())));
+        const sessDocuments = documents.filter(d => Number(d.MaBuoiHoc) === Number(sess.MaBuoiHoc) && (!search || d.TieuDe?.toLowerCase().includes(search.toLowerCase())));
+
+        const totalCount = sessLectures.length + sessExercises.length + sessDocuments.length;
+        totalAssetsCount += totalCount;
+
+        // If we are searching, only include sessions that have matching assets
+        if (search && totalCount === 0) return;
+
+        matchedSessions.push({
+          sessionName: sess.TenBuoiHoc,
+          sessionId: sess.MaBuoiHoc,
+          desc: sess.MoTa || "",
+          order: sess.ThuTu,
+          lectures: sessLectures,
+          exercises: sessExercises,
+          documents: sessDocuments,
+          totalCount
+        });
+      });
+
+      // If we are searching, only include classes that have matching sessions
+      if (search && matchedSessions.length === 0) return;
+
+      result.push({
+        className: cls.TenLop,
+        classId: cls.MaLopHoc,
+        totalCount: totalAssetsCount,
+        sessions: matchedSessions
+      });
     });
 
-    const sortedGroups: {
-      className: string;
-      totalCount: number;
-      sessions: {
-        sessionName: string;
-        items: any[];
-      }[];
-    }[] = [];
-
-    const classNames = Object.keys(groups).sort();
-    for (const className of classNames) {
-      const sessionMap = groups[className];
-      const sessionNames = Object.keys(sessionMap).sort((a, b) => {
-        const numA = extractSessionNumber(a);
-        const numB = extractSessionNumber(b);
-        if (numA !== numB) {
-          return numB - numA;
-        }
-        return b.localeCompare(a);
-      });
-
-      let totalCount = 0;
-      const sessions = sessionNames.map(sessionName => {
-        const sessionItems = sessionMap[sessionName];
-        totalCount += sessionItems.length;
-        return {
-          sessionName,
-          items: sessionItems
-        };
-      });
-
-      sortedGroups.push({
-        className,
-        totalCount,
-        sessions
-      });
-    }
-
-    return sortedGroups;
-  }, [activeTab, filteredLectures, filteredExercises, filteredDocuments]);
+    return result;
+  }, [allClasses, classSessions, lectures, exercises, documents, search, selectedClass]);
 
   // Action: Delete Handler
   const handleDeleteConfirm = async () => {
@@ -286,35 +427,206 @@ const KhoHocLieu = () => {
     }
   };
 
+  // Session creation handler
+  const handleSaveSession = async () => {
+    if (!sessionForm.title.trim()) { alert("Vui lòng nhập tên buổi học!"); return; }
+    if (!targetClassId) return;
+
+    try {
+      const res = await fetch(`${API}/qtv/buoihoc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          TenBuoiHoc: sessionForm.title,
+          MaLopHoc: targetClassId,
+          MoTa: sessionForm.desc,
+          NgayBatDau: null,
+          NgayKetThuc: null,
+          ThuTu: Number(sessionForm.order)
+        })
+      });
+      if (res.ok) {
+        showToast("Đã thêm buổi học thành công!");
+        setShowAddSessionModal(false);
+        setSessionForm({ title: "", desc: "", order: 1 });
+        fetchData();
+      } else {
+        alert("Lỗi khi thêm buổi học");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi kết nối");
+    }
+  };
+
+  // Session deletion handler
+  const handleDeleteSession = async (sessionId: number, sessionName: string) => {
+    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa "${sessionName}" không? Hành động này sẽ xóa buổi học và gỡ bỏ toàn bộ học liệu liên quan.`);
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`${API}/qtv/buoihoc/${sessionId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Đã xóa buổi học thành công!");
+        fetchData();
+      } else {
+        const errText = await res.text();
+        alert("Xóa buổi học thất bại: " + errText);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Lỗi kết nối khi xóa buổi học: " + err.message);
+    }
+  };
+
+  // Lecture modal actions
+  const openAddLecture = (sessionId: number, currentLecturesCount: number) => {
+    setActiveSessionId(sessionId);
+    setBgForm({ title: "", content: "", fileUrl: "", type: "Video", duration: "0 phút", order: currentLecturesCount + 1, isFree: false });
+    setEditorKey(p => p + 1);
+    setBgTab("create");
+    setShowAddLectureModal(true);
+    fetch(`${API}/baigiang/list/all`)
+      .then(r => r.json())
+      .then(data => setAllExistingBg(Array.isArray(data) ? data : []))
+      .catch(() => setAllExistingBg([]));
+  };
+
+  const saveNewLecture = async () => {
+    if (!bgForm.title.trim()) { alert("Vui lòng nhập tiêu đề!"); return; }
+    try {
+      const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+      const res = await fetch(`${API}/baigiang`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          TieuDe: bgForm.title,
+          NoiDung: bgForm.content,
+          FileUrl: bgForm.fileUrl,
+          LoaiBaiHoc: bgForm.type,
+          ThoiLuong: bgForm.duration,
+          TrangThai: "published",
+          TrangThaiDuyet: "Đã duyệt",
+          ThuTu: bgForm.order,
+          MaKhoaHoc: null,
+          MaGiangVien: user.MaNguoiDung || 1,
+          MaBuoiHoc: activeSessionId,
+          IsFree: bgForm.isFree ? 1 : 0
+        })
+      });
+      
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Lỗi từ phía máy chủ");
+      }
+
+      showToast("Đã thêm bài giảng mới!");
+      setShowAddLectureModal(false);
+      fetchData();
+    } catch (err: any) {
+      alert("Lỗi khi lưu bài giảng: " + (err.message || err));
+    }
+  };
+
+  const cloneLecture = async (originalBgId: number) => {
+    try {
+      const res = await fetch(`${API}/baigiang/${originalBgId}/clone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ MaBuoiHoc: activeSessionId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Đã sao chép bài giảng!");
+        setShowAddLectureModal(false);
+        fetchData();
+      } else {
+        alert(data.message || "Lỗi khi sao chép");
+      }
+    } catch {
+      alert("Lỗi kết nối");
+    }
+  };
+
+  // Document modal actions
+  const openAddDoc = (sessionId: number) => {
+    setActiveSessionId(sessionId);
+    setDocForm({ title: "", desc: "", content: "", fileUrl: "" });
+    setDocTab("create");
+    setShowAddDocModal(true);
+    fetch(`${API}/tailieu/list/all`)
+      .then(r => r.json())
+      .then(data => setAllExistingDoc(Array.isArray(data) ? data : []))
+      .catch(() => setAllExistingDoc([]));
+  };
+
+  const saveNewDoc = async () => {
+    if (!docForm.title.trim()) { alert("Vui lòng nhập tiêu đề!"); return; }
+    try {
+      const res = await fetch(`${API}/tailieu`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          TieuDe: docForm.title,
+          MoTa: docForm.desc,
+          NoiDung: docForm.content,
+          FileUrl: docForm.fileUrl,
+          MaBuoiHoc: activeSessionId,
+          TrangThai: "Đã duyệt"
+        })
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Lỗi từ phía máy chủ");
+      }
+
+      showToast("Đã thêm tài liệu mới!");
+      setShowAddDocModal(false);
+      fetchData();
+    } catch (err: any) {
+      alert("Lỗi khi lưu tài liệu: " + (err.message || err));
+    }
+  };
+
+  const cloneDoc = async (originalDocId: number) => {
+    try {
+      const res = await fetch(`${API}/tailieu/${originalDocId}/clone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ MaBuoiHoc: activeSessionId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Đã sao chép tài liệu!");
+        setShowAddDocModal(false);
+        fetchData();
+      } else {
+        alert(data.message || "Lỗi khi sao chép");
+      }
+    } catch {
+      alert("Lỗi kết nối");
+    }
+  };
+
+  // Exercise modal navigation
+  const openAddExercise = (sessionId: number, classId: number) => {
+    navigate(`/QTV/create-exercise/${sessionId}`, {
+      state: {
+        fromClassId: classId,
+        fromPage: "kho-hoc-lieu"
+      }
+    });
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <button onClick={() => navigate("/QTV/khoahoc")} className={styles.backBtn}>
           ← Quay lại Khóa học
         </button>
-        <h1> Kho học liệu tổng hợp</h1>
-      </div>
-
-      {/* Tabs list */}
-      <div className={styles.tabsRow}>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "baigiang" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("baigiang")}
-        >
-           Bài giảng 
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "baitap" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("baitap")}
-        >
-           Bài tập & Kiểm tra 
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === "tailieu" ? styles.tabBtnActive : ""}`}
-          onClick={() => setActiveTab("tailieu")}
-        >
-           Tài liệu 
-        </button>
+        <h1>Kho học liệu tổng hợp</h1>
+        <p>Quản lý toàn bộ lộ trình học tập, bài giảng, bài tập và tài liệu trực thuộc các lớp học</p>
       </div>
 
       {/* Search & Filter Toolbar */}
@@ -342,13 +654,13 @@ const KhoHocLieu = () => {
       </div>
 
       {/* Content Lists */}
-      <div style={{ background: "transparent", border: "none", boxShadow: "none", overflowX: "visible" }} className={styles.tableContainer}>
+      <div className={styles.tableContainer}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
             Đang tải dữ liệu học liệu...
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
             {groupedData.length === 0 ? (
               <div className={styles.emptyState} style={{ background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                 Không tìm thấy học liệu nào.
@@ -360,100 +672,141 @@ const KhoHocLieu = () => {
                   <div key={group.className} className={styles.classCard}>
                     <div className={styles.classHeader} onClick={() => toggleClassCollapse(group.className)}>
                       <div className={styles.classHeaderLeft}>
+                        {isCollapsed ? <FiChevronRight className={styles.toggleIcon} /> : <FiChevronDown className={styles.toggleIcon} />}
                         <h3 className={styles.classTitle}>{group.className}</h3>
                       </div>
-                      <div className={styles.classHeaderRight}>
-                        <span className={`${styles.badge} ${styles.badgeBlue}`}>
-                          {group.totalCount} {activeTab === "baigiang" ? "bài giảng" : activeTab === "baitap" ? "bài tập & kiểm tra" : "tài liệu"}
-                        </span>
-                        {isCollapsed ? (
-                          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>[Mở rộng]</span>
-                        ) : (
-                          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>[Thu gọn]</span>
-                        )}
+                      <div className={styles.classHeaderRight} onClick={e => e.stopPropagation()}>
+                        
+                        <button 
+                          className={styles.addClassBtn}
+                          onClick={() => {
+                            setTargetClassId(group.classId);
+                            setSessionForm({ title: "", desc: "", order: (classSessions[group.classId]?.length || 0) + 1 });
+                            setShowAddSessionModal(true);
+                          }}
+                        >
+                          <FiPlus /> Thêm buổi học
+                        </button>
                       </div>
                     </div>
 
                     {!isCollapsed && (
                       <div className={styles.classContent}>
-                        {group.sessions.map(session => (
-                          <div key={session.sessionName} className={styles.sessionBlock}>
-                            <h4 className={styles.sessionTitle}>
-                              {session.sessionName}
-                            </h4>
-                            <div className={styles.sessionItemList}>
-                              {session.items.map(item => {
-                                // Specific render attributes based on activeTab
-                                let title = "";
-                                let typeLabel = "";
-                                let subtitle = "";
-                                let viewClick = () => {};
-                                let deleteClick = () => {};
+                        {group.sessions.length === 0 ? (
+                          <div className={styles.emptyText}>Chưa có buổi học nào trong lộ trình lớp học này.</div>
+                        ) : (
+                          group.sessions.map((session: any) => (
+                            <div key={session.sessionId} className={styles.sessionBlock}>
+                              <div className={styles.sessionHeaderRow}>
+                                <div className={styles.sessionHeaderLeft}>
+                                  <h4 className={styles.sessionTitle}>{session.sessionName}</h4>
+                                  {session.desc && <p className={styles.sessionDesc}>{session.desc}</p>}
+                                </div>
+                                <button className={styles.sessionDeleteBtn} onClick={() => handleDeleteSession(session.sessionId, session.sessionName)} title="Xóa buổi học">
+                                  <FiTrash2 />
+                                </button>
+                              </div>
 
-                                if (activeTab === "baigiang") {
-                                  title = item.TieuDe;
-                                  typeLabel = item.LoaiBaiHoc || "Video";
-                                  subtitle = `Thời lượng: ${item.ThoiLuong || "—"}`;
-                                  viewClick = () => navigate(isQTV ? `/QTV/bai-giang/${item.MaBaiHoc}` : `/bai-giang/${item.MaBaiHoc}`);
-                                  deleteClick = () => setDeleteTarget({ id: item.MaBaiHoc, type: "baigiang", title: item.TieuDe });
-                                } else if (activeTab === "baitap") {
-                                  title = item.Title;
-                                  const isEx = item.IsExam === 1 || item.Type === "exam";
-                                  typeLabel = isEx ? "Bài kiểm tra" : mapDangBaiToVi(item.Type);
-                                  subtitle = item.CreatedDate
-                                    ? `Ngày tạo: ${new Date(item.CreatedDate).toLocaleDateString("vi-VN")}`
-                                    : "Không có ngày tạo";
-                                  viewClick = () => navigate(isQTV ? `/QTV/baitap-detail/${item.MaBaiTap}/0` : `/baitap-detail/${item.MaBaiTap}/0`);
-                                  deleteClick = () => setDeleteTarget({ id: item.MaBaiTap, type: "baitap", title: item.Title });
-                                } else if (activeTab === "tailieu") {
-                                  title = item.TieuDe;
-                                  typeLabel = "Tài liệu";
-                                  subtitle = item.MoTa || "(Không có mô tả)";
-                                  viewClick = () => handleViewDocumentDetail(item);
-                                  deleteClick = () => setDeleteTarget({ id: item.MaTaiLieu, type: "tailieu", title: item.TieuDe });
-                                }
-
-                                return (
-                                  <div key={activeTab === "baigiang" ? item.MaBaiHoc : activeTab === "baitap" ? item.MaBaiTap : item.MaTaiLieu} className={styles.itemRow}>
-                                    <div className={styles.itemMain}>
-                                      <div className={styles.itemDetails}>
-                                        <p className={styles.itemTitle}>{title}</p>
-                                        <p className={styles.itemSubtitle}>
-                                          <span className={`${styles.badge} ${
-                                            activeTab === "baigiang"
-                                              ? styles.badgeOrange
-                                              : activeTab === "baitap"
-                                              ? (item.IsExam === 1 || item.Type === "exam" ? styles.badgeOrange : styles.badgeBlue)
-                                              : styles.badgeGreen
-                                          }`}>
-                                            {typeLabel}
-                                          </span>
-                                          <span>{subtitle}</span>
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className={styles.itemActions}>
-                                      <button
-                                        className={styles.actionBtnViewText}
-                                        title="Xem chi tiết"
-                                        onClick={viewClick}
-                                      >
-                                        Xem
-                                      </button>
-                                      <button
-                                        className={styles.actionBtnDeleteText}
-                                        title="Xóa"
-                                        onClick={deleteClick}
-                                      >
-                                        Xóa
-                                      </button>
-                                    </div>
+                              {/* 3-Column Resource Layout */}
+                              <div className={styles.sessionColumns}>
+                                {/* Column 1: Lectures */}
+                                <div className={styles.sessionColumn}>
+                                  <div className={`${styles.columnHeader} ${styles.lecture}`}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FiVideo /> Bài giảng ({session.lectures.length})</span>
+                                    <button className={styles.columnAddBtn} onClick={() => openAddLecture(session.sessionId, session.lectures.length)} title="Thêm bài giảng"><FiPlus /></button>
                                   </div>
-                                );
-                              })}
+                                  {session.lectures.length === 0 ? (
+                                    <div className={styles.emptyText}>Chưa có bài giảng</div>
+                                  ) : (
+                                    session.lectures.map((item: any) => (
+                                      <div key={item.MaBaiHoc} className={styles.itemRow}>
+                                        <div className={styles.itemMain}>
+                                          <div className={styles.itemDetails}>
+                                            <p className={styles.itemTitle}>{item.TieuDe}</p>
+                                            <p className={styles.itemSubtitle}>
+                                              <span className={`${styles.badge} ${styles.badgeOrange}`}>{item.LoaiBaiHoc}</span>
+                                              {item.ThoiLuong && <span style={{ marginLeft: "6px" }}>{item.ThoiLuong}</span>}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        <div className={styles.itemActions}>
+                                          <button className={styles.actionBtnViewText} onClick={() => navigate(isQTV ? `/QTV/bai-giang/${item.MaBaiHoc}` : `/bai-giang/${item.MaBaiHoc}`)}>Xem</button>
+                                          <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: item.MaBaiHoc, type: "baigiang", title: item.TieuDe })}>Xóa</button>
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+
+                                {/* Column 2: Exercises */}
+                                <div className={styles.sessionColumn}>
+                                  <div className={`${styles.columnHeader} ${styles.exercise}`}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FiFileText /> Bài tập & Kiểm tra ({session.exercises.length})</span>
+                                    <button className={styles.columnAddBtn} onClick={() => openAddExercise(session.sessionId, group.classId)} title="Thêm bài tập"><FiPlus /></button>
+                                  </div>
+                                  {session.exercises.length === 0 ? (
+                                    <div className={styles.emptyText}>Chưa có bài tập</div>
+                                  ) : (
+                                    session.exercises.map((item: any) => {
+                                      const isEx = item.IsExam === 1 || item.Type === "exam";
+                                      const isLT = item.Type === "luyen-tap-them" || item.Type === "practice";
+                                      const badgeClass = isEx 
+                                        ? styles.badgeRed 
+                                        : (isLT ? styles.badgeOrange : styles.badgeBlue);
+                                      const badgeText = isEx 
+                                        ? "Bài KTra" 
+                                        : (isLT ? "LTThem" : "BTap");
+                                      return (
+                                        <div key={item.MaBaiTap} className={styles.itemRow}>
+                                          <div className={styles.itemMain}>
+                                            <div className={styles.itemDetails}>
+                                              <p className={styles.itemTitle}>{item.Title}</p>
+                                              <p className={styles.itemSubtitle}>
+                                                <span className={`${styles.badge} ${badgeClass}`}>
+                                                  {badgeText}
+                                                </span>
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className={styles.itemActions}>
+                                            <button className={styles.actionBtnViewText} onClick={() => navigate(isQTV ? `/QTV/baitap-detail/${item.MaBaiTap}/0` : `/baitap-detail/${item.MaBaiTap}/0`)}>Xem</button>
+                                            <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: item.MaBaiTap, type: "baitap", title: item.Title })}>Xóa</button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+
+                                {/* Column 3: Documents */}
+                                <div className={styles.sessionColumn}>
+                                  <div className={`${styles.columnHeader} ${styles.document}`}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FiFolder /> Tài liệu ({session.documents.length})</span>
+                                    <button className={styles.columnAddBtn} onClick={() => openAddDoc(session.sessionId)} title="Thêm tài liệu"><FiPlus /></button>
+                                  </div>
+                                  {session.documents.length === 0 ? (
+                                    <div className={styles.emptyText}>Chưa có tài liệu</div>
+                                  ) : (
+                                    session.documents.map((item: any) => (
+                                      <div key={item.MaTaiLieu} className={styles.itemRow}>
+                                        <div className={styles.itemMain}>
+                                          <div className={styles.itemDetails}>
+                                            <p className={styles.itemTitle}>{item.TieuDe}</p>
+                                            {item.MoTa && <p className={styles.itemSubtitle}>{item.MoTa}</p>}
+                                          </div>
+                                        </div>
+                                        <div className={styles.itemActions}>
+                                          <button className={styles.actionBtnViewText} onClick={() => handleViewDocumentDetail(item)}>Xem</button>
+                                          <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: item.MaTaiLieu, type: "tailieu", title: item.TieuDe })}>Xóa</button>
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))
+                        )}
                       </div>
                     )}
                   </div>
@@ -464,18 +817,476 @@ const KhoHocLieu = () => {
         )}
       </div>
 
+      {/* MODAL: THÊM BUỔI HỌC */}
+      {showAddSessionModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalTop}>
+              <h3>Thêm buổi học vào lộ trình</h3>
+              <button className={styles.modalClose} onClick={() => setShowAddSessionModal(false)}><FiX /></button>
+            </div>
+            <div style={{ marginTop: "16px" }}>
+              <div className={styles.formGroup}>
+                <label>Tên buổi học <span className={styles.req}>*</span></label>
+                <input value={sessionForm.title} onChange={e => setSessionForm(p => ({ ...p, title: e.target.value }))} placeholder="VD: Buổi 1: Ngữ pháp cơ bản" />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Mô tả</label>
+                <textarea value={sessionForm.desc} onChange={e => setSessionForm(p => ({ ...p, desc: e.target.value }))} placeholder="Nội dung buổi học..." rows={3} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Thứ tự</label>
+                <input type="number" min={1} value={sessionForm.order} onChange={e => setSessionForm(p => ({ ...p, order: Number(e.target.value) }))} />
+              </div>
+              <div className={styles.modalFooter}>
+                <button className={styles.detailBtnOutline} onClick={() => setShowAddSessionModal(false)}>Hủy</button>
+                <button className={styles.detailBtnPrimary} onClick={handleSaveSession}>Thêm buổi</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: THÊM BÀI GIẢNG */}
+      {showAddLectureModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal} style={{ maxWidth: '600px' }}>
+            <div className={styles.modalTop}>
+              <h3>Thêm bài giảng</h3>
+              <button className={styles.modalClose} onClick={() => setShowAddLectureModal(false)}><FiX /></button>
+            </div>
+            
+            <div className={styles.tabs} style={{ marginBottom: '16px', marginTop: '12px' }}>
+              <button className={`${styles.tab} ${bgTab === 'create' ? styles.tabActive : ''}`} onClick={() => setBgTab('create')}>Tạo mới</button>
+              <button className={`${styles.tab} ${bgTab === 'reuse' ? styles.tabActive : ''}`} onClick={() => setBgTab('reuse')}>Chọn từ danh sách</button>
+            </div>
+
+            {bgTab === 'create' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto', paddingRight: '6px', maxHeight: '55vh' }}>
+                <div className={styles.formGroup}>
+                  <label>Tiêu đề bài giảng *</label>
+                  <input value={bgForm.title} onChange={e => setBgForm(p => ({...p, title: e.target.value}))} placeholder="VD: Lesson 1: Grammar basics" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Nội dung bài giảng</label>
+                  <div style={{ border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
+                    <MDXEditor
+                      key={editorKey}
+                      markdown={bgForm.content}
+                      onChange={val => setBgForm(p => ({...p, content: val}))}
+                      plugins={[
+                        headingsPlugin(),
+                        listsPlugin(),
+                        quotePlugin(),
+                        thematicBreakPlugin(),
+                        tablePlugin(),
+                        markdownShortcutPlugin(),
+                        toolbarPlugin({
+                          toolbarContents: () => (
+                            <>
+                              <BlockTypeSelect />
+                              <BoldItalicUnderlineToggles />
+                              <ListsToggle />
+                            </>
+                          )
+                        })
+                      ]}
+                    />
+                  </div>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Link tài liệu / Video URL (nếu có)</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input style={{ flex: 1 }} value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
+                      Tải file
+                      <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await fetch(`${API}/upload`, {
+                            method: "POST",
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error("Upload failed");
+                          const data = await res.json();
+                          setBgForm(p => ({ ...p, fileUrl: data.url }));
+                          alert("Tải lên file thành công!");
+                        } catch (err) {
+                          alert("Lỗi tải lên file: " + (err as Error).message);
+                        }
+                      }} />
+                    </label>
+                  </div>
+                </div>
+                <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: '4px 0' }}>
+                  <input 
+                    type="checkbox" 
+                    id="isFreeBg" 
+                    checked={bgForm.isFree} 
+                    onChange={e => setBgForm(p => ({...p, isFree: e.target.checked}))} 
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="isFreeBg" style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
+                    Cho phép học thử miễn phí (Free)
+                  </label>
+                </div>
+
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #e2e8f0" }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: '600', color: '#000080', fontSize: '14px' }}>
+                    <input
+                      type="checkbox"
+                      checked={hasMinitest}
+                      onChange={e => setHasMinitest(e.target.checked)}
+                      style={{ width: 18, height: 18, accentColor: '#F95800', cursor: 'pointer', margin: 0 }}
+                    />
+                    <span>Đính kèm bài kiểm tra nhanh (MiniTest)</span>
+                  </label>
+                  
+                  {hasMinitest && (
+                    <div style={{
+                      marginTop: 15,
+                      padding: "15px",
+                      background: "#f8fafc",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                      textAlign: "left"
+                    }}>
+                      <h4 style={{ margin: "0 0 10px 0", color: "#000080", fontSize: "13px", fontWeight: 700 }}>
+                        Thiết lập câu hỏi cho MiniTest
+                      </h4>
+                      
+                      {/* File Scan Card */}
+                      <div style={{
+                        background: "#ffffff",
+                        border: "1px dashed #cbd5e1",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        marginBottom: "15px"
+                      }}>
+                        <h5 style={{ margin: "0 0 5px 0", color: "#000080", fontSize: "12px", fontWeight: 600 }}>
+                          Quét câu hỏi từ file Word (.docx) hoặc Text (.txt)
+                        </h5>
+                        <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#475569", lineHeight: "1.4" }}>
+                          Tự động điền nhanh danh sách câu hỏi. Định dạng file mẫu:
+                        </p>
+                        <pre style={{
+                          background: "#f1f5f9",
+                          padding: "8px",
+                          borderRadius: "6px",
+                          fontSize: "10px",
+                          fontFamily: "Courier New, monospace",
+                          whiteSpace: "pre-wrap",
+                          color: "#334155",
+                          margin: "0 0 10px 0",
+                          border: "1px solid #e2e8f0"
+                        }}>
+{`Câu 1: She _______ English for 5 years.
+A. has studied
+B. studies
+C. studied
+D. is studying
+Đáp án đúng: A
+Giải thích: Thì HTHT (tùy chọn)`}
+                        </pre>
+                        <input
+                          type="file"
+                          accept=".txt,.docx"
+                          onChange={handleMinitestFileScan}
+                          style={{ fontSize: "12px", width: "100%" }}
+                        />
+                      </div>
+
+                      {/* List of Questions */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {minitestQuestions.map((q, qIndex) => (
+                          <div key={qIndex} style={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            padding: "12px",
+                            position: "relative"
+                          }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                              <strong style={{ fontSize: 12, color: "#000080" }}>Câu hỏi {qIndex + 1}</strong>
+                              {minitestQuestions.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeMinitestQuestion(qIndex)}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "#ef4444",
+                                    fontSize: "11px",
+                                    cursor: "pointer",
+                                    fontWeight: "600",
+                                    padding: 0
+                                  }}
+                                >
+                                  Xóa câu hỏi
+                                </button>
+                              )}
+                            </div>
+
+                            <input
+                              type="text"
+                              placeholder="Nhập nội dung câu hỏi..."
+                              value={q.question || ""}
+                              onChange={e => updateQuestionField(qIndex, "question", e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #cbd5e1",
+                                fontSize: "12.5px",
+                                marginBottom: "8px",
+                                boxSizing: "border-box"
+                              }}
+                            />
+
+                            {["A", "B", "C", "D"].map((lbl, aIndex) => (
+                              <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                                <span style={{ fontWeight: "bold", fontSize: 11, width: 12 }}>{lbl}.</span>
+                                <input
+                                  type="text"
+                                  placeholder={`Lựa chọn ${lbl}`}
+                                  value={q.answers[aIndex] || ""}
+                                  onChange={e => updateQuestionAnswer(qIndex, aIndex, e.target.value)}
+                                  style={{
+                                    flex: 1,
+                                    padding: "5px 8px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #cbd5e1",
+                                    fontSize: "12px",
+                                    margin: 0,
+                                    boxSizing: "border-box"
+                                  }}
+                                />
+                              </div>
+                            ))}
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+                              <div>
+                                <label style={{ fontSize: 10, fontWeight: 600, color: "#666", display: "block", marginBottom: 3 }}>
+                                  Đáp án đúng
+                                </label>
+                                <select
+                                  value={q.correct || "A"}
+                                  onChange={e => updateQuestionField(qIndex, "correct", e.target.value)}
+                                  style={{
+                                    width: "100%",
+                                    padding: "5px 8px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #cbd5e1",
+                                    fontSize: "12px",
+                                    background: "#fff",
+                                    boxSizing: "border-box"
+                                  }}
+                                >
+                                  <option value="A">Đáp án đúng: A</option>
+                                  <option value="B">Đáp án đúng: B</option>
+                                  <option value="C">Đáp án đúng: C</option>
+                                  <option value="D">Đáp án đúng: D</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: 10, fontWeight: 600, color: "#666", display: "block", marginBottom: 3 }}>
+                                  Giải thích (tùy chọn)
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Giải thích..."
+                                  value={q.explanation || ""}
+                                  onChange={e => updateQuestionField(qIndex, "explanation", e.target.value)}
+                                  style={{
+                                    width: "100%",
+                                    padding: "5px 8px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #cbd5e1",
+                                    fontSize: "12px",
+                                    margin: 0,
+                                    boxSizing: "border-box"
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={addMinitestQuestion}
+                        style={{
+                          marginTop: "12px",
+                          width: "100%",
+                          padding: "8px",
+                          background: "#ffffff",
+                          border: "1px dashed #cbd5e1",
+                          borderRadius: "6px",
+                          color: "#F95800",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          transition: "all 0.2s"
+                        }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = "#fff8f5";
+                          e.currentTarget.style.borderColor = "#F95800";
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = "#ffffff";
+                          e.currentTarget.style.borderColor = "#cbd5e1";
+                        }}
+                      >
+                        + Thêm câu hỏi
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.modalFooter}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Hủy</button>
+                  <button className={styles.detailBtnPrimary} onClick={saveNewLecture}>Tạo mới</button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px' }}>
+                  {allExistingBg.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Không tìm thấy bài giảng nào.</div>
+                  ) : (
+                    allExistingBg.map((bg: any) => (
+                      <div key={bg.MaBaiHoc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ flex: 1, paddingRight: '8px' }}>
+                          <strong style={{ fontSize: '14px', color: '#1e293b', display: 'block' }}>{bg.TieuDe}</strong>
+                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                            {bg.LoaiBaiHoc} · {bg.ThoiLuong} · Nguồn: Lớp {bg.TenLop} ({bg.TenBuoiHoc})
+                          </div>
+                        </div>
+                        <button className={styles.detailBtnPrimary} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }} onClick={() => cloneLecture(bg.MaBaiHoc)}>Chọn</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className={styles.modalFooter} style={{ marginTop: '16px' }}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddLectureModal(false)}>Đóng</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: THÊM TÀI LIỆU */}
+      {showAddDocModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal} style={{ maxWidth: '600px' }}>
+            <div className={styles.modalTop}>
+              <h3>Thêm tài liệu</h3>
+              <button className={styles.modalClose} onClick={() => setShowAddDocModal(false)}><FiX /></button>
+            </div>
+            
+            <div className={styles.tabs} style={{ marginBottom: '16px', marginTop: '12px' }}>
+              <button className={`${styles.tab} ${docTab === 'create' ? styles.tabActive : ''}`} onClick={() => setDocTab('create')}>Tạo mới</button>
+              <button className={`${styles.tab} ${docTab === 'reuse' ? styles.tabActive : ''}`} onClick={() => setDocTab('reuse')}>Chọn từ danh sách</button>
+            </div>
+
+            {docTab === 'create' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className={styles.formGroup}>
+                  <label>Tiêu đề tài liệu *</label>
+                  <input value={docForm.title} onChange={e => setDocForm(p => ({...p, title: e.target.value}))} placeholder="VD: Slide bài học Unit 1" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Mô tả ngắn</label>
+                  <input value={docForm.desc} onChange={e => setDocForm(p => ({...p, desc: e.target.value}))} placeholder="Slide tóm tắt lý thuyết..." />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Nội dung tài liệu (Markdown hoặc Text)</label>
+                  <textarea value={docForm.content} onChange={e => setDocForm(p => ({...p, content: e.target.value}))} placeholder="Nội dung tóm tắt..." rows={4} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>File đính kèm (URL)</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input style={{ flex: 1 }} value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
+                      Tải file
+                      <input type="file" style={{ display: 'none' }} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await fetch(`${API}/upload`, {
+                            method: "POST",
+                            body: formData
+                          });
+                          if (!res.ok) throw new Error("Upload failed");
+                          const data = await res.json();
+                          setDocForm(p => ({ ...p, fileUrl: data.url }));
+                          alert("Tải lên file thành công!");
+                        } catch (err) {
+                          alert("Lỗi tải lên file: " + (err as Error).message);
+                        }
+                      }} />
+                    </label>
+                  </div>
+                </div>
+                <div className={styles.modalFooter}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddDocModal(false)}>Hủy</button>
+                  <button className={styles.detailBtnPrimary} onClick={saveNewDoc}>Tạo mới</button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px' }}>
+                  {allExistingDoc.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Không tìm thấy tài liệu nào.</div>
+                  ) : (
+                    allExistingDoc.map((doc: any) => (
+                      <div key={doc.MaTaiLieu} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                        <div style={{ flex: 1, paddingRight: '8px' }}>
+                          <strong style={{ fontSize: '14px', color: '#15803d', display: 'block' }}>{doc.TieuDe}</strong>
+                          <div style={{ fontSize: '11px', color: '#16a34a', marginTop: '2px' }}>
+                            {doc.MoTa || 'Không có mô tả'} · Nguồn: Lớp {doc.TenLop} ({doc.TenBuoiHoc})
+                          </div>
+                        </div>
+                        <button className={styles.detailBtnPrimary} style={{ fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }} onClick={() => cloneDoc(doc.MaTaiLieu)}>Chọn</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className={styles.modalFooter} style={{ marginTop: '16px' }}>
+                  <button className={styles.detailBtnOutline} onClick={() => setShowAddDocModal(false)}>Đóng</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* CONFIRM DELETE MODAL */}
       {deleteTarget && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.confirmBox}>
-            <FiAlertTriangle className={styles.warnIcon} />
-            <h3>Xác nhận xóa vĩnh viễn</h3>
-            <p>
-              Bạn có chắc chắn muốn xóa học liệu <strong>"{deleteTarget.title}"</strong> không? Hành động này sẽ gỡ bỏ học liệu khỏi tất cả các lớp của giáo viên và sinh viên.
-            </p>
-            <div className={styles.modalButtons}>
-              <button className={styles.btnCancel} onClick={() => setDeleteTarget(null)}>Hủy bỏ</button>
-              <button className={styles.btnConfirm} onClick={handleDeleteConfirm}>Đồng ý xóa</button>
+        <div className={styles.overlay} onClick={() => setDeleteTarget(null)}>
+          <div className={styles.modal} style={{ width: '450px' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalTop}>
+              <span style={{ fontSize: "16px", fontWeight: 750, color: "#1e293b" }}>Xác nhận xóa vĩnh viễn</span>
+              <button type="button" className={styles.modalClose} onClick={() => setDeleteTarget(null)}>&times;</button>
+            </div>
+            <div style={{ marginTop: "16px" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa học liệu <strong>"{deleteTarget.title}"</strong> không? Hành động này sẽ gỡ bỏ học liệu khỏi tất cả các lớp của giáo viên và sinh viên.
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#ef4444" }}>
+                <strong>Lưu ý:</strong> Hành động này không thể khôi phục!
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button type="button" className={styles.detailBtnOutline} onClick={() => setDeleteTarget(null)}>Hủy bỏ</button>
+                <button type="button" className={styles.detailBtnPrimary} style={{ background: "#c20e0e" }} onClick={handleDeleteConfirm}>Đồng ý xóa</button>
+              </div>
             </div>
           </div>
         </div>

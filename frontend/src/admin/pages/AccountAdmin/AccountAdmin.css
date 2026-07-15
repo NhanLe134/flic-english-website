@@ -113,12 +113,6 @@
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
 }
 
 .box p {
@@ -253,14 +247,21 @@
   /* Chặn xuống dòng cột trạng thái */
 }
 
+.accounts-table td.user-status {
+  overflow: visible;
+  text-overflow: unset;
+}
+
 .status-badge.active {
   background: #dcfce7;
   color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
 .status-badge.locked {
   background: #fee2e2;
   color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 /* ACTION BUTTONS AS ICONS */
@@ -686,6 +687,7 @@
   font-weight: 550;
   margin-top: 4px;
   display: block;
+  font-style: italic;
 }
 
 /* ── Modal Custom Scrollbar ── */

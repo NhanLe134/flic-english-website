@@ -1,10 +1,11 @@
-﻿import "./DanhSachBaiNop.css";
+import "./DanhSachBaiNop.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const DanhSachBaiNop = () => {
   const navigate = useNavigate();
   const { maBaiTap } = useParams();
+  const isQTV = window.location.pathname.includes("/QTV");
 
   const [exercise, setExercise] = useState<any>(null);
   const [danhSach, setDanhSach] = useState<any[]>([]);
@@ -16,12 +17,12 @@ const DanhSachBaiNop = () => {
 
   const id = parseInt(maBaiTap.trim());
 
-  fetch(`http://14.225.192.252:5000/baitap/${id}`)
+  fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${id}`)
     .then(res => res.json())
     .then(data => setExercise(data))
     .catch(err => console.log(err));
 
-  fetch(`http://14.225.192.252:5000/bainop/baitap/${id}`)
+  fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/bainop/baitap/${id}`)
     .then(res => res.json())
     .then(data => setDanhSach(data))
     .catch(err => console.log(err));
@@ -37,7 +38,10 @@ const DanhSachBaiNop = () => {
   const choCham = danhSach.filter(b => b.TrangThai === "Chờ chấm").length;
 
   return (
-    <div className="dsbn-wrapper">
+    <div 
+      className="dsbn-wrapper"
+      style={isQTV ? { maxWidth: "1200px", margin: "0 auto", padding: "24px 32px 32px 32px", boxSizing: "border-box" } : undefined}
+    >
 
       <div className="back" onClick={() => navigate(-1)}>← Quay lại</div>
 
@@ -120,7 +124,7 @@ const DanhSachBaiNop = () => {
                   <td>
                     <button
                       className="dsbn-view-btn"
-                      onClick={() => navigate(`/cham-bai/${b.MaBaiNop}`)}
+                      onClick={() => navigate(isQTV ? `/QTV/cham-bai/${b.MaBaiNop}` : `/cham-bai/${b.MaBaiNop}`)}
                     >
                       {b.TrangThai === "Đã chấm" ? "Xem lại" : "Chấm bài"}
                     </button>

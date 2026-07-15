@@ -3,7 +3,7 @@ import styles from "./DuyetBaiQTV.module.css";
 import { FiSearch, FiEye } from "react-icons/fi";
 import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const getMediaUrl = (url: string) => {
   if (!url) return "";
@@ -105,9 +105,9 @@ export default function DuyetBaiQTV() {
       // Status values mapped for backend
       let statusVal = "";
       if (status === "Đã duyệt") {
-        statusVal = "published";
+        statusVal = "Đã duyệt";
       } else {
-        statusVal = "rejected";
+        statusVal = "Từ chối";
       }
 
       const currentUser = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
@@ -162,6 +162,22 @@ export default function DuyetBaiQTV() {
       itemAuthor.toLowerCase().includes(search.toLowerCase()) ||
       itemCourse.toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    const aStatus = getStatusLabel(a.TrangThaiDuyet || a.TrangThai);
+    const bStatus = getStatusLabel(b.TrangThaiDuyet || b.TrangThai);
+
+    if (aStatus === "Chờ duyệt" && bStatus !== "Chờ duyệt") return -1;
+    if (aStatus !== "Chờ duyệt" && bStatus === "Chờ duyệt") return 1;
+
+    const aDateStr = a.NgayGui || a.NgayTao || a.NgayCapNhat || a.CreatedDate || "";
+    const bDateStr = b.NgayGui || b.NgayTao || b.NgayCapNhat || b.CreatedDate || "";
+
+    const aTime = aDateStr ? new Date(aDateStr).getTime() : 0;
+    const bTime = bDateStr ? new Date(bDateStr).getTime() : 0;
+
+    return bTime - aTime;
   });
 
   const getTabPillCount = (status: string) => {
@@ -282,14 +298,14 @@ export default function DuyetBaiQTV() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.length === 0 ? (
+                {sortedData.length === 0 ? (
                   <tr>
                     <td colSpan={6} className={styles.emptyCell}>
                       Không tìm thấy nội dung nào phù hợp.
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((item: any, idx) => (
+                  sortedData.map((item: any, idx) => (
                     <tr
                       key={idx}
                       className={styles.clickableRow}

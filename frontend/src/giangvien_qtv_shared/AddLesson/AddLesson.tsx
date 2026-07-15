@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useRef, useState, useEffect } from "react";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import "./AddLesson.css";
 import {
   MDXEditor,
@@ -17,17 +17,61 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004");
+
 const AddLesson: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isQTV = location.pathname.startsWith("/QTV");
   const { buoiHocId } = useParams();
+  const [searchParams] = useSearchParams();
+  const editDraftId = searchParams.get("editDraftId");
+  const [draftMaBuoiHoc, setDraftMaBuoiHoc] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!editDraftId) return;
+
+    fetch(`${API_BASE}/baigiang/detail/${editDraftId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setName(data.TieuDe || "");
+          setMoTa(data.NoiDung || "");
+          setLink(data.FileUrl || "");
+          setIsFree(data.IsFree === 1);
+          if (data.MaBuoiHoc) {
+            setDraftMaBuoiHoc(Number(data.MaBuoiHoc));
+          }
+          setEditorKey(prev => prev + 1);
+        }
+      })
+      .catch(err => console.error("Lỗi tải chi tiết bản nháp bài giảng:", err));
+
+    fetch(`${API_BASE}/minitest/baigiang/${editDraftId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.CauHoi) {
+          try {
+            const questions = JSON.parse(data.CauHoi);
+            if (Array.isArray(questions) && questions.length > 0) {
+              setMinitestQuestions(questions);
+              setHasMinitest(true);
+            }
+          } catch (e) {
+            console.error("Lỗi parse câu hỏi MiniTest:", e);
+          }
+        }
+      })
+      .catch(err => console.error("Lỗi tải MiniTest của bản nháp:", err));
+  }, [editDraftId]);
 
   const [name, setName] = useState("");
   const type = "Video";
   const duration = "";
-  const [lessonDate, setLessonDate] = useState("");
   const [moTa, setMoTa] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -94,7 +138,7 @@ const AddLesson: React.FC = () => {
         return;
       }
 
-      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*[\.\:\)])/i;
+      const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
       
@@ -175,7 +219,6 @@ const AddLesson: React.FC = () => {
 
   const handleAddLesson = async (status: "published" | "draft") => {
     if (!name) { alert("Vui lòng nhập tên bài giảng"); return; }
-    if (!lessonDate) { alert("Vui lòng chọn ngày dạy"); return; }
 
     try {
       setUploading(true);
@@ -184,7 +227,7 @@ const AddLesson: React.FC = () => {
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const uploadRes = await fetch("http://14.225.192.252:5000/upload", {
+        const uploadRes = await fetch(`${API_BASE}/upload`, {
           method: "POST",
           body: formData
         });
@@ -198,42 +241,52 @@ const AddLesson: React.FC = () => {
       const vaiTroLower = (user.VaiTro || "").toLowerCase().trim();
       const isTeacher = vaiTroLower === "giảng viên";
 
+      const targetStatus = isTeacher ? (status === "draft" ? "Lưu nháp" : "Chờ duyệt") : (status === "draft" ? "Lưu nháp" : "Đã duyệt");
+
       const newLesson = {
         TieuDe: name,
         LoaiBaiHoc: type,
         ThoiLuong: duration ? duration + " phút" : "0 phút",
-        TrangThai: isTeacher ? (status === "draft" ? "draft" : "pending") : status,
+        TrangThai: targetStatus,
         NoiDung: moTa, // ← lưu Markdown
         FileUrl: fileUrl,
         ThuTu: 1,
         MaKhoaHoc: 1,
         MaGiangVien: user.MaNguoiDung || 1,
-        MaBuoiHoc: Number(buoiHocId),
+        MaBuoiHoc: (Number(buoiHocId) && Number(buoiHocId) !== 0) ? Number(buoiHocId) : (draftMaBuoiHoc || null),
         IsFree: isFree ? 1 : 0
       };
 
-      const res = await fetch("http://14.225.192.252:5000/baigiang", {
-        method: "POST",
+      const requestUrl = editDraftId 
+        ? `${API_BASE}/baigiang/${editDraftId}`
+        : `${API_BASE}/baigiang`;
+      const requestMethod = editDraftId ? "PUT" : "POST";
+
+      const res = await fetch(requestUrl, {
+        method: requestMethod,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLesson)
       });
       
       if (!res.ok) {
-        throw new Error("Không thể lưu bài giảng");
+        throw new Error(editDraftId ? "Không thể cập nhật bài giảng" : "Không thể lưu bài giảng");
       }
 
-      const resData = await res.json();
-      const createdMaBaiHoc = resData.MaBaiHoc;
+      let createdMaBaiHoc = editDraftId;
+      if (!editDraftId) {
+        const resData = await res.json();
+        createdMaBaiHoc = resData.MaBaiHoc;
+      }
 
       if (hasMinitest && createdMaBaiHoc) {
-        const minitestRes = await fetch("http://14.225.192.252:5000/minitest/create", {
+        const minitestRes = await fetch(`${API_BASE}/minitest/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             MaBaiHoc: Number(createdMaBaiHoc),
             CauHoi: JSON.stringify(minitestQuestions),
             DiemDat: 100,
-            TrangThai: isTeacher ? (status === "draft" ? "draft" : "pending") : status
+            TrangThai: targetStatus
           })
         });
         if (!minitestRes.ok) {
@@ -241,16 +294,27 @@ const AddLesson: React.FC = () => {
         }
       }
 
-      if (isTeacher) {
-        alert(
-          hasMinitest
-            ? "Gửi yêu cầu duyệt bài giảng và MiniTest thành công! Nội dung sẽ hiển thị sau khi được phê duyệt."
-            : "Gửi yêu cầu duyệt bài giảng thành công! Bài giảng sẽ hiển thị sau khi được phê duyệt."
-        );
+      if (status === "draft") {
+        alert(hasMinitest ? "Đã lưu bản nháp bài giảng và MiniTest thành công!" : "Đã lưu bản nháp bài giảng thành công!");
       } else {
-        alert(hasMinitest ? "Thêm bài giảng và MiniTest thành công!" : "Thêm bài giảng thành công!");
+        if (isTeacher) {
+          alert(
+            hasMinitest
+              ? "Gửi yêu cầu duyệt bài giảng và MiniTest thành công! Nội dung sẽ hiển thị sau khi được phê duyệt."
+              : "Gửi yêu cầu duyệt bài giảng thành công! Bài giảng sẽ hiển thị sau khi được phê duyệt."
+          );
+        } else {
+          alert(hasMinitest ? "Thêm bài giảng và MiniTest thành công!" : "Thêm bài giảng thành công!");
+        }
       }
-      navigate(-1);
+      
+      if (isQTV) {
+        navigate(-1);
+      } else if (editDraftId) {
+        navigate("/quan-ly-ban-nhap");
+      } else {
+        navigate(-1);
+      }
 
     } catch (err) {
       console.log(err);
@@ -263,8 +327,16 @@ const AddLesson: React.FC = () => {
   return (
     <div className="al-wrapper">
 
-      <div className="back-btn" onClick={() => navigate(-1)}>← Quay lại</div>
-      <h1 className="page-title">Thêm bài giảng</h1>
+      <div className="back-btn" onClick={() => {
+        if (isQTV) {
+          navigate(-1);
+        } else if (editDraftId) {
+          navigate("/quan-ly-ban-nhap");
+        } else {
+          navigate(-1);
+        }
+      }}>← Quay lại</div>
+      <h1 className="page-title">{editDraftId ? "Chỉnh sửa bản nháp bài giảng" : "Thêm bài giảng"}</h1>
 
       <div className="form-layout">
 
@@ -280,17 +352,10 @@ const AddLesson: React.FC = () => {
             onChange={(e) => setName(e.target.value)}
           />
 
-          <label>Ngày dạy *</label>
-          <input
-            type="date"
-            value={lessonDate}
-            onChange={(e) => setLessonDate(e.target.value)}
-          />
-
-
-          <label>Mô tả nội dung</label>
+          <label>Nội dung bài giảng</label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, marginBottom: 16, background: "#fff" }}>
             <MDXEditor
+              key={editorKey}
               markdown={moTa}
               onChange={setMoTa}
               plugins={[
@@ -322,7 +387,7 @@ const AddLesson: React.FC = () => {
                 onChange={e => setIsFree(e.target.checked)}
                 style={{ width: 18, height: 18, accentColor: '#F95800', cursor: 'pointer', margin: 0 }}
               />
-              <span>Cho phép học thử miễn phí (Free)</span>
+              <span>Cho phép học thử miễn phí </span>
             </label>
           </div>
 
@@ -601,18 +666,20 @@ Giải thích: Hành động bắt đầu trong quá khứ kéo dài đến hi�
               </>
             ) : (
               <>
-                <button
-                  className="draft-btn"
-                  disabled={uploading}
-                  onClick={() => handleAddLesson("draft")}
-                >
-                  {uploading ? "Đang lưu..." : "Lưu nháp"}
-                </button>
+                {!isQTV && (
+                  <button
+                    className="draft-btn"
+                    disabled={uploading}
+                    onClick={() => handleAddLesson("draft")}
+                  >
+                    {uploading ? "Đang lưu..." : "Lưu nháp"}
+                  </button>
+                )}
                 <button
                   className="publish-btn"
                   disabled={uploading}
                   onClick={() => handleAddLesson("published")}
-                  style={{ background: "#F95800" }}
+                  style={{ background: "#F95800", width: isQTV ? "100%" : undefined }}
                 >
                   {uploading ? "Đang lưu..." : "Xuất bản ngay"}
                 </button>

@@ -1,4 +1,4 @@
-﻿import "./StudentList.css";
+import "./StudentList.css";
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -20,7 +20,7 @@ const StudentList: React.FC = () => {
     const trimmedId = maSinhVien.trim();
     setShowModal(true);
     setModalLoading(true);
-    fetch(`http://14.225.192.252:5000/students/${trimmedId}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/students/${trimmedId}`)
       .then(res => res.json())
       .then(data => {
         setSelectedStudentDetails(data);
@@ -37,7 +37,7 @@ const StudentList: React.FC = () => {
 
     if (!maNguoiDung) { setLoading(false); return; }
 
-    fetch(`http://14.225.192.252:5000/teacher/students/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/students/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => setStudents(data))
       .catch(err => console.log(err))
@@ -143,17 +143,17 @@ const StudentList: React.FC = () => {
             <option key={lop} value={lop}>{lop}</option>
           ))}
         </select>
-      </div>
 
-      {/* Stats */}
-      <div className="sl-stats-row">
-        <div className="sl-stat-card">
-          <span className="sl-stat-label">Tổng học viên:</span>
-          <span className="sl-stat-value">{filteredStudents.length}</span>
-        </div>
-        <div className="sl-stat-card">
-          <span className="sl-stat-label">Số lớp:</span>
-          <span className="sl-stat-value">{danhSachLop.length}</span>
+        {/* Stats (moved inside and aligned to the right) */}
+        <div className="sl-stats-row">
+          <div className="sl-stat-card">
+            <span className="sl-stat-label">Tổng học viên:</span>
+            <span className="sl-stat-value">{filteredStudents.length}</span>
+          </div>
+          <div className="sl-stat-card">
+            <span className="sl-stat-label">Số lớp:</span>
+            <span className="sl-stat-value">{danhSachLop.length}</span>
+          </div>
         </div>
       </div>
 
@@ -172,19 +172,18 @@ const StudentList: React.FC = () => {
                 <th>Lớp</th>
                 <th>Ngày ghi danh</th>
                 <th>Trạng thái</th>
-                <th>Hoạt động</th>
               </tr>
             </thead>
             <tbody>
               {currentStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: "20px", color: "#999" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "20px", color: "#999" }}>
                     {loading ? "Đang tải..." : "Không có học viên nào"}
                   </td>
                 </tr>
               ) : (
                 currentStudents.map((student: any, index: number) => (
-                  <tr key={index}>
+                  <tr key={index} onClick={() => handleViewStudent(student.MaSinhVien)}>
                     <td>{student.MaSinhVien ? student.MaSinhVien.trim() : ""}</td>
                     <td>{student.MSSV ? student.MSSV.trim() : "—"}</td>
                     <td>{student.HoTen}</td>
@@ -200,14 +199,6 @@ const StudentList: React.FC = () => {
                       <span className={`sl-status-tag ${student.TrangThai === "Đang học" ? "active" : ""}`}>
                         {student.TrangThai || "—"}
                       </span>
-                    </td>
-                    <td>
-                      <button
-                        className="view-btn"
-                        onClick={() => handleViewStudent(student.MaSinhVien)}
-                      >
-                        Xem
-                      </button>
                     </td>
                   </tr>
                 ))

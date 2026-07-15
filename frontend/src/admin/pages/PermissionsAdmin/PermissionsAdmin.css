@@ -65,6 +65,26 @@
   max-width: 100%;
 }
 
+/* Custom scrollbar for permissions table */
+.table-card::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.table-card::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.table-card::-webkit-scrollbar-thumb {
+  background: #a2c2e8;
+  border-radius: 8px;
+}
+
+.table-card::-webkit-scrollbar-thumb:hover {
+  background: #000080;
+}
+
 .permissions-table {
   width: 100%;
   border-collapse: collapse;

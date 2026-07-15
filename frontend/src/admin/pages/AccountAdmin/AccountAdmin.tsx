@@ -1,7 +1,7 @@
-﻿import "./AccountAdmin.css";
+import "./AccountAdmin.css";
 import { useState, useEffect } from "react";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const GV_PERMISSIONS = [
   { code: "LECTURE_CREATE", label: "Đăng bài giảng" },
@@ -199,6 +199,11 @@ export default function AccountAdmin() {
     const errors: { username?: string; fullname?: string; email?: string; password?: string } = {};
     if (!newUser.username.trim()) {
       errors.username = "Vui lòng nhập tên đăng nhập!";
+    } else {
+      const usernameExists = users.some(u => u.TenDangNhap?.toLowerCase().trim() === newUser.username.toLowerCase().trim());
+      if (usernameExists) {
+        errors.username = "Tên đăng nhập đã tồn tại!";
+      }
     }
     if (!newUser.fullname.trim()) {
       errors.fullname = "Vui lòng nhập họ và tên!";
@@ -210,6 +215,11 @@ export default function AccountAdmin() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newUser.email.trim())) {
         errors.email = "Email không đúng định dạng!";
+      } else {
+        const emailExists = users.some(u => u.Email?.toLowerCase().trim() === newUser.email.toLowerCase().trim());
+        if (emailExists) {
+          errors.email = "Email đã tồn tại!";
+        }
       }
     }
     if (!newUser.password.trim()) {
@@ -237,6 +247,16 @@ export default function AccountAdmin() {
         })
       });
       const data = await response.json();
+      
+      if (!response.ok) {
+        if (data && data.errorType) {
+          setAddErrors({ [data.errorType]: data.message });
+        } else {
+          showToast(data?.message || "Lỗi khi tạo tài khoản");
+        }
+        return;
+      }
+
       if (data && data.MaNguoiDung) {
         // Gửi quyền lên API nếu không phải Học Viên
         if (newUser.role !== "Học Viên" && newPermissions.length > 0) {
@@ -309,7 +329,6 @@ export default function AccountAdmin() {
           <table className="accounts-table">
             <thead>
               <tr>
-                <th>Tên đăng nhập</th>
                 <th>Họ tên</th>
                 <th>Email</th>
                 <th>Vai trò</th>
@@ -319,12 +338,9 @@ export default function AccountAdmin() {
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
-                <tr><td colSpan={6} className="table-empty">Không có dữ liệu</td></tr>
+                <tr><td colSpan={5} className="table-empty">Không có dữ liệu</td></tr>
               ) : filteredUsers.map(u => (
                 <tr key={u.MaNguoiDung} onClick={() => { setSelectedUser({ ...u }); setShowDetailModal(true); }}>
-                  <td className="user-username">
-                    <div style={{ fontWeight: 600 }}>{u.TenDangNhap}</div>
-                  </td>
                   <td>
                     <div className="user-name">{u.HoTen}</div>
                   </td>
@@ -340,7 +356,7 @@ export default function AccountAdmin() {
                       {u.VaiTro || "—"}
                     </span>
                   </td>
-                  <td>
+                  <td className="user-status">
                     <span className={`status-badge ${isActive(u.TrangThai) ? "active" : "locked"}`}>
                       {isActive(u.TrangThai) ? "Hoạt động" : "Khóa"}
                     </span>

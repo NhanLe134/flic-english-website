@@ -3,7 +3,7 @@ import SidebarQTV from "../components/SidebarQTV";
 import { Outlet, Navigate } from "react-router-dom";
 import styles from "./QTVLayout.module.css";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const QTVLayout = () => {
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");

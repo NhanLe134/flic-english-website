@@ -2,7 +2,7 @@ import "./ChamBaiPage.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const ChamBaiPage = () => {
   const navigate = useNavigate();
@@ -17,13 +17,13 @@ const ChamBaiPage = () => {
 
   useEffect(() => {
     if (!maBaiNop) return;
-    fetch(`http://14.225.192.252:5000/bainop/${maBaiNop}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/bainop/${maBaiNop}`)
       .then(res => res.json())
       .then(data => {
         setBaiNop(data);
         if (data.Diem !== null && data.Diem !== undefined) setDiem(data.Diem.toString());
         if (data.NhanXet) setNhanXet(data.NhanXet);
-        return fetch(`http://14.225.192.252:5000/baitap/${data.MaBaiTap}`);
+        return fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${data.MaBaiTap}`);
       })
       .then(res => res.json())
       .then(data => setExercise(data))
@@ -36,7 +36,7 @@ const ChamBaiPage = () => {
     if (isNaN(diemSo) || diemSo < 0 || diemSo > 10) { alert("Điểm phải từ 0 đến 10"); return; }
     setLoading(true);
     try {
-      await fetch(`http://14.225.192.252:5000/bainop/${maBaiNop}/cham`, {
+      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/bainop/${maBaiNop}/cham`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Diem: diemSo, NhanXet: nhanXet })
@@ -89,13 +89,13 @@ const ChamBaiPage = () => {
 
   // ── Normalize type ─────────────────────────────────────────────────────────
   const normalizedType: string =
-    ["writing", "reading", "essay"].includes(exType)     ? "essay"      :
-    ["Tổng hợp", "quiz", "trắc nghiệm"].includes(exType) ? "Tổng hợp"   :
-    ["listening", "nghe"].includes(exType)               ? "listening"  :
+    ["writing", "reading", "essay", "viết đoạn văn ngắn", "nghe chép chính tả", "luyện phát âm (check phát âm tự động)", "sắp xếp từ thành câu", "sắp xếp câu thành đoạn văn", "tìm lỗi sai"].includes(exType) ? "essay" :
+    ["tổng hợp", "quiz", "trắc nghiệm"].includes(exType) ? "Tổng hợp" :
+    ["listening", "nghe", "nghe audio trắc nghiệm", "hình ảnh chọn đáp án"].includes(exType) ? "listening" :
     ["matching", "ghép"].includes(exType)                ? "matching"   :
-    ["connect", "nối"].includes(exType)                  ? "connect"    :
+    ["connect", "nối", "nối từ"].includes(exType)         ? "connect"    :
     ["ordering", "sắp xếp"].includes(exType)             ? "ordering"   :
-    ["speaking", "nói"].includes(exType)                 ? "speaking"   :
+    ["speaking", "nói", "nói theo chủ đề (ghi âm nộp gv)"].includes(exType) ? "speaking" :
     ["vocabulary", "từ vựng", "vocab"].includes(exType)  ? "vocabulary" :
     exType;
 
@@ -599,7 +599,7 @@ const ChamBaiPage = () => {
         ) : !(isExam || hasSections) && parsedSubmission ? (
           /* ── CASE 2: REGULAR MULTIPLE QUESTIONS (JSON LIST) ── */
           <div>
-            {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "Nghe audio trắc nghiệm" && (
+            {exercise?.AudioUrl && (exercise.Type || "").toLowerCase() === "nghe audio trắc nghiệm" && (
               <div style={{
                 background: "#fff",
                 border: "1.5px solid #e0d8cc",

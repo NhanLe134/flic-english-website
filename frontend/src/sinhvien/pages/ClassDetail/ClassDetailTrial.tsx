@@ -10,10 +10,11 @@ import {
   FaFileAlt,
   FaPencilAlt,
   FaClipboardCheck,
-  FaInfoCircle
+  FaInfoCircle,
+  FaLock
 } from "react-icons/fa";
 
-const API = "http://14.225.192.252:5000";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -41,6 +42,7 @@ interface Lesson {
   NgayKetThuc: string;
   ThuTu: number;
   TrangThaiDuyet: string;
+  TrangThai?: string;
 }
 
 export default function ClassDetailTrial() {
@@ -102,8 +104,10 @@ export default function ClassDetailTrial() {
         }
 
         if (Array.isArray(lessonsRes)) {
-          // Sort lessons by ThuTu ascending
-          const sorted = [...lessonsRes].sort((a, b) => a.ThuTu - b.ThuTu);
+          // Filter out sessions that are "Chờ mở" and sort lessons by ThuTu ascending
+          const sorted = [...lessonsRes]
+            .filter((l: any) => l.TrangThai !== "Chờ mở")
+            .sort((a, b) => a.ThuTu - b.ThuTu);
           setLessons(sorted);
         } else {
           setLessons([]);
@@ -219,7 +223,7 @@ export default function ClassDetailTrial() {
       ]);
 
       const published = Array.isArray(baigiangData)
-        ? baigiangData.filter((b: any) => b.TrangThai === "published" && (b.IsFree === 1 || b.IsFree === true))
+        ? baigiangData.filter((b: any) => (b.TrangThai === "published" || b.TrangThai === "Đã duyệt") && (b.IsFree === 1 || b.IsFree === true))
         : [];
       const taiLieus = Array.isArray(tailieuData) ? tailieuData : [];
       let baitapData = Array.isArray(rawBaitapData)
@@ -362,17 +366,18 @@ export default function ClassDetailTrial() {
           <div className="cd-timeline-list">
             {[...lessons].reverse().map((lesson, indexInReversed) => {
               const idx = (lessons.length - 1) - indexInReversed;
-              const isExpanded = expandedLessonId === lesson.MaLesson;
+              const isLocked = lesson.TrangThai === "Chờ mở";
+              const isExpanded = !isLocked && expandedLessonId === lesson.MaLesson;
 
-              let markerClass = "cd-timeline-marker cd-marker-current";
-              let markerContent: React.ReactNode = idx + 1;
+              let markerClass = isLocked ? "cd-timeline-marker cd-marker-upcoming" : "cd-timeline-marker cd-marker-current";
+              let markerContent: React.ReactNode = isLocked ? <FaLock size={10} /> : idx + 1;
 
               const detail = lessonDetails[lesson.MaLesson];
 
               return (
                 <div
                   key={lesson.MaLesson}
-                  className={`cd-timeline-item ${isExpanded ? "current-item" : ""}`}
+                  className={`cd-timeline-item ${isExpanded ? "current-item" : ""} ${isLocked ? "locked-item" : ""}`}
                 >
                   {/* Timeline node marker */}
                   <div className={markerClass}>{markerContent}</div>
@@ -382,24 +387,29 @@ export default function ClassDetailTrial() {
                     {/* Header (clickable to toggle) */}
                     <div
                       className="cd-session-card"
-                      onClick={() => handleToggleLesson(lesson.MaLesson)}
-                      style={{ cursor: "pointer" }}
+                      onClick={() => !isLocked && handleToggleLesson(lesson.MaLesson)}
+                      style={{ cursor: isLocked ? "not-allowed" : "pointer", opacity: isLocked ? 0.7 : 1 }}
                     >
                       <div className="cd-session-left">
                         <h4 className="cd-session-title">{lesson.TenLesson}</h4>
+                        {isLocked && <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "600", color: "#ef4444", background: "#fee2e2", padding: "2px 6px", borderRadius: "4px" }}>Chờ mở</span>}
                       </div>
                       <div className="cd-session-right">
                         <span className="cd-session-date">
                           <FaCalendarAlt size={12} />
                           {formatDate(lesson.NgayBatDau)}
                         </span>
-                        <FaChevronRight
-                          className="cd-session-chevron"
-                          style={{
-                            transform: isExpanded ? "rotate(90deg)" : "none",
-                            transition: "transform 0.2s ease"
-                          }}
-                        />
+                        {!isLocked ? (
+                          <FaChevronRight
+                            className="cd-session-chevron"
+                            style={{
+                              transform: isExpanded ? "rotate(90deg)" : "none",
+                              transition: "transform 0.2s ease"
+                            }}
+                          />
+                        ) : (
+                          <FaLock size={12} style={{ color: "#94a3b8" }} />
+                        )}
                       </div>
                     </div>
 
@@ -507,7 +517,14 @@ export default function ClassDetailTrial() {
                                             onClick={() => {
                                               if (isLoggedIn) {
                                                 if (t.FileUrl) {
-                                                  window.open(docUrl, "_blank");
+                                                  const extension = docUrl.split('.').pop()?.toLowerCase();
+                                                  const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
+                                                  const isLocal = docUrl.includes("localhost") || docUrl.includes("127.0.0.1") || docUrl.includes("192.168.") || docUrl.includes("10.");
+                                                  if (isOfficeDoc && !isLocal) {
+                                                    window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(docUrl)}`, "_blank");
+                                                  } else {
+                                                    window.open(docUrl, "_blank");
+                                                  }
                                                 } else {
                                                   navigate(`/doc-detail/${t.MaTaiLieu}`);
                                                 }
@@ -557,8 +574,9 @@ export default function ClassDetailTrial() {
                                         </thead>
                                         <tbody>
                                           {detail.practices.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -613,8 +631,9 @@ export default function ClassDetailTrial() {
                                         </thead>
                                         <tbody>
                                           {detail.exams.map((ex: any, i: number) => {
-                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap));
-                                            const attempts = exSubmissions.length;
+                                            const exSubmissions = submissions.filter(s => String(s.MaBaiTap) === String(ex.MaBaiTap))
+                                              .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
+                                            const attempts = exSubmissions.length > 0 ? (exSubmissions[exSubmissions.length - 1].SoLanLamBai || 1) : 0;
                                             const gradedSubmissions = exSubmissions.filter(s => s.Diem !== null && s.Diem !== undefined && s.Diem !== "");
                                             let score = "";
                                             if (gradedSubmissions.length > 0) {
@@ -665,17 +684,20 @@ export default function ClassDetailTrial() {
       {selectedExercise && (
         <div className="exit-confirm-modal-backdrop" onClick={() => setSelectedExercise(null)}>
           <div className="exit-confirm-modal-card" style={{ maxWidth: "420px", textAlign: "left", position: "relative" }} onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="exit-modal-close-x" 
-              onClick={() => setSelectedExercise(null)}
-              title="Đóng"
-            >
-              &times;
-            </button>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "700", color: "#1e3a8a", paddingRight: "24px" }}>
-              {selectedExercise.Title}
-            </h3>
-            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", margin: "0 0 16px 0" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#1e3a8a", flex: 1 }}>
+                {selectedExercise.Title}
+              </h3>
+              <button
+                className="exit-modal-close-x"
+                style={{ position: "static", padding: 0, fontSize: "28px" }}
+                onClick={() => setSelectedExercise(null)}
+                title="Đóng"
+              >
+                &times;
+              </button>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
                 <span style={{ color: "#64748b", fontSize: "14px" }}>Phân loại:</span>
@@ -694,7 +716,7 @@ export default function ClassDetailTrial() {
               {(() => {
                 const exSubs = submissions.filter(s => String(s.MaBaiTap) === String(selectedExercise.MaBaiTap))
                   .sort((a, b) => (a.SoLanLamBai || 0) - (b.SoLanLamBai || 0));
-                
+
                 if (exSubs.length === 0) {
                   return (
                     <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "4px" }}>
@@ -713,22 +735,25 @@ export default function ClassDetailTrial() {
                       {exSubs.map((sub, sIdx) => {
                         const attemptNum = sub.SoLanLamBai || (sIdx + 1);
                         const scoreDisplay = sub.Diem !== null && sub.Diem !== undefined && sub.Diem !== "" ? `${sub.Diem} điểm` : "Chờ chấm";
+                        const isLastAttempt = sIdx === exSubs.length - 1;
                         return (
                           <div key={sub.MaBaiNop} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #f1f5f9" }}>
                             <span style={{ fontSize: "13px", color: "#475569" }}>
                               Lần {attemptNum}: <strong style={{ color: "#f95800" }}>{scoreDisplay}</strong>
                             </span>
-                            <button
-                              className="ld2-review-btn"
-                              style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
-                              onClick={(e) => {
-                                const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
-                                handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`, e);
-                                setSelectedExercise(null);
-                              }}
-                            >
-                              Xem lại
-                            </button>
+                            {isLastAttempt && (
+                              <button
+                                className="ld2-review-btn"
+                                style={{ margin: 0, padding: "4px 10px", fontSize: "12px", height: "auto", minWidth: "70px" }}
+                                onClick={(e) => {
+                                  const tabKey = selectedExercise.activeTab === 'practices' ? 'lt' : 'bt';
+                                  handleActionClick(`/hoc-thu-sv/${info?.MaLopHoc}/${selectedExercise.lesson.MaLesson}/${tabKey}/${selectedExercise.MaBaiTap}?mode=review&submissionId=${sub.MaBaiNop}`, e);
+                                  setSelectedExercise(null);
+                                }}
+                              >
+                                Xem lại
+                              </button>
+                            )}
                           </div>
                         );
                       })}

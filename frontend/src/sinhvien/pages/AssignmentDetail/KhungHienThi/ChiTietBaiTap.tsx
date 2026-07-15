@@ -21,7 +21,13 @@ import { BoGiaiDeThi } from "./BoGiaiDeThi";
 import "./ChiTietBaiTap.css";
 import "./AssignmentTypes.css";
 
-const API = "http://14.225.192.252:5000";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface ChiTietBaiTapProps {
   overrideExerciseId?: number;
@@ -30,6 +36,7 @@ interface ChiTietBaiTapProps {
   isModal?: boolean;
   isPreview?: boolean;
   onClose?: () => void;
+  showAnswers?: boolean;
 }
 
 function ChiTietBaiTap({
@@ -38,7 +45,8 @@ function ChiTietBaiTap({
   overrideClassId,
   isModal = false,
   isPreview = false,
-  onClose
+  onClose,
+  showAnswers = false
 }: ChiTietBaiTapProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,6 +129,14 @@ function ChiTietBaiTap({
   );
 
   const { submitting, handleSubmit } = submitter;
+
+  const handleWrappedSubmit = (answers: any) => {
+    if (isPreview) {
+      console.log("Submit disabled in preview mode");
+      return;
+    }
+    handleSubmit(answers);
+  };
 
   // Layout navigation buttons logic
   const [showBackBtn, setShowBackBtn] = useState(false);
@@ -213,7 +229,7 @@ function ChiTietBaiTap({
         setExamSecondsLeft(secLeft);
         if (secLeft <= 0) {
           clearInterval(interval);
-          handleSubmit({
+          handleWrappedSubmit({
             mcAnswers, essayAnswers, recordedBlobs, recordedUrls: recorder.recordedUrls,
             fillInAnswers, spokenTexts: recorder.spokenTexts, speechScores: recorder.speechScores,
             orderedWords, shuffledSentences
@@ -297,19 +313,25 @@ function ChiTietBaiTap({
             Duration: <strong>{parsedContent.duration} minutes</strong> · Open time: {new Date(parsedContent.startTime).toLocaleString()}
           </p>
 
-          {timeToExamStart !== null && (
+          {isPreview && (
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              [PREVIEW MODE] Bạn đang xem thử đề thi này dưới vai trò Giáo viên/QTV.
+            </div>
+          )}
+
+          {!isPreview && timeToExamStart !== null && (
             <div style={{ fontSize: 18, fontWeight: 700, color: "#b45309", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
               <FiClock /> The exam starts in: <span style={{ fontFamily: "monospace", fontSize: 22 }}>{timeToExamStart}s</span>
             </div>
           )}
 
-          {examStarted && !examEnded && (
+          {!isPreview && examStarted && !examEnded && (
             <div className="exam-timer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
               <FiClock /> REMAINING TIME: <span className="exam-timer-span">{formattedExamTime}</span>
             </div>
           )}
 
-          {examEnded && (
+          {!isPreview && examEnded && (
             <div style={{ fontSize: 18, fontWeight: 700, color: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
               <FiXCircle /> The exam has ended.
             </div>
@@ -339,12 +361,12 @@ function ChiTietBaiTap({
       {/* 5. Giao diện làm đề thi lớn hoặc ôn tập từng phần */}
       {(isExam || hasSections) ? (
         <div>
-          {timeToExamStart !== null ? (
+          {!isPreview && timeToExamStart !== null ? (
             <div className="ad-exam-waiting">
               <h3>Waiting for the exam to start...</h3>
               <p>The exam interface will automatically display when the countdown reaches 0.</p>
             </div>
-          ) : examEnded && !submitted ? (
+          ) : !isPreview && examEnded && !submitted ? (
             <div className="ad-exam-waiting" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#dc2626" }}>
               <h3>The exam time limit has expired!</h3>
               <p>Submissions are now closed.</p>
@@ -354,8 +376,8 @@ function ChiTietBaiTap({
               exercise={exercise}
               parsedContent={parsedContent}
               submitted={submitted}
-              examStarted={examStarted}
-              examEnded={examEnded}
+              examStarted={isPreview ? true : examStarted}
+              examEnded={isPreview ? false : examEnded}
               activeSectionIdx={activeSectionIdx}
               setActiveSectionIdx={setActiveSectionIdx}
               mcAnswers={mcAnswers}
@@ -382,7 +404,8 @@ function ChiTietBaiTap({
               startRecording={startRecording}
               stopRecording={stopRecording}
               API={API}
-              isReview={isReview}
+              isReview={isPreview ? false : isReview}
+              showAnswers={showAnswers}
             />
           )}
         </div>
@@ -394,6 +417,7 @@ function ChiTietBaiTap({
           submitted={submitted}
           isOverdue={false}
           isExam={isExam}
+          showAnswers={showAnswers}
           examStarted={examStarted}
           isReview={isReview}
           isModal={isModal}
@@ -425,14 +449,14 @@ function ChiTietBaiTap({
           setSpeechScores={recorder.setSpeechScores}
           isListeningSTT={isListeningSTT}
           setIsListeningSTT={setIsListeningSTT}
-          handleSubmit={handleSubmit}
+          handleSubmit={handleWrappedSubmit}
         />
       )}
 
       {/* 7. Nút Nộp Bài góc dưới */}
-      {!submitted && !isReview && (
+      {!submitted && !isReview && !isPreview && (
         <button
-          onClick={() => handleSubmit({
+          onClick={() => handleWrappedSubmit({
             mcAnswers, essayAnswers, recordedBlobs, recordedUrls: recorder.recordedUrls,
             fillInAnswers, spokenTexts: recorder.spokenTexts, speechScores: recorder.speechScores,
             orderedWords, shuffledSentences

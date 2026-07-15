@@ -17,33 +17,36 @@ const ExercisePage = () => {
   const [soHocVien, setSoHocVien] = useState(0);
   const [giangVien, setGiangVien] = useState("—");
   const [lichHoc, setLichHoc] = useState("—");
+  const [trangThaiLopHoc, setTrangThaiLopHoc] = useState("Đang học");
   const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
 
 
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (buoiHocData) => {
-        setLesson(Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData);
-        const maLopHoc = buoiHocData.MaLopHoc;
+        const lessonObj = Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData;
+        setLesson(lessonObj);
+        const maLopHoc = lessonObj.MaLopHoc;
 
         // Lấy số học viên thực tế từ SINHVIEN_LOPHOC
-        const countRes = await fetch(`http://14.225.192.252:5000/lophoc/${maLopHoc}/students/count`);
+        const countRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/lophoc/${maLopHoc}/students/count`);
         const countData = await countRes.json();
         setSoHocVien(countData.SoLuongHocVien || 0);
 
-        // Lấy thông tin lớp (LichHoc)
-        const lopRes = await fetch(`http://14.225.192.252:5000/classes/${maLopHoc}/info`);
+        // Lấy thông tin lớp (LichHoc và TrangThaiLopHoc)
+        const lopRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/classes/${maLopHoc}/info`);
         const lopData = await lopRes.json();
         setLichHoc(formatScheduleOnlyDays(lopData.LichHoc) || "—");
+        setTrangThaiLopHoc(lopData.TrangThaiLopHoc || "Đang học");
 
         // Lấy tên giảng viên
         const userStr = sessionStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
-          const gvRes = await fetch(`http://14.225.192.252:5000/giangvien/${user.MaNguoiDung}`);
+          const gvRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${user.MaNguoiDung}`);
           const gvData = await gvRes.json();
           setGiangVien(gvData.HoTen || "—");
         }
@@ -54,7 +57,7 @@ const ExercisePage = () => {
   /* ===== LOAD BAITAPS ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`http://14.225.192.252:5000/baitap/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setExercises(data))
       .catch(err => console.log(err));
@@ -63,7 +66,7 @@ const ExercisePage = () => {
   /* ===== TOGGLE OPEN/CLOSE EXAM ===== */
   const handleToggleOpen = async (maBaiTap: number) => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/baitap/toggle-open", {
+      const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/baitap/toggle-open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBaiTap: maBaiTap })
@@ -98,7 +101,7 @@ const ExercisePage = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `http://14.225.192.252:5000/baitap/${selectedId}`;
+      const url = `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
@@ -187,15 +190,15 @@ const ExercisePage = () => {
               </div>
               <div className="cd-meta-info">
                 <span className="cd-meta-label">Trạng thái</span>
-                <span className="cd-meta-value">Đang học</span>
+                <span className="cd-meta-value">{trangThaiLopHoc}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="cd-right-content">
-          <span className="status-badge">Đang học</span>
-          <span className="cd-class-id">Mã lớp: B239B1</span>
+          <span className="status-badge">{trangThaiLopHoc}</span>
+          <span className="cd-class-id">Mã lớp: {lesson?.MaLopHoc}</span>
           <span className="cd-class-dates">
             <FiCalendar size={13} style={{ marginRight: 6 }} />
             {lesson?.NgayBatDau && new Date(lesson.NgayBatDau).toLocaleDateString("vi-VN")} - {lesson?.NgayKetThuc && new Date(lesson.NgayKetThuc).toLocaleDateString("vi-VN")}
@@ -291,7 +294,7 @@ const ExercisePage = () => {
 
         <div className="exercise-grid">
           {filteredExercises.map((ex: any) => (
-            <div key={ex.MaBaiTap} className="exercise-card" style={{ height: '250px', display: 'flex', flexDirection: 'column' }}>
+            <div key={ex.MaBaiTap} className="exercise-card" style={{ height: '200px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1a202c', wordBreak: 'break-word', flex: 1 }}>{ex.Title}</h4>
                 {ex.TrangThai !== 'practice' && (
@@ -322,7 +325,9 @@ const ExercisePage = () => {
 
                 const isManual = parsedContent.openingMode === "manual";
                 const isOpened = !!parsedContent.isOpened;
-                const isApproved = ex.TrangThai === "published";
+                const isApproved = ex.TrangThai === "published" || ex.TrangThai === "Đã duyệt";
+
+                if (!isApproved) return null;
 
                 return (
                   <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -435,13 +440,49 @@ const ExercisePage = () => {
 
       {/* ===== MODAL ===== */}
       {showDeleteModal && (
-        <div className="baitap-modal-overlay">
-          <div className="delete-modal">
-            <div className="modal-icon">!</div>
-            <h3>Xác nhận Xóa</h3>
-            <p>Bạn có chắc chắn muốn xóa bài tập này không?</p>
-            <button className="confirm-btn" onClick={handleDelete}>Xác nhận</button>
-            <button className="cancel-btn" onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>Không</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
+        }} onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}>
+          <div style={{
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa bài tập</span>
+              <button type="button" onClick={() => { setShowDeleteModal(false); setSelectedId(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa bài tập này không?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteModal(false); setSelectedId(null); }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

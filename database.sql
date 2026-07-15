@@ -14,24 +14,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BAIDANG]    Script Date: 07/04/2026 7:40:10 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[BAIDANG](
-	[MaBaiDang] [int] IDENTITY(1,1) NOT NULL,
-	[MaQTVND] [int] NOT NULL,
-	[TieuDe] [nvarchar](255) NOT NULL,
-	[NoiDung] [nvarchar](max) NULL,
-	[TrangThai] [nvarchar](20) NULL,
-	[NgayDang] [datetime] NULL,
-PRIMARY KEY CLUSTERED 
-(
-	[MaBaiDang] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
+
 /****** Object:  Table [dbo].[BAIHOCKHOAHOC]    Script Date: 07/04/2026 7:40:10 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -55,31 +38,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BAIHOCMO]    Script Date: 07/04/2026 7:40:10 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[BAIHOCMO](
-	[MaBaiHocMo] [int] IDENTITY(1,1) NOT NULL,
-	[MaNguoiDung] [int] NOT NULL,
-	[TieuDe] [nvarchar](255) NOT NULL,
-	[LoaiBaiHoc] [nvarchar](50) NULL,
-	[NoiDung] [nvarchar](max) NULL,
-	[TrangThai] [nvarchar](20) NULL,
-	[MoTa] [nvarchar](500) NULL,
-	[KyNang] [nvarchar](50) NULL,
-	[CapDo] [nvarchar](50) NULL,
-	[FileUrl] [nvarchar](500) NULL,
-	[LinkUrl] [nvarchar](500) NULL,
-	[NgayTao] [datetime] NULL,
-	[NgayDuyet] [datetime] NULL,
-PRIMARY KEY CLUSTERED 
-(
-	[MaBaiHocMo] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
+
 /****** Object:  Table [dbo].[BAIKIEMTRA]    Script Date: 07/04/2026 7:40:10 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -118,24 +77,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[BINHLUAN]    Script Date: 07/04/2026 7:40:10 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[BINHLUAN](
-	[MaBinhLuan] [int] IDENTITY(1,1) NOT NULL,
-	[MaBaiHoc] [int] NOT NULL,
-	[MaNguoiDung] [int] NOT NULL,
-	[ThoiGian] [datetime] NULL,
-	[NoiDung] [nvarchar](max) NOT NULL,
-	[MaBinhLuanCha] [int] NULL,
-PRIMARY KEY CLUSTERED 
-(
-	[MaBinhLuan] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
+
 /****** Object:  Table [dbo].[CAUHOI]    Script Date: 07/04/2026 7:40:10 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -186,23 +128,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[DUYETBAIDANG]    Script Date: 07/04/2026 7:40:10 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[DUYETBAIDANG](
-	[MaDuyet] [int] IDENTITY(1,1) NOT NULL,
-	[MaBaiDang] [int] NOT NULL,
-	[MaAdmin] [int] NOT NULL,
-	[NgayDuyet] [datetime] NULL,
-	[GhiChu] [nvarchar](max) NULL,
-PRIMARY KEY CLUSTERED 
-(
-	[MaDuyet] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
+
 /****** Object:  Table [dbo].[BAITAP]    Script Date: 07/04/2026 7:40:10 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -308,7 +234,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[KYNANG](
 	[MaKyNang] [int] IDENTITY(1,1) NOT NULL,
-	[MaBaiHocMo] [int] NOT NULL,
 	[LoaiKyNang] [nvarchar](50) NULL,
 	[NoiDung] [nvarchar](max) NULL,
 PRIMARY KEY CLUSTERED 
@@ -493,23 +418,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[TUVUNG]    Script Date: 07/04/2026 7:40:10 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[TUVUNG](
-	[MaTuVung] [int] IDENTITY(1,1) NOT NULL,
-	[MaBaiHocMo] [int] NOT NULL,
-	[Tu] [nvarchar](100) NOT NULL,
-	[Nghia] [nvarchar](max) NULL,
-	[ViDu] [nvarchar](max) NULL,
-PRIMARY KEY CLUSTERED 
-(
-	[MaTuVung] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
+
 SET IDENTITY_INSERT [dbo].[ADMIN] ON 
 GO
 INSERT [dbo].[ADMIN] ([MaAdmin], [MaNguoiDung]) VALUES (1, 3)
@@ -780,78 +689,7 @@ By the end of this lesson, learners will be able to:
 GO
 SET IDENTITY_INSERT [dbo].[BAIHOCKHOAHOC] OFF
 GO
-SET IDENTITY_INSERT [dbo].[BAIHOCMO] ON 
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (1, 6, N'Reading: Daily Life in Vietnam', N'Reading', N'{"passage":"Vietnam is a beautiful country in Southeast Asia. People here are friendly and hardworking. In the morning, many people eat pho or banh mi for breakfast. The streets are busy with motorbikes and bicycles.","vocab":[{"word":"friendly","meaning":"thân thiện"},{"word":"hardworking","meaning":"chăm chỉ"},{"word":"busy","meaning":"đông đúc"}],"questions":["What do Vietnamese people eat for breakfast?","How do people travel on the streets?"]}', N'Hoạt động', N'Bài đọc về cuộc sống hàng ngày tại Việt Nam', N'Reading', N'Beginner', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (2, 6, N'Reading: Climate Change Impact', N'Reading', N'{"passage":"Climate change is one of the most pressing issues of our time. Rising temperatures, melting ice caps, and extreme weather events are becoming increasingly common. Scientists warn that immediate action is needed to prevent catastrophic consequences for future generations.","vocab":[{"word":"pressing","meaning":"cấp bách"},{"word":"catastrophic","meaning":"thảm khốc"},{"word":"consequences","meaning":"hậu quả"}],"questions":["What are three effects of climate change?","Why is immediate action needed?"]}', N'Hoạt động', N'Bài đọc nâng cao về biến đổi khí hậu', N'Reading', N'Advanced', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (3, 6, N'Listening: At the Coffee Shop', N'Listening', N'{"objectives":["Hiểu order đồ uống cơ bản","Nhận biết các size: small/medium/large"],"questions":[{"text":"What size coffee does the customer order?","options":"Small, Medium, Large","answer":"Medium"},{"text":"Does the customer want sugar?","options":"","answer":"False"},{"text":"How much does the coffee cost?","options":"$2, $3, $4","answer":"$3"}]}', N'Hoạt động', N'Luyện nghe hội thoại tại quán cà phê', N'Listening', N'Beginner', N'/uploads/coffee-shop.mp3', N'https://www.soundcloud.com/your-audio-link', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (4, 6, N'Listening: TOEIC Part 3 – Office Conversation', N'Listening', N'{"objectives":["Nắm bắt chủ đề cuộc hội thoại","Hiểu yêu cầu và phản hồi"],"questions":[{"text":"What is the main topic of the conversation?","options":"A meeting, A deadline, A promotion, A vacation","answer":"A deadline"},{"text":"Who will send the report?","options":"The man, The woman, The manager","answer":"The woman"},{"text":"When is the report due?","options":"Monday, Tuesday, Friday","answer":"Friday"}]}', N'Hoạt động', N'Luyện nghe TOEIC Part 3 hội thoại văn phòng', N'Listening', N'TOEIC', N'/uploads/toeic-office.mp3', N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (5, 6, N'Speaking: Introducing Yourself', N'Speaking', N'{"topics":"Self Introduction","level":"Easy","phrases":[{"text":"My name is Nguyen Van A.","phonetic":"/maɪ neɪm ɪz/","translation":"Tên tôi là Nguyễn Văn A."},{"text":"I am from Hanoi, Vietnam.","phonetic":"/aɪ æm frɒm/","translation":"Tôi đến từ Hà Nội, Việt Nam."},{"text":"I am a student at FLIC Language Center.","phonetic":"/aɪ æm ə ˈstjuːdənt/","translation":"Tôi là học viên tại FLIC."},{"text":"Nice to meet you!","phonetic":"/naɪs tə miːt juː/","translation":"Rất vui được gặp bạn!"}],"tips":"Hãy nói rõ ràng, chậm rãi và mỉm cười khi giới thiệu bản thân."}', N'Hoạt động', N'Luyện nói tự giới thiệu bản thân bằng tiếng Anh', N'Speaking', N'Beginner', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (6, 6, N'Speaking: Job Interview Questions', N'Speaking', N'{"topics":"Job Interview","level":"Medium","phrases":[{"text":"Tell me about yourself.","phonetic":"/tel miː əˈbaʊt jɔːˈself/","translation":"Hãy kể về bản thân bạn."},{"text":"What are your greatest strengths?","phonetic":"/wɒt ɑː jɔː ˈɡreɪtɪst streŋθs/","translation":"Điểm mạnh lớn nhất của bạn là gì?"},{"text":"I am a quick learner and a team player.","phonetic":"/aɪ æm ə kwɪk ˈlɜːnər/","translation":"Tôi học hỏi nhanh và làm việc nhóm tốt."}],"tips":"Giữ thái độ tự tin, giao tiếp bằng mắt và trả lời súc tích."}', N'Hoạt động', N'Luyện nói các câu hỏi phỏng vấn xin việc', N'Speaking', N'Intermediate', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (7, 6, N'Writing: My Hometown', N'Writing', N'{"prompt":"Write a paragraph about your hometown.","guide":"Topic sentence → 3-4 supporting sentences → Concluding sentence","samples":{"A2":"My hometown is Pleiku. It is in the highlands of Vietnam. The weather is cool and there are many pine trees. I love my hometown because it is peaceful.","B1":"My hometown, Pleiku, is a small but charming city in the Central Highlands of Vietnam. The weather is cool throughout the year. People here are warm and hardworking.","B2":"Nestled in the Central Highlands, Pleiku is a city of understated beauty. The cool climate and pine forests create a landscape unlike anywhere else in Vietnam.","C1":"Pleiku occupies a distinctive position both geographically and culturally within Vietnam, its temperate climate and verdant pine forests defining the identity of the Central Highlands."}}', N'Hoạt động', N'Luyện viết đoạn văn mô tả quê hương', N'Writing', N'Beginner', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (8, 6, N'Writing: IELTS Task 2 – Technology Essay', N'Writing', N'{"prompt":"Some people believe that technology has made our lives more complicated. To what extent do you agree or disagree?","guide":"Introduction → Body 1 → Body 2 → Conclusion","samples":{"A2":"I think technology is sometimes complicated. But technology also helps us a lot. I disagree that technology makes life more complicated.","B1":"While technology can sometimes be overwhelming, I mostly disagree. Modern smartphones and the internet have simplified many everyday tasks.","B2":"The question of whether technology complicates modern life is nuanced. On one hand, rapid change can be disorienting. On the other, convenience outweighs challenges for most people.","C1":"The assertion that technology has rendered contemporary life more complex merits careful consideration. Nevertheless, technology has simplified rather than complicated modern existence."}}', N'Hoạt động', N'Luyện viết IELTS Task 2 về công nghệ', N'Writing', N'IELTS', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (9, 6, N'Grammar: Present Simple vs Continuous', N'Grammar', N'{"subtitle":"Present Simple vs Present Continuous","explanation":"Present Simple: dùng cho thói quen, sự thật hiển nhiên\nCấu trúc: S + V(s/es)\nVD: She works at a hospital.\n\nPresent Continuous: dùng cho hành động đang xảy ra\nCấu trúc: S + am/is/are + V-ing\nVD: She is working right now.","exercises":"1. She ___ (work) every day. → works\n2. He ___ (sleep) right now. → is sleeping\n3. We ___ (eat) lunch at noon usually. → eat\n4. I ___ (watch) a movie at the moment. → am watching"}', N'Hoạt động', N'Phân biệt thì hiện tại đơn và tiếp diễn', N'Grammar', N'Beginner', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (10, 6, N'Grammar: Modal Verbs – Must, Should, Can', N'Grammar', N'{"subtitle":"Modal Verbs: Must, Should, Can","explanation":"MUST: bắt buộc\nVD: You must wear a seatbelt.\n\nSHOULD: nên làm\nVD: You should drink more water.\n\nCAN: có thể\nVD: I can speak three languages.","exercises":"1. You ___ (obligation) study before the exam. → must\n2. He ___ (advice) exercise more. → should\n3. She ___ (ability) play the piano. → can"}', N'Hoạt động', N'Luyện động từ khuyết thiếu Must / Should / Can', N'Grammar', N'Intermediate', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (11, 6, N'Vocabulary: Daily Routines', N'Vocabulary', N'{"theme":"Daily Routines","vocabList":[{"word":"wake up","meaning":"thức dậy"},{"word":"brush teeth","meaning":"đánh răng"},{"word":"get dressed","meaning":"mặc quần áo"},{"word":"have breakfast","meaning":"ăn sáng"},{"word":"commute","meaning":"đi làm/đi học"},{"word":"take a shower","meaning":"tắm"},{"word":"go to bed","meaning":"đi ngủ"},{"word":"do homework","meaning":"làm bài tập"},{"word":"cook dinner","meaning":"nấu bữa tối"},{"word":"exercise","meaning":"tập thể dục"}],"examples":[{"word":"wake up","sentence":"I usually wake up at 6 AM every morning."},{"word":"brush teeth","sentence":"She brushes her teeth twice a day."},{"word":"commute","sentence":"His daily commute takes about 30 minutes."},{"word":"have breakfast","sentence":"They have breakfast together before school."},{"word":"exercise","sentence":"I exercise for 30 minutes every evening."}]}', N'Hoạt động', N'Từ vựng về các hoạt động hàng ngày', N'Vocabulary', N'Beginner', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (12, 6, N'Vocabulary: Business & Finance', N'Vocabulary', N'{"theme":"Business & Finance","vocabList":[{"word":"revenue","meaning":"doanh thu"},{"word":"expenditure","meaning":"chi tiêu"},{"word":"budget","meaning":"ngân sách"},{"word":"profit margin","meaning":"biên lợi nhuận"},{"word":"stakeholder","meaning":"bên liên quan"},{"word":"acquisition","meaning":"thâu tóm"},{"word":"leverage","meaning":"đòn bẩy tài chính"},{"word":"portfolio","meaning":"danh mục đầu tư"},{"word":"cash flow","meaning":"dòng tiền"}]}', N'Hoạt động', N'Từ vựng kinh doanh và tài chính thông dụng', N'Vocabulary', N'Advanced', NULL, N'', CAST(N'2026-03-20T19:59:45.933' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (13, 6, N'Reading: The Power of Habits', N'Reading', N'{"passage":"Habits are powerful forces in our lives. According to research, nearly 40% of our daily actions are habits rather than conscious decisions. When we develop good habits, such as reading, exercising, or eating healthily, they become automatic and effortless over time. The key to forming a new habit is consistency – doing the same thing at the same time every day until it becomes second nature.","vocab":[{"word":"conscious","meaning":"có ý thức"},{"word":"automatic","meaning":"tự động"},{"word":"consistency","meaning":"sự kiên định"},{"word":"effortless","meaning":"dễ dàng, không tốn công sức"}],"questions":["What percentage of daily actions are habits?","What is the key to forming a new habit?","Give two examples of good habits mentioned in the passage."]}', N'Chờ duyệt', N'Bài đọc về sức mạnh của thói quen trong cuộc sống', N'Reading', N'Intermediate', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (14, 6, N'Reading: Artificial Intelligence in Education', N'Reading', N'{"passage":"Artificial Intelligence is rapidly transforming education. AI-powered tutoring systems can personalize learning paths for each student, identifying weaknesses and adjusting content accordingly. Tools like chatbots and virtual assistants provide instant feedback, allowing students to learn at their own pace. However, critics argue that over-reliance on AI may reduce critical thinking and human interaction in classrooms.","vocab":[{"word":"personalize","meaning":"cá nhân hóa"},{"word":"tutoring","meaning":"dạy kèm"},{"word":"over-reliance","meaning":"phụ thuộc quá mức"},{"word":"critical thinking","meaning":"tư duy phản biện"}],"questions":["How does AI personalize learning?","What do critics say about AI in education?","Do you think AI is beneficial or harmful to education? Why?"]}', N'Chờ duyệt', N'Bài đọc về ứng dụng AI trong giáo dục hiện đại', N'Reading', N'Advanced', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (15, 6, N'Listening: At the Airport', N'Listening', N'{"objectives":["Hiểu thông báo chuyến bay","Nghe và điền thông tin check-in","Nhận biết từ vựng sân bay"],"questions":[{"text":"What is the flight number mentioned?","options":"VN123, VN234, VN345, VN456","answer":"VN234"},{"text":"What time does boarding begin?","options":"14:00, 14:30, 15:00, 15:30","answer":"14:30"},{"text":"Which gate should passengers go to?","options":"Gate A1, Gate B2, Gate C3, Gate D4","answer":"Gate B2"},{"text":"Is the flight delayed?","options":"","answer":"True"}]}', N'Chờ duyệt', N'Luyện nghe thông báo và hội thoại tại sân bay', N'Listening', N'Intermediate', NULL, N'https://www.youtube.com/watch?v=example_airport', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (16, 6, N'Speaking: Describing Your Daily Routine', N'Speaking', N'{"topics":"Daily Routine","level":"Easy","phrases":[{"text":"I usually wake up at six in the morning.","phonetic":"/aɪ ˈjuːʒuəli weɪk ʌp æt sɪks/","translation":"Tôi thường thức dậy lúc 6 giờ sáng."},{"text":"I have breakfast before going to school.","phonetic":"/aɪ hæv ˈbrekfəst bɪˈfɔː ˈɡəʊɪŋ tə skuːl/","translation":"Tôi ăn sáng trước khi đi học."},{"text":"In the evening, I do my homework and read books.","phonetic":"/ɪn ðə ˈiːvnɪŋ/","translation":"Buổi tối, tôi làm bài tập và đọc sách."},{"text":"I go to bed at ten o clock.","phonetic":"/aɪ ɡəʊ tə bed æt ten əˈklɒk/","translation":"Tôi đi ngủ lúc 10 giờ."}],"tips":"Sử dụng các trạng từ tần suất như always, usually, often, sometimes để câu nói tự nhiên hơn."}', N'Chờ duyệt', N'Luyện nói mô tả thói quen sinh hoạt hàng ngày', N'Speaking', N'Beginner', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (17, 6, N'Speaking: Talking About Your Hometown', N'Speaking', N'{"topics":"Hometown Description","level":"Medium","phrases":[{"text":"My hometown is a small but beautiful city in the Central Highlands.","phonetic":"/maɪ ˈhəʊmtaʊn ɪz ə smɔːl bʌt ˈbjuːtɪfʊl ˈsɪti/","translation":"Quê tôi là một thành phố nhỏ nhưng đẹp ở Tây Nguyên."},{"text":"It is famous for its cool weather and stunning landscapes.","phonetic":"/ɪt ɪz ˈfeɪməs fɔː ɪts kuːl ˈweðər/","translation":"Nơi đây nổi tiếng với thời tiết mát mẻ và cảnh quan tuyệt đẹp."},{"text":"The local food is delicious, especially the grilled corn and avocado smoothie.","phonetic":"/ðə ˈləʊkəl fuːd ɪz dɪˈlɪʃəs/","translation":"Đồ ăn địa phương rất ngon, đặc biệt là bắp nướng và sinh tố bơ."},{"text":"I am very proud to be from this place.","phonetic":"/aɪ æm ˈveri praʊd tə biː frɒm ðɪs pleɪs/","translation":"Tôi rất tự hào khi đến từ nơi này."}],"tips":"Hãy thêm cảm xúc cá nhân khi mô tả quê hương để câu chuyện sinh động hơn."}', N'Chờ duyệt', N'Luyện nói giới thiệu và mô tả quê hương', N'Speaking', N'Intermediate', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (18, 6, N'Writing: Formal Email – Making a Complaint', N'Writing', N'{"prompt":"Write a formal email to complain about a defective product you purchased online.","guide":"Subject line → Greeting → State the problem → Provide details → Request action → Closing","samples":{"A2":"Dear Sir, I bought a phone but it is broken. Please help me. Thank you.","B1":"Dear Customer Service, I am writing to complain about a phone I ordered last week. The screen does not work properly. I would like a refund or replacement. Thank you.","B2":"Dear Customer Service Team, I am writing to express my dissatisfaction with a smartphone I purchased from your website on March 15th. Upon arrival, I discovered that the screen was cracked and the device failed to power on. I kindly request either a full refund or an immediate replacement.","C1":"Dear Sir or Madam, I am writing to formally lodge a complaint regarding a smartphone purchased via your online platform on 15 March 2026. The product arrived in a clearly damaged condition, with a cracked display and a non-functional power mechanism, suggesting inadequate packaging. I respectfully request either a full refund or an expedited replacement within seven business days."}}', N'Chờ duyệt', N'Luyện viết email phàn nàn chính thức bằng tiếng Anh', N'Writing', N'Intermediate', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (19, 6, N'Grammar: Past Simple vs Past Continuous', N'Grammar', N'{"subtitle":"Past Simple vs Past Continuous","explanation":"Past Simple: hành động xảy ra và kết thúc trong quá khứ\nCấu trúc: S + V2/ed\nVD: She worked yesterday. / He went to school.\n\nPast Continuous: hành động đang diễn ra tại một thời điểm trong quá khứ\nCấu trúc: S + was/were + V-ing\nVD: She was working at 9 AM. / They were playing when it rained.\n\nKết hợp: Past Continuous + when + Past Simple\nVD: I was watching TV when the phone rang.","exercises":"1. She ___ (cook) dinner when he arrived. → was cooking\n2. They ___ (finish) the project last night. → finished\n3. I ___ (read) a book when the lights went out. → was reading\n4. He ___ (call) me twice yesterday. → called\n5. We ___ (have) lunch when it started to rain. → were having"}', N'Chờ duyệt', N'Phân biệt thì quá khứ đơn và quá khứ tiếp diễn', N'Grammar', N'Intermediate', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (20, 6, N'Vocabulary: Health & Body', N'Vocabulary', N'{"theme":"Health & Body","vocabList":[{"word":"headache","meaning":"đau đầu"},{"word":"fever","meaning":"sốt"},{"word":"stomachache","meaning":"đau bụng"},{"word":"cough","meaning":"ho"},{"word":"sneeze","meaning":"hắt hơi"},{"word":"prescription","meaning":"đơn thuốc"},{"word":"pharmacy","meaning":"nhà thuốc"},{"word":"symptom","meaning":"triệu chứng"},{"word":"diagnosis","meaning":"chẩn đoán"},{"word":"recovery","meaning":"sự hồi phục"},{"word":"appointment","meaning":"cuộc hẹn khám bệnh"},{"word":"surgeon","meaning":"bác sĩ phẫu thuật"}]}', N'Chờ duyệt', N'Từ vựng về sức khỏe và cơ thể người', N'Vocabulary', N'Beginner', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (21, 6, N'Vocabulary: Travel & Tourism', N'Vocabulary', N'{"theme":"Travel & Tourism","vocabList":[{"word":"itinerary","meaning":"lịch trình chuyến đi"},{"word":"passport","meaning":"hộ chiếu"},{"word":"boarding pass","meaning":"thẻ lên máy bay"},{"word":"customs","meaning":"hải quan"},{"word":"accommodation","meaning":"chỗ ở"},{"word":"sightseeing","meaning":"tham quan"},{"word":"souvenir","meaning":"quà lưu niệm"},{"word":"currency exchange","meaning":"đổi ngoại tệ"},{"word":"jet lag","meaning":"chứng lệch múi giờ"},{"word":"round trip","meaning":"vé khứ hồi"},{"word":"layover","meaning":"dừng chờ chuyển chuyến"},{"word":"tour guide","meaning":"hướng dẫn viên du lịch"}]}', N'Chờ duyệt', N'Từ vựng du lịch thông dụng cho người học tiếng Anh', N'Vocabulary', N'Intermediate', NULL, N'', CAST(N'2026-03-20T20:02:14.237' AS DateTime), NULL)
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (22, 6, N'Grammar: Future Tenses', N'Grammar', N'{"subtitle":"Future Tenses","explanation":"WILL: quyết định tức thì, dự đoán\nVD: I will help you. / It will rain tomorrow.\n\nBE GOING TO: kế hoạch đã định, dự đoán có bằng chứng\nVD: I am going to study tonight. / Look at those clouds – it is going to rain.\n\nFUTURE PERFECT: hành động hoàn thành trước 1 thời điểm tương lai\nVD: By 2030, scientists will have found a cure.","exercises":"1. I think it ___ (rain) tomorrow. → will rain\n2. She ___ (visit) her parents this weekend. → is going to visit\n3. By next year, he ___ (finish) his degree. → will have finished\n4. Look out! The vase ___ (fall)! → is going to fall"}', N'Hoạt động', N'Luyện các thì tương lai Will, Be going to, Future Perfect', N'Grammar', N'Intermediate', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (23, 6, N'Grammar: Passive Voice', N'Grammar', N'{"subtitle":"Passive Voice","explanation":"Cấu trúc cơ bản: S + be + V3/ed\n\nPresent Simple Passive: The report is written every week.\nPast Simple Passive: The letter was sent yesterday.\nPresent Perfect Passive: The project has been completed.\nFuture Passive: The results will be announced tomorrow.\n\nDùng bị động khi:\n- Không biết chủ thể hành động\n- Chủ thể không quan trọng\n- Muốn nhấn mạnh đối tượng","exercises":"1. Someone built this house in 1990. → This house ___ in 1990. → was built\n2. They are repairing the road. → The road ___ → is being repaired\n3. Nobody has solved the problem. → The problem ___ → has not been solved"}', N'Hoạt động', N'Câu bị động trong các thì cơ bản và nâng cao', N'Grammar', N'Intermediate', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (24, 6, N'Grammar: Reported Speech', N'Grammar', N'{"subtitle":"Reported Speech","explanation":"Backshift of tenses:\nPresent Simple → Past Simple\nPresent Continuous → Past Continuous\nWill → Would\nCan → Could\n\nVD:\nDirect: She said, I am tired.\nReported: She said that she was tired.\n\nDirect: He said, I will call you.\nReported: He said that he would call me.","exercises":"1. She said: I love English. → She said that she ___ English. → loved\n2. He said: I will come tomorrow. → He said he ___ the next day. → would come\n3. They said: We are studying. → They said they ___. → were studying"}', N'Hoạt động', N'Câu tường thuật - chuyển đổi câu trực tiếp sang gián tiếp', N'Grammar', N'Advanced', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (25, 6, N'Vocabulary: Technology & Internet', N'Vocabulary', N'{"theme":"Technology & Internet","vocabList":[{"word":"artificial intelligence","meaning":"trí tuệ nhân tạo"},{"word":"cloud computing","meaning":"điện toán đám mây"},{"word":"cybersecurity","meaning":"an ninh mạng"},{"word":"bandwidth","meaning":"băng thông"},{"word":"algorithm","meaning":"thuật toán"},{"word":"database","meaning":"cơ sở dữ liệu"},{"word":"encryption","meaning":"mã hóa"},{"word":"firewall","meaning":"tường lửa"},{"word":"virtual reality","meaning":"thực tế ảo"},{"word":"streaming","meaning":"phát trực tuyến"},{"word":"download","meaning":"tải xuống"},{"word":"upload","meaning":"tải lên"}]}', N'Hoạt động', N'Từ vựng công nghệ và internet thông dụng', N'Vocabulary', N'Intermediate', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (26, 6, N'Vocabulary: Environment & Nature', N'Vocabulary', N'{"theme":"Environment & Nature","vocabList":[{"word":"deforestation","meaning":"nạn phá rừng"},{"word":"greenhouse effect","meaning":"hiệu ứng nhà kính"},{"word":"biodiversity","meaning":"đa dạng sinh học"},{"word":"renewable energy","meaning":"năng lượng tái tạo"},{"word":"carbon footprint","meaning":"lượng khí thải carbon"},{"word":"ecosystem","meaning":"hệ sinh thái"},{"word":"endangered species","meaning":"loài có nguy cơ tuyệt chủng"},{"word":"pollution","meaning":"ô nhiễm"},{"word":"sustainable","meaning":"bền vững"},{"word":"recycle","meaning":"tái chế"},{"word":"drought","meaning":"hạn hán"},{"word":"flood","meaning":"lũ lụt"}]}', N'Hoạt động', N'Từ vựng về môi trường và thiên nhiên', N'Vocabulary', N'Intermediate', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (27, 6, N'Reading: Social Media and Society', N'Reading', N'{"passage":"Social media has transformed the way people communicate and share information. Platforms like Facebook, Instagram, and TikTok have billions of users worldwide. While social media connects people across distances and enables the rapid spread of information, it also raises concerns about privacy, misinformation, and mental health. Studies suggest that excessive use of social media can lead to anxiety and depression, particularly among teenagers. However, when used responsibly, it can be a powerful tool for education, business, and social change.","vocab":[{"word":"transformed","meaning":"biến đổi"},{"word":"misinformation","meaning":"thông tin sai lệch"},{"word":"excessive","meaning":"quá mức"},{"word":"responsibly","meaning":"có trách nhiệm"}],"questions":["What are three benefits of social media mentioned?","What health problems can excessive social media use cause?","How can social media be used positively according to the passage?"]}', N'Hoạt động', N'Bài đọc về tác động của mạng xã hội', N'Reading', N'Intermediate', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (28, 6, N'Reading: The Importance of Sleep', N'Reading', N'{"passage":"Sleep is essential for good health. Adults need between 7 and 9 hours of sleep each night. During sleep, the body repairs itself and the brain processes information from the day. People who do not get enough sleep often feel tired, irritable, and have difficulty concentrating. Long-term sleep deprivation can lead to serious health problems such as heart disease and diabetes. To improve sleep quality, experts recommend avoiding screens before bedtime and keeping a regular sleep schedule.","vocab":[{"word":"essential","meaning":"thiết yếu"},{"word":"irritable","meaning":"cáu kỉnh"},{"word":"deprivation","meaning":"thiếu hụt"},{"word":"recommend","meaning":"khuyến nghị"}],"questions":["How many hours of sleep do adults need?","What happens to the body during sleep?","What can long-term sleep deprivation cause?"]}', N'Hoạt động', N'Bài đọc về tầm quan trọng của giấc ngủ', N'Reading', N'Beginner', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (29, 6, N'Listening: Weather Forecast', N'Listening', N'{"objectives":["Hiểu từ vựng về thời tiết","Nghe và ghi chép thông tin thời tiết","Phân biệt các loại thời tiết khác nhau"],"questions":[{"text":"What is the weather like in the morning?","options":"Sunny, Cloudy, Rainy, Windy","answer":"Sunny"},{"text":"What temperature is expected in the afternoon?","options":"25°C, 28°C, 30°C, 32°C","answer":"30°C"},{"text":"Will it rain in the evening?","options":"","answer":"True"},{"text":"What should people bring when going out?","options":"Umbrella, Sunscreen, Jacket, Scarf","answer":"Umbrella"}]}', N'Hoạt động', N'Luyện nghe dự báo thời tiết bằng tiếng Anh', N'Listening', N'Beginner', N'/uploads/weather-forecast.mp3', NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (30, 6, N'Listening: Job Interview Practice', N'Listening', N'{"objectives":["Hiểu câu hỏi phỏng vấn thông dụng","Nắm bắt thông tin về ứng viên","Nhận biết kỹ năng và kinh nghiệm"],"questions":[{"text":"What position is the candidate applying for?","options":"Marketing Manager, Sales Executive, HR Manager, IT Developer","answer":"Marketing Manager"},{"text":"How many years of experience does the candidate have?","options":"2 years, 3 years, 5 years, 7 years","answer":"5 years"},{"text":"What is the candidate strongest skill?","options":"Leadership, Communication, Technical skills, Problem solving","answer":"Communication"},{"text":"When can the candidate start working?","options":"Immediately, In 2 weeks, Next month, In 3 months","answer":"In 2 weeks"}]}', N'Hoạt động', N'Luyện nghe phỏng vấn xin việc thực tế', N'Listening', N'Advanced', N'/uploads/job-interview.mp3', NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (31, 6, N'Speaking: Describing a Place', N'Speaking', N'{"topics":"Describing Places","level":"Medium","phrases":[{"text":"It is located in the heart of the city.","phonetic":"/ɪt ɪz ləʊˈkeɪtɪd ɪn ðə hɑːt/","translation":"Nó nằm ở trung tâm thành phố."},{"text":"The atmosphere is lively and vibrant.","phonetic":"/ðə ˈætməsfɪər ɪz ˈlaɪvli/","translation":"Bầu không khí sôi động và tràn đầy sức sống."},{"text":"It is famous for its stunning architecture.","phonetic":"/ɪt ɪz ˈfeɪməs fɔː/","translation":"Nơi này nổi tiếng với kiến trúc tuyệt đẹp."},{"text":"I would highly recommend visiting this place.","phonetic":"/aɪ wʊd ˈhaɪli ˌrekəˈmend/","translation":"Tôi rất muốn giới thiệu bạn đến thăm nơi này."}],"tips":"Sử dụng tính từ mô tả sinh động và cấu trúc There is/are để diễn đạt đặc điểm địa điểm."}', N'Hoạt động', N'Luyện nói mô tả địa điểm bằng tiếng Anh', N'Speaking', N'Intermediate', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (32, 6, N'Speaking: Expressing Opinions', N'Speaking', N'{"topics":"Expressing Opinions","level":"Hard","phrases":[{"text":"In my opinion, this is a significant issue.","phonetic":"/ɪn maɪ əˈpɪnjən/","translation":"Theo ý kiến của tôi, đây là vấn đề quan trọng."},{"text":"I strongly believe that education is the key.","phonetic":"/aɪ ˈstrɒŋli bɪˈliːv/","translation":"Tôi tin chắc rằng giáo dục là chìa khóa."},{"text":"From my perspective, both sides have valid points.","phonetic":"/frɒm maɪ pəˈspektɪv/","translation":"Theo quan điểm của tôi, cả hai phía đều có lý."},{"text":"I would argue that technology has more benefits than drawbacks.","phonetic":"/aɪ wʊd ˈɑːɡjuː/","translation":"Tôi cho rằng công nghệ có nhiều lợi ích hơn bất lợi."}],"tips":"Sử dụng các cụm từ mở đầu đa dạng để tránh lặp và thể hiện sự tự tin."}', N'Hoạt động', N'Luyện nói diễn đạt quan điểm cá nhân bằng tiếng Anh', N'Speaking', N'Advanced', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (33, 6, N'Writing: Formal Letter of Application', N'Writing', N'{"prompt":"Write a formal letter applying for a Marketing Manager position at a reputable company.","guide":"Date → Recipient Address → Salutation → Opening paragraph → Body (skills & experience) → Closing paragraph → Sign-off","samples":{"A2":"Dear Sir, I want to work at your company. I am a hard worker. Please give me a chance. Thank you.","B1":"Dear Hiring Manager, I am writing to apply for the Marketing Manager position. I have 3 years of experience in marketing. I am confident I can contribute to your team. I look forward to hearing from you.","B2":"Dear Hiring Manager, I am writing to express my interest in the Marketing Manager position advertised on your website. With five years of progressive experience in digital marketing, I have developed strong skills in campaign management, data analysis, and team leadership. I am confident that my background aligns well with the requirements of this role.","C1":"Dear Hiring Manager, I write with considerable enthusiasm to apply for the position of Marketing Manager as advertised on LinkedIn. Over the course of my seven-year career in marketing, I have cultivated expertise in brand strategy, consumer behaviour analysis, and cross-functional team leadership, consistently delivering measurable growth in brand awareness and revenue generation."}}', N'Hoạt động', N'Luyện viết thư xin việc chính thức bằng tiếng Anh', N'Writing', N'Advanced', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-INSERT [dbo].[BAIHOCMO] ([MaBaiHocMo], [MaNguoiDung], [TieuDe], [LoaiBaiHoc], [NoiDung], [TrangThai], [MoTa], [KyNang], [CapDo], [FileUrl], [LinkUrl], [NgayTao], [NgayDuyet]) VALUES (34, 6, N'Writing: Describing Charts and Graphs', N'Writing', N'{"prompt":"The chart below shows the percentage of people using different types of transport in a city in 2000 and 2020. Summarize the information by selecting and reporting the main features.","guide":"Overview → Key trend 1 → Key trend 2 → Comparison → Conclusion","samples":{"A2":"The chart shows transport in a city. More people use cars now. Fewer people use buses.","B1":"The chart shows changes in transport use between 2000 and 2020. Car usage increased significantly from 30% to 55%. In contrast, bus usage fell from 40% to 20%. Bicycle use remained relatively stable throughout the period.","B2":"The bar chart illustrates how transport preferences in a city shifted between 2000 and 2020. The most notable trend is the dramatic rise in private car usage, which almost doubled from 30% to 55%. Conversely, public bus ridership declined sharply from 40% to just 20%, suggesting a move away from public transport.","C1":"The bar chart delineates the modal shift in urban transport usage across a twenty-year period from 2000 to 2020. The most pronounced change is the near-doubling of private car usage, rising from 30% to 55%, indicative of increased car ownership and urban sprawl. This contrasts sharply with the precipitous decline in bus ridership from 40% to 20%, implying a growing preference for personal mobility over public alternatives."}}', N'Hoạt động', N'Luyện viết mô tả biểu đồ - IELTS Task 1', N'Writing', N'IELTS', NULL, NULL, CAST(N'2026-03-21T20:17:49.550' AS DateTime), CAST(N'2026-03-21T20:17:49.550' AS DateTime))
-GO
-SET IDENTITY_INSERT [dbo].[BAIHOCMO] OFF
-GO
+
 SET IDENTITY_INSERT [dbo].[BAIKIEMTRA] ON 
 GO
 INSERT [dbo].[BAIKIEMTRA] ([MaBaiKiemTra], [MaBuoiHoc], [MaGiangVien], [TenBai], [ThoiGian], [TongDiem]) VALUES (1, 1, 1, N'Kiểm tra từ vựng TOEIC', 30, 10)
@@ -942,14 +780,7 @@ Thứ tự đúng: a, b, c, d, e', CAST(N'2026-03-27T13:37:18.417' AS DateTime),
 GO
 SET IDENTITY_INSERT [dbo].[BAINOP] OFF
 GO
-SET IDENTITY_INSERT [dbo].[BINHLUAN] ON 
-GO
-INSERT [dbo].[BINHLUAN] ([MaBinhLuan], [MaBaiHoc], [MaNguoiDung], [ThoiGian], [NoiDung], [MaBinhLuanCha]) VALUES (1, 3, 30, CAST(N'2026-04-02T14:28:41.620' AS DateTime), N'Em chưa hiểu cho lắm ạ', NULL)
-GO
-INSERT [dbo].[BINHLUAN] ([MaBinhLuan], [MaBaiHoc], [MaNguoiDung], [ThoiGian], [NoiDung], [MaBinhLuanCha]) VALUES (4, 3, 4, CAST(N'2026-04-02T15:00:01.950' AS DateTime), N'em chưa hiểu phần nào', 1)
-GO
-SET IDENTITY_INSERT [dbo].[BINHLUAN] OFF
-GO
+
 SET IDENTITY_INSERT [dbo].[DANGKYKHOAHOC] ON 
 GO
 INSERT [dbo].[DANGKYKHOAHOC] ([MaDangKy], [MaKhoaHoc], [MaSinhVien], [NgayDangKy], [TrangThai]) VALUES (5, 1, N'221121521126', CAST(N'2026-03-17T09:44:49.613' AS DateTime), N'Đã đăng ký')
@@ -1506,23 +1337,13 @@ ALTER TABLE [dbo].[NGUOIDUNG] ADD UNIQUE NONCLUSTERED
 	[TenDangNhap] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[BAIDANG] ADD  DEFAULT (getdate()) FOR [NgayDang]
-GO
-ALTER TABLE [dbo].[BAIHOCMO] ADD  DEFAULT (getdate()) FOR [NgayTao]
-GO
 ALTER TABLE [dbo].[BAINOP] ADD  DEFAULT (getdate()) FOR [NgayNop]
 GO
 ALTER TABLE [dbo].[BAINOP] ADD  DEFAULT (N'Chờ chấm') FOR [TrangThai]
 GO
-ALTER TABLE [dbo].[BINHLUAN] ADD  DEFAULT (getdate()) FOR [ThoiGian]
-GO
-ALTER TABLE [dbo].[BINHLUAN] ADD  DEFAULT ('') FOR [NoiDung]
-GO
 ALTER TABLE [dbo].[DANGKYKHOAHOC] ADD  DEFAULT (getdate()) FOR [NgayDangKy]
 GO
 ALTER TABLE [dbo].[DANGKYKHOAHOC] ADD  DEFAULT ('Active') FOR [TrangThai]
-GO
-ALTER TABLE [dbo].[DUYETBAIDANG] ADD  DEFAULT (getdate()) FOR [NgayDuyet]
 GO
 ALTER TABLE [dbo].[BAITAP] ADD  DEFAULT ((0)) FOR [ShowAnswer]
 GO
@@ -1547,9 +1368,7 @@ GO
 ALTER TABLE [dbo].[ADMIN]  WITH CHECK ADD FOREIGN KEY([MaNguoiDung])
 REFERENCES [dbo].[NGUOIDUNG] ([MaNguoiDung])
 GO
-ALTER TABLE [dbo].[BAIDANG]  WITH CHECK ADD FOREIGN KEY([MaQTVND])
-REFERENCES [dbo].[QUANTRIVIENNOIDUNG] ([MaQTVND])
-GO
+
 ALTER TABLE [dbo].[BAIHOCKHOAHOC]  WITH CHECK ADD FOREIGN KEY([MaGiangVien])
 REFERENCES [dbo].[GIANGVIEN] ([MaGiangVien])
 GO
@@ -1561,9 +1380,7 @@ REFERENCES [dbo].[BUOIHOC] ([MaBuoiHoc])
 GO
 ALTER TABLE [dbo].[BAIHOCKHOAHOC] CHECK CONSTRAINT [FK_BaiHocKhoaHoc_BuoiHoc]
 GO
-ALTER TABLE [dbo].[BAIHOCMO]  WITH CHECK ADD FOREIGN KEY([MaNguoiDung])
-REFERENCES [dbo].[NGUOIDUNG] ([MaNguoiDung])
-GO
+
 ALTER TABLE [dbo].[BAIKIEMTRA]  WITH CHECK ADD FOREIGN KEY([MaBuoiHoc])
 REFERENCES [dbo].[BUOIHOC] ([MaBuoiHoc])
 GO
@@ -1573,12 +1390,7 @@ GO
 ALTER TABLE [dbo].[BAINOP]  WITH CHECK ADD FOREIGN KEY([MaBaiTap])
 REFERENCES [dbo].[BAITAP] ([MaBaiTap])
 GO
-ALTER TABLE [dbo].[BINHLUAN]  WITH CHECK ADD FOREIGN KEY([MaBaiHoc])
-REFERENCES [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc])
-GO
-ALTER TABLE [dbo].[BINHLUAN]  WITH CHECK ADD FOREIGN KEY([MaNguoiDung])
-REFERENCES [dbo].[NGUOIDUNG] ([MaNguoiDung])
-GO
+
 ALTER TABLE [dbo].[CAUHOI]  WITH CHECK ADD FOREIGN KEY([MaBaiKiemTra])
 REFERENCES [dbo].[BAIKIEMTRA] ([MaBaiKiemTra])
 GO
@@ -1588,12 +1400,7 @@ GO
 ALTER TABLE [dbo].[DAPAN]  WITH CHECK ADD FOREIGN KEY([MaCauHoi])
 REFERENCES [dbo].[CAUHOI] ([MaCauHoi])
 GO
-ALTER TABLE [dbo].[DUYETBAIDANG]  WITH CHECK ADD FOREIGN KEY([MaAdmin])
-REFERENCES [dbo].[ADMIN] ([MaAdmin])
-GO
-ALTER TABLE [dbo].[DUYETBAIDANG]  WITH CHECK ADD FOREIGN KEY([MaBaiDang])
-REFERENCES [dbo].[BAIDANG] ([MaBaiDang])
-GO
+
 ALTER TABLE [dbo].[BAITAP]  WITH CHECK ADD  CONSTRAINT [FK_BaiTap_BaiHocKhoaHoc] FOREIGN KEY([MaBaiHoc])
 REFERENCES [dbo].[BAIHOCKHOAHOC] ([MaBaiHoc])
 GO
@@ -1616,9 +1423,7 @@ GO
 ALTER TABLE [dbo].[KHOAHOCCHITIET]  WITH CHECK ADD FOREIGN KEY([MaKhoaHoc])
 REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc])
 GO
-ALTER TABLE [dbo].[KYNANG]  WITH CHECK ADD FOREIGN KEY([MaBaiHocMo])
-REFERENCES [dbo].[BAIHOCMO] ([MaBaiHocMo])
-GO
+
 ALTER TABLE [dbo].[BUOIHOC]  WITH CHECK ADD FOREIGN KEY([MaLopHoc])
 REFERENCES [dbo].[LOPHOC] ([MaLopHoc])
 GO
@@ -1657,9 +1462,7 @@ GO
 ALTER TABLE [dbo].[TONGKETKHOAHOC]  WITH CHECK ADD FOREIGN KEY([MaKhoaHoc])
 REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc])
 GO
-ALTER TABLE [dbo].[TUVUNG]  WITH CHECK ADD FOREIGN KEY([MaBaiHocMo])
-REFERENCES [dbo].[BAIHOCMO] ([MaBaiHocMo])
-GO
+
 
 
   -- Bước 1: Thêm 4 cột mới vào bảng với kiểu dữ liệu BIT (True/False trong SQL Server)

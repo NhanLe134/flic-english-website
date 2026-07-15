@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiPlus, FiEye, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
 import "./LessonManagement.css";
 import { hasPermission } from "../../utils/permission";
+
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface LessonManagementProps {
   buoiHocIdProp?: string;
@@ -11,7 +19,7 @@ interface LessonManagementProps {
 
 const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEmbedded }) => {
   const navigate = useNavigate();
-  const { buoiHocId: paramBuoiHocId } = useParams();
+  const { buoiHocId: paramBuoiHocId, maLop, teacherId } = useParams();
   const buoiHocId = buoiHocIdProp || paramBuoiHocId;
 
   const [lessons, setLessons] = useState<any[]>([]);
@@ -22,12 +30,14 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [allExistingLectures, setAllExistingLectures] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [classStatus, setClassStatus] = useState<string>("");
 
   const openReuseModal = async () => {
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://14.225.192.252:5000/baigiang/list/all";
+      let url = `${API}/baigiang/list/all`;
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -43,15 +53,18 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   };
 
   const handleReuseLecture = async (lectureId: number) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
-      const res = await fetch(`http://14.225.192.252:5000/baigiang/${lectureId}/clone`, {
+      const res = await fetch(`${API}/baigiang/${lectureId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
+        alert("Chọn bài giảng thành công!");
         // Refresh lessons list
-        const lRes = await fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`);
+        const lRes = await fetch(`${API}/baigiang/${buoiHocId}`);
         const lData = await lRes.json();
         setLessons(lData);
         setShowReuseModal(false);
@@ -61,14 +74,28 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
       }
     } catch (err) {
       alert("Lỗi kết nối: " + err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
+  const [lessonStatus, setLessonStatus] = useState<string>("");
+
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://14.225.192.252:5000/baigiang/${buoiHocId}`)
+    fetch(`${API}/baigiang/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setLessons(data))
+      .catch(err => console.log(err));
+
+    fetch(`${API}/buoihoc/${buoiHocId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.TrangThaiLopHoc) setClassStatus(data.TrangThaiLopHoc);
+          if (data.TrangThai) setLessonStatus(data.TrangThai);
+        }
+      })
       .catch(err => console.log(err));
   }, [buoiHocId]);
 
@@ -80,7 +107,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
   const confirmDelete = async () => {
     if (selectedId !== null) {
       try {
-        const res = await fetch(`http://14.225.192.252:5000/baigiang/${selectedId}`, {
+        const res = await fetch(`${API}/baigiang/${selectedId}`, {
           method: "DELETE"
         });
         if (res.ok) {
@@ -131,7 +158,7 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             <FiSearch size={16} />
           </button>
         </form>
-        {hasPermission("LECTURE_CREATE") && (
+        {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && hasPermission("LECTURE_CREATE") && (
           <>
             <button
               className="add-btn-reuse"
@@ -162,7 +189,11 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
             {lessons
               .filter(l => l.TieuDe?.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((l, index) => (
-                <tr key={l.MaBaiHoc}>
+                <tr
+                  key={l.MaBaiHoc}
+                  onClick={() => navigate(`/${teacherId}/lophoc/${maLop}/buoi${buoiHocId}/bg/${l.MaBaiHoc}/view`)}
+                  style={{ cursor: "pointer" }}
+                >
                   <td>{index + 1}</td>
                   <td>{l.TieuDe}</td>
                   <td>{l.ThoiLuong}</td>
@@ -175,38 +206,43 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         fontSize: "12px",
                         fontWeight: 600,
                         background:
-                          l.TrangThai === "published" ? "#e8f5e9" :
-                          l.TrangThai === "pending" ? "#fff3e0" :
-                          l.TrangThai === "rejected" ? "#ffebee" : "#eee",
+                          (l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "#e8f5e9" :
+                          (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "#fff3e0" :
+                          (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "#ffebee" : "#eee",
                         color:
-                          l.TrangThai === "published" ? "#2e7d32" :
-                          l.TrangThai === "pending" ? "#F95800" :
-                          l.TrangThai === "rejected" ? "#c62828" : "#666"
+                          (l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "#2e7d32" :
+                          (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "#F95800" :
+                          (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "#c62828" : "#666"
                       }}
                     >
-                      {l.TrangThai === "published" ? "Đã duyệt" :
-                       l.TrangThai === "pending" ? "Chờ duyệt" :
-                       l.TrangThai === "rejected" ? "Từ chối" : l.TrangThai || "Nháp"}
+                      {(l.TrangThai === "published" || l.TrangThai === "Đã duyệt") ? "Đã duyệt" :
+                       (l.TrangThai === "pending" || l.TrangThai === "Chờ duyệt") ? "Chờ duyệt" :
+                       (l.TrangThai === "rejected" || l.TrangThai === "Từ chối") ? "Từ chối" : "Lưu nháp"}
                     </span>
                   </td>
                   <td>
-                    <div className="action-buttons">
-                      <button className="action-icon-btn detail-icon-btn"
-                        onClick={() => navigate(`/bai-giang/${l.MaBaiHoc}`)}
-                        title="Xem chi tiết">
-                        <FiEye size={16} />
-                      </button>
-                      <button className="action-btn minitest-btn"
-                        onClick={() => navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`)}
-                        title="Tạo MiniTest">
-                        <FiPlus size={14} style={{ marginRight: 4 }} />
-                        <span>MiniTest</span>
-                      </button>
-                      <button className="action-icon-btn delete-icon-btn"
-                        onClick={() => handleDeleteClick(l.MaBaiHoc)}
-                        title="Xóa bài học">
-                        <FiTrash2 size={16} />
-                      </button>
+                    <div className="action-buttons" onClick={(e) => e.stopPropagation()}>
+                      {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
+                        <button className="action-btn minitest-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/create-exercise/${buoiHocId}?maBaiHoc=${l.MaBaiHoc}&isMiniTest=true`);
+                          }}
+                          title="Tạo MiniTest">
+                          <FiPlus size={14} style={{ marginRight: 4 }} />
+                          <span>MiniTest</span>
+                        </button>
+                      )}
+                      {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
+                        <button className="action-icon-btn delete-icon-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(l.MaBaiHoc);
+                          }}
+                          title="Xóa bài học">
+                          <FiTrash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -222,29 +258,43 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
         }} onClick={() => setShowModal(false)}>
           <div style={{
-            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
             boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            border: "1px solid #cbd5e1", textAlign: "center"
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
-              Xác nhận xóa bài học
-            </h3>
-            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Bạn có chắc chắn muốn xóa bài học này?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
-              >
-                Xóa
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa bài giảng</span>
+              <button type="button" onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa bài giảng này không?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -282,12 +332,13 @@ const LessonManagement: React.FC<LessonManagementProps> = ({ buoiHocIdProp, isEm
                         {bg.LoaiBaiHoc} · Lớp: {bg.TenLop || bg.TenBuoiHoc}
                       </span>
                     </div>
-                    <button
+                     <button
                       className="confirm-btn"
-                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7" }}
+                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7", opacity: isProcessing ? 0.6 : 1 }}
+                      disabled={isProcessing}
                       onClick={() => handleReuseLecture(bg.MaBaiHoc)}
                     >
-                      Chọn
+                      {isProcessing ? "Đang xử lý..." : "Chọn"}
                     </button>
                   </div>
                 ))

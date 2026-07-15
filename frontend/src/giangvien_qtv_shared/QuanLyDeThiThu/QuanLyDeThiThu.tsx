@@ -1,5 +1,7 @@
 import "./QuanLyDeThiThu.css";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { CustomAudioPlayer } from "../../sinhvien/components/CustomAudioPlayer/CustomAudioPlayer";
 import {
   FiArrowLeft,
   FiFileText,
@@ -16,6 +18,8 @@ import {
   FiCheckCircle,
   FiX
 } from "react-icons/fi";
+
+const API = window.location.hostname === "localhost" ? "http://localhost:5004" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface CauHoi {
   id: number;
@@ -375,8 +379,13 @@ const RichTextEditor = ({
 };
 
 const QuanLyDeThiThu = () => {
+  const navigate = useNavigate();
+  const { teacherId, tab, subId } = useParams<{ teacherId?: string; tab?: string; subId?: string }>();
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
+
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
   const isQTV = user?.VaiTro === "Quản Trị Nội Dung" || window.location.pathname.includes("/QTV/");
+  const basePath = teacherId ? `/${teacherId}/quan-ly-de-thi` : "/QTV/quan-ly-de-thi";
 
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -417,6 +426,7 @@ const QuanLyDeThiThu = () => {
   const [submissions, setSubmissions] = useState<BaiNopHocVien[]>([]);
 
   const [selectedSubmission, setSelectedSubmission] = useState<BaiNopHocVien | null>(null);
+  const [showBackBtn, setShowBackBtn] = useState(false);
   const [gradingSkillTab, setGradingSkillTab] = useState<"listening" | "reading" | "writing" | "speaking">("writing");
   const [gradeViet, setGradeViet] = useState<string>("");
   const [feedbackViet, setFeedbackViet] = useState<string>("");
@@ -457,7 +467,7 @@ const QuanLyDeThiThu = () => {
     }
 
     try {
-      const res = await fetch(`http://14.225.192.252:5000/dethi/submissions/${selectedSubmission.id}/grade`, {
+      const res = await fetch(`${API}/dethi/submissions/${selectedSubmission.id}/grade`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -470,7 +480,7 @@ const QuanLyDeThiThu = () => {
 
       if (res.ok) {
         await loadSubmissions();
-        setSelectedSubmission(null);
+        navigate(`${basePath}/bainop`);
         showToast(`Đã lưu điểm bài thi của ${selectedSubmission.hoTen} thành công!`);
       } else {
         const errData = await res.json();
@@ -482,10 +492,67 @@ const QuanLyDeThiThu = () => {
     }
   };
 
+  // Sync tab with URL
+  useEffect(() => {
+    if (tab === "bainop") {
+      setActiveTab("submissions");
+    } else {
+      setActiveTab("tests");
+    }
+  }, [tab]);
+
+  // Sync subId with active submission
+  useEffect(() => {
+    if (subId && submissions.length > 0) {
+      const foundSub = submissions.find(s => String(s.id) === String(subId));
+      if (foundSub) {
+        handleOpenGrading(foundSub);
+      }
+    } else if (!subId) {
+      setSelectedSubmission(null);
+    }
+  }, [subId, submissions]);
+
+  // Sync back button visibility with mouse coordinates relative to workspace (quadrant 2 / top-left quadrant of the workspace content)
+  useEffect(() => {
+    if (!selectedSubmission) {
+      setShowBackBtn(false);
+      return;
+    }
+    const handleMouseMove = (e: MouseEvent) => {
+      if (workspaceRef.current) {
+        const rect = workspaceRef.current.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        const relativeY = e.clientY - rect.top;
+        if (relativeX > 0 && relativeX < rect.width / 2 && relativeY > 0 && relativeY < rect.height / 2) {
+          setShowBackBtn(true);
+        } else {
+          setShowBackBtn(false);
+        }
+      } else {
+        if (e.clientX < window.innerWidth / 2 && e.clientY < window.innerHeight / 2) {
+          setShowBackBtn(true);
+        } else {
+          setShowBackBtn(false);
+        }
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [selectedSubmission]);
+
+  const handleTabChange = (newTab: "tests" | "submissions") => {
+    if (newTab === "submissions") {
+      navigate(`${basePath}/bainop`);
+    } else {
+      navigate(basePath);
+    }
+  };
+
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("http://14.225.192.252:5000/upload", {
+    const res = await fetch(`${API}/upload`, {
       method: "POST",
       body: formData
     });
@@ -497,7 +564,7 @@ const QuanLyDeThiThu = () => {
   const getMediaUrl = (url?: string) => {
     if (!url) return "";
     if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
-    return `http://14.225.192.252:5000${url}`;
+    return `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${url}`;
   };
 
   // Modals & Active objects
@@ -567,7 +634,7 @@ const QuanLyDeThiThu = () => {
 
   const loadTests = async () => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/dethi");
+      const res = await fetch(`${API}/dethi`);
       if (res.ok) {
         const data = await res.json();
         const mappedTests = data.map((t: any) => ({
@@ -615,7 +682,7 @@ const QuanLyDeThiThu = () => {
 
   const loadSubmissions = async () => {
     try {
-      const res = await fetch("http://14.225.192.252:5000/dethi/submissions");
+      const res = await fetch(`${API}/dethi/submissions`);
       if (res.ok) {
         const data = await res.json();
         setSubmissions(data);
@@ -673,6 +740,17 @@ const QuanLyDeThiThu = () => {
       return () => {
         window.removeEventListener("popstate", handlePopState);
       };
+    }
+  }, [editingTest]);
+
+  // Check for pending toast notification when returning to the test list view
+  useEffect(() => {
+    if (!editingTest) {
+      const pendingToast = sessionStorage.getItem("pending_test_toast");
+      if (pendingToast) {
+        showToast(pendingToast);
+        sessionStorage.removeItem("pending_test_toast");
+      }
     }
   }, [editingTest]);
 
@@ -746,13 +824,14 @@ const QuanLyDeThiThu = () => {
     };
 
     try {
-      const res = await fetch("http://14.225.192.252:5000/dethi", {
+      const res = await fetch(`${API}/dethi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData)
       });
       if (res.ok) {
         await loadTests();
+        showToast("Đã nhân bản đề thi thành công! 📑");
       } else {
         alert("Lỗi sao chép đề thi.");
       }
@@ -768,6 +847,7 @@ const QuanLyDeThiThu = () => {
       const updated = [clonedTest, ...tests];
       localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
       setTests(updated);
+      showToast("Đã nhân bản đề thi thành công! 📑");
     }
   };
 
@@ -1106,21 +1186,10 @@ D. Visiting friends
 
     setImportingPartIdx(partIdx);
 
-    if (file.name.endsWith(".docx")) {
-      const simulatedQuestions = [
-        { id: 1, noiDung: "What time does the meeting start?", luaChon: ["A. 8:00 AM", "B. 8:30 AM", "C. 9:00 AM", "D. 9:30 AM"], dapAn: "C" },
-        { id: 2, noiDung: "Where is the speaker going?", luaChon: ["A. School", "B. Hospital", "C. Airport", "D. Office"], dapAn: "D" },
-        { id: 3, noiDung: "What does the speaker suggest?", luaChon: ["A. Staying home", "B. Going shopping", "C. Watching TV", "D. Visiting friends"], dapAn: "B" }
-      ];
-      setImportedQuestions(simulatedQuestions);
-      setImportErrors([]);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    const parseTextContent = (text: string) => {
+      // Normalize to NFC (composed form) to resolve decomposed character encoding issues (NFD) commonly produced by Word editors
+      const normalizedText = (text || "").normalize("NFC");
+      const lines = normalizedText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
       const parsedList: CauHoi[] = [];
       const errorsList: string[] = [];
 
@@ -1154,27 +1223,27 @@ D. Visiting friends
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        if (line.match(/^(?:Câu|Cau)\s*\d+/i)) {
+        if (line.match(/^\s*(?:Câu|Cau)\s*\d+/i)) {
           if (currentQ.noiDung) {
             validateAndPush(currentQ, qIndex);
             qIndex++;
           }
-          const match = line.match(/^(?:Câu|Cau)\s*(\d+)\s*:\s*(.*)$/i);
+          const match = line.match(/^\s*(?:Câu|Cau)\s*(\d+)\s*[:.：\-]?\s*(.*)$/i);
           currentQ = {
             id: match ? parseInt(match[1]) : qIndex,
-            noiDung: match ? match[2] : line.replace(/^(?:Câu|Cau)\s*\d+\s*:\s*/i, ""),
+            noiDung: match ? match[2] : line.replace(/^\s*(?:Câu|Cau)\s*\d+\s*[:.：\-]?\s*/i, ""),
             luaChon: []
           };
-        } else if (line.match(/^A\./i) || line.match(/^A\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^B\./i) || line.match(/^B\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^C\./i) || line.match(/^C\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^D\./i) || line.match(/^D\s*:/i)) {
-          currentQ.luaChon?.push(line);
-        } else if (line.match(/^(?:Đáp án|Dap an|Đáp án đúng)\s*:/i)) {
-          const match = line.match(/(?:Đáp án|Dap an|Đáp án đúng)\s*:\s*([A-D])/i);
+        } else if (line.match(/^\s*A\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^A\s*[\.):：\-\s]\s*/i, "A. "));
+        } else if (line.match(/^\s*B\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^B\s*[\.):：\-\s]\s*/i, "B. "));
+        } else if (line.match(/^\s*C\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^C\s*[\.):：\-\s]\s*/i, "C. "));
+        } else if (line.match(/^\s*[DĐ]\s*[\.):：\-\s]/i)) {
+          currentQ.luaChon?.push(line.trim().replace(/^[DĐ]\s*[\.):：\-\s]\s*/i, "D. "));
+        } else if (line.match(/(?:đáp\s*án|dap\s*an|đáp|dap|ans|key)\s*[:：]\s*([A-D])/i)) {
+          const match = line.match(/(?:đáp\s*án|dap\s*an|đáp|dap|ans|key)\s*[:：]\s*([A-D])/i);
           if (match) {
             currentQ.dapAn = match[1].toUpperCase();
           } else {
@@ -1189,6 +1258,30 @@ D. Visiting friends
 
       setImportedQuestions(parsedList);
       setImportErrors(errorsList);
+    };
+
+    if (file.name.endsWith(".docx")) {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const mammothModule = await import("mammoth");
+          const arrayBuffer = evt.target?.result as ArrayBuffer;
+          const result = await mammothModule.extractRawText({ arrayBuffer });
+          const text = result.value;
+          parseTextContent(text);
+        } catch (err) {
+          console.error("Lỗi khi đọc file Word:", err);
+          alert("Lỗi khi đọc file Word.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      parseTextContent(text);
     };
     reader.readAsText(file);
   };
@@ -1245,13 +1338,13 @@ D. Visiting friends
     try {
       let response;
       if (isNew) {
-        response = await fetch("http://14.225.192.252:5000/dethi", {
+        response = await fetch(`${API}/dethi`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
         });
       } else {
-        response = await fetch(`http://14.225.192.252:5000/dethi/${editingTest.MaBaiTest}`, {
+        response = await fetch(`${API}/dethi/${editingTest.MaBaiTest}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(bodyData)
@@ -1260,6 +1353,17 @@ D. Visiting friends
 
       if (response.ok) {
         await loadTests();
+        
+        let msg = "";
+        if (statusToSet === "published") {
+          msg = isNew 
+            ? (isQTV ? "Đăng tải đề thi mới thành công! 🎉" : "Đã gửi yêu cầu duyệt đề thi mới! ✉️")
+            : "Cập nhật đề thi thành công! 🎉";
+        } else {
+          msg = isNew ? "Đã lưu bản nháp đề thi mới! 💾" : "Đã lưu bản nháp đề thi thành công! 💾";
+        }
+        sessionStorage.setItem("pending_test_toast", msg);
+
         isExitingRef.current = true;
         setEditingTest(null);
         window.history.back();
@@ -1286,6 +1390,17 @@ D. Visiting friends
 
       localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
       setTests(updated);
+      
+      let msg = "";
+      if (statusToSet === "published") {
+        msg = isNew 
+          ? (isQTV ? "Đăng tải đề thi mới thành công! 🎉" : "Đã gửi yêu cầu duyệt đề thi mới! ✉️")
+          : "Cập nhật đề thi thành công! 🎉";
+      } else {
+        msg = isNew ? "Đã lưu bản nháp đề thi mới! 💾" : "Đã lưu bản nháp đề thi thành công! 💾";
+      }
+      sessionStorage.setItem("pending_test_toast", msg);
+
       isExitingRef.current = true;
       setEditingTest(null);
       window.history.back();
@@ -2051,8 +2166,8 @@ D. Visiting friends
                               }}
                               style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", background: "white" }}
                             >
-                              <option value="Letter">Letter</option>
-                              <option value="Email">Email</option>
+                              <option value="Letter">Email/Letter</option>
+                              <option value="Email">Essay</option>
                             </select>
                           </div>
 
@@ -2294,23 +2409,54 @@ D. Visiting friends
   const renderGradingWorkspace = () => {
     if (!selectedSubmission) return null;
     return (
-      <div className="cd-workspace-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", boxSizing: "border-box" }}>
+      <div ref={workspaceRef} className="cd-workspace-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", boxSizing: "border-box", position: "relative" }}>
+        {/* Floating Back Button (Appears on hover in top-left area / 2nd quadrant) */}
+        {showBackBtn && (
+          <button
+            onClick={() => navigate(`${basePath}/bainop`)}
+            title="Quay lại"
+            style={{
+              position: "fixed",
+              top: "90px",
+              left: workspaceRef.current ? `${workspaceRef.current.getBoundingClientRect().left + 20}px` : "20px",
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              background: "#F95800",
+              border: "1px solid #F95800",
+              boxShadow: "0 4px 14px rgba(249, 88, 0, 0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#ffffff",
+              cursor: "pointer",
+              zIndex: 10000,
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+              e.currentTarget.style.color = "#F95800";
+              e.currentTarget.style.borderColor = "#F95800";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(249, 88, 0, 0.2)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "#F95800";
+              e.currentTarget.style.color = "#ffffff";
+              e.currentTarget.style.borderColor = "#F95800";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(249, 88, 0, 0.35)";
+            }}
+          >
+            <FiArrowLeft size={20} />
+          </button>
+        )}
+
         {/* Workspace Top Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "14px 24px", background: "white", borderBottom: "1px solid #e2e8f0"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              onClick={() => setSelectedSubmission(null)}
-              style={{
-                display: "flex", alignItems: "center", gap: "6px", background: "#f1f5f9", border: "none",
-                padding: "8px 12px", borderRadius: "8px", color: "#334155", cursor: "pointer", fontWeight: 600, fontSize: "13px"
-              }}
-            >
-              <FiArrowLeft /> Quay lại
-            </button>
-            <div style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: "12px" }}>
+            <div>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
                 {isQTV ? "Chi tiết bài làm: " : "Chấm điểm bài thi: "}{selectedSubmission.hoTen} ({selectedSubmission.maSinhVien})
               </h2>
@@ -2462,15 +2608,21 @@ D. Visiting friends
                         <strong>Chủ đề:</strong> Part 1: Social Interaction (Hỏi đáp thông tin cá nhân về hoạt động buổi sáng, sở thích).
                       </div>
                       
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "#f1f5f9", borderRadius: "8px" }}>
-                        <button style={{ background: "#F95800", color: "white", border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: "bold" }}>
-                          ▶
-                        </button>
-                        <div style={{ flex: 1, height: "12px", background: "#cbd5e1", borderRadius: "6px", position: "relative", overflow: "hidden" }}>
-                          <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "40%", background: "#F95800" }} />
-                        </div>
-                        <span style={{ fontSize: "12px", color: "#475569", fontFamily: "monospace" }}>0:45 / 3:00</span>
-                      </div>
+                      {selectedSubmission.baiLamNoi && selectedSubmission.baiLamNoi.length > 0 ? (
+                        selectedSubmission.baiLamNoi.map((audioPath, idx) => {
+                          if (!audioPath) return null;
+                          return (
+                            <div key={idx} style={{ marginTop: idx > 0 ? "16px" : "0" }}>
+                              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+                                File ghi âm bài làm #{idx + 1}
+                              </span>
+                              <CustomAudioPlayer src={getMediaUrl(audioPath)} forcePlacement="down" />
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p style={{ fontSize: "13px", color: "#ef4444", fontWeight: 600, margin: 0 }}>Không tìm thấy file ghi âm bài làm của học viên.</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2581,7 +2733,7 @@ D. Visiting friends
                   </button>
                 )}
                 <button
-                  onClick={() => setSelectedSubmission(null)}
+                  onClick={() => navigate(`${basePath}/bainop`)}
                   style={{
                     background: "#f1f5f9", color: "#334155", border: "none", padding: "12px", borderRadius: "8px",
                     fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%"
@@ -2763,7 +2915,7 @@ D. Visiting friends
                       </td>
                       <td style={{ padding: "10px 12px", textAlign: "right" }}>
                         <button
-                          onClick={() => handleOpenGrading(sub)}
+                          onClick={() => navigate(`${basePath}/bainop/${sub.id}`)}
                           style={{
                             padding: "5px 10px", background: isPending ? "#F95800" : "#f1f5f9",
                             color: isPending ? "white" : "#334155", border: "none", borderRadius: "6px",
@@ -2814,7 +2966,7 @@ D. Visiting friends
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "24px" }}>
         <button
           className="cd-tab-btn"
-          onClick={() => setActiveTab("tests")}
+          onClick={() => handleTabChange("tests")}
           style={{
             padding: "10px 16px", borderRadius: "8px", border: "none",
             background: activeTab === "tests" ? "#fff4ec" : "transparent",
@@ -2826,7 +2978,7 @@ D. Visiting friends
         </button>
         <button
           className="cd-tab-btn"
-          onClick={() => setActiveTab("submissions")}
+          onClick={() => handleTabChange("submissions")}
           style={{
             padding: "10px 16px", borderRadius: "8px", border: "none",
             background: activeTab === "submissions" ? "#fff4ec" : "transparent",
@@ -2906,11 +3058,11 @@ D. Visiting friends
                           background: "#fff4ec", color: "#F95800", padding: "3px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700
                         }}>{test.LoaiBai}</span>
                         <span className={`cd-test-badge-status ${test.TrangThai}`} style={{
-                          background: test.TrangThai === "published" ? "#e6f4ea" : "#f1f5f9",
-                          color: test.TrangThai === "published" ? "#137333" : "#475569",
+                          background: (test.TrangThai === "published" || test.TrangThai === "Đã duyệt") ? "#e6f4ea" : "#f1f5f9",
+                          color: (test.TrangThai === "published" || test.TrangThai === "Đã duyệt") ? "#137333" : "#475569",
                           padding: "3px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700
                         }}>
-                          {test.TrangThai === "published" ? "Hoạt động" : "Nháp"}
+                          {(test.TrangThai === "published" || test.TrangThai === "Đã duyệt") ? "Hoạt động" : "Nháp"}
                         </span>
                       </div>
 
@@ -2990,10 +3142,10 @@ D. Visiting friends
 
           <div className="cd-modal-card" style={{
             background: "#fff", borderRadius: "16px", padding: "32px", width: "100%", maxWidth: "700px",
-            maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #cbd5e1"
+            maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", border: "1px solid #cbd5e1"
           }} onClick={(e) => e.stopPropagation()}>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #cbd5e1", paddingBottom: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #cbd5e1", paddingBottom: "12px", flexShrink: 0 }}>
               <div>
                 <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1e293b", margin: 0 }}>Xem trước đề thi</h2>
                 <p style={{ margin: "2px 0 0 0", color: "#64748b", fontSize: "13px" }}>
@@ -3003,7 +3155,8 @@ D. Visiting friends
               <button onClick={() => setShowPreviewModal(false)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer" }}><FiX size={20} /></button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div className="cd-modal-body" style={{ overflowY: "auto", flexGrow: 1, paddingRight: "8px", boxSizing: "border-box" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               <div>
                 <h4 style={{ color: "#F95800", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px" }}>1. Listening Section</h4>
                 {(!previewTest.kyNang?.listening?.parts || previewTest.kyNang.listening.parts.length === 0) ? (
@@ -3105,8 +3258,9 @@ D. Visiting friends
                 ))}
               </div>
             </div>
+            </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", borderTop: "1px solid #cbd5e1", paddingTop: "14px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", borderTop: "1px solid #cbd5e1", paddingTop: "14px", flexShrink: 0 }}>
               <button
                 onClick={() => setShowPreviewModal(false)}
                 style={{ padding: "8px 20px", background: "#F95800", color: "white", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer" }}
@@ -3168,97 +3322,121 @@ D. Visiting friends
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
         }} onClick={() => { setShowDeleteConfirmPopup(false); setTestIdToDelete(null); }}>
           <div style={{
-            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
             boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            border: "1px solid #cbd5e1", textAlign: "center"
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
-              Xác nhận xóa đề thi
-            </h3>
-            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Bạn có chắc chắn muốn xóa đề thi thử này không?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => {
-                  setShowDeleteConfirmPopup(false);
-                  setTestIdToDelete(null);
-                }}
-                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={async () => {
-                  if (testIdToDelete !== null) {
-                    const isNew = testIdToDelete > 1000000000000;
-                    if (!isNew) {
-                      try {
-                        const res = await fetch(`http://14.225.192.252:5000/dethi/${testIdToDelete}`, {
-                          method: "DELETE"
-                        });
-                        if (res.ok) {
-                          await loadTests();
-                        } else {
-                          alert("Lỗi khi xóa đề thi trên máy chủ.");
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa đề thi</span>
+              <button type="button" onClick={() => { setShowDeleteConfirmPopup(false); setTestIdToDelete(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa đề thi thử này không?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteConfirmPopup(false); setTestIdToDelete(null); }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (testIdToDelete !== null) {
+                      const isNew = testIdToDelete > 1000000000000;
+                      if (!isNew) {
+                        try {
+                          const res = await fetch(`${API}/dethi/${testIdToDelete}`, {
+                            method: "DELETE"
+                          });
+                          if (res.ok) {
+                            await loadTests();
+                            showToast("Đã xóa đề thi thành công! 🗑️");
+                          } else {
+                            alert("Lỗi khi xóa đề thi trên máy chủ.");
+                          }
+                        } catch (err) {
+                          console.error("Lỗi xóa đề thi qua API:", err);
+                          const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
+                          localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
+                          setTests(updated);
+                          showToast("Đã xóa đề thi thành công! 🗑️");
                         }
-                      } catch (err) {
-                        console.error("Lỗi xóa đề thi qua API:", err);
+                      } else {
                         const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
                         localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
                         setTests(updated);
+                        showToast("Đã xóa đề thi thành công! 🗑️");
                       }
-                    } else {
-                      const updated = tests.filter(t => t.MaBaiTest !== testIdToDelete);
-                      localStorage.setItem("flic_practice_tests", JSON.stringify(updated));
-                      setTests(updated);
                     }
-                  }
-                  setShowDeleteConfirmPopup(false);
-                  setTestIdToDelete(null);
-                }}
-                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
-              >
-                Xóa
-              </button>
+                    setShowDeleteConfirmPopup(false);
+                    setTestIdToDelete(null);
+                  }}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Custom Delete Part Confirmation Modal */}
       {showDeletePartConfirmPopup && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
         }} onClick={() => { setShowDeletePartConfirmPopup(false); setDeletePartInfo(null); }}>
           <div style={{
-            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
             boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            border: "1px solid #cbd5e1", textAlign: "center"
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
-              Xác nhận xóa Part
-            </h3>
-            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Bạn có chắc muốn xóa Part này cùng tất cả nội dung bên trong?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => {
-                  setShowDeletePartConfirmPopup(false);
-                  setDeletePartInfo(null);
-                }}
-                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleConfirmDeletePart}
-                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
-              >
-                Xóa
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa phần thi (Part)</span>
+              <button type="button" onClick={() => { setShowDeletePartConfirmPopup(false); setDeletePartInfo(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc muốn xóa Part này cùng tất cả nội dung bên trong?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeletePartConfirmPopup(false); setDeletePartInfo(null); }}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeletePart}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
           </div>
         </div>

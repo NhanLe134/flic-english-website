@@ -1,8 +1,16 @@
 import "./DocumentManagement.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiSearch, FiBookOpen, FiPlus, FiTrash2 } from "react-icons/fi";
 import { hasPermission } from "../../utils/permission";
+
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface DocumentManagementProps {
   buoiHocIdProp?: string;
@@ -18,16 +26,25 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [classStatus, setClassStatus] = useState<string>("");
 
   const handleViewDocumentDetail = (doc: any) => {
     const fileUrl = doc.FileUrl
-      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `http://14.225.192.252:5000${doc.FileUrl}`)
+      ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `${API}${doc.FileUrl}`)
       : doc.NoiDung?.includes("File: /uploads/")
-      ? `http://14.225.192.252:5000${doc.NoiDung.split("File: ")[1]?.trim()}`
+      ? `${API}${doc.NoiDung.split("File: ")[1]?.trim()}`
       : null;
 
     if (fileUrl) {
-      window.open(fileUrl, "_blank");
+      const extension = fileUrl.split('.').pop()?.toLowerCase();
+      const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
+      const isLocal = fileUrl.includes("localhost") || fileUrl.includes("127.0.0.1") || fileUrl.includes("192.168.") || fileUrl.includes("10.");
+      
+      if (isOfficeDoc && !isLocal) {
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, "_blank");
+      } else {
+        window.open(fileUrl, "_blank");
+      }
     } else {
       const newWindow = window.open("", "_blank");
       if (newWindow) {
@@ -62,12 +79,13 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [allExistingDocs, setAllExistingDocs] = useState<any[]>([]);
   const [reuseSearch, setReuseSearch] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const openReuseModal = async () => {
     setShowReuseModal(true);
     try {
       const userStr = sessionStorage.getItem("user");
-      let url = "http://14.225.192.252:5000/tailieu/list/all";
+      let url = `${API}/tailieu/list/all`;
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.MaNguoiDung) {
@@ -83,15 +101,18 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   };
 
   const handleReuseDocument = async (docId: number) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
-      const res = await fetch(`http://14.225.192.252:5000/tailieu/${docId}/clone`, {
+      const res = await fetch(`${API}/tailieu/${docId}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBuoiHoc: buoiHocId })
       });
       if (res.ok) {
+        alert("Chọn tài liệu thành công!");
         // Refresh documents list
-        const dRes = await fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`);
+        const dRes = await fetch(`${API}/tailieu/${buoiHocId}`);
         const dData = await dRes.json();
         setDocuments(dData);
         setShowReuseModal(false);
@@ -101,15 +122,29 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       }
     } catch (err) {
       alert("Lỗi kết nối: " + err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   /* ===== LOAD DATA ===== */
+  const [lessonStatus, setLessonStatus] = useState<string>("");
+
   useEffect(() => {
     if (!buoiHocId) return;
-    fetch(`http://14.225.192.252:5000/tailieu/${buoiHocId}`)
+    fetch(`${API}/tailieu/${buoiHocId}`)
       .then(res => res.json())
       .then(data => setDocuments(data))
+      .catch(err => console.log(err));
+
+    fetch(`${API}/buoihoc/${buoiHocId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.TrangThaiLopHoc) setClassStatus(data.TrangThaiLopHoc);
+          if (data.TrangThai) setLessonStatus(data.TrangThai);
+        }
+      })
       .catch(err => console.log(err));
   }, [buoiHocId]);
 
@@ -125,7 +160,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
   /* ===== XÓA ===== */
   const handleConfirmDelete = async () => {
     if (selectedId !== null) {
-      await fetch(`http://14.225.192.252:5000/tailieu/${selectedId}`, { method: "DELETE" });
+      await fetch(`${API}/tailieu/${selectedId}`, { method: "DELETE" });
       setDocuments(documents.filter(doc => doc.MaTaiLieu !== selectedId));
     }
     setShowConfirm(false);
@@ -160,7 +195,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
             <FiSearch size={16} />
           </button>
         </form>
-        {(hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
+        {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (hasPermission("DOCUMENT_CREATE_PENDING") || hasPermission("DOCUMENT_CREATE_DIRECT")) && (
           <>
             <button
               className="add-btn-reuse"
@@ -178,25 +213,30 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
       {/* LIST */}
       <div className="doc-list">
         {filteredDocs.map(doc => (
-          <div key={doc.MaTaiLieu} className="doc-card">
+          <div
+            key={doc.MaTaiLieu}
+            className="doc-card"
+            onClick={() => handleViewDocumentDetail(doc)}
+            style={{ cursor: "pointer" }}
+          >
             <div className="doc-left">
               <h3 style={{ margin: 0 }}>{doc.TieuDe}</h3>
               <p className="doc-desc" style={{ marginTop: '4px' }}>{doc.MoTa}</p>
             </div>
-            <div className="doc-right">
+            <div className="doc-right" onClick={(e) => e.stopPropagation()}>
               <span className="doc-date">
                 ⏱ Cập nhật: {new Date(doc.NgayCapNhat).toLocaleDateString("vi-VN")}
               </span>
-              <button className="action-icon-btn detail-icon-btn" 
-                onClick={() => handleViewDocumentDetail(doc)}
-                title="Xem Chi Tiết">
-                <FiEye size={16} />
-              </button>
-              <button className="action-icon-btn delete-icon-btn" 
-                onClick={() => handleOpenDelete(doc.MaTaiLieu)}
-                title="Xóa tài liệu">
-                <FiTrash2 size={16} />
-              </button>
+              {classStatus !== "Đã hoàn thành" && lessonStatus !== "Đã hoàn thành" && (
+                <button className="action-icon-btn delete-icon-btn" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDelete(doc.MaTaiLieu);
+                  }}
+                  title="Xóa tài liệu">
+                  <FiTrash2 size={16} />
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -209,29 +249,43 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999
         }} onClick={() => setShowConfirm(false)}>
           <div style={{
-            background: "white", borderRadius: "12px", padding: "24px", width: "400px",
+            background: "white", borderRadius: "12px", width: "450px", maxWidth: "90%",
             boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-            border: "1px solid #cbd5e1", textAlign: "center"
+            border: "1px solid #e2e8f0", overflow: "hidden", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 700, color: "#1f2937" }}>
-              Xác nhận xóa tài liệu
-            </h3>
-            <p style={{ fontSize: "14px", color: "#4b5563", margin: "0 0 20px 0", lineHeight: "1.5" }}>
-              Bạn có chắc chắn muốn xóa tài liệu này không?
-            </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button
-                onClick={() => setShowConfirm(false)}
-                style={{ padding: "8px 16px", background: "#f3f4f6", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#374151" }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "white" }}
-              >
-                Xóa
-              </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Xóa tài liệu</span>
+              <button type="button" onClick={() => setShowConfirm(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#64748b", padding: 0, display: "flex", alignItems: "center" }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px", textAlign: "left" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn xóa tài liệu này không?
+              </p>
+              <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#475569" }}>
+                <strong>Lưu ý:</strong> Xóa xong không thể khôi phục lại được
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  style={{
+                    padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 600
+                  }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  style={{
+                    padding: "8px 16px", background: "#c20e0e", color: "white", border: "none",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -269,12 +323,13 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ buoiHocIdProp, 
                         Lớp: {doc.TenLop || doc.TenBuoiHoc}
                       </span>
                     </div>
-                    <button
+                     <button
                       className="btn-confirm"
-                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7" }}
+                      style={{ fontSize: "12px", padding: "5px 12px", width: "auto", margin: 0, background: "#0284c7", opacity: isProcessing ? 0.6 : 1 }}
+                      disabled={isProcessing}
                       onClick={() => handleReuseDocument(doc.MaTaiLieu)}
                     >
-                      Chọn
+                      {isProcessing ? "Đang xử lý..." : "Chọn"}
                     </button>
                   </div>
                 ))

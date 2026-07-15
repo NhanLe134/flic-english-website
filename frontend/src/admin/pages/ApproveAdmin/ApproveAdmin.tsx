@@ -3,7 +3,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiUsers } from "react-icons/fi";
 import { formatScheduleOnlyDays } from "../../../utils/schedule";
 
-const API = "http://14.225.192.252:5000";
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.")
+    ? `http://${window.location.hostname}:5004`
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 
 const DAYS_OF_WEEK = [
@@ -324,7 +330,7 @@ export default function ApproveAdmin() {
 
   const loadCourses = () => {
     setLoading(true);
-    fetch(`${API}/admin/khoahoc`)
+    fetch(`${API}/admin/khoahoc?all=true`)
       .then(r => r.json())
       .then(data => {
         setCourses(data.map((c: any) => ({
@@ -332,7 +338,7 @@ export default function ApproveAdmin() {
           title: c.TenKhoaHoc,
           desc: c.MoTa || '',
           level: c.TrinhDo || '',
-          status: c.TrangThai || 'Pending',
+          status: c.TrangThai || 'Ẩn',
           created: c.NgayTao ? new Date(c.NgayTao).toLocaleDateString('vi-VN') : '—',
           category: c.DanhMuc || 'Luyện thi',
           classCount: c.SoLop || 0,
@@ -555,8 +561,8 @@ export default function ApproveAdmin() {
 
   // ── Toggle Trạng thái hiển thị ──
   const toggleCourseVisibility = async (courseId: number, currentStatus: string) => {
-    const isVisible = currentStatus === 'Đã duyệt' || currentStatus === 'Hoạt động';
-    const newStatus = isVisible ? 'Ẩn' : 'Đã duyệt';
+    const isVisible = currentStatus === 'Hiển thị' || currentStatus === 'Đã duyệt' || currentStatus === 'Hoạt động';
+    const newStatus = isVisible ? 'Ẩn' : 'Hiển thị';
     try {
       await fetch(`${API}/admin/khoahoc/${courseId}/duyet`, {
         method: "PUT",
@@ -622,7 +628,7 @@ export default function ApproveAdmin() {
     }
 
     if (!classEditForm.maLop) {
-      errors.maLop = "Vui lòng chọn hoặc nhập 1 trình độ";
+      errors.maLop = "Vui lòng chọn trình độ lớp học";
       hasError = true;
     }
 
@@ -713,7 +719,7 @@ export default function ApproveAdmin() {
     }
 
     if (!newClassForm.maLop) {
-      errors.maLop = "Vui lòng chọn hoặc nhập 1 trình độ";
+      errors.maLop = "Vui lòng chọn trình độ lớp học";
       hasError = true;
     }
 
@@ -872,7 +878,7 @@ export default function ApproveAdmin() {
                 filteredCourses.map((course, index) => {
                   const isExpanded = expandedCourse === course.id;
                   const classes = classesMap[course.id] || [];
-                  const isVisible = course.status === 'Đã duyệt' || course.status === 'Hoạt động';
+                  const isVisible = course.status === 'Hiển thị' || course.status === 'Đã duyệt' || course.status === 'Hoạt động';
 
                   return (
                     <React.Fragment key={course.id}>
@@ -1377,7 +1383,7 @@ export default function ApproveAdmin() {
 
 
                 <div className="form-field-group">
-                  <label>Lịch học (Chọn các ngày học trong tuần)</label>
+                  <label>Lịch học (Chọn các ngày học trong tuần):</label>
                   <div className="weekday-selection-row">
                     {DAYS_OF_WEEK.map(d => {
                       const isSelected = newClassForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
@@ -1577,7 +1583,7 @@ export default function ApproveAdmin() {
 
 
                 <div className="form-field-group">
-                  <label>Lịch học (Chọn các ngày học trong tuần)</label>
+                  <label>Lịch học (Chọn các ngày học trong tuần):</label>
                   <div className="weekday-selection-row">
                     {DAYS_OF_WEEK.map(d => {
                       const isSelected = classEditForm.days.split(',').map(x => x.trim()).filter(Boolean).includes(d.value);
@@ -1829,12 +1835,12 @@ export default function ApproveAdmin() {
                   <div className="class-detail-skills-list">
                     {courseSkillsList.map(skill => {
                       const skillId = getSkillId(skill);
-                      const assignment = selectedClassAssignments.find((a: any) => a.MaKyNang === skillId);
+                      const assignment: any = selectedClassAssignments.find((a: any) => a.MaKyNang === skillId);
                       return (
                         <div key={skill} className="class-detail-skill-row">
                           <span className="class-detail-skill-name">{skill}</span>
                           <span style={{ color: assignment ? '#0f172a' : '#94a3b8', fontStyle: assignment ? 'normal' : 'italic' }}>
-                            {assignment ? assignment.HoTen : 'Chưa phân công'}
+                            {assignment ? (assignment.TenGiangVien || assignment.HoTen) : 'Chưa phân công'}
                           </span>
                         </div>
                       );

@@ -1,5 +1,5 @@
 import "./QuanLyKhoaHoc.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { formatScheduleOnlyDays } from "../../utils/schedule";
 
@@ -16,6 +16,10 @@ interface ClassItem {
 
 const QuanLyKhoaHoc = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId: string }>();
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const teacherIdStr = teacherId || `teacher${user.MaNguoiDung || ""}`;
+
   const [search, setSearch] = useState("");
   const [classes, setClasses] = useState<ClassItem[]>([]);
 
@@ -26,13 +30,13 @@ const QuanLyKhoaHoc = () => {
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`http://14.225.192.252:5000/teacher/classes/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/classes/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
         const mappedClasses = data.map((c: any) => ({
           id: c.MaLopHoc,
           name: c.TenLop,
-          code: `CT-${c.MaLopHoc}`,
+          code: `${c.MaLopHoc}`,
           schedule: formatScheduleOnlyDays(c.LichHoc) || '—',
           courseName: c.TenKhoaHoc || '',
           students: c.SoLuongHocVien || 0,
@@ -98,7 +102,7 @@ const QuanLyKhoaHoc = () => {
                 <p className="students-count">{c.courseName}</p>
                 <button
                   className="detail-button"
-                  onClick={() => navigate(`/lessonlist/${c.id}`, { state: { tenKhoaHoc: c.courseName, tenLop: c.name } })}
+                  onClick={() => navigate(`/${teacherIdStr}/lophoc/${c.id}`, { state: { tenKhoaHoc: c.courseName, tenLop: c.name } })}
                 >
                   Xem chi tiết
                 </button>

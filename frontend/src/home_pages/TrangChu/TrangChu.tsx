@@ -78,7 +78,7 @@ const TrangChu = () => {
         if (user.VaiTro === "Quản Trị Viên") {
           navigate("/admin/admin-dashboard", { replace: true });
         } else if (user.VaiTro === "Giảng Viên") {
-          navigate("/quan-ly-khoa-hoc", { replace: true });
+          navigate(`/teacher${user.MaNguoiDung}/lophoc`, { replace: true });
         } else if (user.VaiTro === "Quản Trị Nội Dung") {
           navigate("/QTV/khoahoc", { replace: true });
         } else if (user.VaiTro === "Học Viên") {
@@ -248,7 +248,7 @@ const TrangChu = () => {
         {/* Giao diện trên máy tính (Desktop) */}
         <div className="teachers-container desktop-only-flex">
           {teacherData.map((teacher, idx) => (
-            <div key={idx} className="teacher-card">
+            <div key={idx} className={`teacher-card ${teacher.gradient}`}>
               <div className={`teacher-card-top ${teacher.gradient}`}>
                 <div className="teacher-circle-img">
                   <img src={`${import.meta.env.BASE_URL}image.png`} alt={teacher.name} />
@@ -297,7 +297,7 @@ const TrangChu = () => {
             </button>
 
             {/* Thẻ giáo viên hiện tại */}
-            <div className="teacher-card active-slide">
+            <div className={`teacher-card active-slide ${teacherData[activeIdx].gradient}`}>
               <div className={`teacher-card-top ${teacherData[activeIdx].gradient}`}>
                 <div className="teacher-circle-img">
                   <img src={`${import.meta.env.BASE_URL}image.png`} alt={teacherData[activeIdx].name} />

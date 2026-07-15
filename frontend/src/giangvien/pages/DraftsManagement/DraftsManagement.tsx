@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend } from "react-icons/fi";
+import { useNavigate, useParams } from "react-router-dom";
+import { FiArrowLeft, FiBookOpen, FiCheckSquare, FiAward, FiTrash2, FiSend, FiEye } from "react-icons/fi";
 import "./DraftsManagement.css";
 
 interface DraftLesson {
@@ -23,10 +23,12 @@ interface DraftExercise {
   TenBuoiHoc: string;
   TenLop: string;
   TenKhoaHoc: string;
+  MaBuoiHoc?: number;
 }
 
 const DraftsManagement = () => {
   const navigate = useNavigate();
+  const { teacherId } = useParams<{ teacherId?: string }>();
   const [activeTab, setActiveTab] = useState<"lessons" | "exercises" | "exams">("lessons");
   const [lessons, setLessons] = useState<DraftLesson[]>([]);
   const [exercises, setExercises] = useState<DraftExercise[]>([]);
@@ -40,7 +42,7 @@ const DraftsManagement = () => {
   const fetchDrafts = () => {
     if (!maNguoiDung) return;
     setLoading(true);
-    fetch(`http://14.225.192.252:5000/teacher/${maNguoiDung}/drafts`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/${maNguoiDung}/drafts`)
       .then((res) => res.json())
       .then((data) => {
         setLessons(data.lessons || []);
@@ -57,10 +59,10 @@ const DraftsManagement = () => {
 
   const handleSubmitLesson = async (id: number) => {
     try {
-      const res = await fetch(`http://14.225.192.252:5000/baigiang/${id}/status`, {
+      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ TrangThai: "pending" })
+        body: JSON.stringify({ TrangThai: "Chờ duyệt" })
       });
       if (res.ok) {
         alert("Gửi duyệt bài giảng thành công!");
@@ -76,10 +78,10 @@ const DraftsManagement = () => {
 
   const handleSubmitExercise = async (id: number) => {
     try {
-      const res = await fetch(`http://14.225.192.252:5000/baitap/${id}/status`, {
+      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ TrangThai: "pending" })
+        body: JSON.stringify({ TrangThai: "Chờ duyệt" })
       });
       if (res.ok) {
         alert("Gửi duyệt thành công!");
@@ -118,7 +120,7 @@ const DraftsManagement = () => {
       "Hành động này sẽ xóa vĩnh viễn bản nháp bài giảng hiện tại.",
       async () => {
         try {
-          const res = await fetch(`http://14.225.192.252:5000/baigiang/${lessonId}`, {
+          const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${lessonId}`, {
             method: "DELETE"
           });
           if (res.ok) {
@@ -137,7 +139,7 @@ const DraftsManagement = () => {
       "Hành động này sẽ xóa vĩnh viễn bản nháp bài tập hiện tại.",
       async () => {
         try {
-          const res = await fetch(`http://14.225.192.252:5000/baitap/${exId}`, {
+          const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${exId}`, {
             method: "DELETE"
           });
           if (res.ok) {
@@ -173,7 +175,7 @@ const DraftsManagement = () => {
 
   return (
     <div className="dm-wrapper">
-      <span className="dm-back" onClick={() => navigate(-1)}>
+      <span className="dm-back" onClick={() => teacherId ? navigate(`/${teacherId}/lophoc`) : navigate(-1)}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
         Quay lại
       </span>
@@ -247,7 +249,24 @@ const DraftsManagement = () => {
               return (
                 <div key={id} className="dm-card">
                   <div className="dm-card-info">
-                    <h3>{title}</h3>
+                    <h3 
+                      style={{ cursor: "pointer", color: "#F95800" }}
+                      onClick={() => {
+                        if (item.MaBaiHoc) {
+                          navigate(`/them-bai-giang/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        } else {
+                          navigate(`/create-exercise/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        }
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.textDecoration = "underline";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.textDecoration = "none";
+                      }}
+                    >
+                      {title}
+                    </h3>
                     <div className="dm-card-meta">
                       <span className="dm-meta-tag">{typeLabel}</span>
                       <span>{extraLabel}</span>
@@ -266,6 +285,39 @@ const DraftsManagement = () => {
                     >
                       <FiTrash2 size={16} />
                       Xóa
+                    </button>
+                    <button
+                      className="dm-action-view"
+                      onClick={() => {
+                        if (item.MaBaiHoc) {
+                          navigate(`/them-bai-giang/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        } else {
+                          navigate(`/create-exercise/${item.MaBuoiHoc || 0}?editDraftId=${id}`);
+                        }
+                      }}
+                      style={{
+                        background: "#eff6ff",
+                        color: "#3b82f6",
+                        border: "1px solid #dbeafe",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.background = "#dbeafe";
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.background = "#eff6ff";
+                      }}
+                    >
+                      <FiEye size={16} />
+                      Xem
                     </button>
                     <button
                       className="dm-action-submit"
