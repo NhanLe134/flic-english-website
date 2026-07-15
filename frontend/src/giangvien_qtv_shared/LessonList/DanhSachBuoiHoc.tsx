@@ -1,6 +1,6 @@
 import "./DanhSachBuoiHoc.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FiArrowLeft, FiFileText, FiTrash2, FiPlay, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiTrash2 } from "react-icons/fi";
 import { useDanhSachBuoiHoc } from "./useDanhSachBuoiHoc";
 
 const DanhSachBuoiHoc = () => {
