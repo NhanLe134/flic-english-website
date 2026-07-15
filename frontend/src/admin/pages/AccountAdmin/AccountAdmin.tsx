@@ -329,7 +329,6 @@ export default function AccountAdmin() {
           <table className="accounts-table">
             <thead>
               <tr>
-                <th>Tên đăng nhập</th>
                 <th>Họ tên</th>
                 <th>Email</th>
                 <th>Vai trò</th>
@@ -339,12 +338,9 @@ export default function AccountAdmin() {
             </thead>
             <tbody>
               {filteredUsers.length === 0 ? (
-                <tr><td colSpan={6} className="table-empty">Không có dữ liệu</td></tr>
+                <tr><td colSpan={5} className="table-empty">Không có dữ liệu</td></tr>
               ) : filteredUsers.map(u => (
                 <tr key={u.MaNguoiDung} onClick={() => { setSelectedUser({ ...u }); setShowDetailModal(true); }}>
-                  <td className="user-username">
-                    <div style={{ fontWeight: 600 }}>{u.TenDangNhap}</div>
-                  </td>
                   <td>
                     <div className="user-name">{u.HoTen}</div>
                   </td>
