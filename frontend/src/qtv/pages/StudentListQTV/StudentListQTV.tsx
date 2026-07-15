@@ -175,6 +175,7 @@ const StudentListQTV: React.FC = () => {
         if (res.ok) {
           triggerSuccessPopup(`Đã hủy ghi danh ${studentName}!`);
           loadEnrolledStudents();
+          loadPendingRegs();
         } else {
           alert('Lỗi khi hủy ghi danh');
         }
@@ -878,7 +879,15 @@ const StudentListQTV: React.FC = () => {
                               </button>
                             </>
                           )}
-                          {r.status !== 'Chờ ghi danh' && <span style={{ fontSize: '12px', color: '#aaa' }}>—</span>}
+                          {r.status === 'Đã ghi danh' && (
+                            <button 
+                              style={{ background: '#dc2626', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                              onClick={() => handleRemoveEnrolled(r.studentId, r.classId, r.name)}
+                            >
+                              Hủy GD
+                            </button>
+                          )}
+                          {r.status !== 'Chờ ghi danh' && r.status !== 'Đã ghi danh' && <span style={{ fontSize: '12px', color: '#aaa' }}>—</span>}
                         </div>
                       </td>
                     </tr>

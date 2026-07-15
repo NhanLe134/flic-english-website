@@ -158,7 +158,7 @@ function App() {
           <Route path="/:teacherId/lophoc/:maLop/:buoiId/:tab?" element={<ChiTietBuoiHoc />} />
           <Route path="/:teacherId/lophoc/:maLop/:buoiId/bt/:id/view" element={<ExerciseDetail />} />
           <Route path="/:teacherId/lophoc/:maLop/:buoiId/bg/:id/view" element={<LessonDetail />} />
-          <Route path="/:teacherId/quan-ly-de-thi" element={<QuanLyDeThiThu />} />
+          <Route path="/:teacherId/quan-ly-de-thi/:tab?/:subId?" element={<QuanLyDeThiThu />} />
           <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
           <Route path="/create-exercise/:id" element={<TaoBaiTap />} />
           <Route path="/danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
@@ -210,7 +210,7 @@ function App() {
           <Route path="hocvien" element={<StudentListQTV />} />
           <Route path="duyet-bai" element={<DuyetBaiQTV />} />
           <Route path="create-exercise/:id" element={<TaoBaiTap />} />
-          <Route path="quan-ly-de-thi" element={<QuanLyDeThiThu />} />
+          <Route path="quan-ly-de-thi/:tab?/:subId?" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
           <Route path="bai-giang/:id" element={<LessonDetail />} />
           <Route path="them-bai-giang/:buoiHocId" element={<AddLesson />} />

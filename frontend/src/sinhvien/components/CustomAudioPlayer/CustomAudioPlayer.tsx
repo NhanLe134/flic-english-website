@@ -5,9 +5,10 @@ import "./CustomAudioPlayer.css";
 interface CustomAudioPlayerProps {
   src: string;
   className?: string;
+  forcePlacement?: "up" | "down";
 }
 
-export const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({ src, className }) => {
+export const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({ src, className, forcePlacement }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -229,7 +230,7 @@ export const CustomAudioPlayer: React.FC<CustomAudioPlayerProps> = ({ src, class
           </button>
 
           {isMenuOpen && (
-            <div className={`cap-dropdown-menu ${menuPlacement === "down" ? "open-down" : "open-up"}`}>
+            <div className={`cap-dropdown-menu ${(forcePlacement || menuPlacement) === "down" ? "open-down" : "open-up"}`}>
               {menuView === "main" ? (
                 <div className="cap-menu-view">
                   <button

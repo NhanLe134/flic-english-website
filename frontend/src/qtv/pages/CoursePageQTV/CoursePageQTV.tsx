@@ -333,18 +333,7 @@ function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
 //   return cleaned.trim();
 // };
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr || dateStr === '—') return '—';
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-  const d = new Date(dateStr);
-  if (!isNaN(d.getTime())) {
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-  return dateStr;
-};
+
 
 export default function CoursePageQTV() {
   const navigate = useNavigate()
@@ -426,6 +415,8 @@ export default function CoursePageQTV() {
     console.log(setAllExistingBg);
     console.log(setAllExistingDoc);
     console.log(loadingLessons);
+    console.log(loadingEnrolled);
+    console.log(setLoadingEnrolled);
   }
 
   const fetchLessonAssets = async (lessonId: number) => {
@@ -1135,14 +1126,7 @@ export default function CoursePageQTV() {
     } catch { alert('Lỗi khi ghi danh') }
   }
 
-  const removeEnrolled = (studentId: string) => {
-    if (!detailClass) return
-    confirmAction('Bạn có chắc chắn muốn hủy ghi danh sinh viên này?', async () => {
-      await fetch(`${API}/qtv/lophoc/${detailClass.id}/ghidanh/${studentId}`, { method: 'DELETE' })
-      setEnrolledStudents(prev => prev.filter(s => s.studentId !== studentId))
-      setToast('Đã hủy ghi danh!')
-    })
-  }
+
 
   // ── Lộ trình ──────────────────────────────────────────────────────────────────
   const saveLesson = async () => {
@@ -1847,14 +1831,6 @@ export default function CoursePageQTV() {
             </div>
 
 
-            <div className={styles.tabs}>
-              <button className={`${styles.tab} ${detailTab === 'info' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('info'); sessionStorage.setItem('lastOpenTab', 'info'); }}>
-                Thông tin
-              </button>
-              <button className={`${styles.tab} ${detailTab === 'students' ? styles.tabActive : ''}`} onClick={() => { setDetailTab('students'); sessionStorage.setItem('lastOpenTab', 'students'); }}>
-                Học viên ({enrolledStudents.length})
-              </button>
-            </div>
 
             <div className={styles.modalScrollableBody}>
               {/* Tab Thông tin */}
@@ -2072,58 +2048,6 @@ export default function CoursePageQTV() {
                 </div>
               )}
 
-              {/* Tab Học viên */}
-              {detailTab === 'students' && (
-                <div className={styles.tabContent}>
-                  <div className={styles.tabToolbar}>
-                    <span className={styles.tabInfo}>{enrolledStudents.length}/{detailClass.students} đã ghi danh</span>
-                    <div className={styles.tabToolbarBtns}>
-                      <button className={styles.detailBtnOutline} onClick={() => {
-                        if (enrolledStudents.length === 0) { alert('Chưa có học viên nào để xuất!'); return }
-                        const headers = ['Mã HV','Họ và tên','Giới tính','SĐT','Ngày ghi danh','Trạng thái']
-                        const rows = enrolledStudents.map(s => [s.studentId, s.name, s.gender, s.phone, s.enrollDate, s.status])
-                        const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
-                        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement('a')
-                        a.href = url; a.download = `danhsach_${detailClass?.name.replace(/\s+/g,'_')}.csv`
-                        a.click(); URL.revokeObjectURL(url)
-                        setToast(`Đã xuất ${enrolledStudents.length} học viên!`)
-                      }}>⬇ Xuất danh sách</button>
-                    </div>
-                  </div>
-                  {loadingEnrolled ? (
-                    <div style={{ padding:20, textAlign:'center', color:'#999' }}>Đang tải...</div>
-                  ) : enrolledStudents.length === 0 ? (
-                    <div className={styles.emptyTab}>Chưa có học viên nào.</div>
-                  ) : (
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th style={{ width: '100px' }}>Mã HV</th>
-                          <th>Họ và tên</th>
-                          <th style={{ width: '100px' }}>Giới tính</th>
-                          <th style={{ width: '130px' }}>Ngày GD</th>
-                          <th style={{ width: '130px' }}>Trạng thái</th>
-                          <th style={{ width: '90px' }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {enrolledStudents.map(s => (
-                          <tr key={s.studentId}>
-                            <td>{s.studentId}</td>
-                            <td>{s.name}</td>
-                            <td>{s.gender}</td>
-                            <td>{formatDate(s.enrollDate)}</td>
-                            <td><span className={`${styles.badge} ${s.status === 'Đang học' ? styles.badgeGreen : styles.badgeGray}`}>{s.status}</span></td>
-                            <td><button className={styles.detailBtnDanger} onClick={() => removeEnrolled(s.studentId)}>Hủy GD</button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
 
 
             </div>
