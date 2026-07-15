@@ -1,5 +1,7 @@
 import "./QuanLyDeThiThu.css";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { CustomAudioPlayer } from "../../sinhvien/components/CustomAudioPlayer/CustomAudioPlayer";
 import {
   FiArrowLeft,
   FiFileText,
@@ -377,8 +379,13 @@ const RichTextEditor = ({
 };
 
 const QuanLyDeThiThu = () => {
+  const navigate = useNavigate();
+  const { teacherId, tab, subId } = useParams<{ teacherId?: string; tab?: string; subId?: string }>();
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
+
   const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
   const isQTV = user?.VaiTro === "Quản Trị Nội Dung" || window.location.pathname.includes("/QTV/");
+  const basePath = teacherId ? `/${teacherId}/quan-ly-de-thi` : "/QTV/quan-ly-de-thi";
 
   const [tests, setTests] = useState<BaiTest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -419,6 +426,7 @@ const QuanLyDeThiThu = () => {
   const [submissions, setSubmissions] = useState<BaiNopHocVien[]>([]);
 
   const [selectedSubmission, setSelectedSubmission] = useState<BaiNopHocVien | null>(null);
+  const [showBackBtn, setShowBackBtn] = useState(false);
   const [gradingSkillTab, setGradingSkillTab] = useState<"listening" | "reading" | "writing" | "speaking">("writing");
   const [gradeViet, setGradeViet] = useState<string>("");
   const [feedbackViet, setFeedbackViet] = useState<string>("");
@@ -472,7 +480,7 @@ const QuanLyDeThiThu = () => {
 
       if (res.ok) {
         await loadSubmissions();
-        setSelectedSubmission(null);
+        navigate(`${basePath}/bainop`);
         showToast(`Đã lưu điểm bài thi của ${selectedSubmission.hoTen} thành công!`);
       } else {
         const errData = await res.json();
@@ -481,6 +489,63 @@ const QuanLyDeThiThu = () => {
     } catch (err) {
       console.error("Lỗi khi lưu điểm chấm thi thử:", err);
       alert("Lỗi kết nối khi lưu điểm chấm.");
+    }
+  };
+
+  // Sync tab with URL
+  useEffect(() => {
+    if (tab === "bainop") {
+      setActiveTab("submissions");
+    } else {
+      setActiveTab("tests");
+    }
+  }, [tab]);
+
+  // Sync subId with active submission
+  useEffect(() => {
+    if (subId && submissions.length > 0) {
+      const foundSub = submissions.find(s => String(s.id) === String(subId));
+      if (foundSub) {
+        handleOpenGrading(foundSub);
+      }
+    } else if (!subId) {
+      setSelectedSubmission(null);
+    }
+  }, [subId, submissions]);
+
+  // Sync back button visibility with mouse coordinates relative to workspace (quadrant 2 / top-left quadrant of the workspace content)
+  useEffect(() => {
+    if (!selectedSubmission) {
+      setShowBackBtn(false);
+      return;
+    }
+    const handleMouseMove = (e: MouseEvent) => {
+      if (workspaceRef.current) {
+        const rect = workspaceRef.current.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        const relativeY = e.clientY - rect.top;
+        if (relativeX > 0 && relativeX < rect.width / 2 && relativeY > 0 && relativeY < rect.height / 2) {
+          setShowBackBtn(true);
+        } else {
+          setShowBackBtn(false);
+        }
+      } else {
+        if (e.clientX < window.innerWidth / 2 && e.clientY < window.innerHeight / 2) {
+          setShowBackBtn(true);
+        } else {
+          setShowBackBtn(false);
+        }
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [selectedSubmission]);
+
+  const handleTabChange = (newTab: "tests" | "submissions") => {
+    if (newTab === "submissions") {
+      navigate(`${basePath}/bainop`);
+    } else {
+      navigate(basePath);
     }
   };
 
@@ -2344,23 +2409,54 @@ D. Visiting friends
   const renderGradingWorkspace = () => {
     if (!selectedSubmission) return null;
     return (
-      <div className="cd-workspace-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", boxSizing: "border-box" }}>
+      <div ref={workspaceRef} className="cd-workspace-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", boxSizing: "border-box", position: "relative" }}>
+        {/* Floating Back Button (Appears on hover in top-left area / 2nd quadrant) */}
+        {showBackBtn && (
+          <button
+            onClick={() => navigate(`${basePath}/bainop`)}
+            title="Quay lại"
+            style={{
+              position: "fixed",
+              top: "90px",
+              left: workspaceRef.current ? `${workspaceRef.current.getBoundingClientRect().left + 20}px` : "20px",
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              background: "#F95800",
+              border: "1px solid #F95800",
+              boxShadow: "0 4px 14px rgba(249, 88, 0, 0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#ffffff",
+              cursor: "pointer",
+              zIndex: 10000,
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+              e.currentTarget.style.color = "#F95800";
+              e.currentTarget.style.borderColor = "#F95800";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(249, 88, 0, 0.2)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "#F95800";
+              e.currentTarget.style.color = "#ffffff";
+              e.currentTarget.style.borderColor = "#F95800";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(249, 88, 0, 0.35)";
+            }}
+          >
+            <FiArrowLeft size={20} />
+          </button>
+        )}
+
         {/* Workspace Top Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "14px 24px", background: "white", borderBottom: "1px solid #e2e8f0"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              onClick={() => setSelectedSubmission(null)}
-              style={{
-                display: "flex", alignItems: "center", gap: "6px", background: "#f1f5f9", border: "none",
-                padding: "8px 12px", borderRadius: "8px", color: "#334155", cursor: "pointer", fontWeight: 600, fontSize: "13px"
-              }}
-            >
-              <FiArrowLeft /> Quay lại
-            </button>
-            <div style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: "12px" }}>
+            <div>
               <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
                 {isQTV ? "Chi tiết bài làm: " : "Chấm điểm bài thi: "}{selectedSubmission.hoTen} ({selectedSubmission.maSinhVien})
               </h2>
@@ -2512,15 +2608,21 @@ D. Visiting friends
                         <strong>Chủ đề:</strong> Part 1: Social Interaction (Hỏi đáp thông tin cá nhân về hoạt động buổi sáng, sở thích).
                       </div>
                       
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "#f1f5f9", borderRadius: "8px" }}>
-                        <button style={{ background: "#F95800", color: "white", border: "none", width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: "bold" }}>
-                          ▶
-                        </button>
-                        <div style={{ flex: 1, height: "12px", background: "#cbd5e1", borderRadius: "6px", position: "relative", overflow: "hidden" }}>
-                          <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "40%", background: "#F95800" }} />
-                        </div>
-                        <span style={{ fontSize: "12px", color: "#475569", fontFamily: "monospace" }}>0:45 / 3:00</span>
-                      </div>
+                      {selectedSubmission.baiLamNoi && selectedSubmission.baiLamNoi.length > 0 ? (
+                        selectedSubmission.baiLamNoi.map((audioPath, idx) => {
+                          if (!audioPath) return null;
+                          return (
+                            <div key={idx} style={{ marginTop: idx > 0 ? "16px" : "0" }}>
+                              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+                                File ghi âm bài làm #{idx + 1}
+                              </span>
+                              <CustomAudioPlayer src={getMediaUrl(audioPath)} forcePlacement="down" />
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p style={{ fontSize: "13px", color: "#ef4444", fontWeight: 600, margin: 0 }}>Không tìm thấy file ghi âm bài làm của học viên.</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2631,7 +2733,7 @@ D. Visiting friends
                   </button>
                 )}
                 <button
-                  onClick={() => setSelectedSubmission(null)}
+                  onClick={() => navigate(`${basePath}/bainop`)}
                   style={{
                     background: "#f1f5f9", color: "#334155", border: "none", padding: "12px", borderRadius: "8px",
                     fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%"
@@ -2813,7 +2915,7 @@ D. Visiting friends
                       </td>
                       <td style={{ padding: "10px 12px", textAlign: "right" }}>
                         <button
-                          onClick={() => handleOpenGrading(sub)}
+                          onClick={() => navigate(`${basePath}/bainop/${sub.id}`)}
                           style={{
                             padding: "5px 10px", background: isPending ? "#F95800" : "#f1f5f9",
                             color: isPending ? "white" : "#334155", border: "none", borderRadius: "6px",
@@ -2864,7 +2966,7 @@ D. Visiting friends
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "24px" }}>
         <button
           className="cd-tab-btn"
-          onClick={() => setActiveTab("tests")}
+          onClick={() => handleTabChange("tests")}
           style={{
             padding: "10px 16px", borderRadius: "8px", border: "none",
             background: activeTab === "tests" ? "#fff4ec" : "transparent",
@@ -2876,7 +2978,7 @@ D. Visiting friends
         </button>
         <button
           className="cd-tab-btn"
-          onClick={() => setActiveTab("submissions")}
+          onClick={() => handleTabChange("submissions")}
           style={{
             padding: "10px 16px", borderRadius: "8px", border: "none",
             background: activeTab === "submissions" ? "#fff4ec" : "transparent",
