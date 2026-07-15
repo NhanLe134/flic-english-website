@@ -1125,7 +1125,33 @@ app.get("/baitap/buoihoc/:buoiHocId", async (req, res) => {
         SELECT e.MaBaiTap, e.TieuDe AS Title, e.DangBai AS Type, 
                CAST(e.LaBaiKiemTra AS INT) AS IsExam,
                e.NgayTao AS CreatedDate, e.TrangThai, e.TrangThaiDuyet,
-               e.MaBaiHoc, e.HocThuMienPhi, e.NoiDung AS Content, e.HanNop
+               e.MaBaiHoc, e.HocThuMienPhi, e.NoiDung AS Content, e.HanNop,
+               (
+                 SELECT ROUND(AVG(CAST(b.Diem AS FLOAT)), 1)
+                 FROM BAINOP b
+                 JOIN SINHVIEN s ON b.MaSinhVien = s.MaSinhVien OR b.MaSinhVien = CAST(s.MaNguoiDung AS NVARCHAR(50))
+                 JOIN SINHVIEN_LOPHOC sl ON s.MaSinhVien = sl.MaSinhVien
+                 WHERE b.MaBaiTap = e.MaBaiTap
+                   AND sl.MaLopHoc = (SELECT MaLopHoc FROM BUOIHOC WHERE MaBuoiHoc = @buoiHocId)
+                   AND b.Diem IS NOT NULL
+               ) AS DiemTB,
+               ISNULL(CAST(ROUND(
+                 CAST((
+                   SELECT COUNT(DISTINCT s2.MaSinhVien)
+                   FROM BAINOP b2
+                   JOIN SINHVIEN s2 ON b2.MaSinhVien = s2.MaSinhVien OR b2.MaSinhVien = CAST(s2.MaNguoiDung AS NVARCHAR(50))
+                   JOIN SINHVIEN_LOPHOC sl2 ON s2.MaSinhVien = sl2.MaSinhVien
+                   WHERE b2.MaBaiTap = e.MaBaiTap
+                     AND sl2.MaLopHoc = (SELECT MaLopHoc FROM BUOIHOC WHERE MaBuoiHoc = @buoiHocId)
+                 ) AS FLOAT) * 100.0 / NULLIF(
+                   (
+                     SELECT COUNT(*) 
+                     FROM SINHVIEN_LOPHOC 
+                     WHERE MaLopHoc = (SELECT MaLopHoc FROM BUOIHOC WHERE MaBuoiHoc = @buoiHocId) 
+                       AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')
+                   ), 0
+                 ), 0
+               ) AS INT), 0) AS TiLeNop
         FROM BAITAP e
         JOIN BAIHOCKHOAHOC bh ON e.MaBaiHoc = bh.MaBaiHoc
         WHERE bh.MaBuoiHoc = @buoiHocId
@@ -1136,7 +1162,33 @@ app.get("/baitap/buoihoc/:buoiHocId", async (req, res) => {
                1 AS IsExam,
                NULL AS CreatedDate, k.TrangThai,
                CASE WHEN k.TrangThai = 'published' THEN N'Đã duyệt' WHEN k.TrangThai = 'rejected' THEN N'Từ chối' ELSE N'Chờ duyệt' END AS TrangThaiDuyet,
-               NULL AS MaBaiHoc, 0 AS HocThuMienPhi, k.NoiDung AS Content, NULL AS HanNop
+               NULL AS MaBaiHoc, 0 AS HocThuMienPhi, k.NoiDung AS Content, NULL AS HanNop,
+               (
+                 SELECT ROUND(AVG(CAST(kq.Diem AS FLOAT)), 1)
+                 FROM KETQUABAIKIEMTRA kq
+                 JOIN SINHVIEN s ON kq.MaSinhVien = s.MaSinhVien
+                 JOIN SINHVIEN_LOPHOC sl ON s.MaSinhVien = sl.MaSinhVien
+                 WHERE kq.MaBaiKiemTra = k.MaBaiKiemTra
+                   AND sl.MaLopHoc = (SELECT MaLopHoc FROM BUOIHOC WHERE MaBuoiHoc = @buoiHocId)
+                   AND kq.Diem IS NOT NULL
+               ) AS DiemTB,
+               ISNULL(CAST(ROUND(
+                 CAST((
+                   SELECT COUNT(DISTINCT s3.MaSinhVien)
+                   FROM KETQUABAIKIEMTRA kq3
+                   JOIN SINHVIEN s3 ON kq3.MaSinhVien = s3.MaSinhVien
+                   JOIN SINHVIEN_LOPHOC sl3 ON s3.MaSinhVien = sl3.MaSinhVien
+                   WHERE kq3.MaBaiKiemTra = k.MaBaiKiemTra
+                     AND sl3.MaLopHoc = (SELECT MaLopHoc FROM BUOIHOC WHERE MaBuoiHoc = @buoiHocId)
+                 ) AS FLOAT) * 100.0 / NULLIF(
+                   (
+                     SELECT COUNT(*) 
+                     FROM SINHVIEN_LOPHOC 
+                     WHERE MaLopHoc = (SELECT MaLopHoc FROM BUOIHOC WHERE MaBuoiHoc = @buoiHocId) 
+                       AND (TrangThai = N'Đang học' OR TrangThai = N'Hoàn thành' OR TrangThai = N'Đã hoàn thành')
+                   ), 0
+                 ), 0
+               ) AS INT), 0) AS TiLeNop
         FROM BAIKIEMTRA k
         WHERE k.MaBuoiHoc = @buoiHocId
       `);

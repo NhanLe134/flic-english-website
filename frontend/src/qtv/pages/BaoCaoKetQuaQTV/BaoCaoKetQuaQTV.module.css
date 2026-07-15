@@ -88,7 +88,7 @@ svg:active {
   background: #ffffff;
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(224, 212, 195, 0.55);
+  border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -956,9 +956,9 @@ svg:active {
   color: #ef4444;
 }
 
-.cardWarning {
+/* .cardWarning {
   border-color: rgba(239, 68, 68, 0.2);
-}
+} */
 
 .fontWeight700 {
   font-weight: 700;

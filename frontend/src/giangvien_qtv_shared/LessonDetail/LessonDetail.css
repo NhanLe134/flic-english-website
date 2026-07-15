@@ -74,7 +74,7 @@
 }
 
 .html-content .detail-table th {
-  background: #3f7d3c;
+  background: #000080;
   color: white;
   padding: 10px 14px;
   text-align: left;
@@ -163,7 +163,7 @@
 }
 
 .text-content th {
-  background: #3d7a3d;
+  background: #000080;
   color: white;
   padding: 10px 14px;
   text-align: left;

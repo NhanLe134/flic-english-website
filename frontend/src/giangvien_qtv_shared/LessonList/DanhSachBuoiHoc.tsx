@@ -1,6 +1,6 @@
 import "./DanhSachBuoiHoc.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FiArrowLeft, FiFileText, FiTrash2, FiPlay, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiTrash2 } from "react-icons/fi";
 import { useDanhSachBuoiHoc } from "./useDanhSachBuoiHoc";
 
 const DanhSachBuoiHoc = () => {
@@ -92,10 +92,10 @@ const DanhSachBuoiHoc = () => {
           <thead>
             <tr>
               <th style={{ width: "80px", textAlign: "center" }}>Thứ tự</th>
-              <th style={{ width: "30%" }}>Tên buổi học</th>
+              <th style={{ width: "220px" }}>Tên buổi học</th>
               <th>Mô tả</th>
-              <th style={{ width: "160px", textAlign: "center" }}>Trạng thái</th>
-              <th style={{ width: "220px", textAlign: "center" }}>Thao tác</th>
+              <th style={{ width: "120px", textAlign: "center" }}>Trạng thái</th>
+              <th style={{ width: "90px", textAlign: "center" }}>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -112,7 +112,7 @@ const DanhSachBuoiHoc = () => {
                 return (
                   <tr
                     key={buoiHoc.MaBuoiHoc}
-                    className={`lesson-row ${laBuoiDangMo ? "active-row" : ""}`}
+                    className="lesson-row"
                     onClick={() =>
                       navigate(`/${teacherId}/lophoc/${id}/buoi${buoiHoc.MaBuoiHoc}/bt`, {
                         state: { tenKhoaHoc, tenLop, maLopHoc: id },
@@ -126,7 +126,6 @@ const DanhSachBuoiHoc = () => {
                     {/* Cột Tên buổi học */}
                     <td className="col-name">
                       <div className="lesson-title-cell">
-                        {laBuoiDangMo && <FiPlay className="playing-icon" title="Đang học" />}
                         <span className="lesson-name">{buoiHoc.TenBuoiHoc}</span>
                       </div>
                     </td>
@@ -155,7 +154,7 @@ const DanhSachBuoiHoc = () => {
                       ) : laBuoiDangMo ? (
                         <div className="status-badge-container">
                           <span className="status-badge active-learning-badge">
-                            <FiBookOpen style={{ marginRight: 4 }} /> Đang học
+                            Đang học
                           </span>
                         </div>
                       ) : (
