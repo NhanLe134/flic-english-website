@@ -337,7 +337,7 @@ export default function ClassDetailTrial() {
     <div className="cd-container" style={{ padding: "30px 40px 60px 40px" }}>
       {/* Breadcrumb */}
       <nav className="courses-breadcrumb" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", marginTop: "0px", marginBottom: "24px" }}>
-        <Link to={isLoggedIn ? "/profile" : "/"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Trang chủ</Link>
+        <Link to={isLoggedIn ? "/profile-info" : "/"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Trang chủ</Link>
         <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>
         <Link to={isStudentRoute ? "/hoc-thu-sv" : "/hoc-thu"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Học & thi thử</Link>
         <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>

@@ -35,7 +35,7 @@ export default function CourseRegister() {
 
         {/* Breadcrumb ẩn văn bản giữ khoảng trống */}
         <nav className="courses-breadcrumb" style={{ visibility: 'hidden' }}>
-          <Link to="/profile">Trang chủ</Link>
+          <Link to="/profile-info">Trang chủ</Link>
           <span className="sep">›</span>
           <span className="active">Các khóa học FLIC</span>
         </nav>

@@ -8,7 +8,7 @@ const API = (window.location.hostname === "localhost" || window.location.hostnam
 export default function HocThuSV() {
   const navigate = useNavigate();
   const isLoggedIn = !!sessionStorage.getItem("user");
-  const homePath = isLoggedIn ? "/profile" : "/";
+  const homePath = isLoggedIn ? "/profile-info" : "/";
 
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

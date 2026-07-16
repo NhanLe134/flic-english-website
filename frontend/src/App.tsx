@@ -53,7 +53,6 @@ import QTVLayout from "./qtv/layout/QTVLayout"
 import DuyetBaiQTV from "./qtv/pages/DuyetBaiQTV/DuyetBaiQTV"
 import CoursePageQTV from "./qtv/pages/CoursePageQTV/CoursePageQTV"
 import CourseRegister from "./sinhvien/pages/CourseRegister/CourseRegister"
-import Profile from "./sinhvien/pages/Profile/Profile"
 import ProfilePage from "./sinhvien/pages/ProfilePage/ProfilePage"
 import MyCourses from "./sinhvien/pages/MyCourses/MyCourses"
 import ClassDetailSV from "./sinhvien/pages/ClassDetail/ClassDetailSV"
@@ -228,7 +227,6 @@ function App() {
           <Route path="/hoc-thu-sv/:classId/:lessonId/lt/:id" element={<ChiTietBaiTap />} />
           <Route path="/hoc-thu-sv/:classId/:lessonId/bt/:id" element={<ChiTietBaiTap />} />
           <Route path="/test-thu-sv" element={<TestThuSV />} />
-          <Route path="/profile" element={<Profile/>} />
           {/* Bấm Hồ Sơ trên sidebar → ProfilePage mới */}
           <Route path="/profile-info" element={<ProfilePage />} />
           <Route path="/MyCourses" element={<MyCourses />} />
