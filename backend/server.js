@@ -227,13 +227,14 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   next();
 });
-// Tạo thư mục uploads nếu chưa có
-if (!fs.existsSync("./uploads")) {
-  fs.mkdirSync("./uploads");
+// Tạo thư mục uploads nếu chưa có (đồng nhất với thư mục phục vụ static)
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
 }
 // ===== MULTER - ĐẶT Ở ĐÂY TRƯỚC KHI DÙNG =====
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const safeName = file.originalname.replace(/\s+/g, "-");
     cb(null, Date.now() + "-" + safeName);
