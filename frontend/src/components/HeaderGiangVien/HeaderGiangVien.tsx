@@ -5,6 +5,11 @@ import { useState, useEffect } from "react";
 const HeaderGiangVien = () => {
   const { avatar, handleUpload } = useAvatar();
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [avatar]);
 
   useEffect(() => {
     const userStr = sessionStorage.getItem("user");
@@ -29,8 +34,8 @@ const HeaderGiangVien = () => {
 
       <label className="avatar-wrapper header-avatar-wrapper" title="Đổi ảnh">
         <input type="file" accept="image/*" onChange={handleUpload} hidden />
-        {avatar
-          ? <img src={avatar} alt="avatar" className="avatar-img" />
+        {avatar && !imgFailed
+          ? <img src={avatar} alt="avatar" className="avatar-img" onError={() => setImgFailed(true)} />
           : <div className="avatar-placeholder">{initials}</div>
         }
         <div className="avatar-overlay">📷</div>

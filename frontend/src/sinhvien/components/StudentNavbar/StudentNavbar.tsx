@@ -150,7 +150,7 @@ export default function StudentNavbar() {
           onMouseLeave={() => setShowUserMenu(false)}
           style={{ position: "relative", cursor: "pointer" }}
         >
-          <img src={avatarUrl} alt="user avatar" className="user-avatar" />
+          <img src={avatarUrl} alt="user avatar" className="user-avatar" onError={() => setAvatarUrl(userIcon)} />
           <span className="user-name">{hoTen}</span>
           <FiChevronDown className={`user-chevron ${showUserMenu ? "open" : ""}`} size={14} />
 

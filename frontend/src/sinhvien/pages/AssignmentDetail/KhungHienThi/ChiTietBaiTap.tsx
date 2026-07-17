@@ -6,7 +6,7 @@
  * Ngoài ra còn xử lý điều hướng, trạng thái tải trang (loading), khóa bài học, cảnh báo hết hạn và nộp bài.
  */
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { FiLock, FiClock, FiXCircle } from "react-icons/fi";
 import { FaReply } from "react-icons/fa";
@@ -39,7 +39,37 @@ interface ChiTietBaiTapProps {
   showAnswers?: boolean;
 }
 
-function ChiTietBaiTap({
+class SimpleErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("SimpleErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 24, border: "2px solid #ef4444", backgroundColor: "#fef2f2", color: "#dc2626", borderRadius: 12, margin: 20 }}>
+          <h3 style={{ marginTop: 0, fontWeight: 700 }}>Đã xảy ra lỗi khi hiển thị bài tập:</h3>
+          <p style={{ fontWeight: 600 }}>{this.state.error?.message || this.state.error?.toString()}</p>
+          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "monospace", fontSize: 13, background: "#fff", padding: 12, borderRadius: 8, border: "1px solid #fee2e2", overflowX: "auto" }}>
+            {this.state.error?.stack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function ChiTietBaiTapContent({
   overrideExerciseId,
   overrideStudentId,
   overrideClassId,
@@ -274,6 +304,7 @@ function ChiTietBaiTap({
 
   return (
     <div className="ad-content">
+
       {/* 1. Nút quay lại góc trái */}
       {showBackBtn && (
         <button className="ad-back-overlay" onClick={handleBackNavigation} title="Quay lại">
@@ -468,6 +499,14 @@ function ChiTietBaiTap({
         </button>
       )}
     </div>
+  );
+}
+
+function ChiTietBaiTap(props: ChiTietBaiTapProps) {
+  return (
+    <SimpleErrorBoundary>
+      <ChiTietBaiTapContent {...props} />
+    </SimpleErrorBoundary>
   );
 }
 

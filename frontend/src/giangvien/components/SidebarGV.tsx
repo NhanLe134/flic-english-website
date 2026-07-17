@@ -76,6 +76,11 @@ const Sidebar = () => {
 
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [avatar]);
 
   const allowedMenuItems = menuItems.filter(item => {
     if (item.path === "/quan-ly-khoa-hoc") {
@@ -132,8 +137,8 @@ const Sidebar = () => {
         title="Xem thông tin cá nhân"
       >
         <div className="avatar-wrapper sidebar-avatar-wrapper" style={{ cursor: "pointer" }}>
-          {avatar
-            ? <img src={avatar} alt="avatar" className="avatar-img" />
+          {avatar && !imgFailed
+            ? <img src={avatar} alt="avatar" className="avatar-img" onError={() => setImgFailed(true)} />
             : <div className="avatar-placeholder">{initials}</div>
           }
         </div>
