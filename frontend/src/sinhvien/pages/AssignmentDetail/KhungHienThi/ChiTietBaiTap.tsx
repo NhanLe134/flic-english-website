@@ -86,7 +86,7 @@ function ChiTietBaiTapContent({
   const classId = overrideClassId ? String(overrideClassId) : paramClassId;
   const maLopHoc = classId ? Number(classId) : location.state?.maLopHoc;
 
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
 
   // Hook 1: Fetch and load all exercise configurations and data
   const data = useLayDuLieuBaiTap(id, classId, maLopHoc, user, overrideStudentId, location, isPreview, isModal);
