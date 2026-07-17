@@ -106,7 +106,7 @@ function NavDaDangNhap() {
             borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
             minWidth: 160, zIndex: 999, overflow: "hidden"
           }}>
-            <Link to="/profile"
+            <Link to="/profile-info"
               style={{ display: "block", padding: "10px 16px", fontSize: 14, color: "#333", textDecoration: "none" }}
               onClick={() => { setShowUserMenu(false); setIsMobileMenuOpen(false); }}
             >
