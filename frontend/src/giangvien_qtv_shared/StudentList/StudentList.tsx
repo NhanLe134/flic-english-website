@@ -20,7 +20,7 @@ const StudentList: React.FC = () => {
     const trimmedId = maSinhVien.trim();
     setShowModal(true);
     setModalLoading(true);
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/students/${trimmedId}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/students/${trimmedId}`)
       .then(res => res.json())
       .then(data => {
         setSelectedStudentDetails(data);
@@ -37,7 +37,7 @@ const StudentList: React.FC = () => {
 
     if (!maNguoiDung) { setLoading(false); return; }
 
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/students/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/students/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => setStudents(data))
       .catch(err => console.log(err))

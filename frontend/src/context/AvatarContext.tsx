@@ -19,7 +19,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       const user = JSON.parse(userStr);
       const path = user.AnhDaiDien;
       if (!path) return null;
-      return path.startsWith("http") ? path : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${path}`;
+      return path.startsWith("http") ? path : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${path}`;
     }
     return null;
   });
@@ -37,7 +37,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const uploadRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
+      const uploadRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
         method: "POST",
         body: formData
       });
@@ -45,7 +45,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
 
       const uploadData = await uploadRes.json();
       const relativeUrl = uploadData.url; // e.g. /uploads/filename.png
-      const absoluteUrl = `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${relativeUrl}`;
+      const absoluteUrl = `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${relativeUrl}`;
 
       // 2. Cập nhật state và sessionStorage
       setAvatar(absoluteUrl);
@@ -53,7 +53,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
       sessionStorage.setItem("user", JSON.stringify(user));
 
       // 3. Lưu link relative URL vào database cột AnhDaiDien
-      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/users/${user.MaNguoiDung}/anh-dai-dien`, {
+      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/users/${user.MaNguoiDung}/anh-dai-dien`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ AnhDaiDien: relativeUrl })

@@ -16,21 +16,21 @@ async function main() {
     const pool = await sql.connect(config);
     console.log("Connected to DB!");
     
-    // Query exercise 99
     const result = await pool.request()
-      .input("id", 99)
-      .query("SELECT * FROM BAITAP WHERE MaBaiTap = @id");
+      .query("SELECT * FROM BAITAP WHERE MaBaiTap = 26");
+    console.log("=== Exercise 26 in BAITAP ===");
+    console.log(result.recordset);
+
+    const examResult = await pool.request()
+      .query("SELECT * FROM BAIKIEMTRA WHERE MaBaiKiemTra = 26");
+    console.log("=== Exercise 26 in BAIKIEMTRA ===");
+    console.log(examResult.recordset);
+
+    const practiceResult = await pool.request()
+      .query("SELECT * FROM LUYENTAPTHEM WHERE MaLuyenTapThem = 26");
+    console.log("=== Exercise 26 in LUYENTAPTHEM ===");
+    console.log(practiceResult.recordset);
     
-    const ex = result.recordset[0];
-    const content = JSON.parse(ex.NoiDung);
-    const secType = content.sections[0].type;
-    console.log("=== DB secType ===");
-    console.log(secType);
-
-    console.log("=== CHAR CODES IN DB secType ===");
-    const chars = secType.split("").map(c => `${c} (${c.charCodeAt(0)})`).join(", ");
-    console.log(chars);
-
     await sql.close();
   } catch (err) {
     console.error("Error:", err);

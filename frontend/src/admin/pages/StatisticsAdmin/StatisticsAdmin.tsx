@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import { FiUsers, FiBookOpen, FiUserCheck } from "react-icons/fi";
 
-const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 // const DONUT_COLORS = ["#f58220", "#3b82f6", "#10b981", "#8b5cf6", "#ec4899"];
 
 export default function StatisticsAdmin() {
