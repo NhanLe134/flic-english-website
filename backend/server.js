@@ -1027,6 +1027,28 @@ app.delete("/qtv/buoihoc/:id", async (req, res) => {
     res.status(500).send(err.message);
   }
 })
+
+// Cập nhật buổi học
+app.put("/qtv/buoihoc/:id", async (req, res) => {
+  try {
+    const { TenBuoiHoc, MoTa, ThuTu } = req.body;
+    const pool = await poolPromise;
+    await pool.request()
+      .input("id", req.params.id)
+      .input("TenBuoiHoc", TenBuoiHoc)
+      .input("MoTa", MoTa || "")
+      .input("ThuTu", ThuTu || 1)
+      .query(`
+        UPDATE BUOIHOC 
+        SET TenBuoiHoc = @TenBuoiHoc, MoTa = @MoTa, ThuTu = @ThuTu 
+        WHERE MaBuoiHoc = @id
+      `);
+    res.json({ message: "Cập nhật buổi học thành công" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 app.get("/classes/:id/buoihoc", async (req, res) => {
   try {
     const pool = await poolPromise;

@@ -657,6 +657,25 @@
   color: #dc2626;
 }
 
+.sessionEditBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.sessionEditBtn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
 .columnAddBtn {
   background: transparent;
   border: none;
