@@ -90,7 +90,7 @@ const KhoHocLieu = () => {
   const [toast, setToast] = useState("");
   
   // Delete confirm modal
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; type: "baigiang" | "baitap" | "tailieu"; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; type: "baigiang" | "baitap" | "tailieu"; title: string } | null>(null);
 
   // Session creation modal states
   const [showAddSessionModal, setShowAddSessionModal] = useState(false);
@@ -413,7 +413,8 @@ const KhoHocLieu = () => {
         if (type === "baigiang") {
           setLectures(prev => prev.filter(item => item.MaBaiHoc !== id));
         } else if (type === "baitap") {
-          setExercises(prev => prev.filter(item => item.MaBaiTap !== id));
+          const cleanId = String(id).replace("exam-", "").replace("baitap-", "");
+          setExercises(prev => prev.filter(item => String(item.MaBaiTap) !== cleanId));
         } else if (type === "tailieu") {
           setDocuments(prev => prev.filter(item => item.MaTaiLieu !== id));
         }
@@ -770,7 +771,7 @@ const KhoHocLieu = () => {
                                           </div>
                                           <div className={styles.itemActions}>
                                             <button className={styles.actionBtnViewText} onClick={() => navigate(isQTV ? `/QTV/baitap-detail/${item.MaBaiTap}/0` : `/baitap-detail/${item.MaBaiTap}/0`)}>Xem</button>
-                                            <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: item.MaBaiTap, type: "baitap", title: item.Title })}>Xóa</button>
+                                            <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: isEx ? "exam-" + item.MaBaiTap : "baitap-" + item.MaBaiTap, type: "baitap", title: item.Title })}>Xóa</button>
                                           </div>
                                         </div>
                                       );

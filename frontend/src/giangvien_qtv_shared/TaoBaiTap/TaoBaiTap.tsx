@@ -613,8 +613,19 @@ const TaoBaiTap = () => {
             setDeadline(data.Deadline.split(".")[0]);
           }
           setShowAnswer(data.ShowAnswer === 1);
-          if (data.MaBaiHoc) {
+          let isUnlinked = false;
+          if (data.Content || data.NoiDung) {
+            try {
+              const parsed = JSON.parse(data.Content || data.NoiDung);
+              if (parsed.unlinked) {
+                isUnlinked = true;
+              }
+            } catch (e) {}
+          }
+          if (data.MaBaiHoc && !isUnlinked) {
             setSelectedMaBaiHoc(Number(data.MaBaiHoc));
+          } else {
+            setSelectedMaBaiHoc("");
           }
           if (data.MaBuoiHoc) {
             const buoiHocId = Number(data.MaBuoiHoc);
@@ -2060,6 +2071,7 @@ const TaoBaiTap = () => {
           deadline: deadline || null,
           openingMode: isExam ? openingMode : null,
           isOpened: isExam ? (openingMode === "manual" ? false : true) : true,
+          unlinked: isExam ? false : !selectedMaBaiHoc,
           sections: examSections
         };
         contentStr = JSON.stringify(examContent);
@@ -2072,7 +2084,8 @@ const TaoBaiTap = () => {
           deadline: deadline || null,
           description: questions[0]?.question || "",
           imageUrl: questions[0]?.imageUrl || "",
-          audioUrl: commonAudioUrl || questions[0]?.audioUrl || ""
+          audioUrl: commonAudioUrl || questions[0]?.audioUrl || "",
+          unlinked: !selectedMaBaiHoc
         };
         contentStr = JSON.stringify(contentMeta);
         // Serialize the array of questions

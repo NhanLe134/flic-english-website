@@ -9,7 +9,7 @@ interface BangBaiTapProps {
   lesson: any;
   buoiHocId: string | undefined;
   handleToggleOpen: (maBaiTap: number) => Promise<void>;
-  setSelectedId: (id: number | null) => void;
+  setSelectedId: (id: string | number | null) => void;
   setShowDeleteModal: (show: boolean) => void;
 }
 
@@ -325,7 +325,7 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
                           className="btn-delete-exercise"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedId(Number(ex.MaBaiTap));
+                            setSelectedId(isExam ? "exam-" + ex.MaBaiTap : "baitap-" + ex.MaBaiTap);
                             setShowDeleteModal(true);
                           }}
                           title="Xóa bài tập"

@@ -65,6 +65,7 @@ export function useLayDuLieuBaiTap(
 
   // Load student info
   useEffect(() => {
+    if (isPreview) return;
     if (overrideStudentId) {
       setMaSinhVien(overrideStudentId);
       return;
@@ -90,6 +91,21 @@ export function useLayDuLieuBaiTap(
     if (!exercise || !maSinhVien || (user.VaiTro !== "Sinh Viên" && user.VaiTro !== "Học Viên")) return;
 
     if (maNguoiDung === 123456 || maNguoiDung === 5) {
+      setIsLocked(false);
+      return;
+    }
+
+    let isUnlinked = false;
+    if (exercise.Content) {
+      try {
+        const parsed = JSON.parse(exercise.Content);
+        if (parsed.unlinked) {
+          isUnlinked = true;
+        }
+      } catch (e) {}
+    }
+
+    if (isUnlinked) {
       setIsLocked(false);
       return;
     }
@@ -153,12 +169,12 @@ export function useLayDuLieuBaiTap(
   // Load prior submission data
   useEffect(() => {
     if (!id) return;
-    if (maNguoiDung && maSinhVien === null) return;
+    if (!isPreview && maNguoiDung && maSinhVien === null) return;
 
     Promise.all([
       fetch(`${API}/baitap/${id}`).then(r => r.json()),
       maLopHoc ? fetch(`${API}/classes/${maLopHoc}/info`).then(r => r.json()) : Promise.resolve(null),
-      fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()),
+      !isPreview ? fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()) : Promise.resolve([]),
     ])
       .then(([exData, lopData, nopData]) => {
         setExercise({ ...exData, Type: mapDangBaiToType(exData.Type) });

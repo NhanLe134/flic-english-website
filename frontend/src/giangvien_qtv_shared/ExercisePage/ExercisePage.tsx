@@ -11,7 +11,7 @@ const ExercisePage = () => {
 
   const [search, setSearch] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [exercises, setExercises] = useState<any[]>([]);
   const [lesson, setLesson] = useState<any>(null);
   const [soHocVien, setSoHocVien] = useState(0);
@@ -105,8 +105,9 @@ const ExercisePage = () => {
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
+        const cleanId = String(selectedId).replace("exam-", "").replace("baitap-", "");
         setExercises((prev: any[]) =>
-          prev.filter((e: any) => Number(e.MaBaiTap) !== Number(selectedId))
+          prev.filter((e: any) => String(e.MaBaiTap) !== cleanId)
         );
       } else {
         alert("Xóa thất bại: " + body);
@@ -403,7 +404,12 @@ const ExercisePage = () => {
                 </button>
                 <button
                   onClick={() => {
-                    setSelectedId(Number(ex.MaBaiTap));
+                    let parsedContent: any = {};
+                    try {
+                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                    } catch (e) {}
+                    const isExam = ex.Type === "exam" || ex.IsExam === 1 || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+                    setSelectedId(isExam ? "exam-" + ex.MaBaiTap : "baitap-" + ex.MaBaiTap);
                     setShowDeleteModal(true);
                   }}
                   style={{
