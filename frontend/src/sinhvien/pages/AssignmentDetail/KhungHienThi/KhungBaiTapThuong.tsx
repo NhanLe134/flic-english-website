@@ -106,24 +106,24 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
     <div>
       {/* 1. Tập tin audio chung cho cả bài nếu là nghe trắc nghiệm */}
       {exercise?.AudioUrl && (exercise?.Type || "").toLowerCase() === "nghe audio trắc nghiệm" && (
-        <div className="ad-audio-card">
+        <div className="asd-audio-card">
           <h4><FiVolume2 style={{ color: "#f95800", fontSize: "1.2rem" }} /> General audio file for the entire assignment:</h4>
-          <CustomAudioPlayer src={`${API}${exercise.AudioUrl}`} className="ad-audio-player" />
+          <CustomAudioPlayer src={`${API}${exercise.AudioUrl}`} className="asd-audio-player" />
         </div>
       )}
 
       {/* 2. Thanh hiển thị phân trang bài tập */}
       {questionPages.length > 1 && (
-        <div className="ad-progress-bar">
-          <span className="ad-progress-text">
+        <div className="asd-progress-bar">
+          <span className="asd-progress-text">
             Page {currentPageIdx + 1} of {questionPages.length}
           </span>
-          <div className="ad-progress-dots">
+          <div className="asd-progress-dots">
             {questionPages.map((_, pIdx) => (
               <span
                 key={pIdx}
                 onClick={() => setCurrentPageIdx(pIdx)}
-                className={`ad-progress-dot ${currentPageIdx === pIdx ? "active" : ""}`}
+                className={`asd-progress-dot ${currentPageIdx === pIdx ? "active" : ""}`}
               />
             ))}
           </div>
@@ -138,9 +138,9 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
         const isFindMistakes = (exercise?.Type || "").toLowerCase() === "tìm lỗi sai";
 
         return (
-          <div key={pIdx} className={`ad-page-container ${isModal ? "ad-page-readonly" : ""}`}>
+          <div key={pIdx} className={`ad-page-container ${isModal ? "asd-page-readonly" : ""}`}>
             {isFindMistakes ? (
-              <div className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: "24px 28px", borderRadius: 12, marginBottom: 20 }}>
+              <div className="asd-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: "24px 28px", borderRadius: 12, marginBottom: 20 }}>
                 <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "15px", marginBottom: "20px" }}>
                   <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "18px", fontWeight: 700 }}>
                     Find and correct the mistake in the following sentences:
@@ -205,7 +205,7 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
               page.map((q) => {
                 const originalIdx = questionsList.indexOf(q);
                 return (
-                  <div key={originalIdx} className="ad-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
+                  <div key={originalIdx} className="asd-section" style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12, marginBottom: 20 }}>
                     <BoGiaoDienCauHoi
                       q={q}
                       qIdx={originalIdx}
@@ -256,18 +256,18 @@ export const KhungBaiTapThuong: React.FC<KhungBaiTapThuongProps> = ({
 
       {/* 4. Các nút điều chuyển trang */}
       {questionPages.length > 1 && (
-        <div className="ad-nav-buttons">
+        <div className="asd-nav-buttons">
           <button
             disabled={currentPageIdx === 0}
             onClick={() => setCurrentPageIdx(prev => prev - 1)}
-            className="ad-nav-btn ad-nav-btn-prev"
+            className="asd-nav-btn asd-nav-btn-prev"
           >
             ← Back
           </button>
           <button
             disabled={currentPageIdx === questionPages.length - 1}
             onClick={() => setCurrentPageIdx(prev => prev + 1)}
-            className="ad-nav-btn ad-nav-btn-next"
+            className="asd-nav-btn asd-nav-btn-next"
           >
             Next →
           </button>

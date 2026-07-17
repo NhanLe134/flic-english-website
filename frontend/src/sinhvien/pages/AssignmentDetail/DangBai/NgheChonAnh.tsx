@@ -38,29 +38,29 @@ export const NgheChonAnh: React.FC<NgheChonAnhProps> = ({
   const aud = q.audioUrl || exercise?.AudioUrl || "";
 
   return (
-    <div className="ad-listening-image-block">
+    <div className="asd-listening-image-block">
       {/* 1. Trinh phat am thanh (Audio Player) */}
       {aud && !hideAudio && (
-        <div className="ad-listening-image-audio-wrapper">
-          <CustomAudioPlayer src={`${API}${aud}`} className="ad-listening-image-audio" />
+        <div className="asd-listening-image-audio-wrapper">
+          <CustomAudioPlayer src={`${API}${aud}`} className="asd-listening-image-audio" />
         </div>
       )}
       
       {/* 2. Than noi dung (Body) chia làm 2 cot Trai - Phai */}
-      <div className="ad-listening-image-body">
+      <div className="asd-listening-image-body">
         {/* Cot ben trai: Hien thi anh minh hoa cau hoi */}
-        <div className="ad-listening-image-left">
+        <div className="asd-listening-image-left">
           {img && (
             <img
               src={`${API}${img}`}
               alt="Listening image visual"
-              className="ad-listening-image-img"
+              className="asd-listening-image-img"
             />
           )}
         </div>
         
         {/* Cot ben phai: Hien thi hop cau hoi trac nghiem lua chon (A, B, C, D) */}
-        <div className="ad-listening-image-right">
+        <div className="asd-listening-image-right">
           <CauHoiTracNghiem
             q={{
               question: q.question || "",

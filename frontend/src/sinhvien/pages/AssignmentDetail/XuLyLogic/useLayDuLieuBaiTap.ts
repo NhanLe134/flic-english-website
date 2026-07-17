@@ -202,10 +202,12 @@ export function useLayDuLieuBaiTap(
 
   // Metadata parsing
   const parsedContent = useMemo(() => {
+    console.log("useLayDuLieuBaiTap [parsedContent]: exercise Content length:", exercise?.Content?.length);
     if (!exercise?.Content) return {};
     try {
       if (exercise.Content.trim().startsWith("{")) {
         const parsed = JSON.parse(exercise.Content);
+        console.log("useLayDuLieuBaiTap [parsedContent]: JSON parsed successfully, sections count:", parsed.sections?.length);
         if (parsed.sections && Array.isArray(parsed.sections)) {
           parsed.sections = parsed.sections.map((sec: any) => ({
             ...sec,
@@ -215,7 +217,7 @@ export function useLayDuLieuBaiTap(
         return parsed;
       }
     } catch (e) {
-      console.error(e);
+      console.error("useLayDuLieuBaiTap [parsedContent]: JSON parse error:", e);
     }
     return {
       text: exercise.Content,
@@ -233,16 +235,25 @@ export function useLayDuLieuBaiTap(
 
   // Load prior submission data
   useEffect(() => {
-    if (!id) return;
-    if (!isPreview && maNguoiDung && maSinhVien === null) return;
+    console.log("useLayDuLieuBaiTap [fetchEffect]: triggered! id:", id, "maNguoiDung:", maNguoiDung, "maSinhVien:", maSinhVien, "isPreview:", isPreview, "maLopHoc:", maLopHoc);
+    if (!id) {
+      console.log("useLayDuLieuBaiTap [fetchEffect]: no id, skipped fetch");
+      return;
+    }
+    if (!isPreview && maNguoiDung && maSinhVien === null) {
+      console.log("useLayDuLieuBaiTap [fetchEffect]: !isPreview and maSinhVien is null, skipped fetch");
+      return;
+    }
 
+    console.log("useLayDuLieuBaiTap [fetchEffect]: starting fetch calls...");
     Promise.all([
       fetch(`${API}/baitap/${id}`).then(r => r.json()),
       maLopHoc ? fetch(`${API}/classes/${maLopHoc}/info`).then(r => r.json()) : Promise.resolve(null),
       !isPreview ? fetch(`${API}/bainop/baitap/${id}`).then(r => r.json()) : Promise.resolve([]),
     ])
       .then(([exData, lopData, nopData]) => {
-        setExercise({ ...exData, Type: mapDangBaiToType(exData.Type) });
+        console.log("useLayDuLieuBaiTap [fetchEffect]: fetch finished! Title:", exData?.Title || exData?.TenBai, "Type:", exData?.Type);
+        setExercise({ ...exData, Type: mapDangBaiToType(exData?.Type || exData?.DangBai) });
         setLopInfo(lopData);
         const queryParams = new URLSearchParams(location?.search || "");
         const urlSubmissionId = queryParams.get("submissionId");
@@ -365,7 +376,10 @@ export function useLayDuLieuBaiTap(
       .catch((err) => {
         console.error("Error loading exercise:", err);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        console.log("useLayDuLieuBaiTap [fetchEffect]: finally block. Setting loading to false");
+        setLoading(false);
+      });
   }, [id, maLopHoc, maSinhVien, maNguoiDung, isReview, isPreview, location]);
 
   // Initializing words and sentences shuffle

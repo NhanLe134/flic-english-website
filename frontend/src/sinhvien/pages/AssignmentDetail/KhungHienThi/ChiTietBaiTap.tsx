@@ -303,11 +303,11 @@ function ChiTietBaiTapContent({
   }
 
   return (
-    <div className="ad-content">
+    <div className="asd-content">
 
       {/* 1. Nút quay lại góc trái */}
       {showBackBtn && (
-        <button className="ad-back-overlay" onClick={handleBackNavigation} title="Quay lại">
+        <button className="asd-back-overlay" onClick={handleBackNavigation} title="Quay lại">
           <FaReply size={18} style={{ marginRight: "1px" }} />
         </button>
       )}
@@ -325,18 +325,18 @@ function ChiTietBaiTapContent({
 
       {/* 3. Banner thông tin Lớp học */}
       {lopInfo && (
-        <div className="ad-info-card">
-          <div className="ad-info-left">
-            <p className="ad-course-name">{lopInfo.TenLop}</p>
-            <p className="ad-course-code">{lopInfo.TenKhoaHoc}</p>
+        <div className="asd-info-card">
+          <div className="asd-info-left">
+            <p className="asd-course-name">{lopInfo.TenLop}</p>
+            <p className="asd-course-code">{lopInfo.TenKhoaHoc}</p>
           </div>
-          <span className="ad-badge-active">Active</span>
+          <span className="asd-badge-active">Active</span>
         </div>
       )}
 
       {/* EXAM COUNTDOWN / OVER / RUNNING HEADER */}
       {isExam && (
-        <div className="ad-banner ad-banner-exam">
+        <div className="asd-banner asd-banner-exam">
           <h3 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
             <FiClock /> Assessment Exam
           </h3>
@@ -370,11 +370,11 @@ function ChiTietBaiTapContent({
         </div>
       )}
 
-      <h2 className="ad-title">{exercise.Title}</h2>
+      <h2 className="asd-title">{exercise.Title}</h2>
 
       {/* 4. Banner Trạng thái Đã Nộp */}
       {submitted && baiNop && (
-        <div className="ad-banner ad-banner-submitted">
+        <div className="asd-banner asd-banner-submitted">
           <p className="status-title">You have submitted this assignment</p>
           {baiNop.Diem !== null && baiNop.Diem !== undefined ? (
             <p className="score-info">
@@ -393,12 +393,12 @@ function ChiTietBaiTapContent({
       {(isExam || hasSections) ? (
         <div>
           {!isPreview && timeToExamStart !== null ? (
-            <div className="ad-exam-waiting">
+            <div className="asd-exam-waiting">
               <h3>Waiting for the exam to start...</h3>
               <p>The exam interface will automatically display when the countdown reaches 0.</p>
             </div>
           ) : !isPreview && examEnded && !submitted ? (
-            <div className="ad-exam-waiting" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#dc2626" }}>
+            <div className="asd-exam-waiting" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#dc2626" }}>
               <h3>The exam time limit has expired!</h3>
               <p>Submissions are now closed.</p>
             </div>
@@ -493,7 +493,7 @@ function ChiTietBaiTapContent({
             orderedWords, shuffledSentences
           })}
           disabled={submitting || (isExam && !examStarted) || (isExam && examEnded)}
-          className="ad-submit-btn"
+          className="asd-submit-btn"
         >
           {submitting ? "SUBMITTING..." : "SUBMIT ASSIGNMENT"}
         </button>

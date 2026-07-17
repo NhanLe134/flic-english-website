@@ -1,19 +1,19 @@
 /* CSS cho giao dien NgheChonAnh */
-.ad-listening-image-block {
+.asd-listening-image-block {
   width: 100%;
 }
 
-.ad-listening-image-audio-wrapper {
+.asd-listening-image-audio-wrapper {
   margin-bottom: 20px;
 }
 
-.ad-listening-image-body {
+.asd-listening-image-body {
   display: flex;
   gap: 28px;
   align-items: flex-start;
 }
 
-.ad-listening-image-left {
+.asd-listening-image-left {
   /* The anh chiem min 50% max 60% cua the cha */
   min-width: 50%;
   max-width: 60%;
@@ -27,14 +27,14 @@
   min-height: 280px;
 }
 
-.ad-listening-image-img {
+.asd-listening-image-img {
   width: 100%;
   height: auto;
   max-height: 380px;
   object-fit: contain;
 }
 
-.ad-listening-image-right {
+.asd-listening-image-right {
   flex: 1;
   display: flex;
   flex-direction: column;
