@@ -1479,7 +1479,7 @@ D. Visiting friends
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", boxSizing: "border-box" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nghe (phút)</label>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nghe (p)</label>
                   <input
                     type="number"
                     value={Math.round((editingTest.kyNang.listening.thoiGian || 0) / 60)}
@@ -1499,7 +1499,7 @@ D. Visiting friends
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Đọc (phút)</label>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Đọc (p)</label>
                   <input
                     type="number"
                     value={Math.round((editingTest.kyNang.reading.thoiGian || 0) / 60)}
@@ -1519,7 +1519,7 @@ D. Visiting friends
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Viết (phút)</label>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Viết (p)</label>
                   <input
                     type="number"
                     value={Math.round((editingTest.kyNang.writing.thoiGian || 0) / 60)}
@@ -1539,7 +1539,7 @@ D. Visiting friends
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nói (phút)</label>
+                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#475569" }}>Thời gian Nói (p)</label>
                   <input
                     type="number"
                     value={Math.round((editingTest.kyNang.speaking.thoiGian || 0) / 60)}

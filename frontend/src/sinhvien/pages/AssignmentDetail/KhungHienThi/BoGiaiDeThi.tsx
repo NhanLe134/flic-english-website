@@ -161,6 +161,9 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
 
   const renderSectionQuestionBlock = (q: any, qIdx: number, sIdx: number, secType: string) => {
     const key = `${sIdx}_${qIdx}`;
+    const hasPrompt = q.prompt && q.prompt.trim() !== "" && q.prompt.trim() !== "<p><br></p>";
+
+    const renderQuestionBody = () => {
 
     if (secType === "Nối từ") {
       if (q.vocabPairs && q.vocabPairs.length > 0) {
@@ -428,7 +431,30 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
       );
     }
 
-    return null;
+      return null;
+    };
+
+    return (
+      <React.Fragment key={qIdx}>
+        {hasPrompt && (
+          <div 
+            className="flic-asgn-prompt-box" 
+            style={{ 
+              background: "#f8fafc", 
+              borderLeft: "4px solid #f95800", 
+              padding: "12px 16px", 
+              borderRadius: "6px", 
+              marginBottom: "16px",
+              fontSize: "14px",
+              color: "#334155",
+              lineHeight: 1.6
+            }} 
+            dangerouslySetInnerHTML={{ __html: q.prompt }} 
+          />
+        )}
+        {renderQuestionBody()}
+      </React.Fragment>
+    );
   };
 
   return (

@@ -106,6 +106,9 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
   showAnswers = false
 }) => {
   const questionType = exercise?.Type || "";
+  const hasPrompt = q.prompt && q.prompt.trim() !== "" && q.prompt.trim() !== "<p><br></p>";
+
+  const renderQuestionBody = () => {
 
   const getGlobalSubIdx = (parentIdx: number, subIdx: number) => {
     let count = 0;
@@ -406,15 +409,38 @@ export const BoGiaoDienCauHoi: React.FC<BoGiaoDienCauHoiProps> = ({
     );
   }
 
-  // Mặc định phản hồi tự luận nếu dạng bài chưa được khai báo
+    // Mặc định phản hồi tự luận nếu dạng bài chưa được khai báo
+    return (
+      <VietDoanVan
+        q={q}
+        qIdx={qIdx}
+        essayAnswers={essayAnswers}
+        setEssayAnswers={setEssayAnswers}
+        submitted={submitted}
+        isOverdue={isOverdue}
+      />
+    );
+  };
+
   return (
-    <VietDoanVan
-      q={q}
-      qIdx={qIdx}
-      essayAnswers={essayAnswers}
-      setEssayAnswers={setEssayAnswers}
-      submitted={submitted}
-      isOverdue={isOverdue}
-    />
+    <>
+      {hasPrompt && (
+        <div 
+          className="flic-asgn-prompt-box" 
+          style={{ 
+            background: "#f8fafc", 
+            borderLeft: "4px solid #f95800", 
+            padding: "12px 16px", 
+            borderRadius: "6px", 
+            marginBottom: "16px",
+            fontSize: "14px",
+            color: "#334155",
+            lineHeight: 1.6
+          }} 
+          dangerouslySetInnerHTML={{ __html: q.prompt }} 
+        />
+      )}
+      {renderQuestionBody()}
+    </>
   );
 };

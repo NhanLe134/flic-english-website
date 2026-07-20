@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAvatar } from "../../context/AvatarContext";
 import { useState, useEffect } from "react";
-import { FiBookOpen, FiUser, FiUsers, FiAward, FiLogOut, FiFileText } from "react-icons/fi";
+import { FiBookOpen, FiUsers, FiAward, FiLogOut, FiFileText } from "react-icons/fi";
 import "./SidebarGV.css";
 import { hasPermission } from "../../utils/permission";
 
@@ -10,7 +10,6 @@ const menuItems = [
   { label: "Quản lý đề thi thử",          path: "/quan-ly-de-thi",     icon: <FiFileText className="menu-icon" /> },
   { label: "Danh sách học viên",      path: "/danh-sach-hoc-vien",  icon: <FiUsers className="menu-icon" /> },
   { label: "Quản lý kết quả học tập", path: "/quan-ly-ket-qua",   icon: <FiAward className="menu-icon" /> },
-  { label: "Thông tin cá nhân",       path: "/thong-tin-ca-nhan",   icon: <FiUser className="menu-icon" /> },
   { label: "Đăng xuất",               path: "/",                  icon: <FiLogOut className="menu-icon" /> },
 ];
 
@@ -41,11 +40,7 @@ const getActiveMenu = (pathname: string) => {
     pathname.includes("/quan-ly-ban-nhap")
   ) return "/quan-ly-khoa-hoc";
 
-  if (
-    pathname.includes("/thong-tin-ca-nhan") ||
-    pathname.includes("/edit-personal-info") ||
-    pathname.includes("/personal-info-view")
-  ) return "/thong-tin-ca-nhan";
+
 
   if (
     pathname.includes("/danh-sach-hoc-vien") ||
@@ -128,15 +123,9 @@ const Sidebar = () => {
 
       <div
         className="teacher-profile"
-        onClick={() => {
-          const userStr = sessionStorage.getItem("user");
-          const user = userStr ? JSON.parse(userStr) : {};
-          navigate(`/teacher${user.MaNguoiDung || ""}/thong-tin-ca-nhan`);
-        }}
-        style={{ cursor: "pointer" }}
-        title="Xem thông tin cá nhân"
+        style={{ cursor: "default" }}
       >
-        <div className="avatar-wrapper sidebar-avatar-wrapper" style={{ cursor: "pointer" }}>
+        <div className="avatar-wrapper sidebar-avatar-wrapper" style={{ cursor: "default" }}>
           {avatar && !imgFailed
             ? <img src={avatar} alt="avatar" className="avatar-img" onError={() => setImgFailed(true)} />
             : <div className="avatar-placeholder">{initials}</div>
