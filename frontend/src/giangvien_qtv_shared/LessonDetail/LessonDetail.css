@@ -73,7 +73,7 @@
   overflow: hidden;
 }
 
-.html-content .detail-table th {
+.html-content th {
   background: #000080;
   color: white !important;
   padding: 10px 14px;
@@ -82,7 +82,7 @@
   font-weight: 600;
 }
 
-.html-content .detail-table th * {
+.html-content th * {
   color: white !important;
 }
 

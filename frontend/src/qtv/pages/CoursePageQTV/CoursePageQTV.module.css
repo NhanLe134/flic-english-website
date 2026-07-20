@@ -1158,17 +1158,25 @@
   margin: 0;
   margin-bottom: 16px;
 }
+.modal::-webkit-scrollbar,
+.modalXL::-webkit-scrollbar,
 .modalScrollableBody::-webkit-scrollbar {
   width: 6px;
 }
+.modal::-webkit-scrollbar-track,
+.modalXL::-webkit-scrollbar-track,
 .modalScrollableBody::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 4px;
 }
+.modal::-webkit-scrollbar-thumb,
+.modalXL::-webkit-scrollbar-thumb,
 .modalScrollableBody::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
 }
+.modal::-webkit-scrollbar-thumb:hover,
+.modalXL::-webkit-scrollbar-thumb:hover,
 .modalScrollableBody::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
@@ -1302,4 +1310,30 @@
 .roadmapTable tr:hover .removeAssetBtn {
   opacity: 1;
   visibility: visible;
+}
+
+.timeSelect {
+  padding: 6px 28px 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat;
+  background-position: right 10px center;
+  background-size: 11px;
+  cursor: pointer;
+  outline: none;
+  min-width: 90px;
+}
+
+.flicSelectArrow {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background: #ffffff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 13px !important;
+  cursor: pointer;
 }

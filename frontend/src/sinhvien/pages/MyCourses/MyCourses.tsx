@@ -128,10 +128,10 @@ function MyCourses() {
         : [];
       const exercisesList = Array.isArray(exercisesRes)
         ? exercisesRes.map((ex: any) => ({
-            ...ex,
-            MaExercise: ex.MaBaiTap,
-            MaLesson: ex.MaBuoiHoc
-          }))
+          ...ex,
+          MaExercise: ex.MaBaiTap,
+          MaLesson: ex.MaBuoiHoc
+        }))
         : [];
       const documentsList = Array.isArray(tailieuRes) ? tailieuRes : [];
 
@@ -199,15 +199,15 @@ function MyCourses() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ 
-          MaLopHoc: enrollClassId.trim(), 
-          MaSinhVien: enrollStudentId 
+        body: JSON.stringify({
+          MaLopHoc: enrollClassId.trim(),
+          MaSinhVien: enrollStudentId
         })
       });
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message || "Gửi yêu cầu ghi danh thành công! Vui lòng chờ Quản trị viên phê duyệt.");
+        alert(data.message || "Gửi yêu cầu ghi danh thành công!\n Vui lòng chờ Quản trị viên phê duyệt.");
         setShowEnrollModal(false);
       } else {
         alert(data.message || "Lỗi khi gửi yêu cầu ghi danh.");
@@ -334,7 +334,7 @@ function MyCourses() {
                         <h3 className="mc-card-name">{c.TenLop}</h3>
                         <span className="mc-card-code">{c.TenKhoaHoc}</span>
                       </div>
-                      
+
                       {/* Status badges */}
                       {c.TrangThai === 'Chờ duyệt' && (
                         <span className="mc-status-badge" style={{

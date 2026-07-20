@@ -126,7 +126,7 @@ const SidebarQTV = () => {
               }
             >
               <FiBook className="menu-icon" />
-              <span>Khóa học</span>
+              <span>Lớp học</span>
             </NavLink>
           </li>
         )}
