@@ -344,7 +344,7 @@ app.post("/login", async (req, res) => {
 app.get("/courses", async (req, res) => {
   try {
     const pool = await poolPromise;
-    const result = await pool.request().query(`SELECT MaKhoaHoc, TenKhoaHoc, MoTa, TrinhDo, TrangThai FROM KHOAHOC WHERE TrangThai = N'Hiển thị' ORDER BY NgayTao DESC`);
+    const result = await pool.request().query(`SELECT MaKhoaHoc, TenKhoaHoc, MoTa, TrinhDo, TrangThai, HinhAnh FROM KHOAHOC WHERE TrangThai = N'Hiển thị' ORDER BY NgayTao DESC`);
     res.json(result.recordset);
   } catch (err) { res.status(500).send(err.message); }
 });
@@ -361,7 +361,7 @@ app.get("/courses/:id/details", async (req, res) => {
 
 // Tạo khóa học mới
 app.post("/qtv/khoahoc", async (req, res) => {
-  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, Listening, Reading, Speaking, Writing } = req.body
+  const { TenKhoaHoc, MoTa, TrinhDo, MaNguoiDung, Listening, Reading, Speaking, Writing, HinhAnh } = req.body
   try {
     const pool = await poolPromise
     const result = await pool.request()
@@ -373,10 +373,11 @@ app.post("/qtv/khoahoc", async (req, res) => {
       .input("Speaking", Speaking !== undefined ? Number(Speaking) : 0)
       .input("Writing", Writing !== undefined ? Number(Writing) : 0)
       .input("MaNguoiDung", MaNguoiDung)
+      .input("HinhAnh", HinhAnh || null)
       .query(`
-        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao)
+        INSERT INTO KHOAHOC (TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing, TrangThai, MaNguoiDung, NgayTao, HinhAnh)
         OUTPUT INSERTED.MaKhoaHoc
-        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @Listening, @Reading, @Speaking, @Writing, N'Ẩn', @MaNguoiDung, GETDATE())
+        VALUES (@TenKhoaHoc, @MoTa, @TrinhDo, @Listening, @Reading, @Speaking, @Writing, N'Ẩn', @MaNguoiDung, GETDATE(), @HinhAnh)
       `)
     const newId = result.recordset[0].MaKhoaHoc
     res.json({
@@ -2411,6 +2412,7 @@ app.get("/admin/khoahoc", async (req, res) => {
         kh.TrangThai,
         kh.NgayTao,
         kh.NgayDuyet,
+        kh.HinhAnh,
         (
           SELECT TOP 1 nd.HoTen
           FROM KHOAHOCCHITIET khct
@@ -2984,7 +2986,7 @@ app.get("/lophoc/:id/students/count", async (req, res) => {
 // ── Sửa khóa học ──
 app.put("/admin/khoahoc/:id", async (req, res) => {
   try {
-    const { TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing } = req.body
+    const { TenKhoaHoc, MoTa, TrinhDo, Listening, Reading, Speaking, Writing, HinhAnh } = req.body
     const pool = await poolPromise
     
     // Check if course has classes
@@ -3031,13 +3033,15 @@ app.put("/admin/khoahoc/:id", async (req, res) => {
       .input("Reading", Reading !== undefined ? Number(Reading) : null)
       .input("Speaking", Speaking !== undefined ? Number(Speaking) : null)
       .input("Writing", Writing !== undefined ? Number(Writing) : null)
+      .input("HinhAnh", HinhAnh || null)
       .query(`
         UPDATE KHOAHOC 
         SET TenKhoaHoc=@TenKhoaHoc, MoTa=@MoTa, TrinhDo=@TrinhDo, 
             Listening=COALESCE(@Listening, Listening),
             Reading=COALESCE(@Reading, Reading),
             Speaking=COALESCE(@Speaking, Speaking),
-            Writing=COALESCE(@Writing, Writing)
+            Writing=COALESCE(@Writing, Writing),
+            HinhAnh=@HinhAnh
         WHERE MaKhoaHoc=@id
       `)
     res.json({ message: "Đã cập nhật" })
@@ -3707,7 +3711,7 @@ app.get("/courses/public", async (req, res) => {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        k.MaKhoaHoc, k.TenKhoaHoc, k.MoTa, k.TrinhDo,
+        k.MaKhoaHoc, k.TenKhoaHoc, k.MoTa, k.TrinhDo, k.HinhAnh,
         (
           SELECT TOP 1 nd.HoTen
           FROM KHOAHOCCHITIET khct

@@ -4,6 +4,20 @@ import { formatScheduleOnlyDays } from '../../../utils/schedule'
 import styles from './CoursePageQTV.module.css'
 import { FiSearch, FiChevronDown, FiChevronRight, FiPackage, FiUsers, FiX, FiPlus } from 'react-icons/fi'
 import { useNavigate, useLocation } from 'react-router-dom'
+import {
+  MDXEditor,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  markdownShortcutPlugin,
+  tablePlugin,
+  toolbarPlugin,
+  BoldItalicUnderlineToggles,
+  ListsToggle,
+  BlockTypeSelect,
+} from "@mdxeditor/editor"
+import "@mdxeditor/editor/style.css"
 
 const API =
   window.location.hostname === "localhost" ||
@@ -1192,7 +1206,7 @@ export default function CoursePageQTV() {
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <h1>Quản lý toàn bộ khóa học</h1>
+        <h1>Quản lý lớp học</h1>
         <p>Thêm mới, sửa, xóa lớp học · Phân công giáo viên · Ghi danh sinh viên · Lộ trình học</p>
       </div>
 
@@ -1457,8 +1471,31 @@ export default function CoursePageQTV() {
               ) : null}
             </div>
             <div className={styles.formGroup}>
-              <label>Mô tả</label>
-              <textarea value={cForm.desc} onChange={e => setCForm(p => ({...p, desc: e.target.value}))} placeholder="Mô tả ngắn về nội dung khóa học..." rows={3} />
+              <label>Mô tả chi tiết</label>
+              <div style={{ border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
+                <MDXEditor
+                  key={editCourse ? editCourse.id : 'new'}
+                  markdown={cForm.desc || ''}
+                  onChange={val => setCForm(p => ({...p, desc: val}))}
+                  plugins={[
+                    headingsPlugin(),
+                    listsPlugin(),
+                    quotePlugin(),
+                    thematicBreakPlugin(),
+                    tablePlugin(),
+                    markdownShortcutPlugin(),
+                    toolbarPlugin({
+                      toolbarContents: () => (
+                        <>
+                          <BlockTypeSelect />
+                          <BoldItalicUnderlineToggles />
+                          <ListsToggle />
+                        </>
+                      )
+                    })
+                  ]}
+                />
+              </div>
             </div>
 
             {/* Phân công GV */}

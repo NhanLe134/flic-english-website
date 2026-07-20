@@ -88,6 +88,7 @@ export default function BaoCaoKetQua() {
   const [filterCourse, setFilterCourse] = useState('Tất cả khóa học')
   const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
+  const [courses, setCourses] = useState<any[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [teachers, setTeachers] = useState<string[]>([])
   const [loadingTeachers, setLoadingTeachers] = useState(false)
@@ -111,11 +112,10 @@ export default function BaoCaoKetQua() {
     }
     setLoadingTeachers(true)
     fetch(`${API}/qtv/lophoc/${currentClassId}/giangvien`)
-      .then(r => r.json())
+      .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const names = Array.from(new Set(data.map((item: any) => item.TenGiangVien)))
-          setTeachers(names as string[])
+          setTeachers(data.map(t => t.HoTen))
         } else {
           setTeachers([])
         }
@@ -134,12 +134,14 @@ export default function BaoCaoKetQua() {
       fetch(`${API}/baocao/baitap-headers`).then(r => r.json()),
       fetch(`${API}/baocao/buoihoc`).then(r => r.json()),
       fetch(`${API}/baocao/giangvien-all`).then(r => r.json()).catch(() => []),
+      fetch(`${API}/admin/khoahoc`).then(r => r.json()).catch(() => []),
     ])
-      .then(([svData, headers, lessonsData, gvData]) => {
+      .then(([svData, headers, lessonsData, gvData, coursesData]) => {
         setClassLecturers(Array.isArray(gvData) ? gvData : [])
         const headerList: ExerciseHeader[] = Array.isArray(headers) ? headers : []
         setRawHeaders(headerList)
         setAllLessons(Array.isArray(lessonsData) ? lessonsData : [])
+        setCourses(Array.isArray(coursesData) ? coursesData : [])
 
         const mapped: StudentResult[] = (Array.isArray(svData) ? svData : []).map((sv: any) => {
           const rawScores: Record<number, number | null> = {}
@@ -269,8 +271,10 @@ export default function BaoCaoKetQua() {
   }
 
   const courseOptions = useMemo(() => {
-    return ["Tất cả khóa học", ...Array.from(new Set(allData.map(h => h.courseName).filter(x => x && x !== '—')))]
-  }, [allData])
+    const fromCourses = courses.map(c => c.TenKhoaHoc);
+    const fromData = allData.map(h => h.courseName);
+    return ["Tất cả khóa học", ...Array.from(new Set([...fromCourses, ...fromData])).filter(Boolean)];
+  }, [courses, allData])
 
   const classOptions = useMemo(() => {
     const classIdMap: Record<string, number> = {}

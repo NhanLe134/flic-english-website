@@ -67,6 +67,7 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   const [filterTT, setFilterTT]     = useState("Tất cả trạng thái")
   const [rawHeaders, setRawHeaders] = useState<ExerciseHeader[]>([])
   const [allLessons, setAllLessons] = useState<LessonInfo[]>([])
+  const [courses, setCourses]       = useState<any[]>([])
 
   useEffect(() => {
     if (id && allLessons.length > 0) {
@@ -111,16 +112,18 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
   useEffect(() => {
     setLoading(true)
 
-    // Lấy danh sách sinh viên + bài tập + lessons
+    // Lấy danh sách sinh viên + bài tập + lessons + tất cả khóa học
     Promise.all([
       fetch(`${API}/baocao/hocvien`).then(r => r.json()),
       fetch(`${API}/baocao/baitap-headers`).then(r => r.json()),
       fetch(`${API}/baocao/buoihoc`).then(r => r.json()),
+      fetch(`${API}/admin/khoahoc`).then(r => r.json()).catch(() => []),
     ])
-      .then(([svData, headers, lessonsData]) => {
+      .then(([svData, headers, lessonsData, coursesData]) => {
         const headerList: ExerciseHeader[] = Array.isArray(headers) ? headers : []
         setRawHeaders(headerList)
         setAllLessons(Array.isArray(lessonsData) ? lessonsData : [])
+        setCourses(Array.isArray(coursesData) ? coursesData : [])
         
         const mapped: HocVien[] = (Array.isArray(svData) ? svData : []).map((sv: any) => {
           const rawScores: Record<number, number | string | null> = {}
@@ -213,7 +216,11 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     return groups
   }, [activeHeaders])
 
-  const khoaList = ["Tất cả khóa học", ...Array.from(new Set(data.map(h => h.tenKhoa)))]
+  const khoaList = useMemo(() => {
+    const fromCourses = courses.map(c => c.TenKhoaHoc);
+    const fromData = data.map(h => h.tenKhoa);
+    return ["Tất cả khóa học", ...Array.from(new Set([...fromCourses, ...fromData])).filter(Boolean)];
+  }, [courses, data]);
   const lopList = useMemo(() => {
     const classIdMap: Record<string, number> = {}
     allLessons.forEach((l: any) => {

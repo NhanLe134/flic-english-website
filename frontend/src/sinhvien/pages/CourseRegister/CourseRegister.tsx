@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import "../../../home_pages/DSKhoaHoc/DSKhoaHoc.css";
 
 const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
@@ -51,11 +52,16 @@ export default function CourseRegister() {
             {courses.map((course) => (
               <div className="course-item-container" key={course.MaKhoaHoc}>
                 <div className="course-item">
-                  <img src={getCourseImage(course.TenKhoaHoc)} alt={course.TenKhoaHoc} />
+                  <div className="course-img-wrapper">
+                    <img src={course.HinhAnh ? `${API}${course.HinhAnh}` : getCourseImage(course.TenKhoaHoc)} alt={course.TenKhoaHoc} />
+                    {course.TrinhDo && <span className="course-level-badge">{course.TrinhDo}</span>}
+                  </div>
 
                   <div className="course-content">
                     <h2>{course.TenKhoaHoc}</h2>
-                    <p>{course.MoTa || "Chưa có mô tả chi tiết cho khóa học này."}</p>
+                    <div className="course-desc-markdown">
+                      <ReactMarkdown>{course.MoTa || "Chưa có mô tả chi tiết cho khóa học này."}</ReactMarkdown>
+                    </div>
 
                     <div className="course-buttons">
                       <button onClick={() => window.open("https://flic.due.udn.vn/ngoai_ngu/", "_blank")}>

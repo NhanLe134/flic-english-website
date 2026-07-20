@@ -574,7 +574,6 @@ const StudentListQTV: React.FC = () => {
       )}
 
       {/* MAIN LAYOUT */}
-      <div>
         <div className="slqtv-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
           <div className="slqtv-header-text">
             <h1>Danh Sách Học Viên</h1>
@@ -650,7 +649,7 @@ const StudentListQTV: React.FC = () => {
           })()}
         </div>
 
-        <div style={{ padding: "0 32px 32px 32px" }}>
+        <div>
           {/* Search bar & Filters */}
           <div className="slqtv-filters-row-new">
             <div className="slqtv-search-wrapper-new">
@@ -791,7 +790,6 @@ const StudentListQTV: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
 
       {/* ════ MODAL: DANH SÁCH GHI DANH ĐĂNG KÝ LỚP ════ */}
       {showRegModal && !showAssignClassModal && (

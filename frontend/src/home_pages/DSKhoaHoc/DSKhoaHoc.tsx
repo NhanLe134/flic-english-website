@@ -4,6 +4,7 @@ import "./DSKhoaHoc.css";
 import "./DSKhoaHoc_TuongThich.css"; // Import file css tuong thich rieng
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
@@ -56,14 +57,19 @@ const DSKhoaHoc = () => {
                 return (
                   <div className="course-item-container" key={course.MaKhoaHoc}>
                     <div className="course-item">
-                      <img 
-                        src={`${import.meta.env.BASE_URL}${imgPath.substring(1)}`} 
-                        alt={course.TenKhoaHoc} 
-                      />
+                      <div className="course-img-wrapper">
+                        <img 
+                          src={course.HinhAnh ? `${API}${course.HinhAnh}` : `${import.meta.env.BASE_URL}${imgPath.substring(1)}`} 
+                          alt={course.TenKhoaHoc} 
+                        />
+                        {course.TrinhDo && <span className="course-level-badge">{course.TrinhDo}</span>}
+                      </div>
 
                       <div className="course-content">
                         <h2>{course.TenKhoaHoc}</h2>
-                        <p>{course.MoTa || "Khóa học chất lượng cao tại FLIC Language Center."}</p>
+                        <div className="course-desc-markdown">
+                          <ReactMarkdown>{course.MoTa || "Khóa học chất lượng cao tại FLIC Language Center."}</ReactMarkdown>
+                        </div>
 
                         <div className="course-buttons">
                           <button onClick={() => navigate(`/coursehome/${course.MaKhoaHoc}`)}>

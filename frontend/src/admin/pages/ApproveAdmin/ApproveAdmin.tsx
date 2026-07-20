@@ -2,6 +2,20 @@ import "./ApproveAdmin.css";
 import React, { useState, useEffect, useRef } from "react";
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiUsers } from "react-icons/fi";
 import { formatScheduleOnlyDays } from "../../../utils/schedule";
+import {
+  MDXEditor,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  markdownShortcutPlugin,
+  tablePlugin,
+  toolbarPlugin,
+  BoldItalicUnderlineToggles,
+  ListsToggle,
+  BlockTypeSelect,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
 
 const API =
   window.location.hostname === "localhost" ||
@@ -213,6 +227,7 @@ interface Course {
   Reading: boolean;
   Speaking: boolean;
   Writing: boolean;
+  HinhAnh?: string;
 }
 
 interface LopHoc {
@@ -255,10 +270,10 @@ export default function ApproveAdmin() {
   // Modal Thêm/Sửa khóa học
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [editCourse, setEditCourse] = useState<Course | null>(null);
-  const [cForm, setCForm] = useState({ title: '', desc: '', level: 'TOEIC', category: 'Luyện thi' });
+  const [cForm, setCForm] = useState({ title: '', desc: '', level: 'TOEIC', category: 'Luyện thi', image: '' });
   const [formLevels, setFormLevels] = useState<string[]>([]);
   const [formNewLevelInput, setFormNewLevelInput] = useState("");
-  const [courseFormErrors, setCourseFormErrors] = useState({ title: '', levels: '', levelInput: '', skills: '' });
+  const [courseFormErrors, setCourseFormErrors] = useState({ title: '', levels: '', levelInput: '', skills: '', image: '' });
 
   // Bản đồ lưu danh sách trình độ theo MaKhoaHoc
   const [courseDetailsMap, setCourseDetailsMap] = useState<Record<number, Array<{ MaLop: number; TenLop: string }>>>({});
@@ -345,7 +360,8 @@ export default function ApproveAdmin() {
           Listening: !!c.Listening,
           Reading: !!c.Reading,
           Speaking: !!c.Speaking,
-          Writing: !!c.Writing
+          Writing: !!c.Writing,
+          HinhAnh: c.HinhAnh || ''
         })));
       })
       .catch(() => setToast('Lỗi tải danh sách khóa học'))
@@ -444,18 +460,18 @@ export default function ApproveAdmin() {
 
   // ── Thao tác Form Thêm/Sửa khóa học ──
   const openAddCourse = () => {
-    setCForm({ title: '', desc: '', level: '', category: 'Luyện thi' });
+    setCForm({ title: '', desc: '', level: '', category: 'Luyện thi', image: '' });
     setEditCourse(null);
     setFormLevels([]);
     setFormNewLevelInput("");
     setCourseSkills([]);
-    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '' });
+    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '', image: '' });
     setShowCourseModal(true);
   };
 
   const openEditCourse = (c: Course) => {
     const list = c.level ? c.level.split(',').map(s => s.trim()).filter(Boolean) : [];
-    setCForm({ title: c.title, desc: c.desc, level: '', category: c.category });
+    setCForm({ title: c.title, desc: c.desc, level: '', category: c.category, image: c.HinhAnh || '' });
     setEditCourse(c);
     setFormLevels(list);
     setFormNewLevelInput("");
@@ -465,14 +481,38 @@ export default function ApproveAdmin() {
     if (c.Speaking) skillsList.push('Speaking');
     if (c.Writing) skillsList.push('Writing');
     setCourseSkills(skillsList);
-    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '' });
+    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '', image: '' });
     setShowCourseModal(true);
   };
 
 
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch(`${API}/upload`, {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.url) {
+          setCForm((prev) => ({ ...prev, image: data.url }));
+          setCourseFormErrors((prev) => ({ ...prev, image: "" }));
+        }
+      })
+      .catch((err) => {
+        console.error("Lỗi upload ảnh:", err);
+        setToast("Lỗi tải ảnh lên hệ thống!");
+      });
+  };
+
   const saveCourse = async () => {
-    const errors = { title: '', levels: '', levelInput: '', skills: '' };
+    const errors = { title: '', levels: '', levelInput: '', skills: '', image: '' };
     if (!cForm.title.trim()) {
       errors.title = 'Vui lòng nhập tên khóa học!';
     }
@@ -482,11 +522,14 @@ export default function ApproveAdmin() {
     if (courseSkills.length === 0) {
       errors.skills = 'Vui lòng chọn ít nhất một kỹ năng!';
     }
-    if (errors.title || errors.levels || errors.skills) {
+    if (!cForm.image) {
+      errors.image = 'Vui lòng tải lên ảnh khóa học!';
+    }
+    if (errors.title || errors.levels || errors.skills || errors.image) {
       setCourseFormErrors(errors);
       return;
     }
-    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '' });
+    setCourseFormErrors({ title: '', levels: '', levelInput: '', skills: '', image: '' });
 
     const finalLevel = formLevels.join(', ');
     const listeningVal = courseSkills.includes('Listening') ? 1 : 0;
@@ -509,7 +552,8 @@ export default function ApproveAdmin() {
             Listening: listeningVal,
             Reading: readingVal,
             Speaking: speakingVal,
-            Writing: writingVal
+            Writing: writingVal,
+            HinhAnh: cForm.image
           })
         });
         setToast('Đã cập nhật thông tin khóa học!');
@@ -526,7 +570,8 @@ export default function ApproveAdmin() {
             Listening: listeningVal,
             Reading: readingVal,
             Speaking: speakingVal,
-            Writing: writingVal
+            Writing: writingVal,
+            HinhAnh: cForm.image
           })
         });
         const data = await res.json();
@@ -1303,15 +1348,71 @@ export default function ApproveAdmin() {
               </div>
 
               <div className="form-field-group">
-                <label>Mô tả chi tiết</label>
-                <textarea
-                  ref={textareaRef}
-                  value={cForm.desc}
-                  onChange={e => setCForm(p => ({ ...p, desc: e.target.value }))}
-                  placeholder="Nội dung chính và mô tả khóa học..."
-                  rows={3}
-                  style={{ overflowY: 'hidden', resize: 'none' }}
+                <label>Ảnh khóa học <span className="required-star">*</span></label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: "none" }}
+                  id="course-image-upload-input"
                 />
+                <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "4px" }}>
+                  <label
+                    htmlFor="course-image-upload-input"
+                    className="course-image-upload-btn"
+                  >
+                    Tải ảnh lên...
+                  </label>
+                  {cForm.image ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <img
+                        src={`${API}${cForm.image}`}
+                        alt="Preview"
+                        style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "4px", border: "1px solid #ddd" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setCForm((p) => ({ ...p, image: "" }))}
+                        style={{ border: "none", background: "none", cursor: "pointer", fontSize: "16px", color: "#dc2626" }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: "13px", color: "#888" }}>Chưa chọn ảnh nào</span>
+                  )}
+                </div>
+                {courseFormErrors.image && (
+                  <span className="form-field-error-text mt-4">{courseFormErrors.image}</span>
+                )}
+              </div>
+
+              <div className="form-field-group">
+                <label>Mô tả chi tiết</label>
+                <div style={{ border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
+                  <MDXEditor
+                    key={editCourse ? editCourse.id : 'new'}
+                    markdown={cForm.desc || ''}
+                    onChange={val => setCForm(p => ({ ...p, desc: val }))}
+                    plugins={[
+                      headingsPlugin(),
+                      listsPlugin(),
+                      quotePlugin(),
+                      thematicBreakPlugin(),
+                      tablePlugin(),
+                      markdownShortcutPlugin(),
+                      toolbarPlugin({
+                        toolbarContents: () => (
+                          <>
+                            <BlockTypeSelect />
+                            <BoldItalicUnderlineToggles />
+                            <ListsToggle />
+                          </>
+                        )
+                      })
+                    ]}
+                  />
+                </div>
               </div>
 
             </div>
