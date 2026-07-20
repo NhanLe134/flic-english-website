@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FiClock } from "react-icons/fi";
 import "./TestThuSV.css";
 
@@ -55,16 +55,13 @@ export default function TestThuSV() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isLoggedIn = !!sessionStorage.getItem("user");
-  const homePath = isLoggedIn ? "/profile" : "/";
-
   useEffect(() => {
     if ((location.state as any)?.submitted) setSubmitted(true);
     
     const API =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1" ||
-      window.location.hostname.startsWith("192.168.") ||
+      window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") ||
       window.location.hostname.startsWith("10.")
         ? `http://${window.location.hostname}:5004`
         : "http://14.225.192.252:5004";
@@ -154,9 +151,8 @@ export default function TestThuSV() {
 
   return (
     <div className="test-thu-container">
-      {/* Breadcrumb */}
       <nav className="courses-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', marginTop: '0px', marginBottom: '24px', fontFamily: 'Inter, sans-serif' }}>
-        <Link to={homePath} style={{ color: '#777777', textDecoration: 'none', fontWeight: 500 }}>Trang chủ</Link>
+        <span style={{ color: '#777777', fontWeight: 500 }}>Trang chủ</span>
         <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>
         <span style={{ color: '#777777', fontWeight: 500 }}>Học & thi thử</span>
         <span style={{ color: '#bbbbbb', fontSize: '14px', userSelect: 'none' }}>›</span>

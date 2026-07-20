@@ -19,7 +19,7 @@ import {
   FiX
 } from "react-icons/fi";
 
-const API = window.location.hostname === "localhost" ? "http://localhost:5004" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
+const API = window.location.hostname === "localhost" ? "http://localhost:5004" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface CauHoi {
   id: number;
@@ -564,7 +564,7 @@ const QuanLyDeThiThu = () => {
   const getMediaUrl = (url?: string) => {
     if (!url) return "";
     if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
-    return `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${url}`;
+    return `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${url}`;
   };
 
   // Modals & Active objects

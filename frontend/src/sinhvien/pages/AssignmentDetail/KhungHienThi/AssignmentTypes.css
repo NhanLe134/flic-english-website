@@ -358,7 +358,7 @@
 }
 
 /* MCQ Box within split reading panel overrides (remove borders & simplify hierarchy) */
-.flic-asgn-reading-questions-panel .ad-mcq-question-box {
+.flic-asgn-reading-questions-panel .asd-mcq-question-box {
   border: none !important;
   box-shadow: none !important;
   padding: 16px 0 !important;
@@ -367,12 +367,12 @@
   background: transparent !important;
 }
 
-.flic-asgn-reading-questions-panel .ad-mcq-question-box:last-child {
+.flic-asgn-reading-questions-panel .asd-mcq-question-box:last-child {
   border-bottom: none !important;
   margin-bottom: 0 !important;
 }
 
-.flic-asgn-reading-questions-panel .ad-mcq-option {
+.flic-asgn-reading-questions-panel .asd-mcq-option {
   border: 1px solid #e2e8f0 !important;
   background: #ffffff !important;
   border-radius: 8px !important;
@@ -380,12 +380,12 @@
   font-size: 14px !important;
 }
 
-.flic-asgn-reading-questions-panel .ad-mcq-option:hover {
+.flic-asgn-reading-questions-panel .asd-mcq-option:hover {
   background: #f8fafc !important;
   border-color: #cbd5e1 !important;
 }
 
-.flic-asgn-reading-questions-panel .ad-mcq-option.chosen {
+.flic-asgn-reading-questions-panel .asd-mcq-option.chosen {
   background: #fff8f5 !important;
   border-color: #F95800 !important;
 }

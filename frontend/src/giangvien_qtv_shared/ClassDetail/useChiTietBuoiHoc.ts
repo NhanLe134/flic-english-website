@@ -23,7 +23,7 @@ export const useChiTietBuoiHoc = (id: string | undefined) => {
   const [filterType, setFilterType] = useState<"all" | "homework" | "exam" | "practice">("all");
   const [exercises, setExercises] = useState<any[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | number | null>(null);
 
   // Tải thông tin chi tiết buổi học
   const taiThongTinBuoiHoc = () => {
@@ -94,8 +94,9 @@ export const useChiTietBuoiHoc = (id: string | undefined) => {
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
+        const cleanId = String(selectedId).replace("exam-", "").replace("baitap-", "");
         setExercises((prev: any[]) =>
-          prev.filter((e: any) => Number(e.MaBaiTap) !== Number(selectedId))
+          prev.filter((e: any) => String(e.MaBaiTap) !== cleanId)
         );
       } else {
         alert("Xóa thất bại: " + body);

@@ -14,7 +14,7 @@ import {
   FaLock
 } from "react-icons/fa";
 
-const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface ClassInfo {
   MaLopHoc: number;
@@ -337,7 +337,7 @@ export default function ClassDetailTrial() {
     <div className="cd-container" style={{ padding: "30px 40px 60px 40px" }}>
       {/* Breadcrumb */}
       <nav className="courses-breadcrumb" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", marginTop: "0px", marginBottom: "24px" }}>
-        <Link to={isLoggedIn ? "/profile" : "/"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Trang chủ</Link>
+        <span style={{ color: "#777777", fontWeight: 500 }}>Trang chủ</span>
         <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>
         <Link to={isStudentRoute ? "/hoc-thu-sv" : "/hoc-thu"} style={{ color: "#777777", textDecoration: "none", fontWeight: 500 }}>Học & thi thử</Link>
         <span style={{ color: "#bbbbbb", fontSize: "14px", userSelect: "none" }}>›</span>

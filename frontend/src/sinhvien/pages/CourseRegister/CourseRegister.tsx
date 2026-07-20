@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "../../../home_pages/DSKhoaHoc/DSKhoaHoc.css";
 
-const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 const getCourseImage = (name: string) => {
   const lower = name.toLowerCase();
@@ -35,7 +35,7 @@ export default function CourseRegister() {
 
         {/* Breadcrumb ẩn văn bản giữ khoảng trống */}
         <nav className="courses-breadcrumb" style={{ visibility: 'hidden' }}>
-          <Link to="/profile">Trang chủ</Link>
+          <Link to="/profile-info">Trang chủ</Link>
           <span className="sep">›</span>
           <span className="active">Các khóa học FLIC</span>
         </nav>

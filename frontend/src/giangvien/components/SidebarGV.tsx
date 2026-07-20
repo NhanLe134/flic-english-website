@@ -76,6 +76,11 @@ const Sidebar = () => {
 
   const [teacherInfo, setTeacherInfo] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // ← thêm
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [avatar]);
 
   const allowedMenuItems = menuItems.filter(item => {
     if (item.path === "/quan-ly-khoa-hoc") {
@@ -97,7 +102,7 @@ const Sidebar = () => {
     const userStr = sessionStorage.getItem("user");
     if (!userStr) return;
     const user = JSON.parse(userStr);
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${user.MaNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${user.MaNguoiDung}`)
       .then(res => res.json())
       .then(data => setTeacherInfo(data))
       .catch(err => console.log(err));
@@ -132,8 +137,8 @@ const Sidebar = () => {
         title="Xem thông tin cá nhân"
       >
         <div className="avatar-wrapper sidebar-avatar-wrapper" style={{ cursor: "pointer" }}>
-          {avatar
-            ? <img src={avatar} alt="avatar" className="avatar-img" />
+          {avatar && !imgFailed
+            ? <img src={avatar} alt="avatar" className="avatar-img" onError={() => setImgFailed(true)} />
             : <div className="avatar-placeholder">{initials}</div>
           }
         </div>

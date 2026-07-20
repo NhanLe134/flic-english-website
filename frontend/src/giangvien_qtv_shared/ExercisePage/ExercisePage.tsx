@@ -11,7 +11,7 @@ const ExercisePage = () => {
 
   const [search, setSearch] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [exercises, setExercises] = useState<any[]>([]);
   const [lesson, setLesson] = useState<any>(null);
   const [soHocVien, setSoHocVien] = useState(0);
@@ -24,7 +24,7 @@ const ExercisePage = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`)
       .then(res => res.json())
       .then(async (buoiHocData) => {
         const lessonObj = Array.isArray(buoiHocData) ? buoiHocData[0] : buoiHocData;
@@ -32,12 +32,12 @@ const ExercisePage = () => {
         const maLopHoc = lessonObj.MaLopHoc;
 
         // Lấy số học viên thực tế từ SINHVIEN_LOPHOC
-        const countRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/lophoc/${maLopHoc}/students/count`);
+        const countRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/lophoc/${maLopHoc}/students/count`);
         const countData = await countRes.json();
         setSoHocVien(countData.SoLuongHocVien || 0);
 
         // Lấy thông tin lớp (LichHoc và TrangThaiLopHoc)
-        const lopRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/classes/${maLopHoc}/info`);
+        const lopRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/classes/${maLopHoc}/info`);
         const lopData = await lopRes.json();
         setLichHoc(formatScheduleOnlyDays(lopData.LichHoc) || "—");
         setTrangThaiLopHoc(lopData.TrangThaiLopHoc || "Đang học");
@@ -46,7 +46,7 @@ const ExercisePage = () => {
         const userStr = sessionStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
-          const gvRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${user.MaNguoiDung}`);
+          const gvRes = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${user.MaNguoiDung}`);
           const gvData = await gvRes.json();
           setGiangVien(gvData.HoTen || "—");
         }
@@ -57,7 +57,7 @@ const ExercisePage = () => {
   /* ===== LOAD BAITAPS ===== */
   useEffect(() => {
     if (!id) return;
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/buoihoc/${id}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/buoihoc/${id}`)
       .then(res => res.json())
       .then(data => setExercises(data))
       .catch(err => console.log(err));
@@ -66,7 +66,7 @@ const ExercisePage = () => {
   /* ===== TOGGLE OPEN/CLOSE EXAM ===== */
   const handleToggleOpen = async (maBaiTap: number) => {
     try {
-      const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/baitap/toggle-open", {
+      const res = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/baitap/toggle-open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ MaBaiTap: maBaiTap })
@@ -101,12 +101,13 @@ const ExercisePage = () => {
   const handleDelete = async () => {
     if (selectedId === null) return;
     try {
-      const url = `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${selectedId}`;
+      const url = `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${selectedId}`;
       const res = await fetch(url, { method: "DELETE" });
       const body = await res.text();
       if (res.ok) {
+        const cleanId = String(selectedId).replace("exam-", "").replace("baitap-", "");
         setExercises((prev: any[]) =>
-          prev.filter((e: any) => Number(e.MaBaiTap) !== Number(selectedId))
+          prev.filter((e: any) => String(e.MaBaiTap) !== cleanId)
         );
       } else {
         alert("Xóa thất bại: " + body);
@@ -403,7 +404,12 @@ const ExercisePage = () => {
                 </button>
                 <button
                   onClick={() => {
-                    setSelectedId(Number(ex.MaBaiTap));
+                    let parsedContent: any = {};
+                    try {
+                      if (ex.Content) parsedContent = JSON.parse(ex.Content);
+                    } catch (e) {}
+                    const isExam = ex.Type === "exam" || ex.IsExam === 1 || parsedContent.isExam || ex.Title?.toLowerCase().includes("test") || ex.Title?.toLowerCase().includes("kiểm tra");
+                    setSelectedId(isExam ? "exam-" + ex.MaBaiTap : "baitap-" + ex.MaBaiTap);
                     setShowDeleteModal(true);
                   }}
                   style={{

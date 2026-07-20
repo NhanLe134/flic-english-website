@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams, useLocation } from "react-rout
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 
-const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004");
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004");
 
 interface Question {
   question?: string;
@@ -613,8 +613,19 @@ const TaoBaiTap = () => {
             setDeadline(data.Deadline.split(".")[0]);
           }
           setShowAnswer(data.ShowAnswer === 1);
-          if (data.MaBaiHoc) {
+          let isUnlinked = false;
+          if (data.Content || data.NoiDung) {
+            try {
+              const parsed = JSON.parse(data.Content || data.NoiDung);
+              if (parsed.unlinked) {
+                isUnlinked = true;
+              }
+            } catch (e) {}
+          }
+          if (data.MaBaiHoc && !isUnlinked) {
             setSelectedMaBaiHoc(Number(data.MaBaiHoc));
+          } else {
+            setSelectedMaBaiHoc("");
           }
           if (data.MaBuoiHoc) {
             const buoiHocId = Number(data.MaBuoiHoc);
@@ -2060,6 +2071,7 @@ const TaoBaiTap = () => {
           deadline: deadline || null,
           openingMode: isExam ? openingMode : null,
           isOpened: isExam ? (openingMode === "manual" ? false : true) : true,
+          unlinked: isExam ? false : !selectedMaBaiHoc,
           sections: examSections
         };
         contentStr = JSON.stringify(examContent);
@@ -2072,7 +2084,8 @@ const TaoBaiTap = () => {
           deadline: deadline || null,
           description: questions[0]?.question || "",
           imageUrl: questions[0]?.imageUrl || "",
-          audioUrl: commonAudioUrl || questions[0]?.audioUrl || ""
+          audioUrl: commonAudioUrl || questions[0]?.audioUrl || "",
+          unlinked: !selectedMaBaiHoc
         };
         contentStr = JSON.stringify(contentMeta);
         // Serialize the array of questions

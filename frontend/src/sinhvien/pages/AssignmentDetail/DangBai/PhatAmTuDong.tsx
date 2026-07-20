@@ -247,11 +247,11 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
               <div className="pronounce-wave-bar"></div>
               <div className="pronounce-wave-bar"></div>
             </div>
-            <span className="ad-recording-status" style={{ color: "#000080", fontSize: 13, fontWeight: 700 }}>Đang lắng nghe...</span>
+            <span className="asd-recording-status" style={{ color: "#000080", fontSize: 13, fontWeight: 700 }}>Đang lắng nghe...</span>
             <button
               type="button"
               onClick={() => stopSpeechRecognition(qIdx)}
-              className="ad-record-stop-btn"
+              className="asd-record-stop-btn"
               style={{ background: "#dc2626", marginLeft: 0, padding: "6px 16px", fontSize: 13 }}
             >
               Dừng
@@ -263,7 +263,7 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
               type="button"
               disabled={isOverdue}
               onClick={() => startSpeechRecognition(qIdx, q.text)}
-              className="ad-record-start-btn"
+              className="asd-record-start-btn"
               style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#000080" }}
             >
               <FiMic /> Nhấn vào đây để nói
@@ -272,7 +272,7 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
         ) : (
           <div className="pronounce-waveform-box" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, textAlign: "left" }}>
             <div style={{ flex: 1 }}>
-              <div className="ad-stt-text-output" style={{ width: "100%", borderTop: "none", marginTop: 0, paddingTop: 0 }}>
+              <div className="asd-stt-text-output" style={{ width: "100%", borderTop: "none", marginTop: 0, paddingTop: 0 }}>
                 <p style={{ fontStyle: "italic", margin: "0 0 8px 0" }}>Nhận diện được: "{spokenText}"</p>
                 <div className="pronounce-score-container">
                   <div className={`pronounce-score-circle ${(speechScore || 0) >= 7 ? "excellent" : "needs-work"}`}>
@@ -319,7 +319,7 @@ export const PhatAmTuDong: React.FC<PhatAmTuDongProps> = ({
                 type="button"
                 disabled={isOverdue}
                 onClick={() => startSpeechRecognition(qIdx, q.text)}
-                className="ad-record-start-btn"
+                className="asd-record-start-btn"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#000080" }}
               >
                 <FiMic /> Nhấn vào đây để nói

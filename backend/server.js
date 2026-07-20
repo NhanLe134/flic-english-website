@@ -91,6 +91,9 @@ async function isClassCompletedByBaiTap(pool, maBaiTap) {
     } else if (maBaiTap.startsWith("practice-")) {
       targetId = parseInt(maBaiTap.replace("practice-", ""), 10);
       isPractice = true;
+    } else if (maBaiTap.startsWith("baitap-")) {
+      targetId = parseInt(maBaiTap.replace("baitap-", ""), 10);
+      isExam = false;
     } else {
       const parsed = parseInt(maBaiTap, 10);
       if (!isNaN(parsed)) targetId = parsed;
@@ -227,13 +230,14 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   next();
 });
-// Tạo thư mục uploads nếu chưa có
-if (!fs.existsSync("./uploads")) {
-  fs.mkdirSync("./uploads");
+// Tạo thư mục uploads nếu chưa có (đồng nhất với thư mục phục vụ static)
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
 }
 // ===== MULTER - ĐẶT Ở ĐÂY TRƯỚC KHI DÙNG =====
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const safeName = file.originalname.replace(/\s+/g, "-");
     cb(null, Date.now() + "-" + safeName);
@@ -512,55 +516,26 @@ app.post("/qtv/lophoc", async (req, res) => {
           .query(`SELECT * FROM BAIKIEMTRA WHERE MaBuoiHoc = @OldMaBuoiHoc`)
 
         for (const oldExam of oldExamsResult.recordset) {
-          const newExamResult = await pool.request()
+          await pool.request()
             .input("NewMaBuoiHoc", newMaBuoiHoc)
             .input("MaGiangVien", oldExam.MaGiangVien || null)
             .input("MaNguoiDung", oldExam.MaNguoiDung || null)
             .input("TenBai", oldExam.TenBai)
             .input("ThoiGian", oldExam.ThoiGian)
             .input("TongDiem", oldExam.TongDiem)
+            .input("NoiDung", oldExam.NoiDung || "")
+            .input("CauHoi", oldExam.CauHoi || "")
+            .input("ShowAnswer", oldExam.ShowAnswer ? 1 : 0)
+            .input("TrangThai", oldExam.TrangThai || "draft")
+            .input("TrangThaiDuyet", oldExam.TrangThaiDuyet || "Chờ duyệt")
+            .input("NgayBatDau", oldExam.NgayBatDau || null)
+            .input("HanNop", oldExam.HanNop || null)
             .query(`
-              INSERT INTO BAIKIEMTRA (MaBuoiHoc, MaGiangVien, TenBai, ThoiGian, TongDiem, MaNguoiDung)
-              VALUES (@NewMaBuoiHoc, @MaGiangVien, @TenBai, @ThoiGian, @TongDiem, @MaNguoiDung);
-              SELECT SCOPE_IDENTITY() AS NewMaBaiKiemTra;
-            `)
-          
-          const newMaBaiKiemTra = newExamResult.recordset[0].NewMaBaiKiemTra;
-
-          // Sao chép câu hỏi (CAUHOI) và đáp án (DAPAN) của bài kiểm tra cũ
-          const oldQuestionsResult = await pool.request()
-            .input("OldMaBaiKiemTra", oldExam.MaBaiKiemTra)
-            .query(`SELECT * FROM CAUHOI WHERE MaBaiKiemTra = @OldMaBaiKiemTra`)
-
-          for (const oldQ of oldQuestionsResult.recordset) {
-            const newQResult = await pool.request()
-              .input("NewMaBaiKiemTra", newMaBaiKiemTra)
-              .input("NoiDung", oldQ.NoiDung)
-              .input("DapAnDung", oldQ.DapAnDung)
-              .input("LoaiCauHoi", oldQ.LoaiCauHoi)
-              .query(`
-                INSERT INTO CAUHOI (MaBaiKiemTra, NoiDung, DapAnDung, LoaiCauHoi)
-                VALUES (@NewMaBaiKiemTra, @NoiDung, @DapAnDung, @LoaiCauHoi);
-                SELECT SCOPE_IDENTITY() AS NewMaCauHoi;
-              `)
-            
-            const newMaCauHoi = newQResult.recordset[0].NewMaCauHoi;
-
-            const oldAnswersResult = await pool.request()
-              .input("OldMaCauHoi", oldQ.MaCauHoi)
-              .query(`SELECT * FROM DAPAN WHERE MaCauHoi = @OldMaCauHoi`)
-
-            for (const oldAns of oldAnswersResult.recordset) {
-              await pool.request()
-                .input("NewMaCauHoi", newMaCauHoi)
-                .input("NoiDung", oldAns.NoiDung)
-                .input("LaDapAnDung", oldAns.LaDapAnDung)
-                .query(`
-                  INSERT INTO DAPAN (MaCauHoi, NoiDung, LaDapAnDung)
-                  VALUES (@NewMaCauHoi, @NoiDung, @LaDapAnDung)
-                `)
-            }
-          }
+              INSERT INTO BAIKIEMTRA 
+                (MaBuoiHoc, MaGiangVien, TenBai, ThoiGian, TongDiem, MaNguoiDung, NoiDung, CauHoi, ShowAnswer, TrangThai, TrangThaiDuyet, NgayBatDau, HanNop, NgayTao)
+              VALUES 
+                (@NewMaBuoiHoc, @MaGiangVien, @TenBai, @ThoiGian, @TongDiem, @MaNguoiDung, @NoiDung, @CauHoi, @ShowAnswer, @TrangThai, @TrangThaiDuyet, @NgayBatDau, @HanNop, GETDATE())
+            `);
         }
       }
     }
@@ -859,25 +834,7 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
           SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
         );
 
-        -- 15. Xóa đáp án bài kiểm tra thuộc buổi học trong lớp
-        DELETE FROM DAPAN WHERE MaCauHoi IN (
-          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
-            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
-              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-            ) OR MaLesson IN (
-              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-            )
-          )
-        );
-
-        -- 16. Xóa câu hỏi bài kiểm tra thuộc buổi học trong lớp
-        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
-            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-          ) OR MaLesson IN (
-            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc = @id
-          )
-        );
+         -- 15-16. (CAUHOI/DAPAN tables removed since they do not exist)
 
         -- 17. Xóa kết quả bài kiểm tra thuộc buổi học trong lớp
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
@@ -1052,17 +1009,7 @@ app.delete("/qtv/buoihoc/:id", async (req, res) => {
         -- 11. Delete TAILIEU
         DELETE FROM TAILIEU WHERE MaBuoiHoc = @id;
 
-        -- 12. Delete DAPAN
-        DELETE FROM DAPAN WHERE MaCauHoi IN (
-          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
-            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id OR MaLesson = @id
-          )
-        );
-
-        -- 13. Delete CAUHOI
-        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc = @id OR MaLesson = @id
-        );
+        -- 12-13. (CAUHOI/DAPAN tables removed since they do not exist)
 
         -- 14. Delete KETQUABAIKIEMTRA
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
@@ -1080,6 +1027,28 @@ app.delete("/qtv/buoihoc/:id", async (req, res) => {
     res.status(500).send(err.message);
   }
 })
+
+// Cập nhật buổi học
+app.put("/qtv/buoihoc/:id", async (req, res) => {
+  try {
+    const { TenBuoiHoc, MoTa, ThuTu } = req.body;
+    const pool = await poolPromise;
+    await pool.request()
+      .input("id", req.params.id)
+      .input("TenBuoiHoc", TenBuoiHoc)
+      .input("MoTa", MoTa || "")
+      .input("ThuTu", ThuTu || 1)
+      .query(`
+        UPDATE BUOIHOC 
+        SET TenBuoiHoc = @TenBuoiHoc, MoTa = @MoTa, ThuTu = @ThuTu 
+        WHERE MaBuoiHoc = @id
+      `);
+    res.json({ message: "Cập nhật buổi học thành công" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 app.get("/classes/:id/buoihoc", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -1272,12 +1241,35 @@ app.get("/baitap/:id", async (req, res) => {
 
 app.put("/baitap/:id", async (req, res) => {
   try {
-    const { Title, Type, Content, Questions, Vocabulary, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai, MaBaiHoc } = req.body;
+    const { Title, Type, Content, Questions, Vocabulary, AudioUrl, ShowAnswer, IsFree, IsExam, TrangThai, KyNang, DangBai, MaBaiHoc, MaBuoiHoc } = req.body;
     const pool = await poolPromise;
     if (await isClassCompletedByBaiTap(pool, req.params.id)) {
       return res.status(400).json({ message: "Lớp học đã hoàn thành, không thể chỉnh sửa bài tập!" });
     }
     if (Title !== undefined || Content !== undefined || MaBaiHoc !== undefined) {
+      let targetMaBaiHoc = null;
+      if (MaBaiHoc && parseInt(MaBaiHoc, 10)) {
+        targetMaBaiHoc = parseInt(MaBaiHoc, 10);
+      } else if (MaBuoiHoc) {
+        const bhResult = await pool.request()
+          .input("buoiHocId", MaBuoiHoc)
+          .query(`SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC`);
+        if (bhResult.recordset.length > 0) {
+          targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+        } else {
+          const insertBh = await pool.request()
+            .input("buoiHocId", MaBuoiHoc)
+            .input("MaNguoiDung", null)
+            .input("TrangThai", "published")
+            .query(`
+              INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
+              VALUES (1, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
+              SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+            `);
+          targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+        }
+      }
+
       await pool.request()
         .input("id", parseInt(req.params.id))
         .input("TieuDe", Title || "")
@@ -1291,7 +1283,7 @@ app.put("/baitap/:id", async (req, res) => {
         .input("IsExam", IsExam !== undefined ? IsExam : 0)
         .input("TrangThai", TrangThai || "draft")
         .input("KyNang", KyNang || "Tổng hợp")
-        .input("MaBaiHoc", MaBaiHoc ? parseInt(MaBaiHoc, 10) : null)
+        .input("MaBaiHoc", targetMaBaiHoc)
         .query(`
           UPDATE BAITAP 
           SET TieuDe = @TieuDe,
@@ -1346,24 +1338,23 @@ app.delete("/baitap/:id", async (req, res) => {
 
     if (!identified) {
       targetId = parseInt(id, 10);
-      const examCheck = await pool.request()
+      const exerciseCheck = await pool.request()
         .input("id", targetId)
-        .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
-      if (examCheck.recordset.length > 0) {
-        isExam = true;
+        .query(`SELECT MaBaiTap FROM BAITAP WHERE MaBaiTap = @id`);
+      if (exerciseCheck.recordset.length > 0) {
+        isExam = false;
+      } else {
+        const examCheck = await pool.request()
+          .input("id", targetId)
+          .query(`SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBaiKiemTra = @id`);
+        if (examCheck.recordset.length > 0) {
+          isExam = true;
+        }
       }
     }
 
     if (isExam) {
-      // Delete answers, questions, results, and the exam itself
-      await pool.request()
-        .input("id", targetId)
-        .query(`DELETE FROM DAPAN WHERE MaCauHoi IN (SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra = @id)`);
-      
-      await pool.request()
-        .input("id", targetId)
-        .query(`DELETE FROM CAUHOI WHERE MaBaiKiemTra = @id`);
-      
+      // Delete results and the exam itself (DAPAN/CAUHOI do not exist)
       await pool.request()
         .input("id", targetId)
         .query(`DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra = @id`);
@@ -2552,8 +2543,8 @@ app.post("/baitap/create", async (req, res) => {
       res.json({ message: "Thêm bài kiểm tra thành công" });
     } else {
       let targetMaBaiHoc = undefined;
-      if (req.body.hasOwnProperty("MaBaiHoc")) {
-        targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc, 10) : null;
+      if (req.body.hasOwnProperty("MaBaiHoc") && req.body.MaBaiHoc !== null && req.body.MaBaiHoc !== "") {
+        targetMaBaiHoc = parseInt(MaBaiHoc, 10);
       } else {
         if (MaBuoiHoc) {
           const bhResult = await pool.request()
@@ -2576,7 +2567,7 @@ app.post("/baitap/create", async (req, res) => {
         }
       }
 
-      if (targetMaBaiHoc === undefined) {
+      if (targetMaBaiHoc === undefined || targetMaBaiHoc === null) {
         return res.status(400).json({ message: "Thiếu thông tin bài giảng (MaBaiHoc)" });
       }
 
@@ -3356,24 +3347,7 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
         -- 9. Xóa tổng kết khóa học
         DELETE FROM TONGKETKHOAHOC WHERE MaKhoaHoc = @id;
 
-        -- 10. Xóa các bảng liên quan đến bài thi/bài học trong khóa học
-        DELETE FROM DAPAN WHERE MaCauHoi IN (
-          SELECT MaCauHoi FROM CAUHOI WHERE MaBaiKiemTra IN (
-            SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
-              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
-                SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
-              )
-            )
-          )
-        );
-
-        DELETE FROM CAUHOI WHERE MaBaiKiemTra IN (
-          SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (
-            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
-              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
-            )
-          )
-        );
+         -- 10. (CAUHOI/DAPAN tables removed since they do not exist)
 
         DELETE FROM KETQUABAIKIEMTRA WHERE MaBaiKiemTra IN (
           SELECT MaBaiKiemTra FROM BAIKIEMTRA WHERE MaBuoiHoc IN (

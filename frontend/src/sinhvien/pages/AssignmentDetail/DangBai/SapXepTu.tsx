@@ -175,14 +175,14 @@ export const SapXepTu: React.FC<SapXepTuProps> = ({
 
   return (
     <div style={{ padding: "8px 0" }}>
-      <div className="ad-speaking-prompt-box" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 18px", marginBottom: 20 }}>
+      <div className="asd-speaking-prompt-box" style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 18px", marginBottom: 20 }}>
         <p
-          className="ad-speaking-prompt-label"
+          className="asd-speaking-prompt-label"
           style={{ color: "#F95800", display: "flex", alignItems: "center", gap: 6, margin: "0 0 8px 0", fontSize: 13, fontWeight: 700 }}
         >
           <FiFileText /> {getQuestionNumberLabel()}
         </p>
-        <p className="ad-speaking-prompt-text" style={{ color: "#334155", fontSize: 15, fontWeight: 500, margin: 0 }}>
+        <p className="asd-speaking-prompt-text" style={{ color: "#334155", fontSize: 15, fontWeight: 500, margin: 0 }}>
           {q.text}
         </p>
       </div>
@@ -258,7 +258,7 @@ export const SapXepTu: React.FC<SapXepTuProps> = ({
 
       {submitted && (
         <div
-          className="ad-explanation"
+          className="asd-explanation"
           style={{
             background: "#f0fdf4",
             border: "1px solid #86efac",

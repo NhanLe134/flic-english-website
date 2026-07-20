@@ -42,7 +42,7 @@ const DraftsManagement = () => {
   const fetchDrafts = () => {
     if (!maNguoiDung) return;
     setLoading(true);
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/${maNguoiDung}/drafts`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/teacher/${maNguoiDung}/drafts`)
       .then((res) => res.json())
       .then((data) => {
         setLessons(data.lessons || []);
@@ -59,7 +59,7 @@ const DraftsManagement = () => {
 
   const handleSubmitLesson = async (id: number) => {
     try {
-      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${id}/status`, {
+      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "Chờ duyệt" })
@@ -78,7 +78,7 @@ const DraftsManagement = () => {
 
   const handleSubmitExercise = async (id: number) => {
     try {
-      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${id}/status`, {
+      const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ TrangThai: "Chờ duyệt" })
@@ -120,7 +120,7 @@ const DraftsManagement = () => {
       "Hành động này sẽ xóa vĩnh viễn bản nháp bài giảng hiện tại.",
       async () => {
         try {
-          const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${lessonId}`, {
+          const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baigiang/${lessonId}`, {
             method: "DELETE"
           });
           if (res.ok) {
@@ -139,7 +139,7 @@ const DraftsManagement = () => {
       "Hành động này sẽ xóa vĩnh viễn bản nháp bài tập hiện tại.",
       async () => {
         try {
-          const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${exId}`, {
+          const res = await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/baitap/${exId}`, {
             method: "DELETE"
           });
           if (res.ok) {

@@ -58,23 +58,23 @@ export const NgheChepChinhTa: React.FC<NgheChepChinhTaProps> = ({
   const isPerfect = score === 10;
 
   return (
-    <div className="ad-dictation-container">
+    <div className="asd-dictation-container">
       {aud && (
-        <div className="ad-dictation-audio-wrapper">
-          <CustomAudioPlayer src={`${API}${aud}`} className="ad-dictation-audio" />
+        <div className="asd-dictation-audio-wrapper">
+          <CustomAudioPlayer src={`${API}${aud}`} className="asd-dictation-audio" />
         </div>
       )}
       {!isReview && (
-        <div className="ad-dictation-prompt">
-          <FiEdit3 className="ad-dictation-icon" style={{ verticalAlign: "middle" }} />
+        <div className="asd-dictation-prompt">
+          <FiEdit3 className="asd-dictation-icon" style={{ verticalAlign: "middle" }} />
           <span>Listen and write exactly what you hear:</span>
         </div>
       )}
 
       {isReview ? (
-        <div className="ad-dictation-result-wrapper review-mode">
-          <div className="ad-dictation-score-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div className="ad-dictation-score-badge" style={{ backgroundColor: "#eff6ff", color: "#1e3a8a", border: "1px solid #bfdbfe", padding: "6px 16px", borderRadius: "20px", fontWeight: "700" }}>
+        <div className="asd-dictation-result-wrapper review-mode">
+          <div className="asd-dictation-score-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <div className="asd-dictation-score-badge" style={{ backgroundColor: "#eff6ff", color: "#1e3a8a", border: "1px solid #bfdbfe", padding: "6px 16px", borderRadius: "20px", fontWeight: "700" }}>
               Tỷ lệ chính xác: {(() => {
                 const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
                 const std = clean(studentAns);
@@ -90,12 +90,12 @@ export const NgheChepChinhTa: React.FC<NgheChepChinhTaProps> = ({
               })()}%
             </div>
           </div>
-          <div className="ad-dictation-comparison-grid" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div className="ad-dictation-comparison-box student" style={{ background: "#ffffff", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-              <span className="ad-dictation-box-title" style={{ display: "block", color: "#64748b", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>
+          <div className="asd-dictation-comparison-grid" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div className="asd-dictation-comparison-box student" style={{ background: "#ffffff", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+              <span className="asd-dictation-box-title" style={{ display: "block", color: "#64748b", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>
                 Nội dung bạn nghe và nhập vào:
               </span>
-              <div className="ad-dictation-box-text" style={{ fontSize: "16px", lineHeight: "1.6" }}>
+              <div className="asd-dictation-box-text" style={{ fontSize: "16px", lineHeight: "1.6" }}>
                 {(() => {
                   const cleanWord = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
                   const stdWords = studentAns.split(/\s+/).filter(Boolean);
@@ -126,48 +126,48 @@ export const NgheChepChinhTa: React.FC<NgheChepChinhTaProps> = ({
               </div>
             </div>
             
-            <div className="ad-dictation-comparison-box correct" style={{ background: "#f0fdf4", padding: "16px", borderRadius: "8px", border: "1.5px solid #bbf7d0" }}>
-              <span className="ad-dictation-box-title" style={{ display: "block", color: "#16a34a", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>
+            <div className="asd-dictation-comparison-box correct" style={{ background: "#f0fdf4", padding: "16px", borderRadius: "8px", border: "1.5px solid #bbf7d0" }}>
+              <span className="asd-dictation-box-title" style={{ display: "block", color: "#16a34a", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>
                 Nội dung chính xác:
               </span>
-              <p className="ad-dictation-box-text" style={{ margin: 0, fontSize: "16px", color: "#16a34a", fontWeight: "600" }}>
+              <p className="asd-dictation-box-text" style={{ margin: 0, fontSize: "16px", color: "#16a34a", fontWeight: "600" }}>
                 {q.text}
               </p>
             </div>
           </div>
           {q.explanation && (
-            <div className="ad-dictation-explanation" style={{ marginTop: "16px", padding: "12px", background: "#f1f5f9", borderRadius: "6px", color: "#475569", fontSize: "14px" }}>
+            <div className="asd-dictation-explanation" style={{ marginTop: "16px", padding: "12px", background: "#f1f5f9", borderRadius: "6px", color: "#475569", fontSize: "14px" }}>
               <strong>Giải thích:</strong> {q.explanation}
             </div>
           )}
         </div>
       ) : submitted ? (
-        <div className="ad-dictation-result-wrapper">
-          <div className="ad-dictation-score-row">
-            <div className={`ad-dictation-score-badge ${isPerfect ? "perfect" : "partial"}`}>
+        <div className="asd-dictation-result-wrapper">
+          <div className="asd-dictation-score-row">
+            <div className={`asd-dictation-score-badge ${isPerfect ? "perfect" : "partial"}`}>
               {isPerfect ? "✓ Perfect Match" : `Score: ${score}/10`}
             </div>
           </div>
-          <div className="ad-dictation-comparison-grid">
-            <div className="ad-dictation-comparison-box student">
-              <span className="ad-dictation-box-title">Your response:</span>
-              <p className="ad-dictation-box-text">"{studentAns || "(Empty)"}"</p>
+          <div className="asd-dictation-comparison-grid">
+            <div className="asd-dictation-comparison-box student">
+              <span className="asd-dictation-box-title">Your response:</span>
+              <p className="asd-dictation-box-text">"{studentAns || "(Empty)"}"</p>
             </div>
-            <div className="ad-dictation-comparison-box correct">
-              <span className="ad-dictation-box-title">Correct answer:</span>
-              <p className="ad-dictation-box-text">"{q.text}"</p>
+            <div className="asd-dictation-comparison-box correct">
+              <span className="asd-dictation-box-title">Correct answer:</span>
+              <p className="asd-dictation-box-text">"{q.text}"</p>
             </div>
           </div>
           {q.explanation && (
-            <div className="ad-dictation-explanation">
+            <div className="asd-dictation-explanation">
               <strong>Explanation:</strong> {q.explanation}
             </div>
           )}
         </div>
       ) : (
-        <div className="ad-dictation-input-wrapper">
+        <div className="asd-dictation-input-wrapper">
           <textarea
-            className="ad-dictation-textarea"
+            className="asd-dictation-textarea"
             disabled={isOverdue || (isExam && !examStarted)}
             value={studentAns}
             onChange={(e) =>

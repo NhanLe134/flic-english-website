@@ -49,7 +49,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
   return (
     <div
       key={qIdx}
-      className="ad-mcq-question-box"
+      className="asd-mcq-question-box"
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -89,7 +89,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
           </span>
         )}
       </div>
-      <div className="ad-mcq-list">
+      <div className="asd-mcq-list">
         {optionsList.map((opt: any) => {
           const isChosen = chosen === opt.label;
           let optionClass = "";
@@ -125,7 +125,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
           return (
             <label
               key={opt.label}
-              className={`ad-mcq-option ${optionClass}`}
+              className={`asd-mcq-option ${optionClass}`}
             >
               <input
                 type="radio"
@@ -137,7 +137,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
                   }
                 }}
               />
-              <span className="ad-mcq-label-text">{opt.label}.</span>
+              <span className="asd-mcq-label-text">{opt.label}.</span>
               {opt.text && opt.text.trim().toUpperCase() !== opt.label && (
                 <span>{opt.text}</span>
               )}
@@ -146,7 +146,7 @@ export const CauHoiTracNghiem: React.FC<CauHoiTracNghiemProps> = ({
         })}
       </div>
       {(submitted || isReview || showAnswers) && (
-        <div className="ad-explanation">
+        <div className="asd-explanation">
           <p className="correct-ans" style={{ margin: "4px 0", color: "#16a34a", fontWeight: "600" }}>
             Đáp án đúng: {q.correct}
           </p>

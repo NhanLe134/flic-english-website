@@ -28,7 +28,7 @@ const EditPersonalInfo = () => {
     const user = JSON.parse(userStr);
     const maNguoiDung = user.MaNguoiDung;
 
-    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`)
+    fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`)
       .then(res => res.json())
       .then(data => {
         setFormData({
@@ -56,7 +56,7 @@ const EditPersonalInfo = () => {
         const formDataUpload = new FormData();
         formDataUpload.append("file", file);
 
-        const uploadRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
+        const uploadRes = await fetch((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "/upload", {
           method: "POST",
           body: formDataUpload
         });
@@ -81,7 +81,7 @@ const EditPersonalInfo = () => {
     const maNguoiDung = user.MaNguoiDung;
 
     try {
-      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`, {
+      await fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/giangvien/${maNguoiDung}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +102,7 @@ const EditPersonalInfo = () => {
       user.AnhDaiDien = formData.avatar;
       sessionStorage.setItem("user", JSON.stringify(user));
       
-      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${formData.avatar}`) : null;
+      const absoluteUrl = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${formData.avatar}`) : null;
       setAvatar(absoluteUrl);
 
       setShowPopup(true);
@@ -118,7 +118,7 @@ const EditPersonalInfo = () => {
     ? formData.HoTen.split(" ").pop()?.charAt(0).toUpperCase()
     : "?";
 
-  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${formData.avatar}`) : "";
+  const displayAvatar = formData.avatar ? (formData.avatar.startsWith("http") ? formData.avatar : `${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}${formData.avatar}`) : "";
 
   return (
     <div className="epi-wrapper">

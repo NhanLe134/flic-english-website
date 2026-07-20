@@ -10,7 +10,8 @@ import {
   FiFileText, 
   FiFolder, 
   FiChevronDown, 
-  FiChevronRight 
+  FiChevronRight,
+  FiEdit 
 } from "react-icons/fi";
 import {
   MDXEditor,
@@ -32,7 +33,7 @@ const API =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? `http://${window.location.hostname}:5004`
-    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
 interface Lecture {
   MaBaiHoc: number;
@@ -90,10 +91,13 @@ const KhoHocLieu = () => {
   const [toast, setToast] = useState("");
   
   // Delete confirm modal
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; type: "baigiang" | "baitap" | "tailieu"; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; type: "baigiang" | "baitap" | "tailieu"; title: string } | null>(null);
 
   // Session creation modal states
   const [showAddSessionModal, setShowAddSessionModal] = useState(false);
+  const [showEditSessionModal, setShowEditSessionModal] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
+  const [editSessionForm, setEditSessionForm] = useState({ title: "", desc: "", order: 1 });
   const [targetClassId, setTargetClassId] = useState<number | null>(null);
   const [sessionForm, setSessionForm] = useState({ title: "", desc: "", order: 1 });
 
@@ -413,7 +417,8 @@ const KhoHocLieu = () => {
         if (type === "baigiang") {
           setLectures(prev => prev.filter(item => item.MaBaiHoc !== id));
         } else if (type === "baitap") {
-          setExercises(prev => prev.filter(item => item.MaBaiTap !== id));
+          const cleanId = String(id).replace("exam-", "").replace("baitap-", "");
+          setExercises(prev => prev.filter(item => String(item.MaBaiTap) !== cleanId));
         } else if (type === "tailieu") {
           setDocuments(prev => prev.filter(item => item.MaTaiLieu !== id));
         }
@@ -452,6 +457,44 @@ const KhoHocLieu = () => {
         fetchData();
       } else {
         alert("Lỗi khi thêm buổi học");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi kết nối");
+    }
+  };
+
+  const openEditSession = (session: any) => {
+    setEditingSessionId(session.sessionId);
+    setEditSessionForm({
+      title: session.sessionName,
+      desc: session.desc || "",
+      order: session.order || 1
+    });
+    setShowEditSessionModal(true);
+  };
+
+  const handleUpdateSession = async () => {
+    if (!editSessionForm.title.trim()) { alert("Vui lòng nhập tên buổi học!"); return; }
+    if (!editingSessionId) return;
+
+    try {
+      const res = await fetch(`${API}/qtv/buoihoc/${editingSessionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          TenBuoiHoc: editSessionForm.title,
+          MoTa: editSessionForm.desc,
+          ThuTu: Number(editSessionForm.order)
+        })
+      });
+      if (res.ok) {
+        showToast("Đã cập nhật buổi học thành công!");
+        setShowEditSessionModal(false);
+        setEditingSessionId(null);
+        fetchData();
+      } else {
+        alert("Lỗi khi cập nhật buổi học");
       }
     } catch (err) {
       console.error(err);
@@ -700,11 +743,16 @@ const KhoHocLieu = () => {
                               <div className={styles.sessionHeaderRow}>
                                 <div className={styles.sessionHeaderLeft}>
                                   <h4 className={styles.sessionTitle}>{session.sessionName}</h4>
-                                  {session.desc && <p className={styles.sessionDesc}>{session.desc}</p>}
+                                  {session.desc && <p className={styles.sessionDesc} style={{ whiteSpace: "pre-wrap" }}>{session.desc}</p>}
                                 </div>
-                                <button className={styles.sessionDeleteBtn} onClick={() => handleDeleteSession(session.sessionId, session.sessionName)} title="Xóa buổi học">
-                                  <FiTrash2 />
-                                </button>
+                                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                  <button className={styles.sessionEditBtn} onClick={() => openEditSession(session)} title="Sửa buổi học">
+                                    <FiEdit />
+                                  </button>
+                                  <button className={styles.sessionDeleteBtn} onClick={() => handleDeleteSession(session.sessionId, session.sessionName)} title="Xóa buổi học">
+                                    <FiTrash2 />
+                                  </button>
+                                </div>
                               </div>
 
                               {/* 3-Column Resource Layout */}
@@ -770,7 +818,7 @@ const KhoHocLieu = () => {
                                           </div>
                                           <div className={styles.itemActions}>
                                             <button className={styles.actionBtnViewText} onClick={() => navigate(isQTV ? `/QTV/baitap-detail/${item.MaBaiTap}/0` : `/baitap-detail/${item.MaBaiTap}/0`)}>Xem</button>
-                                            <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: item.MaBaiTap, type: "baitap", title: item.Title })}>Xóa</button>
+                                            <button className={styles.actionBtnDeleteText} onClick={() => setDeleteTarget({ id: isEx ? "exam-" + item.MaBaiTap : "baitap-" + item.MaBaiTap, type: "baitap", title: item.Title })}>Xóa</button>
                                           </div>
                                         </div>
                                       );
@@ -845,7 +893,36 @@ const KhoHocLieu = () => {
             </div>
           </div>
         </div>
+      )}      {/* MODAL: SỬA BUỔI HỌC */}
+      {showEditSessionModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalTop}>
+              <h3>Sửa buổi học trong lộ trình</h3>
+              <button className={styles.modalClose} onClick={() => setShowEditSessionModal(false)}><FiX /></button>
+            </div>
+            <div style={{ marginTop: "16px" }}>
+              <div className={styles.formGroup}>
+                <label>Tên buổi học <span className={styles.req}>*</span></label>
+                <input value={editSessionForm.title} onChange={e => setEditSessionForm(p => ({ ...p, title: e.target.value }))} placeholder="VD: Buổi 1: Ngữ pháp cơ bản" />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Mô tả</label>
+                <textarea value={editSessionForm.desc} onChange={e => setEditSessionForm(p => ({ ...p, desc: e.target.value }))} placeholder="Nội dung buổi học..." rows={3} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Thứ tự</label>
+                <input type="number" min={1} value={editSessionForm.order} onChange={e => setEditSessionForm(p => ({ ...p, order: Number(e.target.value) }))} />
+              </div>
+              <div className={styles.modalFooter}>
+                <button className={styles.detailBtnOutline} onClick={() => setShowEditSessionModal(false)}>Hủy</button>
+                <button className={styles.detailBtnPrimary} onClick={handleUpdateSession}>Lưu thay đổi</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
+
 
       {/* MODAL: THÊM BÀI GIẢNG */}
       {showAddLectureModal && (

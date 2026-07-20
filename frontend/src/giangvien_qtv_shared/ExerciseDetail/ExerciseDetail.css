@@ -357,22 +357,22 @@
 }
 
 /* Custom override for student view layout inside teacher detail view */
-.ed-wrapper .ad-content {
+.ed-wrapper .asd-content {
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   zoom: 0.85;
 }
 
-.ed-wrapper .ad-content .ad-title {
+.ed-wrapper .asd-content .asd-title {
   display: none !important;
 }
 
-.ed-wrapper .ad-content .ad-info-card {
+.ed-wrapper .asd-content .asd-info-card {
   margin-top: 10px !important;
   margin-bottom: 15px !important;
 }
 
-.ed-wrapper .ad-back-overlay {
+.ed-wrapper .asd-back-overlay {
   display: none !important;
 }

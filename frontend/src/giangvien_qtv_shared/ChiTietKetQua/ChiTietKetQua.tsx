@@ -23,8 +23,8 @@ const ChiTietKetQua = () => {
     const maNguoiDung = user.MaNguoiDung;
 
     Promise.all([
-      fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`).then(r => r.json()),
-      fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}/students/${maNguoiDung}`).then(r => r.json())
+      fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}`).then(r => r.json()),
+      fetch(`${(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004")}/buoihoc/${id}/students/${maNguoiDung}`).then(r => r.json())
     ])
       .then(([buoiHocData, studentData]) => {
         setLessonInfo(buoiHocData);

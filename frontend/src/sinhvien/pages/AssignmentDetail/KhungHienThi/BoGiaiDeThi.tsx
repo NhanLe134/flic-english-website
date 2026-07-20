@@ -122,6 +122,25 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
   isReview = false,
   showAnswers = false
 }) => {
+  console.log("BoGiaiDeThi [render]: exercise:", exercise?.Title, "sections count:", parsedContent?.sections?.length, "activeSectionIdx:", activeSectionIdx, "examStarted:", examStarted, "examEnded:", examEnded);
+
+  React.useEffect(() => {
+    const el = document.querySelector(".asd-section");
+    console.log("BoGiaiDeThi [DOM check]: .asd-section element:", el, "all elements:", document.querySelectorAll(".asd-section").length);
+    if (el) {
+      const style = window.getComputedStyle(el);
+      console.log("BoGiaiDeThi [DOM Style]: display:", style.display, "visibility:", style.visibility, "opacity:", style.opacity, "height:", style.height, "width:", style.width);
+      let parent = el.parentElement;
+      while (parent) {
+        const pStyle = window.getComputedStyle(parent);
+        console.log("BoGiaiDeThi [DOM Parent Style]: tag:", parent.tagName, "class:", parent.className, "display:", pStyle.display, "visibility:", pStyle.visibility, "opacity:", pStyle.opacity, "height:", pStyle.height);
+        if (pStyle.display === "none" || pStyle.visibility === "hidden" || parseFloat(pStyle.opacity) === 0) {
+          console.warn("BoGiaiDeThi [DOM Style warning]: parent is hiding the content!");
+        }
+        parent = parent.parentElement;
+      }
+    }
+  });
 
   const getSectionQuestionNumber = (sec: any, qIdx: number, subIdx?: number) => {
     let count = 1;
@@ -416,12 +435,12 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
     <div>
       {/* Các tab phân phần thi */}
       {parsedContent.sections && parsedContent.sections.length > 1 && (
-        <div className="ad-exam-tabs">
+        <div className="asd-exam-tabs">
           {parsedContent.sections?.map((sec: any, sIdx: number) => (
             <button
               key={sIdx}
               onClick={() => setActiveSectionIdx(sIdx)}
-              className={`ad-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
+              className={`asd-exam-tab ${activeSectionIdx === sIdx ? "active" : ""}`}
             >
               {sec.title}
             </button>
@@ -436,7 +455,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
         return (
           <div
             key={sIdx}
-            className="ad-section"
+            className="asd-section"
             style={{ background: "#fff", border: "1px solid #e0d4c3", padding: 20, borderRadius: 12 }}
           >
             {parsedContent.sections && parsedContent.sections.length > 1 && (
@@ -454,7 +473,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                   </div>
                 ) : (
                   <textarea
-                    className="ad-q-input"
+                    className="asd-q-input"
                     disabled={!examStarted || examEnded}
                     value={essayAnswers[sIdx] || ""}
                     onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
@@ -467,11 +486,11 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
 
             {sec.type === "Nói theo chủ đề (ghi âm nộp GV)" && (
               <div>
-                <div className="ad-speaking-prompt-box">
-                  <p className="ad-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div className="asd-speaking-prompt-box">
+                  <p className="asd-speaking-prompt-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <FiFileText /> Topic Prompt:
                   </p>
-                  <p className="ad-speaking-prompt-text">{sec.content}</p>
+                  <p className="asd-speaking-prompt-text">{sec.content}</p>
                 </div>
                 {sec.imageUrl && (
                   <img
@@ -482,14 +501,14 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                 )}
 
                 {!submitted ? (
-                  <div className="ad-recorder-dashed-box">
+                  <div className="asd-recorder-dashed-box">
                     {isRecording[sIdx] ? (
-                      <div className="ad-recording-status">
+                      <div className="asd-recording-status">
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                           <span style={{ display: "inline-block", width: "8px", height: "8px", background: "#dc2626", borderRadius: "50%", animation: "pulse 1.5s infinite" }}></span>
                           Recording: {recordSeconds[sIdx] || 0}s
                         </span>
-                        <button onClick={() => stopRecording(sIdx)} className="ad-record-stop-btn">
+                        <button onClick={() => stopRecording(sIdx)} className="asd-record-stop-btn">
                           Stop
                         </button>
                       </div>
@@ -497,7 +516,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                       <button
                         disabled={!examStarted || examEnded}
                         onClick={() => startRecording(sIdx)}
-                        className="ad-record-start-btn"
+                        className="asd-record-start-btn"
                         style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                       >
                         <FiMic /> Record your speech
@@ -518,7 +537,7 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
                 )}
 
                 <textarea
-                  className="ad-q-input"
+                  className="asd-q-input"
                   disabled={submitted || !examStarted || examEnded}
                   value={essayAnswers[sIdx] || ""}
                   onChange={e => setEssayAnswers(prev => ({ ...prev, [sIdx]: e.target.value }))}
@@ -529,13 +548,13 @@ export const BoGiaiDeThi: React.FC<BoGiaiDeThiProps> = ({
             )}
 
             {sec.type === "Trắc nghiệm đọc hiểu (chia đôi màn hình)" && (
-              <div className="ad-reading-split-container">
-                <div className="ad-reading-passage-panel">
-                  <div className="ad-passage-text">
+              <div className="asd-reading-split-container">
+                <div className="asd-reading-passage-panel">
+                  <div className="asd-passage-text">
                     {renderReadingPassage(sec.content)}
                   </div>
                 </div>
-                <div className="ad-reading-questions-panel">
+                <div className="asd-reading-questions-panel">
                   {sec.questions?.map((q: any, qIdx: number) => (
                     <div key={qIdx} style={{ marginBottom: 20 }}>
                       {renderSectionQuestionBlock(q, qIdx, sIdx, sec.type)}

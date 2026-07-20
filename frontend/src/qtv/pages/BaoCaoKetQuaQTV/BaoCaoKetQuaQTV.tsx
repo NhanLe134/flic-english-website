@@ -6,7 +6,7 @@ import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
 import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap"
 
-const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + ''
+const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + ''
 
 interface ExerciseHeader {
   MaBaiTap: number
@@ -233,13 +233,26 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
 
   const ttList   = ["Tất cả trạng thái", "Đang học", "Hoàn thành", "Tạm dừng"]
 
-  const filtered = data.filter(h => {
-    const ms  = h.hoTen.toLowerCase().includes(search.toLowerCase()) || h.maHV.toLowerCase().includes(search.toLowerCase())
-    const mk  = filterKhoa === "Tất cả khóa học" || h.tenKhoa === filterKhoa
-    const ml  = h.lopKhoaHoc === filterLop
-    const mtt = filterTT   === "Tất cả trạng thái" || h.trangThai === filterTT
-    return ms && mk && ml && mtt
-  })
+  const filtered = useMemo(() => {
+    return data
+      .filter(h => {
+        const ms  = h.hoTen.toLowerCase().includes(search.toLowerCase()) || h.maHV.toLowerCase().includes(search.toLowerCase())
+        const mk  = filterKhoa === "Tất cả khóa học" || h.tenKhoa === filterKhoa
+        const ml  = h.lopKhoaHoc === filterLop
+        const mtt = filterTT   === "Tất cả trạng thái" || h.trangThai === filterTT
+        return ms && mk && ml && mtt
+      })
+      .map(h => {
+        const classScores = activeHeaders.map(eh => h.rawScores[eh.MaBaiTap]).filter((d): d is number => typeof d === 'number')
+        const diemTB = classScores.length > 0
+          ? Math.round((classScores.reduce((a, b) => a + b, 0) / classScores.length) * 100) / 100
+          : null
+        return {
+          ...h,
+          diemTB
+        }
+      })
+  }, [data, search, filterKhoa, filterLop, filterTT, activeHeaders])
 
   // Reset về trang 1 khi thay đổi bộ lọc
   useEffect(() => {
