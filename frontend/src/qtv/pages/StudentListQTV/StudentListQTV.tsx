@@ -106,6 +106,7 @@ const StudentListQTV: React.FC = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectRegId, setRejectRegId] = useState<number | null>(null);
   const [showCancelEnrollModal, setShowCancelEnrollModal] = useState(false);
+  const [unenrollTarget, setUnenrollTarget] = useState<{ studentId: string; classId: number; studentName: string } | null>(null);
   const [regClassFilter, setRegClassFilter] = useState<string>('all');
 
   const uniqueRegClasses = useMemo(() => {
@@ -166,22 +167,27 @@ const StudentListQTV: React.FC = () => {
       .finally(() => setLoadingEnrolled(false));
   };
 
-  const handleRemoveEnrolled = async (studentId: string, classId: number, studentName: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn hủy ghi danh học viên ${studentName} khỏi lớp học này?`)) {
-      try {
-        const res = await fetch(`${API}/qtv/lophoc/${classId}/ghidanh/${studentId}`, {
-          method: 'DELETE'
-        });
-        if (res.ok) {
-          triggerSuccessPopup(`Đã hủy ghi danh ${studentName}!`);
-          loadEnrolledStudents();
-          loadPendingRegs();
-        } else {
-          alert('Lỗi khi hủy ghi danh');
-        }
-      } catch {
+  const handleRemoveEnrolled = (studentId: string, classId: number, studentName: string) => {
+    setUnenrollTarget({ studentId, classId, studentName });
+  };
+
+  const confirmUnenroll = async () => {
+    if (!unenrollTarget) return;
+    const { studentId, classId, studentName } = unenrollTarget;
+    setUnenrollTarget(null);
+    try {
+      const res = await fetch(`${API}/qtv/lophoc/${classId}/ghidanh/${studentId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        triggerSuccessPopup(`Đã hủy ghi danh ${studentName}!`);
+        loadEnrolledStudents();
+        loadPendingRegs();
+      } else {
         alert('Lỗi khi hủy ghi danh');
       }
+    } catch {
+      alert('Lỗi khi hủy ghi danh');
     }
   };
 
@@ -649,7 +655,7 @@ const StudentListQTV: React.FC = () => {
           })()}
         </div>
 
-        <div>
+        <div style={{ padding: 0 }}>
           {/* Search bar & Filters */}
           <div className="slqtv-filters-row-new">
             <div className="slqtv-search-wrapper-new">
@@ -1052,6 +1058,43 @@ const StudentListQTV: React.FC = () => {
                 onClick={confirmCancelEnroll}
               >
                 Xác nhận xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ════ MODAL: XÁC NHẬN HỦY GHI DANH BẢNG DANH SÁCH ════ */}
+      {unenrollTarget && (
+        <div className="slqtv-modal-overlay" onClick={() => setUnenrollTarget(null)}>
+          <div className="slqtv-modal-card" style={{ maxWidth: '440px', width: '90%' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 className="slqtv-modal-title" style={{ border: "none", marginBottom: 0, paddingBottom: 0, color: "#dc2626" }}>
+                Xác nhận hủy ghi danh
+              </h2>
+              <button className="slqtv-modal-close" onClick={() => setUnenrollTarget(null)} style={{ top: '20px', right: '20px' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: "8px 0 20px 0" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", lineHeight: "1.5" }}>
+                Bạn có chắc chắn muốn hủy ghi danh học viên <strong>{unenrollTarget.studentName}</strong> khỏi lớp học này không?
+              </p>
+              <p style={{ margin: "0", fontSize: "13px", color: "#dc2626", background: "#fef2f2", padding: "10px 12px", borderRadius: "6px", border: "1px solid #fee2e2", lineHeight: "1.5" }}>
+                <strong>Lưu ý:</strong> Hành động này sẽ hủy ghi danh học viên khỏi lớp học hiện tại.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button 
+                style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }} 
+                onClick={() => setUnenrollTarget(null)}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                style={{ background: '#dc2626', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }} 
+                onClick={confirmUnenroll}
+              >
+                Xác nhận hủy
               </button>
             </div>
           </div>

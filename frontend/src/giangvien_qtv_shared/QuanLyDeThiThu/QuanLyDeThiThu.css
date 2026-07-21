@@ -171,6 +171,7 @@
 }
 
 .cd-wrapper.qtv-compact .cd-header {
+  padding: 0;
   margin-bottom: 20px;
 }
 

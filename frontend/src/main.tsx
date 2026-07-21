@@ -82,7 +82,7 @@ if (typeof window !== "undefined") {
 }
 
 if (typeof window !== "undefined") {
-  (window as any).showGlobalErrorPopup = function (titleText: string, messageText: string, detailsText?: string) {
+  (window as any).showGlobalErrorPopup = function (titleText: string, messageText: string) {
     if (document.getElementById("global-error-overlay-container")) return;
 
     const overlay = document.createElement("div");
@@ -125,11 +125,6 @@ if (typeof window !== "undefined") {
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.marginBottom = "16px";
-    header.style.gap = "12px";
-
-    const icon = document.createElement("span");
-    icon.innerText = "🚨";
-    icon.style.fontSize = "28px";
 
     const title = document.createElement("h3");
     title.innerText = titleText || "Hệ thống gặp sự cố";
@@ -138,45 +133,17 @@ if (typeof window !== "undefined") {
     title.style.fontSize = "20px";
     title.style.fontWeight = "700";
 
-    header.appendChild(icon);
     header.appendChild(title);
     box.appendChild(header);
 
     const desc = document.createElement("p");
     desc.innerText = messageText || "Đã xảy ra lỗi không mong muốn trong quá trình vận hành.";
-    desc.style.margin = "0 0 16px 0";
+    desc.style.margin = "0 0 20px 0";
     desc.style.color = "#1e293b";
     desc.style.fontSize = "14.5px";
     desc.style.lineHeight = "1.5";
     desc.style.fontWeight = "600";
     box.appendChild(desc);
-
-    if (detailsText) {
-      const detailsTitle = document.createElement("div");
-      detailsTitle.innerText = "Chi tiết kỹ thuật:";
-      detailsTitle.style.fontSize = "12.5px";
-      detailsTitle.style.fontWeight = "700";
-      detailsTitle.style.color = "#64748b";
-      detailsTitle.style.marginBottom = "6px";
-      box.appendChild(detailsTitle);
-
-      const detailsBox = document.createElement("pre");
-      detailsBox.innerText = detailsText;
-      detailsBox.style.margin = "0 0 24px 0";
-      detailsBox.style.padding = "12px";
-      detailsBox.style.background = "#f8fafc";
-      detailsBox.style.border = "1px solid #e2e8f0";
-      detailsBox.style.borderRadius = "8px";
-      detailsBox.style.fontSize = "12px";
-      detailsBox.style.color = "#0f172a";
-      detailsBox.style.overflowX = "auto";
-      detailsBox.style.maxHeight = "150px";
-      detailsBox.style.overflowY = "auto";
-      detailsBox.style.whiteSpace = "pre-wrap";
-      detailsBox.style.wordBreak = "break-all";
-      detailsBox.style.fontFamily = "Consolas, Monaco, monospace";
-      box.appendChild(detailsBox);
-    }
 
     const footer = document.createElement("div");
     footer.style.display = "flex";
@@ -210,25 +177,18 @@ if (typeof window !== "undefined") {
   };
 
   // Intercept Global Errors
-  window.addEventListener("error", (event) => {
-    if (event.message) {
-      (window as any).showGlobalErrorPopup(
-        "Sự cố hệ thống",
-        `Phát hiện lỗi runtime: ${event.message}`,
-        `Tệp tin: ${event.filename}\nDòng: ${event.lineno}, Cột: ${event.colno}`
-      );
-    }
+  window.addEventListener("error", () => {
+    (window as any).showGlobalErrorPopup(
+      "Lỗi xử lý ứng dụng",
+      "Đã xảy ra sự cố khi tải dữ liệu hoặc giao diện. Bạn vui lòng tải lại trang (F5) để tiếp tục."
+    );
   });
 
   // Intercept Unhandled Promise Rejections
-  window.addEventListener("unhandledrejection", (event) => {
-    const reason = event.reason;
-    const msg = reason?.message || String(reason);
-    const stack = reason?.stack || "";
+  window.addEventListener("unhandledrejection", () => {
     (window as any).showGlobalErrorPopup(
-      "Sự cố bất đồng bộ",
-      `Phát hiện lỗi Unhandled Promise Rejection: ${msg}`,
-      stack || "Không có stack trace."
+      "Thao tác chưa thể hoàn thành",
+      "Hệ thống không thể xử lý thao tác vừa thực hiện. Vui lòng thử lại hoặc tải lại trang."
     );
   });
 
@@ -238,20 +198,16 @@ if (typeof window !== "undefined") {
     try {
       const response = await originalFetch(...args);
       if (!response.ok && response.status >= 500) {
-        const clonedResponse = response.clone();
-        const errorText = await clonedResponse.text().catch(() => "Không có thông tin lỗi chi tiết.");
         (window as any).showGlobalErrorPopup(
-          `Lỗi phản hồi máy chủ (${response.status})`,
-          `Yêu cầu tới API gặp sự cố phản hồi không hợp lệ.`,
-          `API URL: ${response.url}\n\nChi tiết phản hồi từ máy chủ:\n${errorText}`
+          `Máy chủ gặp sự cố (Lỗi ${response.status})`,
+          `Máy chủ xử lý yêu cầu gặp lỗi nội bộ (${response.status}). Vui lòng kiểm tra lại dịch vụ Backend hoặc liên hệ quản trị viên.`
         );
       }
       return response;
     } catch (error: any) {
       (window as any).showGlobalErrorPopup(
-        "Lỗi Kết Nối Mạng",
-        `Không thể gửi yêu cầu đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn hoặc liên hệ quản trị viên.`,
-        `Chi tiết sự cố:\n${error.message || String(error)}`
+        "Mất kết nối máy chủ (Backend)",
+        "Không thể kết nối đến máy chủ Backend (Port 5004). Vui lòng kiểm tra kết nối mạng hoặc đảm bảo máy chủ Backend đang hoạt động."
       );
       throw error;
     }

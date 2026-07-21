@@ -3,9 +3,12 @@
 .page {
   background: #ffffff;
   min-height: 100vh;
+  padding: 0;
 }
 
 .pageHeader {
+  padding: 0;
+  margin-bottom: 20px;
 }
 
 .pageHeader h1 {
@@ -23,6 +26,7 @@
 }
 
 .content {
+  padding: 0;
 }
 
 /* Stats Row */

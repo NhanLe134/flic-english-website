@@ -81,9 +81,8 @@ const API =
 const ExerciseDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id, buoiHocId, buoiId, maLop, teacherId } = useParams();
+  const { id, buoiId, maLop, teacherId } = useParams();
   const isQTV = location.pathname.includes("/QTV");
-  const isTargetPage = (id === "72" && buoiHocId === "36") || (id === "74" && buoiHocId === "0");
 
   const [exercise, setExercise] = useState<any>(null);
 
@@ -134,7 +133,7 @@ const ExerciseDetail = () => {
         <ChiTietBaiTap
           overrideExerciseId={Number(id)}
           isPreview={true}
-          showAnswers={isTargetPage}
+          showAnswers={true}
         />
       </div>
     </div>

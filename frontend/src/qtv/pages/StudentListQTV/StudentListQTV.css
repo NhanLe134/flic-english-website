@@ -18,6 +18,7 @@
   margin-bottom: 20px;
   gap: 16px;
   flex-wrap: wrap;
+  padding: 0;
 }
 
 .slqtv-header-text h1 {
