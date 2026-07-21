@@ -120,11 +120,12 @@ function CustomAudioPlayer({ audioUrl, onEnded, isOnce = true, reviewMode = fals
   const [progress, setProgress] = useState(0);
   const [timeDisp, setTimeDisp] = useState("00:00");
   const [currentTimeDisp, setCurrentTimeDisp] = useState("--:--");
-
   const handlePlay = () => {
     if ((isOnce && played) || reviewMode) return;
     setPlayed(true);
-    audioRef.current?.play();
+    audioRef.current?.play().catch(e => {
+      console.error("Lỗi phát audio:", e);
+    });
   };
 
   useEffect(() => {
@@ -1296,6 +1297,32 @@ export default function TestExamPage() {
               speaking: match.diemNoi,
               final: match.diemTong !== null ? match.diemTong : (match.diemNghe + match.diemDoc) / 2
             });
+
+            // Restore Listening and Reading selected options
+            setAnswers({
+              listening: match.baiLamListening || {},
+              reading: match.baiLamReading || {}
+            });
+
+            // Restore Writing answers map
+            const writingAnswersMap: Record<number, string> = {};
+            if (Array.isArray(match.baiLamViet)) {
+              match.baiLamViet.forEach((ans: string, idx: number) => {
+                writingAnswersMap[idx + 1] = ans;
+              });
+            }
+            setWritingAnswers(writingAnswersMap);
+
+            // Restore Speaking recording URLs
+            const speakingUrlsMap: Record<number, string> = {};
+            if (Array.isArray(match.baiLamNoi)) {
+              match.baiLamNoi.forEach((url: string, idx: number) => {
+                if (url && !url.includes("Bài nói của học viên đã được hệ thống ghi nhận thành công.")) {
+                  speakingUrlsMap[idx] = url;
+                }
+              });
+            }
+            setSpeakingUrls(speakingUrlsMap);
           }
         })
         .catch(err => console.error("Error fetching submission details:", err));
@@ -1413,6 +1440,11 @@ export default function TestExamPage() {
 
   // Timer Effect supporting refined Speaking logic
   const startRecording = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showToast("Lỗi bảo mật: Quyền truy cập Microphone bị chặn! Vui lòng sử dụng HTTPS hoặc cấu hình chrome://flags để tiếp tục.");
+      console.error("Microphone access is not supported or restricted (insecure HTTP context).");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -1898,7 +1930,6 @@ export default function TestExamPage() {
       const speakingArray = testData.kyNang.speaking.parts.map((_, idx) => {
         return activeSpeakingUrls[idx] || "Bài nói của học viên đã được hệ thống ghi nhận thành công.";
       });
-
       const u = JSON.parse(sessionStorage.getItem("user") || "{}");
       const maNguoiDung = u.MaNguoiDung;
 
@@ -1913,6 +1944,8 @@ export default function TestExamPage() {
           diemDoc: readingScore,
           baiLamViet: writingArray,
           baiLamNoi: speakingArray,
+          baiLamListening: activeAnswers.listening,
+          baiLamReading: activeAnswers.reading,
           yeuCauChamViet: true,
           yeuCauChamNoi: true
         })
