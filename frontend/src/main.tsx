@@ -1,6 +1,7 @@
-// Override native window.alert with a premium custom overlay modal
 if (typeof window !== "undefined") {
   window.alert = function (message) {
+    const isAuthPrompt = typeof message === "string" && message.toLowerCase().includes("đăng nhập");
+
     const overlay = document.createElement("div");
     overlay.className = "global-alert-overlay-bg";
     overlay.style.position = "fixed";
@@ -8,7 +9,7 @@ if (typeof window !== "undefined") {
     overlay.style.left = "0";
     overlay.style.width = "100%";
     overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.45)";
     overlay.style.display = "flex";
     overlay.style.justifyContent = "center";
     overlay.style.alignItems = "center";
@@ -16,14 +17,38 @@ if (typeof window !== "undefined") {
     overlay.style.fontFamily = "'Segoe UI', Roboto, sans-serif";
 
     const box = document.createElement("div");
+    box.style.position = "relative";
     box.style.background = "#fff";
-    box.style.padding = "24px 32px";
+    box.style.padding = "28px 32px";
     box.style.borderRadius = "16px";
     box.style.width = "fit-content";
-    box.style.minWidth = "320px";
+    box.style.minWidth = "340px";
     box.style.maxWidth = "480px";
     box.style.textAlign = "center";
-    box.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
+    box.style.boxShadow = "0 15px 35px rgba(0,0,0,0.18)";
+
+    const closeAlert = () => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      if (document.head.contains(styleEl)) {
+        document.head.removeChild(styleEl);
+      }
+    };
+
+    // Close X button
+    const closeX = document.createElement("button");
+    closeX.innerHTML = "&times;";
+    closeX.style.position = "absolute";
+    closeX.style.top = "10px";
+    closeX.style.right = "14px";
+    closeX.style.background = "none";
+    closeX.style.border = "none";
+    closeX.style.fontSize = "22px";
+    closeX.style.color = "#94a3b8";
+    closeX.style.cursor = "pointer";
+    closeX.onclick = closeAlert;
+    box.appendChild(closeX);
     
     // Inject animation styles
     const styleEl = document.createElement("style");
@@ -40,42 +65,98 @@ if (typeof window !== "undefined") {
     title.innerText = "Thông báo";
     title.style.margin = "0 0 12px 0";
     title.style.color = "#000080";
-    title.style.fontSize = "18px";
+    title.style.fontSize = "19px";
     title.style.fontWeight = "700";
 
     const text = document.createElement("p");
     text.innerText = message;
-    text.style.margin = "0 0 20px 0";
+    text.style.margin = "0 0 24px 0";
     text.style.color = "#334155";
-    text.style.fontSize = "14px";
+    text.style.fontSize = "14.5px";
     text.style.lineHeight = "1.6";
     text.style.fontWeight = "600";
 
-    const btn = document.createElement("button");
-    btn.innerText = "Đóng";
-    btn.style.background = "#F95800";
-    btn.style.color = "#fff";
-    btn.style.border = "none";
-    btn.style.padding = "8px 28px";
-    btn.style.borderRadius = "8px";
-    btn.style.cursor = "pointer";
-    btn.style.fontSize = "14px";
-    btn.style.fontWeight = "600";
-    btn.style.boxShadow = "0 2px 4px rgba(249, 88, 0, 0.2)";
-    btn.style.transition = "background 0.2s, transform 0.1s";
-    
-    btn.onmouseover = () => btn.style.background = "#e04f00";
-    btn.onmouseout = () => btn.style.background = "#F95800";
-    btn.onmousedown = () => btn.style.transform = "scale(0.95)";
-    btn.onmouseup = () => btn.style.transform = "scale(1)";
-    btn.onclick = () => {
-      document.body.removeChild(overlay);
-      document.head.removeChild(styleEl);
-    };
-
     box.appendChild(title);
     box.appendChild(text);
-    box.appendChild(btn);
+
+    if (isAuthPrompt) {
+      const btnGroup = document.createElement("div");
+      btnGroup.style.display = "flex";
+      btnGroup.style.justifyContent = "center";
+      btnGroup.style.gap = "12px";
+
+      const loginBtn = document.createElement("button");
+      loginBtn.innerText = "Đăng Nhập";
+      loginBtn.style.background = "#F95800";
+      loginBtn.style.color = "#fff";
+      loginBtn.style.border = "none";
+      loginBtn.style.padding = "10px 24px";
+      loginBtn.style.borderRadius = "8px";
+      loginBtn.style.cursor = "pointer";
+      loginBtn.style.fontSize = "14px";
+      loginBtn.style.fontWeight = "700";
+      loginBtn.style.boxShadow = "0 3px 8px rgba(249, 88, 0, 0.25)";
+      loginBtn.style.transition = "background 0.2s, transform 0.1s";
+      loginBtn.onmouseover = () => loginBtn.style.background = "#e04f00";
+      loginBtn.onmouseout = () => loginBtn.style.background = "#F95800";
+      loginBtn.onmousedown = () => loginBtn.style.transform = "scale(0.95)";
+      loginBtn.onmouseup = () => loginBtn.style.transform = "scale(1)";
+      loginBtn.onclick = () => {
+        closeAlert();
+        const hash = window.location.hash || "#/";
+        const baseUrl = hash.includes("?") ? hash.split("?")[0] : hash;
+        window.location.hash = `${baseUrl}?auth=login`;
+      };
+
+      const registerBtn = document.createElement("button");
+      registerBtn.innerText = "Đăng Ký";
+      registerBtn.style.background = "#000080";
+      registerBtn.style.color = "#fff";
+      registerBtn.style.border = "none";
+      registerBtn.style.padding = "10px 24px";
+      registerBtn.style.borderRadius = "8px";
+      registerBtn.style.cursor = "pointer";
+      registerBtn.style.fontSize = "14px";
+      registerBtn.style.fontWeight = "700";
+      registerBtn.style.boxShadow = "0 3px 8px rgba(0, 0, 128, 0.25)";
+      registerBtn.style.transition = "background 0.2s, transform 0.1s";
+      registerBtn.onmouseover = () => registerBtn.style.background = "#000066";
+      registerBtn.onmouseout = () => registerBtn.style.background = "#000080";
+      registerBtn.onmousedown = () => registerBtn.style.transform = "scale(0.95)";
+      registerBtn.onmouseup = () => registerBtn.style.transform = "scale(1)";
+      registerBtn.onclick = () => {
+        closeAlert();
+        const hash = window.location.hash || "#/";
+        const baseUrl = hash.includes("?") ? hash.split("?")[0] : hash;
+        window.location.hash = `${baseUrl}?auth=register`;
+      };
+
+      btnGroup.appendChild(loginBtn);
+      btnGroup.appendChild(registerBtn);
+      box.appendChild(btnGroup);
+    } else {
+      const btn = document.createElement("button");
+      btn.innerText = "Đóng";
+      btn.style.background = "#F95800";
+      btn.style.color = "#fff";
+      btn.style.border = "none";
+      btn.style.padding = "8px 28px";
+      btn.style.borderRadius = "8px";
+      btn.style.cursor = "pointer";
+      btn.style.fontSize = "14px";
+      btn.style.fontWeight = "600";
+      btn.style.boxShadow = "0 2px 4px rgba(249, 88, 0, 0.2)";
+      btn.style.transition = "background 0.2s, transform 0.1s";
+      
+      btn.onmouseover = () => btn.style.background = "#e04f00";
+      btn.onmouseout = () => btn.style.background = "#F95800";
+      btn.onmousedown = () => btn.style.transform = "scale(0.95)";
+      btn.onmouseup = () => btn.style.transform = "scale(1)";
+      btn.onclick = closeAlert;
+
+      box.appendChild(btn);
+    }
+
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   };
