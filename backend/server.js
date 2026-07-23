@@ -420,6 +420,197 @@ app.post("/qtv/khoahoc", async (req, res) => {
   }
 })
 
+// Xóa toàn bộ khóa học và các dữ liệu liên quan (Cascade delete)
+app.delete("/qtv/khoahoc/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input("id", id)
+      .query(`
+        -- 1. Xóa TONGKETKHOAHOC
+        DELETE FROM TONGKETKHOAHOC WHERE MaKhoaHoc = @id;
+
+        -- 2. Xóa DANGKYKHOAHOC
+        DELETE FROM DANGKYKHOAHOC WHERE MaKhoaHoc = @id;
+
+        -- 3. Xóa PHANCONGGIANGVIEN liên quan đến các lớp của khóa học
+        DELETE FROM PHANCONGGIANGVIEN 
+        WHERE MaLopHoc IN (
+             SELECT l.MaLopHoc FROM LOPHOC l 
+             JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
+             WHERE kc.MaKhoaHoc = @id
+           );
+
+        -- 4. Xóa PHANCONG_LOP_KYNANG thuộc các lớp của khóa học
+        DELETE FROM PHANCONG_LOP_KYNANG 
+        WHERE MaLopHoc IN (
+          SELECT l.MaLopHoc FROM LOPHOC l 
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 5. Xóa ghi danh học viên SINHVIEN_LOPHOC
+        DELETE FROM SINHVIEN_LOPHOC 
+        WHERE MaLopHoc IN (
+          SELECT l.MaLopHoc FROM LOPHOC l 
+          JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
+          WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 6. Gỡ ActiveBuoiHocId trong LOPHOC để tránh vòng lặp khóa ngoại
+        UPDATE LOPHOC SET ActiveBuoiHocId = NULL 
+        WHERE MaLop IN (SELECT MaLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id);
+
+        -- 7. Xóa TIENDO_MINITEST của các bài học thuộc khóa học hoặc các lớp của khóa học
+        DELETE FROM TIENDO_MINITEST 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
+          WHERE MaKhoaHoc = @id OR MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        -- 8. Xóa MINITEST
+        DELETE FROM MINITEST 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
+          WHERE MaKhoaHoc = @id OR MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        -- 9. Xóa TIENDOHOCTAP
+        DELETE FROM TIENDOHOCTAP 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
+          WHERE MaKhoaHoc = @id OR MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        -- 10. Xóa BAINOPTHEM
+        DELETE FROM BAINOPTHEM
+        WHERE MaLuyenTapThem IN (
+          SELECT MaLuyenTapThem FROM LUYENTAPTHEM
+          WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          ) OR MaBaiHoc IN (
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
+          )
+        );
+
+        -- 11. Xóa LUYENTAPTHEM
+        DELETE FROM LUYENTAPTHEM
+        WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+            SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+          )
+        ) OR MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaKhoaHoc = @id
+        );
+
+        -- 12. Xóa BAINOP (bài nộp của học viên cho các bài tập thuộc bài giảng/buổi học)
+        DELETE FROM BAINOP 
+        WHERE MaBaiTap IN (
+          SELECT MaBaiTap FROM BAITAP 
+          WHERE MaBaiHoc IN (
+            SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
+            WHERE MaKhoaHoc = @id OR MaBuoiHoc IN (
+              SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+                SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+              )
+            )
+          )
+        );
+
+        -- 13. Xóa BAITAP
+        DELETE FROM BAITAP 
+        WHERE MaBaiHoc IN (
+          SELECT MaBaiHoc FROM BAIHOCKHOAHOC 
+          WHERE MaKhoaHoc = @id OR MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        -- 14. Xóa BAIHOCKHOAHOC
+        DELETE FROM BAIHOCKHOAHOC 
+        WHERE MaKhoaHoc = @id OR MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+            SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+          )
+        );
+
+        -- 15. Xóa TAILIEU
+        DELETE FROM TAILIEU 
+        WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+            SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+          )
+        );
+
+        -- 16. Xóa KETQUABAIKIEMTRA
+        DELETE FROM KETQUABAIKIEMTRA 
+        WHERE MaBaiKiemTra IN (
+          SELECT MaBaiKiemTra FROM BAIKIEMTRA 
+          WHERE MaBuoiHoc IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          ) OR MaLesson IN (
+            SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+              SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+            )
+          )
+        );
+
+        -- 17. Xóa BAIKIEMTRA
+        DELETE FROM BAIKIEMTRA 
+        WHERE MaBuoiHoc IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+            SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+          )
+        ) OR MaLesson IN (
+          SELECT MaBuoiHoc FROM BUOIHOC WHERE MaLopHoc IN (
+            SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+          )
+        );
+
+        -- 18. Xóa BUOIHOC
+        DELETE FROM BUOIHOC 
+        WHERE MaLopHoc IN (
+          SELECT l.MaLopHoc FROM LOPHOC l JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop WHERE kc.MaKhoaHoc = @id
+        );
+
+        -- 19. Xóa LOPHOC
+        DELETE FROM LOPHOC 
+        WHERE MaLop IN (SELECT MaLop FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id);
+
+        -- 20. Xóa KHOAHOCCHITIET (Trình độ / Lớp chi tiết)
+        DELETE FROM KHOAHOCCHITIET WHERE MaKhoaHoc = @id;
+
+        -- 21. Cuối cùng, xóa KHOAHOC
+        DELETE FROM KHOAHOC WHERE MaKhoaHoc = @id;
+      `);
+
+    res.json({ message: "Đã xóa toàn bộ khóa học và các dữ liệu liên quan thành công" });
+  } catch (err) {
+    console.error("❌ Lỗi khi xóa khóa học:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Tạo lớp học và sao chép lộ trình
 app.post("/qtv/lophoc", async (req, res) => {
   const { TenLop, MaLop, LichHoc, SoLuongHocVien, CopyFromClassId, teachers } = req.body
