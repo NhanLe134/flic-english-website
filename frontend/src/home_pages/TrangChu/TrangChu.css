@@ -1,16 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Playfair+Display:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap');
 
-/* Kiểu mặc định cho trang chủ (Desktop/Laptop) */
+:root {
+  --color-orange: #F95800;
+  --color-blue: #000080;
+  --color-navy: #00004d;
+  --color-bg-light: #f8fafc;
+  --color-text-dark: #0f172a;
+  --color-text-muted: #64748b;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Kiểu mặc định cho trang chủ */
 .trang-chu {
   width: 100%;
   overflow-x: hidden;
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  color: var(--color-text-dark);
+}
+
+.section-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-orange);
+  background-color: rgba(249, 88, 0, 0.1);
+  padding: 6px 16px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
 }
 
 /* ================= HỢP PHẦN HERO ================= */
 .hero {
-  background-color: white;
-  padding: 50px 0 100px;
-  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at 80% 20%, rgba(0, 82, 212, 0.05) 0%, transparent 50%), 
+              radial-gradient(circle at 20% 80%, rgba(249, 88, 0, 0.05) 0%, transparent 50%),
+              #ffffff;
+  padding: 80px 0 120px;
+  position: relative;
 }
 
 .hero-container {
@@ -23,81 +50,101 @@
 }
 
 .hero-left {
-  width: 50%;
+  width: 55%;
 }
 
-/* TIÊU ĐỀ PHỤ */
 .hero-subtitle {
-  display: block;
-  font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  display: inline-block;
+  font-size: 14px;
   font-weight: 700;
-  color: #111111;
-  margin-bottom: 12px;
+  color: var(--color-blue);
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
 }
 
-/* TIÊU ĐỀ CHÍNH */
 .hero-left h1 {
-  font-family: 'Inter', sans-serif;
-  font-size: 52px;
+  font-size: 48px;
   font-weight: 800;
-  line-height: 1.15;
-  margin: 16px 0 24px;
-  color: #111111;
-  letter-spacing: -1px;
+  line-height: 1.2;
+  margin: 0 0 24px 0;
+  color: var(--color-navy);
+  letter-spacing: -0.5px;
 }
 
-/* MÔ TẢ */
 .hero-left p {
-  font-family: 'Inter', sans-serif;
-  font-style: italic;
   font-size: 16px;
-  color: #4a4a4a;
+  color: var(--color-text-muted);
   margin-bottom: 40px;
-  line-height: 1.6;
-  max-width: 500px;
+  line-height: 1.7;
+  max-width: 550px;
 }
 
-/* THỐNG KÊ */
 .hero-stats {
   display: flex;
-  gap: 48px;
+  gap: 32px;
   margin-bottom: 40px;
 }
 
-.hero-stats>div {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.stat-card {
+  background: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.02);
+  flex: 0 1 auto;
+  min-width: 150px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
 }
 
 .hero-stats h3 {
-  font-family: 'Inter', sans-serif;
-  color: #F95800;
-  font-size: 32px;
-  font-weight: 700;
+  display: block !important;
+  color: var(--color-orange);
+  font-size: 24px;
+  font-weight: 800;
   margin: 0;
-  line-height: 1;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .hero-stats span {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: #555555;
-  font-weight: 500;
+  display: block !important;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: left;
 }
 
-/* HÌNH ẢNH HERO */
 .hero-right {
+  position: relative;
+  width: 40%;
   display: flex;
-  justify-content: flex-end;
-  width: 45%;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-image-backdrop {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 82, 212, 0.1) 0%, rgba(249, 88, 0, 0.1) 100%);
+  filter: blur(40px);
+  z-index: 1;
 }
 
 .hero-right img {
-  width: 450px;
+  width: 100%;
+  max-width: 420px;
   height: auto;
-  display: block;
+  z-index: 2;
+  position: relative;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.1));
 }
 
 .hero-buttons {
@@ -107,35 +154,38 @@
 
 .btn-login,
 .btn-register {
-  font-family: 'Inter', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  padding: 12px 40px;
+  padding: 14px 32px;
   border-radius: 30px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-smooth);
   outline: none;
 }
 
 .btn-login {
-  background-color: #F95800;
+  background-color: var(--color-orange);
   color: white;
-  border: 2px solid #F95800;
+  border: 2px solid var(--color-orange);
+  box-shadow: 0 4px 14px rgba(249, 88, 0, 0.3);
 }
 
 .btn-login:hover {
   background-color: #d64c00;
   border-color: #d64c00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 88, 0, 0.4);
 }
 
 .btn-register {
   background-color: transparent;
-  color: #F95800;
-  border: 2px solid #F95800;
+  color: var(--color-blue);
+  border: 2px solid var(--color-blue);
 }
 
 .btn-register:hover {
-  background-color: #FFF2EB;
+  background-color: rgba(0, 82, 212, 0.05);
+  transform: translateY(-2px);
 }
 
 /* ================= HỢP PHẦN ABOUT (GIỚI THIỆU) ================= */
@@ -810,4 +860,17 @@
   max-width: 720px;
   margin: 0 auto;
   color: rgba(255, 255, 255, 0.95);
+}
+
+/* Scroll Reveal / Slide Transition Effect like enet */
+.reveal {
+  opacity: 0;
+  transform: translateY(45px);
+  transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform, opacity;
+}
+
+.reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
