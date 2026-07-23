@@ -239,7 +239,7 @@ function BaiGiangSV() {
     if (!video) return;
     const targetTime = parseFloat(e.target.value);
     
-    if (progress.DaXemVideo === 0) {
+    if (progress.DaXemVideo !== 1) {
       if (targetTime > maxTimeWatchedRef.current + 0.1) {
         return;
       }
@@ -318,7 +318,7 @@ function BaiGiangSV() {
     const video = e.target;
     const currTime = video.currentTime;
     
-    if (progress.DaXemVideo === 0) {
+    if (progress.DaXemVideo !== 1) {
       if (video.seeking) {
         if (currTime > maxTimeWatchedRef.current + 0.1) {
           video.currentTime = maxTimeWatchedRef.current;
@@ -349,7 +349,7 @@ function BaiGiangSV() {
 
   const handleSeeking = (e: any) => {
     const video = e.target;
-    if (progress.DaXemVideo === 0) {
+    if (progress.DaXemVideo !== 1) {
       if (video.currentTime > maxTimeWatchedRef.current + 0.1) {
         video.currentTime = maxTimeWatchedRef.current;
       }
@@ -357,6 +357,36 @@ function BaiGiangSV() {
   };
 
   const handleMarkVideoComplete = async () => {
+    if (progress.DaXemVideo === 1) return;
+
+    let durationValue = duration;
+    let watchedTime = maxTimeWatchedRef.current;
+
+    if (videoRef.current) {
+      durationValue = videoRef.current.duration || duration;
+    } else if (ytPlayerRef.current && typeof ytPlayerRef.current.getDuration === "function") {
+      durationValue = ytPlayerRef.current.getDuration();
+    }
+
+    if (durationValue > 0) {
+      const percentWatched = (watchedTime / durationValue) * 100;
+      if (percentWatched < 90) {
+        console.warn(`Chưa xem hết video (mới xem ${percentWatched.toFixed(1)}%). Không thể hoàn thành.`);
+        if (videoRef.current) {
+          videoRef.current.currentTime = watchedTime;
+          setCurrentTime(watchedTime);
+          setIsPlaying(false);
+          videoRef.current.pause();
+        } else if (ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === "function") {
+          ytPlayerRef.current.seekTo(watchedTime, true);
+          try {
+            ytPlayerRef.current.pauseVideo();
+          } catch (e) {}
+        }
+        return;
+      }
+    }
+
     // Optimistically update local state to unlock Minitest immediately
     setProgress(prev => ({ ...prev, DaXemVideo: 1 }));
     if (!id || !maSinhVien) return;
@@ -422,7 +452,7 @@ function BaiGiangSV() {
                 const state = player.getPlayerState();
                 if (state === (window as any).YT.PlayerState.PLAYING) {
                   const currentTime = player.getCurrentTime();
-                  if (progress.DaXemVideo === 0) {
+                  if (progress.DaXemVideo !== 1) {
                     if (currentTime > maxTimeWatchedRef.current + 1.5) {
                       player.seekTo(maxTimeWatchedRef.current, true);
                     } else if (currentTime > maxTimeWatchedRef.current) {
@@ -938,7 +968,7 @@ function BaiGiangSV() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={async () => {
-                      if (progress.DaXemVideo === 0) {
+                      if (progress.DaXemVideo !== 1) {
                         await handleMarkVideoComplete();
                       }
                     }}
@@ -1335,15 +1365,15 @@ function BaiGiangSV() {
               {/* Bước 2: Minitest */}
               {minitestQuestions && minitestQuestions.length > 0 && (
                 <div className={`ld2-timeline-item ${
-                  progress.DaXemVideo === 0 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
+                  progress.DaXemVideo !== 1 ? "" : progress.DaDatMinitest === 1 ? "completed" : "active"
                 }`}>
                   <div className="ld2-timeline-bullet">
-                    {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo === 0 ? <FiLock /> : "2"}
+                    {progress.DaDatMinitest === 1 ? <FiCheckCircle /> : progress.DaXemVideo !== 1 ? <FiLock /> : "2"}
                   </div>
                   <div className="ld2-timeline-content">
                     <span className="ld2-timeline-label">Hoàn thành Minitest</span>
                     <span className="ld2-timeline-desc">
-                      {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo === 0 ? "Đang khóa" : "Chờ thực hiện"}
+                      {progress.DaDatMinitest === 1 ? "Đạt yêu cầu" : progress.DaXemVideo !== 1 ? "Đang khóa" : "Chờ thực hiện"}
                     </span>
                   </div>
                 </div>

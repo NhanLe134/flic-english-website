@@ -86,6 +86,13 @@
   color: white !important;
 }
 
+.html-content table th,
+.html-content table th *,
+.text-content table th,
+.text-content table th * {
+  color: white !important;
+}
+
 .html-content .detail-table td {
   border: 1px solid #e0d4c3;
   padding: 10px 14px;

@@ -1,6 +1,7 @@
-// Override native window.alert with a premium custom overlay modal
 if (typeof window !== "undefined") {
   window.alert = function (message) {
+    const isAuthPrompt = typeof message === "string" && message.toLowerCase().includes("đăng nhập");
+
     const overlay = document.createElement("div");
     overlay.className = "global-alert-overlay-bg";
     overlay.style.position = "fixed";
@@ -8,7 +9,7 @@ if (typeof window !== "undefined") {
     overlay.style.left = "0";
     overlay.style.width = "100%";
     overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.45)";
     overlay.style.display = "flex";
     overlay.style.justifyContent = "center";
     overlay.style.alignItems = "center";
@@ -16,14 +17,38 @@ if (typeof window !== "undefined") {
     overlay.style.fontFamily = "'Segoe UI', Roboto, sans-serif";
 
     const box = document.createElement("div");
+    box.style.position = "relative";
     box.style.background = "#fff";
-    box.style.padding = "24px 32px";
+    box.style.padding = "28px 32px";
     box.style.borderRadius = "16px";
     box.style.width = "fit-content";
-    box.style.minWidth = "320px";
+    box.style.minWidth = "340px";
     box.style.maxWidth = "480px";
     box.style.textAlign = "center";
-    box.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
+    box.style.boxShadow = "0 15px 35px rgba(0,0,0,0.18)";
+
+    const closeAlert = () => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      if (document.head.contains(styleEl)) {
+        document.head.removeChild(styleEl);
+      }
+    };
+
+    // Close X button
+    const closeX = document.createElement("button");
+    closeX.innerHTML = "&times;";
+    closeX.style.position = "absolute";
+    closeX.style.top = "10px";
+    closeX.style.right = "14px";
+    closeX.style.background = "none";
+    closeX.style.border = "none";
+    closeX.style.fontSize = "22px";
+    closeX.style.color = "#94a3b8";
+    closeX.style.cursor = "pointer";
+    closeX.onclick = closeAlert;
+    box.appendChild(closeX);
     
     // Inject animation styles
     const styleEl = document.createElement("style");
@@ -40,49 +65,105 @@ if (typeof window !== "undefined") {
     title.innerText = "Thông báo";
     title.style.margin = "0 0 12px 0";
     title.style.color = "#000080";
-    title.style.fontSize = "18px";
+    title.style.fontSize = "19px";
     title.style.fontWeight = "700";
 
     const text = document.createElement("p");
     text.innerText = message;
-    text.style.margin = "0 0 20px 0";
+    text.style.margin = "0 0 24px 0";
     text.style.color = "#334155";
-    text.style.fontSize = "14px";
+    text.style.fontSize = "14.5px";
     text.style.lineHeight = "1.6";
     text.style.fontWeight = "600";
 
-    const btn = document.createElement("button");
-    btn.innerText = "Đóng";
-    btn.style.background = "#F95800";
-    btn.style.color = "#fff";
-    btn.style.border = "none";
-    btn.style.padding = "8px 28px";
-    btn.style.borderRadius = "8px";
-    btn.style.cursor = "pointer";
-    btn.style.fontSize = "14px";
-    btn.style.fontWeight = "600";
-    btn.style.boxShadow = "0 2px 4px rgba(249, 88, 0, 0.2)";
-    btn.style.transition = "background 0.2s, transform 0.1s";
-    
-    btn.onmouseover = () => btn.style.background = "#e04f00";
-    btn.onmouseout = () => btn.style.background = "#F95800";
-    btn.onmousedown = () => btn.style.transform = "scale(0.95)";
-    btn.onmouseup = () => btn.style.transform = "scale(1)";
-    btn.onclick = () => {
-      document.body.removeChild(overlay);
-      document.head.removeChild(styleEl);
-    };
-
     box.appendChild(title);
     box.appendChild(text);
-    box.appendChild(btn);
+
+    if (isAuthPrompt) {
+      const btnGroup = document.createElement("div");
+      btnGroup.style.display = "flex";
+      btnGroup.style.justifyContent = "center";
+      btnGroup.style.gap = "12px";
+
+      const loginBtn = document.createElement("button");
+      loginBtn.innerText = "Đăng Nhập";
+      loginBtn.style.background = "#F95800";
+      loginBtn.style.color = "#fff";
+      loginBtn.style.border = "none";
+      loginBtn.style.padding = "10px 24px";
+      loginBtn.style.borderRadius = "8px";
+      loginBtn.style.cursor = "pointer";
+      loginBtn.style.fontSize = "14px";
+      loginBtn.style.fontWeight = "700";
+      loginBtn.style.boxShadow = "0 3px 8px rgba(249, 88, 0, 0.25)";
+      loginBtn.style.transition = "background 0.2s, transform 0.1s";
+      loginBtn.onmouseover = () => loginBtn.style.background = "#e04f00";
+      loginBtn.onmouseout = () => loginBtn.style.background = "#F95800";
+      loginBtn.onmousedown = () => loginBtn.style.transform = "scale(0.95)";
+      loginBtn.onmouseup = () => loginBtn.style.transform = "scale(1)";
+      loginBtn.onclick = () => {
+        closeAlert();
+        const hash = window.location.hash || "#/";
+        const baseUrl = hash.includes("?") ? hash.split("?")[0] : hash;
+        window.location.hash = `${baseUrl}?auth=login`;
+      };
+
+      const registerBtn = document.createElement("button");
+      registerBtn.innerText = "Đăng Ký";
+      registerBtn.style.background = "#000080";
+      registerBtn.style.color = "#fff";
+      registerBtn.style.border = "none";
+      registerBtn.style.padding = "10px 24px";
+      registerBtn.style.borderRadius = "8px";
+      registerBtn.style.cursor = "pointer";
+      registerBtn.style.fontSize = "14px";
+      registerBtn.style.fontWeight = "700";
+      registerBtn.style.boxShadow = "0 3px 8px rgba(0, 0, 128, 0.25)";
+      registerBtn.style.transition = "background 0.2s, transform 0.1s";
+      registerBtn.onmouseover = () => registerBtn.style.background = "#000066";
+      registerBtn.onmouseout = () => registerBtn.style.background = "#000080";
+      registerBtn.onmousedown = () => registerBtn.style.transform = "scale(0.95)";
+      registerBtn.onmouseup = () => registerBtn.style.transform = "scale(1)";
+      registerBtn.onclick = () => {
+        closeAlert();
+        const hash = window.location.hash || "#/";
+        const baseUrl = hash.includes("?") ? hash.split("?")[0] : hash;
+        window.location.hash = `${baseUrl}?auth=register`;
+      };
+
+      btnGroup.appendChild(loginBtn);
+      btnGroup.appendChild(registerBtn);
+      box.appendChild(btnGroup);
+    } else {
+      const btn = document.createElement("button");
+      btn.innerText = "Đóng";
+      btn.style.background = "#F95800";
+      btn.style.color = "#fff";
+      btn.style.border = "none";
+      btn.style.padding = "8px 28px";
+      btn.style.borderRadius = "8px";
+      btn.style.cursor = "pointer";
+      btn.style.fontSize = "14px";
+      btn.style.fontWeight = "600";
+      btn.style.boxShadow = "0 2px 4px rgba(249, 88, 0, 0.2)";
+      btn.style.transition = "background 0.2s, transform 0.1s";
+      
+      btn.onmouseover = () => btn.style.background = "#e04f00";
+      btn.onmouseout = () => btn.style.background = "#F95800";
+      btn.onmousedown = () => btn.style.transform = "scale(0.95)";
+      btn.onmouseup = () => btn.style.transform = "scale(1)";
+      btn.onclick = closeAlert;
+
+      box.appendChild(btn);
+    }
+
     overlay.appendChild(box);
     document.body.appendChild(overlay);
   };
 }
 
 if (typeof window !== "undefined") {
-  (window as any).showGlobalErrorPopup = function (titleText: string, messageText: string, detailsText?: string) {
+  (window as any).showGlobalErrorPopup = function (titleText: string, messageText: string) {
     if (document.getElementById("global-error-overlay-container")) return;
 
     const overlay = document.createElement("div");
@@ -125,11 +206,6 @@ if (typeof window !== "undefined") {
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.marginBottom = "16px";
-    header.style.gap = "12px";
-
-    const icon = document.createElement("span");
-    icon.innerText = "🚨";
-    icon.style.fontSize = "28px";
 
     const title = document.createElement("h3");
     title.innerText = titleText || "Hệ thống gặp sự cố";
@@ -138,45 +214,17 @@ if (typeof window !== "undefined") {
     title.style.fontSize = "20px";
     title.style.fontWeight = "700";
 
-    header.appendChild(icon);
     header.appendChild(title);
     box.appendChild(header);
 
     const desc = document.createElement("p");
     desc.innerText = messageText || "Đã xảy ra lỗi không mong muốn trong quá trình vận hành.";
-    desc.style.margin = "0 0 16px 0";
+    desc.style.margin = "0 0 20px 0";
     desc.style.color = "#1e293b";
     desc.style.fontSize = "14.5px";
     desc.style.lineHeight = "1.5";
     desc.style.fontWeight = "600";
     box.appendChild(desc);
-
-    if (detailsText) {
-      const detailsTitle = document.createElement("div");
-      detailsTitle.innerText = "Chi tiết kỹ thuật:";
-      detailsTitle.style.fontSize = "12.5px";
-      detailsTitle.style.fontWeight = "700";
-      detailsTitle.style.color = "#64748b";
-      detailsTitle.style.marginBottom = "6px";
-      box.appendChild(detailsTitle);
-
-      const detailsBox = document.createElement("pre");
-      detailsBox.innerText = detailsText;
-      detailsBox.style.margin = "0 0 24px 0";
-      detailsBox.style.padding = "12px";
-      detailsBox.style.background = "#f8fafc";
-      detailsBox.style.border = "1px solid #e2e8f0";
-      detailsBox.style.borderRadius = "8px";
-      detailsBox.style.fontSize = "12px";
-      detailsBox.style.color = "#0f172a";
-      detailsBox.style.overflowX = "auto";
-      detailsBox.style.maxHeight = "150px";
-      detailsBox.style.overflowY = "auto";
-      detailsBox.style.whiteSpace = "pre-wrap";
-      detailsBox.style.wordBreak = "break-all";
-      detailsBox.style.fontFamily = "Consolas, Monaco, monospace";
-      box.appendChild(detailsBox);
-    }
 
     const footer = document.createElement("div");
     footer.style.display = "flex";
@@ -210,25 +258,18 @@ if (typeof window !== "undefined") {
   };
 
   // Intercept Global Errors
-  window.addEventListener("error", (event) => {
-    if (event.message) {
-      (window as any).showGlobalErrorPopup(
-        "Sự cố hệ thống",
-        `Phát hiện lỗi runtime: ${event.message}`,
-        `Tệp tin: ${event.filename}\nDòng: ${event.lineno}, Cột: ${event.colno}`
-      );
-    }
+  window.addEventListener("error", () => {
+    (window as any).showGlobalErrorPopup(
+      "Lỗi xử lý ứng dụng",
+      "Đã xảy ra sự cố khi tải dữ liệu hoặc giao diện. Bạn vui lòng tải lại trang (F5) để tiếp tục."
+    );
   });
 
   // Intercept Unhandled Promise Rejections
-  window.addEventListener("unhandledrejection", (event) => {
-    const reason = event.reason;
-    const msg = reason?.message || String(reason);
-    const stack = reason?.stack || "";
+  window.addEventListener("unhandledrejection", () => {
     (window as any).showGlobalErrorPopup(
-      "Sự cố bất đồng bộ",
-      `Phát hiện lỗi Unhandled Promise Rejection: ${msg}`,
-      stack || "Không có stack trace."
+      "Thao tác chưa thể hoàn thành",
+      "Hệ thống không thể xử lý thao tác vừa thực hiện. Vui lòng thử lại hoặc tải lại trang."
     );
   });
 
@@ -238,20 +279,16 @@ if (typeof window !== "undefined") {
     try {
       const response = await originalFetch(...args);
       if (!response.ok && response.status >= 500) {
-        const clonedResponse = response.clone();
-        const errorText = await clonedResponse.text().catch(() => "Không có thông tin lỗi chi tiết.");
         (window as any).showGlobalErrorPopup(
-          `Lỗi phản hồi máy chủ (${response.status})`,
-          `Yêu cầu tới API gặp sự cố phản hồi không hợp lệ.`,
-          `API URL: ${response.url}\n\nChi tiết phản hồi từ máy chủ:\n${errorText}`
+          `Máy chủ gặp sự cố (Lỗi ${response.status})`,
+          `Máy chủ xử lý yêu cầu gặp lỗi nội bộ (${response.status}). Vui lòng kiểm tra lại dịch vụ Backend hoặc liên hệ quản trị viên.`
         );
       }
       return response;
     } catch (error: any) {
       (window as any).showGlobalErrorPopup(
-        "Lỗi Kết Nối Mạng",
-        `Không thể gửi yêu cầu đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn hoặc liên hệ quản trị viên.`,
-        `Chi tiết sự cố:\n${error.message || String(error)}`
+        "Mất kết nối máy chủ (Backend)",
+        "Không thể kết nối đến máy chủ Backend (Port 5004). Vui lòng kiểm tra kết nối mạng hoặc đảm bảo máy chủ Backend đang hoạt động."
       );
       throw error;
     }

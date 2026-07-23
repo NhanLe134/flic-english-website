@@ -2961,7 +2961,7 @@ D. Visiting friends
         </div>
       </div>
 
-      <div className="cd-content">
+      <div className="cd-content" style={isQTV ? { padding: 0 } : undefined}>
       {/* TABS BAR */}
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "24px" }}>
         <button

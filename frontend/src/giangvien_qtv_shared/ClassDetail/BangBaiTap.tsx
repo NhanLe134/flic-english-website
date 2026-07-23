@@ -141,7 +141,7 @@ const BangBaiTap: React.FC<BangBaiTapProps> = ({
                 colSpan={coTheThaoTacMo ? 8 : 7}
                 className="empty-row"
               >
-                Chưa có bài tập nào cho buổi học này.
+                Không tìm thấy bài tập nào
               </td>
             </tr>
           ) : (
