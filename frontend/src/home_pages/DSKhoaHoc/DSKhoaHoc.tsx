@@ -3,7 +3,6 @@ import Footer from "../../components/Footer/Footer";
 import "./DSKhoaHoc.css";
 import "./DSKhoaHoc_TuongThich.css"; // Import file css tuong thich rieng
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 
 const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
@@ -12,7 +11,6 @@ const getCourseImage = (title?: string, trinhDo?: string) => {
   const t = (title || "").toLowerCase();
   const td = (trinhDo || "").toLowerCase();
   if (t.includes("toeic") || td.includes("toeic")) return "/image(17).png";
-  if (t.includes("ielts") || td.includes("ielts")) return "/image(18).png";
   if (t.includes("vstep") || td.includes("vstep")) return "/image(19).png";
   return "/image(20).png";
 };
@@ -20,7 +18,6 @@ const getCourseImage = (title?: string, trinhDo?: string) => {
 const DSKhoaHoc = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`${API}/courses`)
@@ -38,9 +35,15 @@ const DSKhoaHoc = () => {
     <>
       <NavTuDong />
 
+      <div className="courses-header-banner">
+        <div className="courses-banner-content">
+          <h1>CHƯƠNG TRÌNH ĐÀO TẠO</h1>
+          <p>Lộ trình tối ưu – Cam kết chất lượng đầu ra bằng văn bản</p>
+        </div>
+      </div>
+
       <div className="courses-page-wrapper">
         <div className="courses-container">
-          <h1 className="courses-title">CÁC KHÓA HỌC</h1>
 
           {loading ? (
             <div style={{ textAlign: "center", padding: "80px 0", color: "#64748b" }}>
@@ -58,9 +61,9 @@ const DSKhoaHoc = () => {
                   <div className="course-item-container" key={course.MaKhoaHoc}>
                     <div className="course-item">
                       <div className="course-img-wrapper">
-                        <img 
-                          src={course.HinhAnh ? `${API}${course.HinhAnh}` : `${import.meta.env.BASE_URL}${imgPath.substring(1)}`} 
-                          alt={course.TenKhoaHoc} 
+                        <img
+                          src={course.HinhAnh ? `${API}${course.HinhAnh}` : `${import.meta.env.BASE_URL}${imgPath.substring(1)}`}
+                          alt={course.TenKhoaHoc}
                         />
                         {course.TrinhDo && <span className="course-level-badge">{course.TrinhDo}</span>}
                       </div>
@@ -72,8 +75,8 @@ const DSKhoaHoc = () => {
                         </div>
 
                         <div className="course-buttons">
-                          <button onClick={() => navigate(`/coursehome/${course.MaKhoaHoc}`)}>
-                            Xem chi tiết & Đăng ký
+                          <button onClick={() => window.open("https://flic.due.udn.vn/ngoai_ngu/", "_blank", "noopener,noreferrer")}>
+                            Đăng ký khóa học
                           </button>
                         </div>
                       </div>

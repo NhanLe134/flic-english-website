@@ -26,8 +26,7 @@ function Nav() {
   const isAbout = location.pathname === "/about";
   const isCourses =
     location.pathname === "/courses" ||
-    location.pathname.startsWith("/courses-category") ||
-    location.pathname.startsWith("/coursehome");
+    location.pathname.startsWith("/courses-category");
   const isTrialActive = location.pathname === "/hoc-thu" || location.pathname === "/test-thu";
 
   // Hàm chuyển đổi menu di động

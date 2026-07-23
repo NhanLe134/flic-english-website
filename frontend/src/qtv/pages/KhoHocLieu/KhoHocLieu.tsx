@@ -91,7 +91,7 @@ const KhoHocLieu = () => {
   const [toast, setToast] = useState("");
   
   // Delete confirm modal
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; type: "baigiang" | "baitap" | "tailieu"; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; type: "baigiang" | "baitap" | "tailieu" | "buoihoc"; title: string } | null>(null);
 
   // Session creation modal states
   const [showAddSessionModal, setShowAddSessionModal] = useState(false);
@@ -408,6 +408,7 @@ const KhoHocLieu = () => {
     if (type === "baigiang") url = `${API}/baigiang/${id}`;
     else if (type === "baitap") url = `${API}/baitap/${id}`;
     else if (type === "tailieu") url = `${API}/tailieu/${id}`;
+    else if (type === "buoihoc") url = `${API}/qtv/buoihoc/${id}`;
 
     try {
       const res = await fetch(url, { method: "DELETE" });
@@ -421,6 +422,8 @@ const KhoHocLieu = () => {
           setExercises(prev => prev.filter(item => String(item.MaBaiTap) !== cleanId));
         } else if (type === "tailieu") {
           setDocuments(prev => prev.filter(item => item.MaTaiLieu !== id));
+        } else if (type === "buoihoc") {
+          fetchData();
         }
       } else {
         alert("Xóa thất bại. Vui lòng kiểm tra lại!");
@@ -503,23 +506,8 @@ const KhoHocLieu = () => {
   };
 
   // Session deletion handler
-  const handleDeleteSession = async (sessionId: number, sessionName: string) => {
-    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa "${sessionName}" không? Hành động này sẽ xóa buổi học và gỡ bỏ toàn bộ học liệu liên quan.`);
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(`${API}/qtv/buoihoc/${sessionId}`, { method: "DELETE" });
-      if (res.ok) {
-        showToast("Đã xóa buổi học thành công!");
-        fetchData();
-      } else {
-        const errText = await res.text();
-        alert("Xóa buổi học thất bại: " + errText);
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert("Lỗi kết nối khi xóa buổi học: " + err.message);
-    }
+  const handleDeleteSession = (sessionId: number, sessionName: string) => {
+    setDeleteTarget({ id: sessionId, type: "buoihoc", title: sessionName });
   };
 
   // Lecture modal actions

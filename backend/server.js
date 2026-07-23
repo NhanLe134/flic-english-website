@@ -276,20 +276,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowed = [
-      "image/jpeg", "image/png", "image/gif", "image/webp",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
-      "audio/mpeg", "audio/wav", "audio/mp4", "audio/x-m4a", "audio/webm", "audio/ogg", "audio/webm;codecs=opus", "audio/ogg;codecs=opus",
-      "video/mp4", "video/webm", "video/ogg", "video/quicktime",
-      "application/octet-stream"
-    ];
-    if (allowed.includes(file.mimetype) || file.mimetype.startsWith("audio/")) cb(null, true);
-    else cb(new Error("File không hợp lệ"));
+    cb(null, true);
   }
 });
 app.post("/upload", upload.single("file"), (req, res) => {
@@ -5083,24 +5070,26 @@ app.post("/exercises/:id/clone", async (req, res) => {
     }
 
     let targetMaBaiHoc = null;
-    if (req.body.hasOwnProperty("MaBaiHoc")) {
-      targetMaBaiHoc = MaBaiHoc ? parseInt(MaBaiHoc, 10) : null;
+    if (req.body.hasOwnProperty("MaBaiHoc") && req.body.MaBaiHoc !== null && req.body.MaBaiHoc !== "") {
+      targetMaBaiHoc = parseInt(MaBaiHoc, 10);
     } else {
-      const bhResult = await pool.request()
-        .input("buoiHocId", MaBuoiHoc)
-        .query("SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC");
-      if (bhResult.recordset.length > 0) {
-        targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
-      } else {
-        const insertBh = await pool.request()
+      if (MaBuoiHoc) {
+        const bhResult = await pool.request()
           .input("buoiHocId", MaBuoiHoc)
-          .input("MaNguoiDung", clonerMaNguoiDung)
-          .query(`
-            INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
-            VALUES (1, N'Bài giảng mặc định', '', 'published', @buoiHocId, @MaNguoiDung);
-            SELECT SCOPE_IDENTITY() AS MaBaiHoc;
-          `);
-        targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+          .query("SELECT TOP 1 MaBaiHoc FROM BAIHOCKHOAHOC WHERE MaBuoiHoc = @buoiHocId ORDER BY ThuTu ASC");
+        if (bhResult.recordset.length > 0) {
+          targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
+        } else {
+          const insertBh = await pool.request()
+            .input("buoiHocId", MaBuoiHoc)
+            .input("MaNguoiDung", clonerMaNguoiDung)
+            .query(`
+              INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
+              VALUES (1, N'Bài giảng mặc định', '', 'published', @buoiHocId, @MaNguoiDung);
+              SELECT SCOPE_IDENTITY() AS MaBaiHoc;
+            `);
+          targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
+        }
       }
     }
 

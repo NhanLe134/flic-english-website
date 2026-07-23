@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import styles from "./DuyetBaiQTV.module.css";
-import { FiSearch, FiEye } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import ChiTietBaiTap from "../../../sinhvien/pages/AssignmentDetail/KhungHienThi/ChiTietBaiTap";
 
 const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
@@ -9,6 +11,89 @@ const getMediaUrl = (url: string) => {
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
   return API + "/" + url.replace(/^\//, "");
+};
+
+const getYoutubeEmbedUrl = (url: string) => {
+  if (!url) return "";
+  let videoId = "";
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    videoId = match[2];
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+};
+
+const getGoogleDriveEmbedUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("drive.google.com")) {
+    return url.replace(/\/view(\?.*)?$/, "/preview");
+  }
+  return url;
+};
+
+const unescapeMarkdown = (str: string) => {
+  if (!str) return "";
+  let s = str
+    .replace(/^#\s+(#{1,6}\s)/gm, "$1")
+    .replace(/^#\s+(?!#)/gm, "")
+    .replace(/^\\(#{1,6})/gm, "$1")
+    .replace(/^\\-/gm, "-")
+    .replace(/\\\|/g, "|")
+    .replace(/\\>/g, ">")
+    .replace(/\\\*/g, "*")
+    .replace(/\\_/g, "_")
+    .replace(/\\\./g, ".")
+    .replace(/\\!/g, "!")
+    .replace(/\n{3,}/g, "\n\n");
+
+  const lines = s.split("\n");
+  const out: string[] = [];
+
+  const isListOrTable = (l: string) =>
+    /^\s*[-*+] /.test(l) ||
+    /^\s*\d+\./.test(l) ||
+    /^\|/.test(l.trim());
+
+  for (let i = 0; i < lines.length; i++) {
+    const prev = out[out.length - 1] ?? "";
+    const cur = lines[i];
+    const next = lines[i + 1] ?? "";
+
+    if (cur.trim() === "" && isListOrTable(prev) && isListOrTable(next)) {
+      continue;
+    }
+    if (cur.trim() === "" && !isListOrTable(prev) && prev.trim() !== "" && isListOrTable(next)) {
+      continue;
+    }
+
+    out.push(cur);
+  }
+
+  return out.join("\n");
+};
+
+const markdownComponents = {
+  ul: ({ children }: any) => (
+    <ul style={{ paddingLeft: 24, margin: "4px 0" }}>{children}</ul>
+  ),
+  ol: ({ children }: any) => (
+    <ol style={{ paddingLeft: 24, margin: "4px 0" }}>{children}</ol>
+  ),
+  li: ({ children }: any) => {
+    const unwrapped = React.Children.map(children, (child: any) => {
+      if (child?.type === "p") return child.props.children;
+      return child;
+    });
+    return (
+      <li style={{ margin: "2px 0", padding: 0, lineHeight: 1.6 }}>
+        {unwrapped}
+      </li>
+    );
+  },
+  p: ({ children }: any) => (
+    <p style={{ margin: "6px 0", padding: 0 }}>{children}</p>
+  ),
 };
 
 type ContentType = "baigiang" | "baitap" | "dethi";
@@ -44,6 +129,43 @@ export default function DuyetBaiQTV() {
   const [dethiData, setDethiData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const [lessonDetail, setLessonDetail] = useState<any>(null);
+  const [minitestData, setMinitestData] = useState<any>(null);
+  const [minitestQuestions, setMinitestQuestions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (selectedItem && activeTab === "baigiang" && selectedItem.MaBaiHoc) {
+      fetch(`${API}/baigiang/detail/${selectedItem.MaBaiHoc}`)
+        .then(r => r.json())
+        .then(data => setLessonDetail(data))
+        .catch(err => console.log(err));
+
+      fetch(`${API}/minitest/baigiang/${selectedItem.MaBaiHoc}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.MaMinitest) {
+            setMinitestData(data);
+            try {
+              if (data.CauHoi) setMinitestQuestions(JSON.parse(data.CauHoi));
+              else setMinitestQuestions([]);
+            } catch (e) {
+              setMinitestQuestions([]);
+            }
+          } else {
+            setMinitestData(null);
+            setMinitestQuestions([]);
+          }
+        })
+        .catch(() => {
+          setMinitestData(null);
+          setMinitestQuestions([]);
+        });
+    } else {
+      setLessonDetail(null);
+      setMinitestData(null);
+      setMinitestQuestions([]);
+    }
+  }, [selectedItem, activeTab]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -359,54 +481,47 @@ export default function DuyetBaiQTV() {
             </div>
 
             <div className={styles.modalBody}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Giảng viên / Người đăng</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={selectedItem.TenGiangVien || selectedItem.TenNguoiTao || "Hệ thống"}
-                  />
+              {activeTab !== "baigiang" && activeTab !== "baitap" && (
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Giảng viên / Người đăng</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={selectedItem.TenGiangVien || selectedItem.TenNguoiTao || "Hệ thống"}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Loại nội dung</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={
+                        activeTab === "dethi" ? "Đề thi thử" :
+                        "Tài liệu học tập"
+                      }
+                    />
+                  </div>
                 </div>
-                <div className={styles.formGroup}>
-                  <label>Loại nội dung</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={
-                      activeTab === "baigiang" ? "Bài giảng" :
-                      activeTab === "baitap" ? "Bài tập / Bài kiểm tra" :
-                      activeTab === "dethi" ? "Đề thi thử" :
-                      "Tài liệu học tập"
-                    }
-                  />
-                </div>
-              </div>
+              )}
 
               {activeTab === "baitap" ? (
-                <>
-                  <div className={styles.formRowThree}>
-                    <div className={styles.formGroup}>
-                      <label>Kỹ năng</label>
-                      <input type="text" disabled value={selectedItem.KyNang || "—"} />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Dạng bài</label>
-                      <input type="text" disabled value={selectedItem.DangBai || "—"} />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Định dạng</label>
-                      <input type="text" disabled value={selectedItem.Type || "—"} />
-                    </div>
-                  </div>
-
-                  {selectedItem.Vocabulary && (
-                    <div className={styles.formGroupFull}>
-                      <label>Từ vựng đi kèm</label>
-                      <input type="text" disabled value={selectedItem.Vocabulary} />
-                    </div>
-                  )}
-                </>
+                <div style={{ marginTop: "4px", boxSizing: "border-box", zoom: 0.85 }}>
+                  <ChiTietBaiTap
+                    overrideExerciseId={(() => {
+                      const rawId = selectedItem.MaBaiTap;
+                      if (typeof rawId === "number") return rawId;
+                      if (typeof rawId === "string") {
+                        const match = rawId.match(/^(baitap|exam)-(\d+)$/);
+                        return match ? parseInt(match[2], 10) : parseInt(rawId, 10) || undefined;
+                      }
+                      return undefined;
+                    })()}
+                    isModal={true}
+                    isPreview={true}
+                    showAnswers={true}
+                  />
+                </div>
               ) : activeTab === "dethi" ? (
                 <>
                   <div className={styles.formRow}>
@@ -586,16 +701,169 @@ export default function DuyetBaiQTV() {
                     );
                   })()}
                 </>
+              ) : activeTab === "baigiang" ? (
+                <div style={{ marginTop: "8px", boxSizing: "border-box", textAlign: "left" }}>
+                  {(() => {
+                    const currentLesson = lessonDetail || selectedItem;
+                    const noiDung = currentLesson.NoiDung || "";
+                    const rawFileUrl = currentLesson.FileUrl || "";
+                    const fileUrl = rawFileUrl ? getMediaUrl(rawFileUrl) : "";
+                    
+                    const isYoutube = fileUrl.includes("youtube.com") || fileUrl.includes("youtu.be");
+                    const isGoogleDrive = fileUrl.includes("drive.google.com");
+                    const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(fileUrl);
+                    const isPdf = /\.pdf$/i.test(fileUrl);
+                    const isVideo = /\.(mp4|webm|ogg)$/i.test(fileUrl);
+                    const isAudio = /\.(mp3|wav|m4a)$/i.test(fileUrl);
+
+                    return (
+                      <div>
+                        {/* Content text formatted like LessonDetail */}
+                        {noiDung && (
+                          <div style={{ marginBottom: "20px", padding: "14px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                            {noiDung.trimStart().startsWith("<") ? (
+                              <div
+                                className="html-content"
+                                dangerouslySetInnerHTML={{ __html: noiDung }}
+                              />
+                            ) : (
+                              <div className="text-content" style={{ fontSize: "13.5px", lineHeight: 1.6, color: "#1e293b" }}>
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={markdownComponents}
+                                >
+                                  {unescapeMarkdown(noiDung).trim()}
+                                </ReactMarkdown>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Media Player */}
+                        {isImage && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <img src={fileUrl} alt="lesson" style={{ width: "100%", borderRadius: "8px" }} />
+                          </div>
+                        )}
+
+                        {isPdf && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <iframe
+                              src={fileUrl}
+                              width="100%"
+                              height="450px"
+                              title="PDF viewer"
+                              style={{ borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                            />
+                          </div>
+                        )}
+
+                        {isVideo && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <video controls width="100%" style={{ borderRadius: "8px", maxHeight: "360px", display: "block", margin: "0 auto" }}>
+                              <source src={fileUrl} />
+                              Trình duyệt không hỗ trợ video.
+                            </video>
+                          </div>
+                        )}
+
+                        {isAudio && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <audio controls style={{ width: "100%" }}>
+                              <source src={fileUrl} />
+                              Trình duyệt không hỗ trợ audio.
+                            </audio>
+                          </div>
+                        )}
+
+                        {isYoutube && (
+                          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: "8px", marginBottom: "20px" }}>
+                            <iframe
+                              src={getYoutubeEmbedUrl(fileUrl)}
+                              title="YouTube video player"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: "8px", border: "none" }}
+                            />
+                          </div>
+                        )}
+
+                        {isGoogleDrive && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <iframe
+                              src={getGoogleDriveEmbedUrl(fileUrl)}
+                              width="100%"
+                              height="400px"
+                              title="Google Drive player"
+                              style={{ borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                              allow="autoplay"
+                            />
+                          </div>
+                        )}
+
+                        {fileUrl && !isImage && !isPdf && !isVideo && !isAudio && !isYoutube && !isGoogleDrive && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <a href={fileUrl} target="_blank" rel="noreferrer" style={{ color: "#F95800", fontWeight: 600, fontSize: "13px" }}>
+                              📁 Tải xuống file đính kèm ({fileUrl.split("/").pop()})
+                            </a>
+                          </div>
+                        )}
+
+                        {/* MiniTest */}
+                        {minitestData && minitestQuestions.length > 0 && (
+                          <div style={{ marginTop: "20px", padding: "14px 16px", border: "1px solid #fed7aa", background: "#fff7ed", borderRadius: "8px" }}>
+                            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#c2410c", margin: "0 0 12px 0" }}>
+                              ⚡ MiniTest đính kèm ({minitestQuestions.length} câu hỏi)
+                            </h3>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                              {minitestQuestions.map((q: any, qIdx: number) => (
+                                <div key={qIdx} style={{ padding: "10px", background: "#ffffff", borderRadius: "6px", border: "1px solid #ffedd5" }}>
+                                  <p style={{ fontWeight: 600, fontSize: "13px", color: "#1e293b", margin: "0 0 6px 0" }}>
+                                    Câu {qIdx + 1}: {q.question}
+                                  </p>
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                                    {q.answers?.map((text: string, aIdx: number) => {
+                                      const label = ["A", "B", "C", "D"][aIdx];
+                                      const isCorrect = label === q.correct;
+                                      return (
+                                        <div
+                                          key={label}
+                                          style={{
+                                            padding: "6px 8px",
+                                            borderRadius: 4,
+                                            border: `1px solid ${isCorrect ? "#bbf7d0" : "#e2e8f0"}`,
+                                            background: isCorrect ? "#f0fdf4" : "#ffffff",
+                                            color: isCorrect ? "#15803d" : "#475569",
+                                            fontSize: "12px",
+                                            fontWeight: isCorrect ? 600 : 400,
+                                            display: "flex",
+                                            alignItems: "center"
+                                          }}
+                                        >
+                                          <span style={{ fontWeight: 700, marginRight: "4px" }}>{label}.</span>
+                                          <span style={{ flex: 1 }}>{text}</span>
+                                          {isCorrect && <span style={{ marginLeft: "4px" }}>✅</span>}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
               ) : (
                 <div className={styles.formGroupFull}>
                   <label>Mô tả / Nội dung chi tiết</label>
                   <textarea
                     disabled
                     rows={4}
-                    value={
-                      activeTab === "baigiang" ? selectedItem.NoiDung || "Chưa có nội dung chi tiết." :
-                      selectedItem.MoTa || "Chưa có mô tả tài liệu."
-                    }
+                    value={selectedItem.MoTa || "Chưa có mô tả tài liệu."}
                   />
                 </div>
               )}
@@ -619,7 +887,7 @@ export default function DuyetBaiQTV() {
                     />
                   </div>
                 </div>
-              ) : (
+              ) : activeTab === "baigiang" || activeTab === "baitap" ? null : (
                 <div className={styles.formRowThree}>
                   <div className={styles.formGroup}>
                     <label>Lớp học</label>
@@ -645,17 +913,6 @@ export default function DuyetBaiQTV() {
                       value={selectedItem.CapDo || "Beginner"}
                     />
                   </div>
-                </div>
-              )}
-              {selectedItem.MaBaiTap && selectedItem.MaBaiTap.startsWith("baitap-") && (
-                <div className={styles.formGroupFull} style={{ textAlign: "center", margin: "16px 0 8px 0" }}>
-                  <button
-                    type="button"
-                    className={styles.previewBtn}
-                    onClick={() => setShowPreview(true)}
-                  >
-                    <FiEye /> Xem trước bài tập
-                  </button>
                 </div>
               )}
             </div>

@@ -60,7 +60,7 @@ const VeChuongToi = () => {
 
       {/* Hero Banner duoc thiet ke tu dong thay doi va fix vua van khung hinh */}
       <div className="about-hero">
-        <img src={`${import.meta.env.BASE_URL}image(16).png`} alt="FLIC Banner" />
+        <img src={`${import.meta.env.BASE_URL}banner.png`} alt="FLIC Banner" />
       </div>
 
       <div className="about-container">
