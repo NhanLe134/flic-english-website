@@ -25,6 +25,7 @@ interface LessonInfo {
   MaLopHoc: number | null
   TenLop: string | null
   ActiveBuoiHocId: number | null
+  TrangThai?: string
 }
 
 interface HocVien {

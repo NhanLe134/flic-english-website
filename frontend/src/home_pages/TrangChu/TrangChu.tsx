@@ -90,24 +90,44 @@ const TrangChu = () => {
     }
   }, [navigate]);
 
+  // Hiệu ứng dịch chuyển khi scroll chuột (Scroll Reveal giống enet)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal-visible");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".reveal");
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      elements.forEach((el) => observer.unobserve(el));
+    };
+  }, []);
+
   return (
     <div className="trang-chu">
       {/* 1. THANH ĐIỀU HƯỚNG TỰ ĐỘNG */}
       <NavTuDong />
       
       {/* 2. PHẦN ĐẦU TRANG GIỚI THIỆU (HERO) */}
-      <section className="hero">
+      <section className="hero reveal">
         <div className="hero-container">
           <div className="hero-left">
             <span className="hero-subtitle">
-              TOEIC, IELTS & VSTEP – bắt đầu từ gốc
+              TOEIC, IELTS & VSTEP – BẮT ĐẦU TỪ GỐC
             </span>
 
             <h1>
-              Nâng điểm TOEIC,
-              IELTS & VSTEP từ
-              gốc – Học vững
-              nền, tiến xa hơn!
+              Nâng điểm TOEIC, <br />
+              IELTS & VSTEP từ gốc – <br />
+              Học vững nền, tiến xa!
             </h1>
 
             <p>
@@ -116,17 +136,17 @@ const TrangChu = () => {
             </p>
 
             <div className="hero-stats">
-              <div>
+              <div className="stat-card">
                 <h3>10,000+</h3>
-                <span>Người học thành công</span>
+                <span>Học viên thành công</span>
               </div>
-              <div>
+              <div className="stat-card">
                 <h3>15+</h3>
                 <span>Giáo viên chuyên gia</span>
               </div>
-              <div>
+              <div className="stat-card">
                 <h3>98%</h3>
-                <span>Tỷ lệ thành công</span>
+                <span>Đạt & vượt mục tiêu</span>
               </div>
             </div>
 
@@ -141,13 +161,14 @@ const TrangChu = () => {
           </div>
 
           <div className="hero-right">
-            <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC" />
+            <div className="hero-image-backdrop"></div>
+            <img src={`${import.meta.env.BASE_URL}image.png`} alt="FLIC English Center" />
           </div>
         </div>
       </section>
       
       {/* 3. GIỚI THIỆU VỀ TRUNG TÂM (ABOUT) */}
-      <section className="about">
+      <section className="about reveal">
         <div className="about-inner-container">
           <div className="about-left">
             <div className="about-left-card">
@@ -195,7 +216,7 @@ const TrangChu = () => {
       </section>
       
       {/* 4. HÌNH ẢNH KẾT QUẢ THỰC TẾ (RESULTS) */}
-      <section className="results-section">
+      <section className="results-section reveal">
         <div className="results-container">
           <h2 className="results-title">
             HỌC VIÊN FLIC - NGƯỜI THẬT, KẾT QUẢ THẬT
@@ -238,7 +259,7 @@ const TrangChu = () => {
       </section>
       
       {/* 5. ĐỘI NGŨ GIÁO VIÊN GIẢNG DẠY (TEACHERS) */}
-      <section className="teachers">
+      <section className="teachers reveal">
         <h2>GẶP GỠ GIÁO VIÊN CỦA CHÚNG TÔI</h2>
         <p className="teachers-subtitle">
           Học hỏi từ các nhà giáo dục được chứng nhận, tận tâm,
@@ -355,7 +376,7 @@ const TrangChu = () => {
       </section>
       
       {/* 6. PHẦN KÊU GỌI HÀNH ĐỘNG (CTA) */}
-      <section className="cta-section">
+      <section className="cta-section reveal">
         <div className="cta-container">
           <h2>
             BẠN ĐÃ SẴN SÀNG ĐẠT ĐƯỢC

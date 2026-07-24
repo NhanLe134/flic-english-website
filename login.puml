@@ -1,0 +1,28 @@
+@startuml
+autonumber
+skinparam maxMessageSize 150
+
+actor "Người dùng\n(Sinh viên/Giảng viên)" as U
+participant "Giao diện Frontend\n(ReactJS)" as FE
+participant "API Server\n(Node.js/Express)" as API
+database "Database\n(SQL Server)" as DB
+
+U -> FE: Nhập Email, Mật khẩu\nvà bấm Đăng nhập
+FE -> API: POST /api/auth/login\n{email, password}
+
+API -> DB: SELECT * FROM NGUOIDUNG\nWHERE Email = email
+DB --> API: Trả về bản ghi người dùng\n(kèm Hash Password)
+
+alt Không tìm thấy Email
+    API --> FE: HTTP 404 (Không tìm thấy tài khoản)
+else Tìm thấy Email nhưng Mật khẩu sai
+    API -> API: So sánh mật khẩu\n(Bcrypt Compare)
+    API --> FE: HTTP 401 (Sai mật khẩu)
+else Tìm thấy Email và Mật khẩu đúng
+    API -> API: So sánh mật khẩu\n(Bcrypt Compare)
+    API -> API: Khởi tạo Access Token (JWT)\nchứa Role/ID
+    API --> FE: HTTP 200 {Token, Thông tin User}
+    FE -> FE: Lưu Token vào LocalStorage/Cookie
+    FE --> U: Hiển thị Toast thành công\n& Chuyển hướng trang chủ
+end
+@enduml

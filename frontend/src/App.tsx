@@ -5,7 +5,6 @@ import TrangChu from "./home_pages/TrangChu/TrangChu"
 import VeChuongToi from "./home_pages/VeChuongToi/VeChuongToi"
 import CoursesPageHome from "./home_pages/DSKhoaHoc/DSKhoaHoc"
 import CoursesCategoryPage from "./home_pages/CoursesCategoryPage/CoursesCategoryPage"
-import CourseDetailHome from "./home_pages/CourseDetailHome/CourseDetailHome"
 import RegisterSuccess from "./home_pages/RegisterSuccess/RegisterSuccess"
 import PopupXacThuc from "./components/PopupXacThuc/PopupXacThuc"
 import QuanLyKhoaHoc from "./giangvien_qtv_shared/QuanLyKhoaHoc/QuanLyKhoaHoc"
@@ -157,7 +156,6 @@ function App() {
         <Route path="/about" element={<VeChuongToi />} />
         <Route path="/courses" element={<CoursesPageHome />} />
         <Route path="/courses-category/:categoryKey" element={<CoursesCategoryPage />} />
-        <Route path="/coursehome/:id" element={<CourseDetailHome />} />
         <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
         <Route path="/register-success" element={<RegisterSuccess />} />
         <Route path="/hoc-thu" element={<HocThu />} />
