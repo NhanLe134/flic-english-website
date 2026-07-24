@@ -172,16 +172,11 @@ const BaoCaoKetQuaQTV = ({ showCsvButton = true }: Props) => {
     const classLessons = allLessons.filter(l => l.TenLop === filterLop)
     if (classLessons.length === 0) return []
 
-    const activeLesson = classLessons.find(l => l.MaBuoiHoc === classLessons[0]?.ActiveBuoiHocId)
-    const activeThuTu = activeLesson ? activeLesson.ThuTu : null
+    // Chỉ lấy các buổi học đã mở (TrangThai = 'Đang học' hoặc 'Đã hoàn thành')
+    const openLessons = classLessons.filter(l => l.TrangThai === "Đang học" || l.TrangThai === "Đã hoàn thành")
 
-    const allBuoiNumbers = Array.from(new Set(classLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
+    return Array.from(new Set(openLessons.filter(l => l.ThuTu !== null).map(l => l.ThuTu as number)))
       .sort((a, b) => b - a);
-
-    if (activeThuTu !== null && activeThuTu !== 0) {
-      return allBuoiNumbers.filter(b => b <= activeThuTu);
-    }
-    return allBuoiNumbers;
   }, [allLessons, filterLop])
 
   const getBuoiStatusOrAvg = (hv: HocVien, buoiNum: number) => {

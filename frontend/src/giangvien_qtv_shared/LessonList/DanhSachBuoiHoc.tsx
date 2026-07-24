@@ -1,3 +1,4 @@
+import { useState } from "react";
 import "./DanhSachBuoiHoc.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FiArrowLeft, FiFileText, FiTrash2 } from "react-icons/fi";
@@ -7,6 +8,15 @@ const DanhSachBuoiHoc = () => {
   const navigate = useNavigate();
   const { id, teacherId } = useParams<{ id: string; teacherId?: string }>();
   const location = useLocation();
+
+  const [expandedDescs, setExpandedDescs] = useState<Record<number, boolean>>({});
+  const toggleDesc = (maBuoiHoc: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedDescs(prev => ({
+      ...prev,
+      [maBuoiHoc]: !prev[maBuoiHoc]
+    }));
+  };
 
   // Lấy tên khóa học và tên lớp học từ state truyền qua route
   const tenKhoaHoc = location.state?.tenKhoaHoc || "Chi tiết khóa học";
@@ -133,7 +143,31 @@ const DanhSachBuoiHoc = () => {
                     {/* Cột Mô tả */}
                     <td className="col-desc">
                       {buoiHoc.MoTa ? (
-                        <span className="lesson-desc-text">{buoiHoc.MoTa}</span>
+                        <span className="lesson-desc-text">
+                          {buoiHoc.MoTa.length > 150 && !expandedDescs[buoiHoc.MaBuoiHoc] ? (
+                            <>
+                              {buoiHoc.MoTa.slice(0, 150)}...{" "}
+                              <span 
+                                onClick={(e) => toggleDesc(buoiHoc.MaBuoiHoc, e)} 
+                                style={{ color: "#F95800", cursor: "pointer", fontWeight: "600", fontSize: "13px", marginLeft: "4px" }}
+                              >
+                                (xem thêm)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {buoiHoc.MoTa}
+                              {buoiHoc.MoTa.length > 150 && (
+                                <span 
+                                  onClick={(e) => toggleDesc(buoiHoc.MaBuoiHoc, e)} 
+                                  style={{ color: "#F95800", cursor: "pointer", fontWeight: "600", fontSize: "13px", marginLeft: "4px" }}
+                                >
+                                  {" "}(thu gọn)
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </span>
                       ) : (
                         <span style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
                           Không có mô tả
@@ -152,8 +186,13 @@ const DanhSachBuoiHoc = () => {
                           Đã hoàn thành
                         </span>
                       ) : laBuoiDangMo ? (
-                        <div className="status-badge-container">
-                          <span className="status-badge active-learning-badge">
+                        <div className="status-badge-container" onClick={(e) => e.stopPropagation()}>
+                          <span 
+                            className="status-badge active-learning-badge"
+                            onClick={() => xuLyCapNhatBuoiHocDangHoc(null)}
+                            style={{ cursor: "pointer" }}
+                            title="Bấm để tắt kích hoạt"
+                          >
                             Đang học
                           </span>
                         </div>

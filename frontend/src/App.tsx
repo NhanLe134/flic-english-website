@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom"
+import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import TeacherLayout from "./giangvien/layout/TeacherLayout"
 import TrangChu from "./home_pages/TrangChu/TrangChu"
 import VeChuongToi from "./home_pages/VeChuongToi/VeChuongToi"
@@ -114,6 +114,27 @@ const NavigateTeacherToLopHoc = () => {
   return <Navigate to={`/teacher${user.MaNguoiDung || ""}/lophoc`} replace />;
 };
 
+const NavigateTeacherToDrafts = () => {
+  const user = JSON.parse(sessionStorage.getItem("user") || localStorage.getItem("user") || "{}");
+  return <Navigate to={`/teacher${user.MaNguoiDung || ""}/quan-ly-ban-nhap`} replace />;
+};
+
+const RouteListener = () => {
+  const location = useLocation();
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes("/lophoc")) {
+      sessionStorage.setItem("lastClassUrl", path + location.search);
+      localStorage.setItem("lastClassUrl", path + location.search);
+      if (location.state) {
+        sessionStorage.setItem("lastClassState", JSON.stringify(location.state));
+        localStorage.setItem("lastClassState", JSON.stringify(location.state));
+      }
+    }
+  }, [location]);
+  return null;
+};
+
 function App() {
   useEffect(() => {
     try {
@@ -128,6 +149,7 @@ function App() {
 
   return (
     <HashRouter>
+      <RouteListener />
       <MobileNoticeProvider>
         <MobileNoticeTrigger />
         <Routes>
@@ -152,6 +174,7 @@ function App() {
         {/* GIẢNG VIÊN - bọc trong TeacherLayout */}
         <Route element={<TeacherLayout />}>
           <Route path="/quan-ly-khoa-hoc" element={<NavigateTeacherToLopHoc />} />
+          <Route path="/quan-ly-ban-nhap" element={<NavigateTeacherToDrafts />} />
           <Route path="/:teacherId/lophoc" element={<QuanLyKhoaHoc />} />
           <Route path="/:teacherId/lophoc/:id" element={<DanhSachBuoiHoc />} />
           <Route path="/:teacherId/lophoc/:maLop/:buoiId/:tab?" element={<ChiTietBuoiHoc />} />
