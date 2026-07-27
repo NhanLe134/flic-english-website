@@ -13,7 +13,7 @@ GO
 IF OBJECT_ID('dbo.ADMIN', 'U') IS NOT NULL DROP TABLE [dbo].[ADMIN];
 CREATE TABLE [dbo].[ADMIN] (
   [MaAdmin] [int] IDENTITY(1,1) NOT NULL,
-  [MaNguoiDung] [int] NOT NULL,
+  [MaNguoiDung] [int] NOT NULL UNIQUE,
   PRIMARY KEY CLUSTERED ([MaAdmin])
 );
 GO
@@ -192,7 +192,7 @@ GO
 IF OBJECT_ID('dbo.GIANGVIEN', 'U') IS NOT NULL DROP TABLE [dbo].[GIANGVIEN];
 CREATE TABLE [dbo].[GIANGVIEN] (
   [MaGiangVien] [int] IDENTITY(1,1) NOT NULL,
-  [MaNguoiDung] [int] NOT NULL,
+  [MaNguoiDung] [int] NOT NULL UNIQUE,
   [HocVi] [nvarchar](50) NULL,
   [ChuyenMon] [nvarchar](100) NULL,
   [SoDienThoai] [nvarchar](20) NULL,
@@ -333,17 +333,6 @@ CREATE TABLE [dbo].[NGUOIDUNG_QUYENHAN] (
 );
 GO
 
--- Table Structure for [dbo].[PHANCONG_LOP_KYNANG]
-IF OBJECT_ID('dbo.PHANCONG_LOP_KYNANG', 'U') IS NOT NULL DROP TABLE [dbo].[PHANCONG_LOP_KYNANG];
-CREATE TABLE [dbo].[PHANCONG_LOP_KYNANG] (
-  [MaPhanCongKN] [int] IDENTITY(1,1) NOT NULL,
-  [MaLopHoc] [int] NOT NULL,
-  [MaGiangVien] [int] NOT NULL,
-  [KyNang] [nvarchar](50) NOT NULL,
-  PRIMARY KEY CLUSTERED ([MaPhanCongKN])
-);
-GO
-
 -- Table Structure for [dbo].[PHANCONGGIANGVIEN]
 IF OBJECT_ID('dbo.PHANCONGGIANGVIEN', 'U') IS NOT NULL DROP TABLE [dbo].[PHANCONGGIANGVIEN];
 CREATE TABLE [dbo].[PHANCONGGIANGVIEN] (
@@ -360,7 +349,7 @@ GO
 IF OBJECT_ID('dbo.QUANTRIVIENNOIDUNG', 'U') IS NOT NULL DROP TABLE [dbo].[QUANTRIVIENNOIDUNG];
 CREATE TABLE [dbo].[QUANTRIVIENNOIDUNG] (
   [MaQTVND] [int] IDENTITY(1,1) NOT NULL,
-  [MaNguoiDung] [int] NOT NULL,
+  [MaNguoiDung] [int] NOT NULL UNIQUE,
   PRIMARY KEY CLUSTERED ([MaQTVND])
 );
 GO
@@ -378,7 +367,7 @@ GO
 IF OBJECT_ID('dbo.SINHVIEN', 'U') IS NOT NULL DROP TABLE [dbo].[SINHVIEN];
 CREATE TABLE [dbo].[SINHVIEN] (
   [MaSinhVien] [int] IDENTITY(1,1) NOT NULL,
-  [MaNguoiDung] [int] NOT NULL,
+  [MaNguoiDung] [int] NOT NULL UNIQUE,
   [Lop] [nvarchar](50) NULL,
   [BietDanh] [nvarchar](100) NULL,
   [MSSV] [nvarchar](50) NULL,
@@ -438,32 +427,12 @@ CREATE TABLE [dbo].[TIENDOHOCTAP] (
 );
 GO
 
--- Table Structure for [dbo].[TONGKETKHOAHOC]
-IF OBJECT_ID('dbo.TONGKETKHOAHOC', 'U') IS NOT NULL DROP TABLE [dbo].[TONGKETKHOAHOC];
-CREATE TABLE [dbo].[TONGKETKHOAHOC] (
-  [MaTongKet] [int] IDENTITY(1,1) NOT NULL,
-  [MaSinhVien] [int] NOT NULL,
-  [MaKhoaHoc] [int] NOT NULL,
-  [DiemTrungBinh] [float] NULL,
-  PRIMARY KEY CLUSTERED ([MaTongKet])
-);
-GO
-
 -- Table Structure for [dbo].[VAITRO]
 IF OBJECT_ID('dbo.VAITRO', 'U') IS NOT NULL DROP TABLE [dbo].[VAITRO];
 CREATE TABLE [dbo].[VAITRO] (
   [MaVaiTro] [int] IDENTITY(1,1) NOT NULL,
   [TenVaiTro] [nvarchar](50) NOT NULL,
   PRIMARY KEY CLUSTERED ([MaVaiTro])
-);
-GO
-
--- Table Structure for [dbo].[VAITRO_QUYENHAN]
-IF OBJECT_ID('dbo.VAITRO_QUYENHAN', 'U') IS NOT NULL DROP TABLE [dbo].[VAITRO_QUYENHAN];
-CREATE TABLE [dbo].[VAITRO_QUYENHAN] (
-  [MaVaiTro] [int] NOT NULL,
-  [MaQuyenHan] [int] NOT NULL,
-  PRIMARY KEY CLUSTERED ([MaQuyenHan], [MaVaiTro])
 );
 GO
 
@@ -658,7 +627,6 @@ GO
 SET IDENTITY_INSERT [dbo].[GIANGVIEN] ON;
 INSERT [dbo].[GIANGVIEN] ([MaGiangVien], [MaNguoiDung], [HocVi], [ChuyenMon], [SoDienThoai], [KinhNghiem], [GioiThieu]) VALUES (1, 4, N'', N'', N'', N'', N'');
 INSERT [dbo].[GIANGVIEN] ([MaGiangVien], [MaNguoiDung], [HocVi], [ChuyenMon], [SoDienThoai], [KinhNghiem], [GioiThieu]) VALUES (2, 9, N'Cử nhân', N'Tiếng Anh', N'', N'', N'');
-INSERT [dbo].[GIANGVIEN] ([MaGiangVien], [MaNguoiDung], [HocVi], [ChuyenMon], [SoDienThoai], [KinhNghiem], [GioiThieu]) VALUES (3, 9, N'Cử nhân', N'Tiếng Anh', N'', N'', N'');
 INSERT [dbo].[GIANGVIEN] ([MaGiangVien], [MaNguoiDung], [HocVi], [ChuyenMon], [SoDienThoai], [KinhNghiem], [GioiThieu]) VALUES (5, 33, NULL, NULL, NULL, NULL, NULL);
 INSERT [dbo].[GIANGVIEN] ([MaGiangVien], [MaNguoiDung], [HocVi], [ChuyenMon], [SoDienThoai], [KinhNghiem], [GioiThieu]) VALUES (6, 37, NULL, NULL, NULL, NULL, NULL);
 INSERT [dbo].[GIANGVIEN] ([MaGiangVien], [MaNguoiDung], [HocVi], [ChuyenMon], [SoDienThoai], [KinhNghiem], [GioiThieu]) VALUES (7, 42, NULL, NULL, NULL, NULL, NULL);
@@ -988,29 +956,6 @@ INSERT [dbo].[VAITRO] ([MaVaiTro], [TenVaiTro]) VALUES (4, N'Quản trị nội 
 SET IDENTITY_INSERT [dbo].[VAITRO] OFF;
 GO
 
--- Dumping Data for [dbo].[VAITRO_QUYENHAN]
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 1);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 2);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 3);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 4);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 5);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 6);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 7);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 8);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 9);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 10);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 11);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 12);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 13);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 14);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 15);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 16);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 17);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 18);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 19);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 20);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 21);
-INSERT [dbo].[VAITRO_QUYENHAN] ([MaVaiTro], [MaQuyenHan]) VALUES (1, 22);
 GO
 
 -- Foreign Key Constraints
@@ -1025,7 +970,6 @@ ALTER TABLE [dbo].[PHANCONGGIANGVIEN] ADD CONSTRAINT [FK_PCGV_GIANGVIEN] FOREIGN
 ALTER TABLE [dbo].[BAIHOCKHOAHOC] ADD CONSTRAINT [FK__BAIHOCKHO__MaKho__59FA5E80] FOREIGN KEY ([MaKhoaHoc]) REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc]);
 ALTER TABLE [dbo].[DANGKYKHOAHOC] ADD CONSTRAINT [FK__DANGKYKHO__MaKho__628FA481] FOREIGN KEY ([MaKhoaHoc]) REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc]);
 ALTER TABLE [dbo].[KHOAHOCCHITIET] ADD CONSTRAINT [FK__KHOAHOCCH__MaKho__6B24EA82] FOREIGN KEY ([MaKhoaHoc]) REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc]);
-ALTER TABLE [dbo].[TONGKETKHOAHOC] ADD CONSTRAINT [FK__TONGKETKH__MaKho__778AC167] FOREIGN KEY ([MaKhoaHoc]) REFERENCES [dbo].[KHOAHOC] ([MaKhoaHoc]);
 ALTER TABLE [dbo].[LOPHOC] ADD CONSTRAINT [FK__LOPHOC__MaLop__6E01572D] FOREIGN KEY ([MaLop]) REFERENCES [dbo].[KHOAHOCCHITIET] ([MaLop]);
 ALTER TABLE [dbo].[PHANCONGGIANGVIEN] ADD CONSTRAINT [FK_PCGV_KYNANG] FOREIGN KEY ([MaKyNang]) REFERENCES [dbo].[KYNANG] ([MaKyNang]);
 ALTER TABLE [dbo].[BAIKIEMTRA] ADD CONSTRAINT [FK_BAIKIEMTRA_LESSON] FOREIGN KEY ([MaLesson]) REFERENCES [dbo].[BUOIHOC] ([MaBuoiHoc]);
@@ -1048,9 +992,7 @@ ALTER TABLE [dbo].[DANGKYKHOAHOC] ADD CONSTRAINT [FK__DANGKYKHO__MaSin__55F4C372
 ALTER TABLE [dbo].[BAINOP] ADD CONSTRAINT [FK__BAINOP__MaSinhVi__56E8E7AB] FOREIGN KEY ([MaSinhVien]) REFERENCES [dbo].[SINHVIEN] ([MaSinhVien]);
 ALTER TABLE [dbo].[DETHI_SUBMISSIONS] ADD CONSTRAINT [FK_DETHI_SUBMISSIONS_SINHVIEN] FOREIGN KEY ([MaSinhVien]) REFERENCES [dbo].[SINHVIEN] ([MaSinhVien]);
 ALTER TABLE [dbo].[DETHI_SUBMISSIONS] ADD CONSTRAINT [FK_DETHI_SUBMISSIONS_DETHI] FOREIGN KEY ([MaDeThi]) REFERENCES [dbo].[DETHI] ([MaDeThi]);
-ALTER TABLE [dbo].[VAITRO_QUYENHAN] ADD CONSTRAINT [FK_VTQH_VAITRO] FOREIGN KEY ([MaVaiTro]) REFERENCES [dbo].[VAITRO] ([MaVaiTro]);
 ALTER TABLE [dbo].[NGUOIDUNG] ADD CONSTRAINT [FK_NGUOIDUNG_VAITRO] FOREIGN KEY ([MaVaiTro]) REFERENCES [dbo].[VAITRO] ([MaVaiTro]);
-ALTER TABLE [dbo].[VAITRO_QUYENHAN] ADD CONSTRAINT [FK_VTQH_QUYENHAN] FOREIGN KEY ([MaQuyenHan]) REFERENCES [dbo].[QUYENHAN] ([MaQuyenHan]);
 GO
 
 -- Re-enable constraints

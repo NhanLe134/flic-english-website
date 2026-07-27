@@ -416,9 +416,7 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
     await pool.request()
       .input("id", id)
       .query(`
-        -- 1. Xóa TONGKETKHOAHOC
-        DELETE FROM TONGKETKHOAHOC WHERE MaKhoaHoc = @id;
-
+        
         -- 2. Xóa DANGKYKHOAHOC
         DELETE FROM DANGKYKHOAHOC WHERE MaKhoaHoc = @id;
 
@@ -430,9 +428,7 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
              WHERE kc.MaKhoaHoc = @id
            );
 
-        -- 4. Xóa PHANCONG_LOP_KYNANG thuộc các lớp của khóa học
-        DELETE FROM PHANCONG_LOP_KYNANG 
-        WHERE MaLopHoc IN (
+                WHERE MaLopHoc IN (
           SELECT l.MaLopHoc FROM LOPHOC l 
           JOIN KHOAHOCCHITIET kc ON l.MaLop = kc.MaLop 
           WHERE kc.MaKhoaHoc = @id
@@ -967,7 +963,6 @@ app.delete("/qtv/lophoc/:id", async (req, res) => {
         DELETE FROM PHANCONGGIANGVIEN WHERE MaLopHoc = @id;
 
         -- 2. Xóa phân công kỹ năng
-        DELETE FROM PHANCONG_LOP_KYNANG WHERE MaLopHoc = @id;
 
         -- 3. Xóa ghi danh học viên lớp học
         DELETE FROM SINHVIEN_LOPHOC WHERE MaLopHoc = @id;
@@ -3557,7 +3552,6 @@ app.delete("/qtv/khoahoc/:id", async (req, res) => {
         DELETE FROM DANGKYKHOAHOC WHERE MaKhoaHoc = @id;
 
         -- 9. Xóa tổng kết khóa học
-        DELETE FROM TONGKETKHOAHOC WHERE MaKhoaHoc = @id;
 
          -- 10. (CAUHOI/DAPAN tables removed since they do not exist)
 
