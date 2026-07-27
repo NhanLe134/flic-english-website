@@ -175,7 +175,18 @@ const DraftsManagement = () => {
 
   return (
     <div className="dm-wrapper">
-      <span className="dm-back" onClick={() => teacherId ? navigate(`/${teacherId}/lophoc`) : navigate(-1)}>
+      <span className="dm-back" onClick={() => {
+        const lastClassUrl = sessionStorage.getItem("lastClassUrl") || localStorage.getItem("lastClassUrl");
+        const lastClassStateStr = sessionStorage.getItem("lastClassState") || localStorage.getItem("lastClassState");
+        const lastClassState = lastClassStateStr ? JSON.parse(lastClassStateStr) : null;
+        if (lastClassUrl) {
+          navigate(lastClassUrl, { state: lastClassState });
+        } else if (teacherId) {
+          navigate(`/${teacherId}/lophoc`);
+        } else {
+          navigate(-1);
+        }
+      }}>
         <FiArrowLeft size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
         Quay lại
       </span>

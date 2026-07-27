@@ -533,7 +533,7 @@ export default function ClassDetailSV() {
           <div className="cd-timeline-list">
             {[...lessons].reverse().map((lesson, indexInReversed) => {
               const idx = (lessons.length - 1) - indexInReversed;
-              const isLocked = lesson.TrangThai === "Chờ mở";
+              const isLocked = lesson.TrangThai !== "Đang học" && lesson.TrangThai !== "Đã hoàn thành";
               const isCompleted = !isLocked && idx < completedCount;
               const isCurrent = !isLocked && idx === completedCount;
               const isExpanded = !isLocked && expandedLessonId === lesson.MaLesson;
@@ -572,7 +572,7 @@ export default function ClassDetailSV() {
                     >
                       <div className="cd-session-left">
                         <h4 className="cd-session-title">{lesson.TenLesson}</h4>
-                        {isLocked && <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "600", color: "#ef4444", background: "#fee2e2", padding: "2px 6px", borderRadius: "4px" }}>Chờ mở</span>}
+                        {isLocked && <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "600", color: "#ef4444", background: "#fee2e2", padding: "2px 6px", borderRadius: "4px" }}>{lesson.TrangThai || "Chưa mở"}</span>}
                       </div>
                       <div className="cd-session-right">
                         <span className="cd-session-date">

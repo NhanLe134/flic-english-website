@@ -1888,7 +1888,7 @@ app.get("/teacher/:maNguoiDung/drafts", async (req, res) => {
         SELECT 
           bt.MaBaiTap, bt.TieuDe AS Title, bt.DangBai AS Type, 
           CONVERT(varchar, bt.NgayTao, 103) AS CreatedDate, bt.TrangThai,
-          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc, bt.MaBuoiHoc
+          bh.TenBuoiHoc, lh.TenLop, kh2.TenKhoaHoc, b.MaBuoiHoc
         FROM BAITAP bt
         LEFT JOIN BAIHOCKHOAHOC b ON bt.MaBaiHoc = b.MaBaiHoc
         LEFT JOIN BUOIHOC bh ON b.MaBuoiHoc = bh.MaBuoiHoc
@@ -4053,7 +4053,14 @@ app.put("/users/:id/profile", async (req, res) => {
 app.get("/student/all-classes", async (req, res) => {
   try {
     const pool = await poolPromise
-    const result = await pool.request().query("SELECT MaLopHoc, TenLop FROM LOPHOC ORDER BY TenLop")
+    const result = await pool.request().query(`
+      SELECT l.MaLopHoc, l.TenLop 
+      FROM LOPHOC l
+      JOIN KHOAHOCCHITIET khct ON l.MaLop = khct.MaLop
+      JOIN KHOAHOC kh ON khct.MaKhoaHoc = kh.MaKhoaHoc
+      WHERE kh.TrangThai = N'Hiển thị'
+      ORDER BY l.TenLop
+    `)
     res.json(result.recordset)
   } catch (err) { res.status(500).send(err.message) }
 })
@@ -4763,7 +4770,7 @@ app.get("/baocao/buoihoc", async (req, res) => {
     const pool = await poolPromise
     const result = await pool.request().query(`
       SELECT 
-        l.MaBuoiHoc, l.TenBuoiHoc, l.ThuTu, l.MaLopHoc, lh.TenLop, lh.ActiveBuoiHocId
+        l.MaBuoiHoc, l.TenBuoiHoc, l.ThuTu, l.MaLopHoc, lh.TenLop, lh.ActiveBuoiHocId, l.TrangThai
       FROM BUOIHOC l
       LEFT JOIN LOPHOC lh ON l.MaLopHoc = lh.MaLopHoc
       ORDER BY l.ThuTu
