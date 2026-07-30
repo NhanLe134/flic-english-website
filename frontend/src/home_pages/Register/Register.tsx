@@ -8,6 +8,30 @@ interface RegisterProps {
   onClose?: () => void;
 }
 
+const getPasswordRequirements = (password: string) => {
+  return {
+    hasMinLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+  };
+};
+
+const renderStatusIcon = (isMet: boolean) => {
+  return isMet ? (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="7.5 12.5 10.5 15.5 16.5 9.5" />
+    </svg>
+  ) : (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="15" y1="9" x2="9" y2="15" />
+      <line x1="9" y1="9" x2="15" y2="15" />
+    </svg>
+  );
+};
+
 const Register = ({ isModal = false }: RegisterProps) => {
   const navigate = useNavigate();
 
@@ -31,6 +55,10 @@ const Register = ({ isModal = false }: RegisterProps) => {
     password?: string;
     confirmPassword?: string;
   }>({});
+
+  const reqs = getPasswordRequirements(form.password);
+  const isPasswordInvalid = form.password.length > 0 &&
+    (!reqs.hasMinLength || !reqs.hasUppercase || !reqs.hasLowercase || !reqs.hasNumber);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -99,6 +127,12 @@ const Register = ({ isModal = false }: RegisterProps) => {
     if (!form.password.trim()) {
       newErrors.password = "Vui lòng điền mật khẩu!";
       hasError = true;
+    } else {
+      const requirements = getPasswordRequirements(form.password);
+      if (!requirements.hasMinLength || !requirements.hasUppercase || !requirements.hasLowercase || !requirements.hasNumber) {
+        newErrors.password = "invalid_requirements";
+        hasError = true;
+      }
     }
 
     if (!form.confirmPassword.trim()) {
@@ -249,7 +283,32 @@ const Register = ({ isModal = false }: RegisterProps) => {
               )}
             </button>
           </div>
-          {errors.password && <span className="error-message">{errors.password}</span>}
+          {errors.password && errors.password !== "invalid_requirements" && (
+            <span className="error-message">{errors.password}</span>
+          )}
+          {(isPasswordInvalid || errors.password === "invalid_requirements") && (
+            <div className="password-requirements-msg">
+              <span className="requirements-title">Mật khẩu cần đầy đủ:</span>
+              <ul className="requirements-list">
+                <li className={reqs.hasUppercase ? "met" : "unmet"}>
+                  <span className="requirement-icon">{renderStatusIcon(reqs.hasUppercase)}</span>
+                  Ít nhất 1 chữ cái in hoa
+                </li>
+                <li className={reqs.hasLowercase ? "met" : "unmet"}>
+                  <span className="requirement-icon">{renderStatusIcon(reqs.hasLowercase)}</span>
+                  Ít nhất 1 chữ cái viết thường
+                </li>
+                <li className={reqs.hasNumber ? "met" : "unmet"}>
+                  <span className="requirement-icon">{renderStatusIcon(reqs.hasNumber)}</span>
+                  Ít nhất 1 chữ số
+                </li>
+                <li className={reqs.hasMinLength ? "met" : "unmet"}>
+                  <span className="requirement-icon">{renderStatusIcon(reqs.hasMinLength)}</span>
+                  Phải đủ 8 kí tự
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="auth-input-group">

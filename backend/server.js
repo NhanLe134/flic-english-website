@@ -305,7 +305,13 @@ app.put("/users/:maNguoiDung/anh-dai-dien", async (req, res) => {
 });
 app.post("/register", async (req, res) => {
   try {
-    const { username, password, name, email, ngaySinh, gioiTinh } = req.body
+    const { username, password, name, email, ngaySinh, gioiTinh } = req.body;
+    
+    // Validate password constraints on server side
+    if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.status(400).send("Mật khẩu phải từ 8 kí tự trở lên, chứa ít nhất 1 chữ in hoa, 1 chữ viết thường và 1 chữ số.");
+    }
+
     const pool = await poolPromise;
     await pool.request()
       .input("username", username)
@@ -316,7 +322,20 @@ app.post("/register", async (req, res) => {
       .query(`INSERT INTO NGUOIDUNG (TenDangNhap, MatKhau, HoTen, Email, NgaySinh, TrangThai, NgayTao, MaVaiTro)
               VALUES (@username, @password, @name, @email, @ngaySinh, 'active', GETDATE(), 5)`);
     res.json({ message: "Đăng ký thành công" });
-  } catch (err) { res.status(500).send(err.message); }
+  } catch (err) {
+    console.error("Lỗi đăng ký:", err);
+    if (err.message && (err.message.includes("UNIQUE KEY") || err.message.includes("duplicate key"))) {
+      const { username, email } = req.body;
+      if (email && err.message.includes(email)) {
+        return res.status(400).send("Email này đã được sử dụng! Vui lòng dùng email khác.");
+      }
+      if (username && err.message.includes(username)) {
+        return res.status(400).send("Tên đăng nhập đã tồn tại! Vui lòng chọn tên đăng nhập khác.");
+      }
+      return res.status(400).send("Tên đăng nhập hoặc Email đã tồn tại trong hệ thống!");
+    }
+    res.status(500).send("Đăng ký thất bại! Vui lòng thử lại sau.");
+  }
 });
 app.get("/users/role/:maNguoiDung", async (req, res) => {
   try {

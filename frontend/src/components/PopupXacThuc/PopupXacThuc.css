@@ -432,3 +432,55 @@ div.auth-modal-card-wrapper .auth-forgot-link:hover {
   background-color: #e04f00;
   box-shadow: 0 4px 12px rgba(249, 88, 0, 0.25);
 }
+
+/* Password requirements styles */
+.password-requirements-msg {
+  margin-top: 6px;
+  padding-left: 10px;
+  text-align: left;
+  animation: authModalFadeIn 0.2s ease-out;
+}
+
+.password-requirements-msg .requirements-title {
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 600;
+  color: #334155;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.password-requirements-msg .requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.password-requirements-msg .requirements-list li {
+  font-size: 13px;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  transition: color 0.15s ease;
+}
+
+.password-requirements-msg .requirements-list li:last-child {
+  margin-bottom: 0;
+}
+
+.password-requirements-msg .requirements-list li.met {
+  color: #16a34a;
+}
+
+.password-requirements-msg .requirements-list li.unmet {
+  color: #ef4444;
+}
+
+.password-requirements-msg .requirement-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
