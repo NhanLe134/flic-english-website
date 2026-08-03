@@ -842,11 +842,17 @@ export default function ApproveAdmin() {
 
   const executeDelete = async (id: number) => {
     try {
-      await fetch(`${API}/qtv/khoahoc/${id}`, { method: 'DELETE' });
-      setToast(`Đã xóa hoàn toàn khóa học và thông tin liên quan!`);
-      setDeletingCourse(null);
-      setCountdown(null);
-      loadCourses();
+      const res = await fetch(`${API}/qtv/khoahoc/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setToast(`Đã xóa hoàn toàn khóa học và thông tin liên quan!`);
+        setDeletingCourse(null);
+        setCountdown(null);
+        loadCourses();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(`Lỗi khi xóa khóa học: ${data.message || 'Không thể xóa khóa học'}`);
+        cancelDelete();
+      }
     } catch {
       alert("Lỗi khi kết nối để xóa khóa học.");
       cancelDelete();

@@ -430,13 +430,16 @@ function BaiGiangSV() {
         height: "100%",
         width: "100%",
         videoId: videoId,
+        host: "https://www.youtube.com",
         playerVars: {
           controls: 1,
           disablekb: 1,
           fs: 1,
           modestbranding: 1,
           rel: 0,
-          showinfo: 0
+          showinfo: 0,
+          enablejsapi: 1,
+          origin: window.location.origin
         },
         events: {
           onStateChange: (event: any) => {
