@@ -312,12 +312,12 @@ CREATE TABLE [dbo].[MINITEST] (
 );
 GO
 
--- Table Structure for [dbo].[NGUOIDUNG]
+-- Table Structure for [dbo].[NGUOIDUNG] (MatKhau được băm bằng Bcrypt)
 IF OBJECT_ID('dbo.NGUOIDUNG', 'U') IS NOT NULL DROP TABLE [dbo].[NGUOIDUNG];
 CREATE TABLE [dbo].[NGUOIDUNG] (
   [MaNguoiDung] [int] IDENTITY(1,1) NOT NULL,
   [TenDangNhap] [nvarchar](50) NOT NULL,
-  [MatKhau] [nvarchar](255) NOT NULL,
+  [MatKhau] [nvarchar](255) NOT NULL, -- Chuỗi băm Bcrypt ($2b$10$...)
   [HoTen] [nvarchar](100) NOT NULL,
   [Email] [nvarchar](100) NOT NULL,
   [NgaySinh] [date] NULL,

@@ -5,6 +5,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const nodemailer = require("nodemailer")
+const bcrypt = require("bcryptjs");
 
 const app = express();
 
@@ -313,9 +314,10 @@ app.post("/register", async (req, res) => {
     }
 
     const pool = await poolPromise;
+    const hashedPassword = bcrypt.hashSync(password, 10);
     await pool.request()
       .input("username", username)
-      .input("password", password)
+      .input("password", hashedPassword)
       .input("name", name)
       .input("email", email)
       .input("ngaySinh", ngaySinh || null)
@@ -363,12 +365,18 @@ app.post("/login", async (req, res) => {
     const { username, password } = req.body;
     const pool = await poolPromise;
     const result = await pool.request()
-      .input("username", username).input("password", password)
-      .query(`SELECT * FROM NGUOIDUNG WHERE TenDangNhap=@username AND MatKhau=@password`);
+      .input("username", username)
+      .query(`SELECT * FROM NGUOIDUNG WHERE TenDangNhap=@username`);
     if (result.recordset.length === 0)
       return res.status(401).json({ message: "Sai tài khoản hoặc mật khẩu" });
     
     const user = result.recordset[0];
+    const isMatch = (user.MatKhau && (user.MatKhau.startsWith("$2a$") || user.MatKhau.startsWith("$2b$")))
+      ? bcrypt.compareSync(password, user.MatKhau)
+      : (password === user.MatKhau);
+    if (!isMatch)
+      return res.status(401).json({ message: "Sai tài khoản hoặc mật khẩu" });
+
     if (user.TrangThai && (user.TrangThai.toLowerCase() === "khóa" || user.TrangThai.toLowerCase() === "locked")) {
       return res.status(403).json({ message: "Tài khoản của bạn đã bị khóa" });
     }
@@ -2288,19 +2296,26 @@ app.put("/doi-mat-khau", async (req, res) => {
     const { maNguoiDung, matKhauCu, matKhauMoi } = req.body;
     const pool = await poolPromise;
 
-    // Kiểm tra mật khẩu cũ
+    // Lấy thông tin người dùng
     const check = await pool.request()
       .input("maNguoiDung", maNguoiDung)
-      .input("matKhauCu", matKhauCu)
-      .query(`SELECT * FROM NGUOIDUNG WHERE MaNguoiDung=@maNguoiDung AND MatKhau=@matKhauCu`);
+      .query(`SELECT * FROM NGUOIDUNG WHERE MaNguoiDung=@maNguoiDung`);
 
     if (check.recordset.length === 0)
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+
+    const user = check.recordset[0];
+    const isMatch = (user.MatKhau && (user.MatKhau.startsWith("$2a$") || user.MatKhau.startsWith("$2b$")))
+      ? bcrypt.compareSync(matKhauCu, user.MatKhau)
+      : (matKhauCu === user.MatKhau);
+    if (!isMatch)
       return res.status(401).json({ message: "Mật khẩu hiện tại không đúng" });
 
-    // Cập nhật mật khẩu mới
+    // Cập nhật mật khẩu mới (băm với bcrypt)
+    const hashedNewPassword = bcrypt.hashSync(matKhauMoi, 10);
     await pool.request()
       .input("maNguoiDung", maNguoiDung)
-      .input("matKhauMoi", matKhauMoi)
+      .input("matKhauMoi", hashedNewPassword)
       .query(`UPDATE NGUOIDUNG SET MatKhau=@matKhauMoi WHERE MaNguoiDung=@maNguoiDung`);
 
     res.json({ message: "Đổi mật khẩu thành công" });
@@ -3703,11 +3718,13 @@ app.post("/admin/users", async (req, res) => {
     else if (VaiTro === "Quản Trị Viên") maVaiTro = 1;
 
     // Tạo NGUOIDUNG
+    const rawPassword = MatKhau || "123456";
+    const hashedPassword = bcrypt.hashSync(rawPassword, 10);
     const result = await pool.request()
       .input("TenDangNhap", TenDangNhap)
       .input("HoTen", HoTen)
       .input("Email", Email)
-      .input("MatKhau", MatKhau || "123456")
+      .input("MatKhau", hashedPassword)
       .input("MaVaiTro", maVaiTro)
       .query(`INSERT INTO NGUOIDUNG (TenDangNhap,HoTen,Email,MatKhau,TrangThai,NgayTao,MaVaiTro)
               OUTPUT INSERTED.MaNguoiDung
@@ -4558,11 +4575,12 @@ app.post("/forgot-password", async (req, res) => {
 
     // Tạo mật khẩu mới ngẫu nhiên
     const newPassword = Math.random().toString(36).slice(-8)
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
 
     // Cập nhật mật khẩu mới vào DB
     await pool.request()
       .input("email", email)
-      .input("newPassword", newPassword)
+      .input("newPassword", hashedPassword)
       .query(`UPDATE NGUOIDUNG SET MatKhau = @newPassword WHERE Email = @email`)
 
     // Gửi email
@@ -5795,9 +5813,33 @@ const initDb = async () => {
           ';
       END
     `)
+    await migratePasswords();
     console.log("Database initialized successfully (ActiveBuoiHocId, MINITEST TrangThai, BAINOP DaXemGiaiThich, BUOIHOC TrangThai, and MaNguoiDung columns checked/added).")
   } catch (err) {
     console.error("Database initialization error:", err.message)
+  }
+}
+
+async function migratePasswords() {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query("SELECT MaNguoiDung, MatKhau FROM NGUOIDUNG");
+    let count = 0;
+    for (const user of result.recordset) {
+      if (user.MatKhau && !user.MatKhau.startsWith("$2a$") && !user.MatKhau.startsWith("$2b$")) {
+        const hashed = bcrypt.hashSync(user.MatKhau, 10);
+        await pool.request()
+          .input("id", user.MaNguoiDung)
+          .input("hashed", hashed)
+          .query("UPDATE NGUOIDUNG SET MatKhau = @hashed WHERE MaNguoiDung = @id");
+        count++;
+      }
+    }
+    if (count > 0) {
+      console.log(`Auto-migrated ${count} unhashed password(s) in NGUOIDUNG to bcrypt.`);
+    }
+  } catch (err) {
+    console.error("Password auto-migration error:", err.message);
   }
 }
 
