@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./KhoHocLieu.module.css";
-import { 
-  FiSearch, 
-  FiX, 
-  FiPlus, 
-  FiTrash2, 
-  FiVideo, 
-  FiFileText, 
-  FiFolder, 
-  FiChevronDown, 
+import {
+  FiSearch,
+  FiX,
+  FiPlus,
+  FiTrash2,
+  FiVideo,
+  FiFileText,
+  FiFolder,
+  FiChevronDown,
   FiChevronRight,
-  FiEdit 
+  FiEdit
 } from "react-icons/fi";
 import {
   MDXEditor,
@@ -31,7 +31,7 @@ import "@mdxeditor/editor/style.css";
 
 const API =
   window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
+    window.location.hostname === "127.0.0.1"
     ? `http://${window.location.hostname}:5004`
     : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("172.") || window.location.hostname.startsWith("10.") ? "http://" + window.location.hostname + ":5004" : "http://14.225.192.252:5004") + "";
 
@@ -76,20 +76,20 @@ const KhoHocLieu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isQTV = location.pathname.startsWith("/QTV");
-  
+
   // Data lists
   const [allClasses, setAllClasses] = useState<{ MaLopHoc: number; TenLop: string }[]>([]);
   const [classSessions, setClassSessions] = useState<Record<number, { MaBuoiHoc: number; TenBuoiHoc: string; MoTa: string; ThuTu: number }[]>>({});
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
-  
+
   // Loading & states
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [toast, setToast] = useState("");
-  
+
   // Delete confirm modal
   const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; type: "baigiang" | "baitap" | "tailieu" | "buoihoc"; title: string } | null>(null);
 
@@ -178,7 +178,7 @@ const KhoHocLieu = () => {
       const qBoundary = /(?=Câu\s*\d+|Question\s*\d+|\b\d+\s*(?:[\.\)]|:(?!\d)))/i;
       const qBlocks = text.split(qBoundary).map(b => b.trim()).filter(Boolean);
       const parsed: any[] = [];
-      
+
       for (const block of qBlocks) {
         const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         if (lines.length < 2) continue;
@@ -212,7 +212,7 @@ const KhoHocLieu = () => {
             }
           }
         }
-        
+
         questionText = questionText.replace(/^(Câu\s*\d+\s*[\.\:\-]?\s*|Question\s*\d+\s*[\.\:\-]?\s*|\d+\s*[\.\:\)]\s*)/i, "").trim();
         parsed.push({
           question: questionText,
@@ -247,14 +247,14 @@ const KhoHocLieu = () => {
     const fileUrl = doc.FileUrl
       ? (doc.FileUrl.startsWith("http") ? doc.FileUrl : `${API}${doc.FileUrl}`)
       : doc.NoiDung?.includes("File: /uploads/")
-      ? `${API}${doc.NoiDung.split("File: ")[1]?.trim()}`
-      : null;
+        ? `${API}${doc.NoiDung.split("File: ")[1]?.trim()}`
+        : null;
 
     if (fileUrl) {
       const extension = fileUrl.split('.').pop()?.toLowerCase();
       const isOfficeDoc = ["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension || "");
       const isLocal = fileUrl.includes("localhost") || fileUrl.includes("127.0.0.1") || fileUrl.includes("192.168.") || fileUrl.includes("10.");
-      
+
       if (isOfficeDoc && !isLocal) {
         window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, "_blank");
       } else {
@@ -321,7 +321,7 @@ const KhoHocLieu = () => {
         fetch(`${API}/exercises/list/all`).then(r => r.json()),
         fetch(`${API}/tailieu/list/all`).then(r => r.json())
       ]);
-      
+
       setLectures(Array.isArray(lectRes) ? lectRes : []);
       setExercises(Array.isArray(exRes) ? exRes : []);
       setDocuments(Array.isArray(docRes) ? docRes : []);
@@ -350,7 +350,7 @@ const KhoHocLieu = () => {
   // Group all assets under each class and session
   const groupedData = useMemo(() => {
     const result: any[] = [];
-    
+
     allClasses.forEach(cls => {
       // Filter by selectedClass dropdown
       if (selectedClass && cls.TenLop !== selectedClass) return;
@@ -403,7 +403,7 @@ const KhoHocLieu = () => {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     const { id, type } = deleteTarget;
-    
+
     let url = "";
     if (type === "baigiang") url = `${API}/baigiang/${id}`;
     else if (type === "baitap") url = `${API}/baitap/${id}`;
@@ -545,7 +545,7 @@ const KhoHocLieu = () => {
           IsFree: bgForm.isFree ? 1 : 0
         })
       });
-      
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || "Lỗi từ phía máy chủ");
@@ -707,8 +707,8 @@ const KhoHocLieu = () => {
                         <h3 className={styles.classTitle}>{group.className}</h3>
                       </div>
                       <div className={styles.classHeaderRight} onClick={e => e.stopPropagation()}>
-                        
-                        <button 
+
+                        <button
                           className={styles.addClassBtn}
                           onClick={() => {
                             setTargetClassId(group.classId);
@@ -786,11 +786,11 @@ const KhoHocLieu = () => {
                                     session.exercises.map((item: any) => {
                                       const isEx = item.IsExam === 1 || item.Type === "exam";
                                       const isLT = item.Type === "luyen-tap-them" || item.Type === "practice";
-                                      const badgeClass = isEx 
-                                        ? styles.badgeRed 
+                                      const badgeClass = isEx
+                                        ? styles.badgeRed
                                         : (isLT ? styles.badgeOrange : styles.badgeBlue);
-                                      const badgeText = isEx 
-                                        ? "Bài KTra" 
+                                      const badgeText = isEx
+                                        ? "Bài KTra"
                                         : (isLT ? "LTThem" : "BTap");
                                       return (
                                         <div key={item.MaBaiTap} className={styles.itemRow}>
@@ -920,7 +920,7 @@ const KhoHocLieu = () => {
               <h3>Thêm bài giảng</h3>
               <button className={styles.modalClose} onClick={() => setShowAddLectureModal(false)}><FiX /></button>
             </div>
-            
+
             <div className={styles.tabs} style={{ marginBottom: '16px', marginTop: '12px' }}>
               <button className={`${styles.tab} ${bgTab === 'create' ? styles.tabActive : ''}`} onClick={() => setBgTab('create')}>Tạo mới</button>
               <button className={`${styles.tab} ${bgTab === 'reuse' ? styles.tabActive : ''}`} onClick={() => setBgTab('reuse')}>Chọn từ danh sách</button>
@@ -930,7 +930,7 @@ const KhoHocLieu = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto', paddingRight: '6px', maxHeight: '55vh' }}>
                 <div className={styles.formGroup}>
                   <label>Tiêu đề bài giảng *</label>
-                  <input value={bgForm.title} onChange={e => setBgForm(p => ({...p, title: e.target.value}))} placeholder="VD: Lesson 1: Grammar basics" />
+                  <input value={bgForm.title} onChange={e => setBgForm(p => ({ ...p, title: e.target.value }))} placeholder="VD: Lesson 1: Grammar basics" />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Nội dung bài giảng</label>
@@ -938,7 +938,7 @@ const KhoHocLieu = () => {
                     <MDXEditor
                       key={editorKey}
                       markdown={bgForm.content}
-                      onChange={val => setBgForm(p => ({...p, content: val}))}
+                      onChange={val => setBgForm(p => ({ ...p, content: val }))}
                       plugins={[
                         headingsPlugin(),
                         listsPlugin(),
@@ -962,7 +962,7 @@ const KhoHocLieu = () => {
                 <div className={styles.formGroup}>
                   <label>Link tài liệu / Video URL (nếu có)</label>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <input style={{ flex: 1 }} value={bgForm.fileUrl} onChange={e => setBgForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <input style={{ flex: 1 }} value={bgForm.fileUrl} onChange={e => setBgForm(p => ({ ...p, fileUrl: e.target.value }))} placeholder="http://..." />
                     <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
                       Tải file
                       <input type="file" style={{ display: 'none' }} onChange={async (e) => {
@@ -987,11 +987,11 @@ const KhoHocLieu = () => {
                   </div>
                 </div>
                 <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: '4px 0' }}>
-                  <input 
-                    type="checkbox" 
-                    id="isFreeBg" 
-                    checked={bgForm.isFree} 
-                    onChange={e => setBgForm(p => ({...p, isFree: e.target.checked}))} 
+                  <input
+                    type="checkbox"
+                    id="isFreeBg"
+                    checked={bgForm.isFree}
+                    onChange={e => setBgForm(p => ({ ...p, isFree: e.target.checked }))}
                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                   />
                   <label htmlFor="isFreeBg" style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
@@ -1009,7 +1009,7 @@ const KhoHocLieu = () => {
                     />
                     <span>Đính kèm bài kiểm tra nhanh (MiniTest)</span>
                   </label>
-                  
+
                   {hasMinitest && (
                     <div style={{
                       marginTop: 15,
@@ -1022,7 +1022,7 @@ const KhoHocLieu = () => {
                       <h4 style={{ margin: "0 0 10px 0", color: "#000080", fontSize: "13px", fontWeight: 700 }}>
                         Thiết lập câu hỏi cho MiniTest
                       </h4>
-                      
+
                       {/* File Scan Card */}
                       <div style={{
                         background: "#ffffff",
@@ -1048,7 +1048,7 @@ const KhoHocLieu = () => {
                           margin: "0 0 10px 0",
                           border: "1px solid #e2e8f0"
                         }}>
-{`Câu 1: She _______ English for 5 years.
+                          {`Câu 1: She _______ English for 5 years.
 A. has studied
 B. studies
 C. studied
@@ -1253,7 +1253,7 @@ Giải thích: Thì HTHT (tùy chọn)`}
               <h3>Thêm tài liệu</h3>
               <button className={styles.modalClose} onClick={() => setShowAddDocModal(false)}><FiX /></button>
             </div>
-            
+
             <div className={styles.tabs} style={{ marginBottom: '16px', marginTop: '12px' }}>
               <button className={`${styles.tab} ${docTab === 'create' ? styles.tabActive : ''}`} onClick={() => setDocTab('create')}>Tạo mới</button>
               <button className={`${styles.tab} ${docTab === 'reuse' ? styles.tabActive : ''}`} onClick={() => setDocTab('reuse')}>Chọn từ danh sách</button>
@@ -1263,20 +1263,20 @@ Giải thích: Thì HTHT (tùy chọn)`}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div className={styles.formGroup}>
                   <label>Tiêu đề tài liệu *</label>
-                  <input value={docForm.title} onChange={e => setDocForm(p => ({...p, title: e.target.value}))} placeholder="VD: Slide bài học Unit 1" />
+                  <input value={docForm.title} onChange={e => setDocForm(p => ({ ...p, title: e.target.value }))} placeholder="VD: Slide bài học Unit 1" />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Mô tả ngắn</label>
-                  <input value={docForm.desc} onChange={e => setDocForm(p => ({...p, desc: e.target.value}))} placeholder="Slide tóm tắt lý thuyết..." />
+                  <input value={docForm.desc} onChange={e => setDocForm(p => ({ ...p, desc: e.target.value }))} placeholder="Slide tóm tắt lý thuyết..." />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Nội dung tài liệu (Markdown hoặc Text)</label>
-                  <textarea value={docForm.content} onChange={e => setDocForm(p => ({...p, content: e.target.value}))} placeholder="Nội dung tóm tắt..." rows={4} />
+                  <textarea value={docForm.content} onChange={e => setDocForm(p => ({ ...p, content: e.target.value }))} placeholder="Nội dung tóm tắt..." rows={4} />
                 </div>
                 <div className={styles.formGroup}>
                   <label>File đính kèm (URL)</label>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <input style={{ flex: 1 }} value={docForm.fileUrl} onChange={e => setDocForm(p => ({...p, fileUrl: e.target.value}))} placeholder="http://..." />
+                    <input style={{ flex: 1 }} value={docForm.fileUrl} onChange={e => setDocForm(p => ({ ...p, fileUrl: e.target.value }))} placeholder="http://..." />
                     <label style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#1e293b', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, border: '1px solid #cbd5e1', height: '38px', margin: 0 }}>
                       Tải file
                       <input type="file" style={{ display: 'none' }} onChange={async (e) => {

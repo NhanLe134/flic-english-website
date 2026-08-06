@@ -319,7 +319,7 @@ CREATE TABLE [dbo].[NGUOIDUNG] (
   [TenDangNhap] [nvarchar](50) NOT NULL,
   [MatKhau] [nvarchar](255) NOT NULL, -- Chuỗi băm Bcrypt ($2b$10$...)
   [HoTen] [nvarchar](100) NOT NULL,
-  [Email] [nvarchar](100) NOT NULL,
+  [Email] [nvarchar](100) NOT NULL UNIQUE,
   [NgaySinh] [date] NULL,
   [GioiTinh] [nvarchar](10) NULL,
   [TrangThai] [nvarchar](20) NULL DEFAULT ('Active'),

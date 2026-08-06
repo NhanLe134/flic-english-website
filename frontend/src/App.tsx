@@ -9,22 +9,22 @@ import RegisterSuccess from "./home_pages/RegisterSuccess/RegisterSuccess"
 import PopupXacThuc from "./components/PopupXacThuc/PopupXacThuc"
 import QuanLyKhoaHoc from "./giangvien_qtv_shared/QuanLyKhoaHoc/QuanLyKhoaHoc"
 import ResetSuccess from "./home_pages/ResetSuccess/ResetSuccess"
-import CourseDetail from "./giangvien_qtv_shared/CourseDetail/CourseDetail"
+import ChiTietKhoaHoc from "./giangvien_qtv_shared/ChiTietKhoaHoc/ChiTietKhoaHoc"
 import DanhSachBuoiHoc from "./giangvien_qtv_shared/LessonList/DanhSachBuoiHoc"
-import ChiTietBuoiHoc from "./giangvien_qtv_shared/ClassDetail/ChiTietBuoiHoc"
+import ChiTietBuoiHoc from "./giangvien_qtv_shared/ChiTietLopHoc/ChiTietBuoiHoc"
 import TaoBaiTap from "./giangvien_qtv_shared/TaoBaiTap/TaoBaiTap"
 import ExerciseDetail from "./giangvien_qtv_shared/ExerciseDetail/ExerciseDetail"
 import LessonManagement from "./giangvien_qtv_shared/LessonManagement/LessonManagement"
 import LessonDetail from "./giangvien_qtv_shared/LessonDetail/LessonDetail"
-import AddLesson from "./giangvien_qtv_shared/AddLesson/AddLesson"
+import ThemBaiGiang from "./giangvien_qtv_shared/ThemBaiGiang/ThemBaiGiang"
 import DocumentManagement from "./giangvien_qtv_shared/DocumentManagement/DocumentManagement"
-import AddDocument from "./giangvien_qtv_shared/AddDocument/AddDocument"
+import ThemTaiLieu from "./giangvien_qtv_shared/ThemTaiLieu/ThemTaiLieu"
 
-import CreatepersonalInfo from "./giangvien_qtv_shared/CreatepersonalInfo/CreatepersonalInfo"
+import TaoThongTinCaNhan from "./giangvien_qtv_shared/TaoThongTinCaNhan/TaoThongTinCaNhan"
 import PersonalInfoView from "./giangvien_qtv_shared/PersonalInfoView/PersonalInfoView"
 import EditPersonalInfo from "./giangvien_qtv_shared/EditPersonalInfo/EditPersonalInfo"
 import StudentList from "./giangvien_qtv_shared/StudentList/StudentList"
-import AddStudent from "./giangvien_qtv_shared/AddStudent/AddStudent"
+import ThemHocVien from "./giangvien_qtv_shared/ThemHocVien/ThemHocVien"
 import ExercisePage from "./giangvien_qtv_shared/ExercisePage/ExercisePage"
 import ViewStudent from "./giangvien_qtv_shared/ViewStudent/ViewStudent"
 import EditStudent from "./giangvien_qtv_shared/EditStudent/EditStudent"
@@ -36,15 +36,15 @@ import SuaKetQuaHocTapHocVien from "./giangvien_qtv_shared/SuaKetQuaHocTapHocVie
 import DoiMatKhau from "./giangvien_qtv_shared/DoiMatKhau/DoiMatKhau"
 import HocThu from "./home_pages/HocThu/HocThu"
 import TestThuPublic from "./home_pages/TestThu/TestThuPublic"
-import DraftsManagement from "./giangvien/pages/DraftsManagement/DraftsManagement"
+import QuanLyBanNhap from "./giangvien/pages/QuanLyBanNhap/QuanLyBanNhap"
 import QuanLyDeThiThu from "./giangvien_qtv_shared/QuanLyDeThiThu/QuanLyDeThiThu"
 
 /* ADMIN */
 import AdminLayout from "./admin/layout/AdminLayout"
-import StatisticsAdmin from "./admin/pages/StatisticsAdmin/StatisticsAdmin"
-import ApproveAdmin from "./admin/pages/ApproveAdmin/ApproveAdmin"
-import AccountAdmin from "./admin/pages/AccountAdmin/AccountAdmin"
-import PermissionsAdmin from "./admin/pages/PermissionsAdmin/PermissionsAdmin"
+import ThongKeAdmin from "./admin/pages/ThongKeAdmin/ThongKeAdmin"
+import PheDuyetKhoaHoc from "./admin/pages/QuanLyKhoaHoc/PheDuyetKhoaHoc"
+import QuanLyTaiKhoan from "./admin/pages/QuanLyTaiKhoan/QuanLyTaiKhoan"
+import PhanQuyenAdmin from "./admin/pages/PhanQuyenAdmin/PhanQuyenAdmin"
 import BaoCaoKetQua from "./admin/pages/BaoCaoKetQua/BaoCaoKetQua"
 
 /* QTV nội dung */
@@ -179,27 +179,27 @@ function App() {
           <Route path="/:teacherId/lophoc/:maLop/:buoiId/bt/:id/view" element={<ExerciseDetail />} />
           <Route path="/:teacherId/lophoc/:maLop/:buoiId/bg/:id/view" element={<LessonDetail />} />
           <Route path="/:teacherId/quan-ly-de-thi/:tab?/:subId?" element={<QuanLyDeThiThu />} />
-          <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
+          <Route path="/khoa-hoc/:id" element={<ChiTietKhoaHoc />} />
           <Route path="/create-exercise/:id" element={<TaoBaiTap />} />
           <Route path="/danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="/cham-bai/:maBaiNop" element={<ChamBaiPage />} />
           <Route path="/quan-ly-bai-giang/:buoiHocId" element={<LessonManagement />} />
-          <Route path="/them-bai-giang/:buoiHocId" element={<AddLesson />} />
+          <Route path="/them-bai-giang/:buoiHocId" element={<ThemBaiGiang />} />
           <Route path="/documents/:buoiHocId" element={<DocumentManagement />} />
-          <Route path="/them-tai-lieu/:buoiHocId" element={<AddDocument />} />
+          <Route path="/them-tai-lieu/:buoiHocId" element={<ThemTaiLieu />} />
 
 
           {/* PROFILE */}
-          <Route path="/:teacherId/personal-info-view" element={<CreatepersonalInfo />} />
+          <Route path="/:teacherId/personal-info-view" element={<TaoThongTinCaNhan />} />
           <Route path="/:teacherId/thong-tin-ca-nhan" element={<PersonalInfoView />} />
           <Route path="/:teacherId/edit-personal-info" element={<EditPersonalInfo />} />
           <Route path="/:teacherId/doi-mat-khau" element={<DoiMatKhau />} />
-          <Route path="/:teacherId/quan-ly-ban-nhap" element={<DraftsManagement />} />
+          <Route path="/:teacherId/quan-ly-ban-nhap" element={<QuanLyBanNhap />} />
           {/* BÀI TẬP */}
           <Route path="/bai-tap/:id" element={<ExercisePage />} />
           {/* HỌC VIÊN */}
           <Route path="/:teacherId/danh-sach-hoc-vien" element={<StudentList />} />
-          <Route path="/them-hoc-vien" element={<AddStudent />} />
+          <Route path="/them-hoc-vien" element={<ThemHocVien />} />
           <Route path="/xem-hoc-vien/:id" element={<ViewStudent />} />
           <Route path="/sua-hoc-vien/:id" element={<EditStudent />} />
 
@@ -215,10 +215,10 @@ function App() {
         {/* ADMIN */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="admin-dashboard" />} />
-          <Route path="admin-dashboard" element={<StatisticsAdmin />} />
-          <Route path="approve" element={<ApproveAdmin />} />
-          <Route path="account" element={<AccountAdmin />} />
-          <Route path="permissions" element={<PermissionsAdmin />} />
+          <Route path="admin-dashboard" element={<ThongKeAdmin />} />
+          <Route path="approve" element={<PheDuyetKhoaHoc />} />
+          <Route path="account" element={<QuanLyTaiKhoan />} />
+          <Route path="permissions" element={<PhanQuyenAdmin />} />
           <Route path="bao-cao-ket-qua" element={<BaoCaoKetQua />} />
         </Route>
 
@@ -233,7 +233,7 @@ function App() {
           <Route path="quan-ly-de-thi/:tab?/:subId?" element={<QuanLyDeThiThu />} />
           <Route path="kho-hoc-lieu" element={<KhoHocLieu />} />
           <Route path="bai-giang/:id" element={<LessonDetail />} />
-          <Route path="them-bai-giang/:buoiHocId" element={<AddLesson />} />
+          <Route path="them-bai-giang/:buoiHocId" element={<ThemBaiGiang />} />
           <Route path="baitap-detail/:id/:buoiHocId" element={<ExerciseDetail />} />
           <Route path="danh-sach-bai-nop/:maBaiTap" element={<DanhSachBaiNop />} />
           <Route path="cham-bai/:maBaiNop" element={<ChamBaiPage />} />

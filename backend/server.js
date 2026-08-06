@@ -312,9 +312,30 @@ app.post("/register", async (req, res) => {
     if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
       return res.status(400).send("Mật khẩu phải từ 8 kí tự trở lên, chứa ít nhất 1 chữ in hoa, 1 chữ viết thường và 1 chữ số.");
     }
-
     const pool = await poolPromise;
     const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // Check if username or email already exists in the database
+    const checkUser = await pool.request()
+      .input("username", username)
+      .input("email", email)
+      .query("SELECT TenDangNhap, Email FROM NGUOIDUNG WHERE TenDangNhap = @username OR Email = @email");
+
+    if (checkUser.recordset.length > 0) {
+      const hasDuplicateEmail = checkUser.recordset.some(
+        row => row.Email && row.Email.toLowerCase() === email.toLowerCase()
+      );
+      if (hasDuplicateEmail) {
+        return res.status(400).send("Email này đã được sử dụng! Vui lòng dùng email khác.");
+      }
+
+      const hasDuplicateUsername = checkUser.recordset.some(
+        row => row.TenDangNhap && row.TenDangNhap.toLowerCase() === username.toLowerCase()
+      );
+      if (hasDuplicateUsername) {
+        return res.status(400).send("Tên đăng nhập đã tồn tại! Vui lòng chọn tên đăng nhập khác.");
+      }
+    }
     await pool.request()
       .input("username", username)
       .input("password", hashedPassword)

@@ -2,7 +2,7 @@
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   padding: 0;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .pageHeader {
@@ -274,7 +274,7 @@
 .itemRow:hover {
   background: #ffffff;
   border-color: #cbd5e1;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .itemMain {
@@ -613,8 +613,15 @@
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .emptyState {
