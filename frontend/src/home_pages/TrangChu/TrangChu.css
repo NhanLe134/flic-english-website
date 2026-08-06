@@ -13,7 +13,7 @@
 /* Kiểu mặc định cho trang chủ */
 .trang-chu {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   font-family: 'Montserrat', 'Inter', sans-serif;
   color: var(--color-text-dark);
 }
