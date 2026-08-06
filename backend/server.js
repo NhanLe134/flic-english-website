@@ -1463,13 +1463,33 @@ app.put("/baitap/:id", async (req, res) => {
         if (bhResult.recordset.length > 0) {
           targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
         } else {
+          let resolvedKhForLesson = null;
+          const khRes = await pool.request()
+            .input("maBuoiHoc", MaBuoiHoc)
+            .query(`
+              SELECT TOP 1 kc.MaKhoaHoc 
+              FROM BUOIHOC bh 
+              JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc 
+              JOIN KHOAHOCCHITIET kc ON lh.MaLop = kc.MaLop 
+              WHERE bh.MaBuoiHoc = @maBuoiHoc
+            `);
+          if (khRes.recordset.length > 0) {
+            resolvedKhForLesson = khRes.recordset[0].MaKhoaHoc;
+          } else {
+            const fallbackKh = await pool.request().query(`SELECT TOP 1 MaKhoaHoc FROM KHOAHOC ORDER BY MaKhoaHoc ASC`);
+            if (fallbackKh.recordset.length > 0) {
+              resolvedKhForLesson = fallbackKh.recordset[0].MaKhoaHoc;
+            }
+          }
+
           const insertBh = await pool.request()
             .input("buoiHocId", MaBuoiHoc)
+            .input("maKhoaHoc", resolvedKhForLesson)
             .input("MaNguoiDung", null)
             .input("TrangThai", "published")
             .query(`
               INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
-              VALUES (1, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
+              VALUES (@maKhoaHoc, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
               SELECT SCOPE_IDENTITY() AS MaBaiHoc;
             `);
           targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
@@ -1665,6 +1685,31 @@ app.post("/baigiang", async (req, res) => {
       }
     }
 
+    let resolvedMaKhoaHoc = null;
+    if (MaBuoiHoc) {
+      const khRes = await pool.request()
+        .input("maBuoiHoc", MaBuoiHoc)
+        .query(`
+          SELECT TOP 1 kc.MaKhoaHoc 
+          FROM BUOIHOC bh 
+          JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc 
+          JOIN KHOAHOCCHITIET kc ON lh.MaLop = kc.MaLop 
+          WHERE bh.MaBuoiHoc = @maBuoiHoc
+        `);
+      if (khRes.recordset.length > 0) {
+        resolvedMaKhoaHoc = khRes.recordset[0].MaKhoaHoc;
+      }
+    }
+    if (!resolvedMaKhoaHoc && MaKhoaHoc) {
+      resolvedMaKhoaHoc = MaKhoaHoc;
+    }
+    if (!resolvedMaKhoaHoc) {
+      const fallbackKh = await pool.request().query(`SELECT TOP 1 MaKhoaHoc FROM KHOAHOC ORDER BY MaKhoaHoc ASC`);
+      if (fallbackKh.recordset.length > 0) {
+        resolvedMaKhoaHoc = fallbackKh.recordset[0].MaKhoaHoc;
+      }
+    }
+
     const result = await pool.request()
       .input("TieuDe", TieuDe)
       .input("NoiDung", NoiDung || "")
@@ -1674,7 +1719,7 @@ app.post("/baigiang", async (req, res) => {
       .input("TrangThai", finalTrangThai)
       .input("TrangThaiDuyet", finalTrangThaiDuyet)
       .input("ThuTu", ThuTu || 1)
-      .input("MaKhoaHoc", MaKhoaHoc || 1)
+      .input("MaKhoaHoc", resolvedMaKhoaHoc)
       .input("MaBuoiHoc", MaBuoiHoc)
       .input("IsFree", IsFree !== undefined ? IsFree : 0)
       .input("MaNguoiDung", MaGiangVien || null)
@@ -1684,6 +1729,23 @@ app.post("/baigiang", async (req, res) => {
     const newMaBaiHoc = result.recordset[0].MaBaiHoc;
     res.json({ message: "Thêm bài giảng thành công", MaBaiHoc: newMaBaiHoc });
   } catch (err) { res.status(500).send(err.message); }
+});
+
+app.get("/my-courses/:maSinhVien", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input("maSinhVien", req.params.maSinhVien)
+      .query(`
+        SELECT d.*, k.TenKhoaHoc 
+        FROM DANGKYKHOAHOC d 
+        LEFT JOIN KHOAHOC k ON d.MaKhoaHoc = k.MaKhoaHoc 
+        WHERE d.MaSinhVien = @maSinhVien
+      `);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json([]);
+  }
 });
 
 app.delete("/baigiang/:id", async (req, res) => {
@@ -1719,6 +1781,31 @@ app.put("/baigiang/:id", async (req, res) => {
     const { TieuDe, NoiDung, FileUrl, LoaiBaiHoc, ThoiLuong, TrangThai, TrangThaiDuyet, ThuTu, MaKhoaHoc, MaBuoiHoc, IsFree } = req.body;
     const id = req.params.id;
 
+    let resolvedMaKhoaHoc = null;
+    if (MaBuoiHoc) {
+      const khRes = await pool.request()
+        .input("maBuoiHoc", MaBuoiHoc)
+        .query(`
+          SELECT TOP 1 kc.MaKhoaHoc 
+          FROM BUOIHOC bh 
+          JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc 
+          JOIN KHOAHOCCHITIET kc ON lh.MaLop = kc.MaLop 
+          WHERE bh.MaBuoiHoc = @maBuoiHoc
+        `);
+      if (khRes.recordset.length > 0) {
+        resolvedMaKhoaHoc = khRes.recordset[0].MaKhoaHoc;
+      }
+    }
+    if (!resolvedMaKhoaHoc && MaKhoaHoc) {
+      resolvedMaKhoaHoc = MaKhoaHoc;
+    }
+    if (!resolvedMaKhoaHoc) {
+      const fallbackKh = await pool.request().query(`SELECT TOP 1 MaKhoaHoc FROM KHOAHOC ORDER BY MaKhoaHoc ASC`);
+      if (fallbackKh.recordset.length > 0) {
+        resolvedMaKhoaHoc = fallbackKh.recordset[0].MaKhoaHoc;
+      }
+    }
+
     await pool.request()
       .input("id", id)
       .input("TieuDe", TieuDe)
@@ -1729,7 +1816,7 @@ app.put("/baigiang/:id", async (req, res) => {
       .input("TrangThai", TrangThai)
       .input("TrangThaiDuyet", TrangThaiDuyet || "Đã duyệt")
       .input("ThuTu", ThuTu || 1)
-      .input("MaKhoaHoc", MaKhoaHoc || 1)
+      .input("MaKhoaHoc", resolvedMaKhoaHoc)
       .input("MaBuoiHoc", MaBuoiHoc)
       .input("IsFree", IsFree !== undefined ? IsFree : 0)
       .query(`
@@ -2767,13 +2854,33 @@ app.post("/baitap/create", async (req, res) => {
           if (bhResult.recordset.length > 0) {
             targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
           } else {
+            let resolvedKhForLesson = null;
+            const khRes = await pool.request()
+              .input("maBuoiHoc", MaBuoiHoc)
+              .query(`
+                SELECT TOP 1 kc.MaKhoaHoc 
+                FROM BUOIHOC bh 
+                JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc 
+                JOIN KHOAHOCCHITIET kc ON lh.MaLop = kc.MaLop 
+                WHERE bh.MaBuoiHoc = @maBuoiHoc
+              `);
+            if (khRes.recordset.length > 0) {
+              resolvedKhForLesson = khRes.recordset[0].MaKhoaHoc;
+            } else {
+              const fallbackKh = await pool.request().query(`SELECT TOP 1 MaKhoaHoc FROM KHOAHOC ORDER BY MaKhoaHoc ASC`);
+              if (fallbackKh.recordset.length > 0) {
+                resolvedKhForLesson = fallbackKh.recordset[0].MaKhoaHoc;
+              }
+            }
+
             const insertBh = await pool.request()
               .input("buoiHocId", MaBuoiHoc)
+              .input("maKhoaHoc", resolvedKhForLesson)
               .input("MaNguoiDung", MaGiangVien || null)
               .input("TrangThai", isQTV ? "published" : "published")
               .query(`
                 INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
-                VALUES (1, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
+                VALUES (@maKhoaHoc, N'Bài giảng mặc định', '', @TrangThai, @buoiHocId, @MaNguoiDung);
                 SELECT SCOPE_IDENTITY() AS MaBaiHoc;
               `);
             targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;
@@ -4978,12 +5085,32 @@ app.post("/exercises/:id/clone", async (req, res) => {
         if (bhResult.recordset.length > 0) {
           targetMaBaiHoc = bhResult.recordset[0].MaBaiHoc;
         } else {
+          let resolvedKhForLesson = null;
+          const khRes = await pool.request()
+            .input("maBuoiHoc", MaBuoiHoc)
+            .query(`
+              SELECT TOP 1 kc.MaKhoaHoc 
+              FROM BUOIHOC bh 
+              JOIN LOPHOC lh ON bh.MaLopHoc = lh.MaLopHoc 
+              JOIN KHOAHOCCHITIET kc ON lh.MaLop = kc.MaLop 
+              WHERE bh.MaBuoiHoc = @maBuoiHoc
+            `);
+          if (khRes.recordset.length > 0) {
+            resolvedKhForLesson = khRes.recordset[0].MaKhoaHoc;
+          } else {
+            const fallbackKh = await pool.request().query(`SELECT TOP 1 MaKhoaHoc FROM KHOAHOC ORDER BY MaKhoaHoc ASC`);
+            if (fallbackKh.recordset.length > 0) {
+              resolvedKhForLesson = fallbackKh.recordset[0].MaKhoaHoc;
+            }
+          }
+
           const insertBh = await pool.request()
             .input("buoiHocId", MaBuoiHoc)
+            .input("maKhoaHoc", resolvedKhForLesson)
             .input("MaNguoiDung", clonerMaNguoiDung)
             .query(`
               INSERT INTO BAIHOCKHOAHOC (MaKhoaHoc, TieuDe, NoiDung, TrangThai, MaBuoiHoc, MaNguoiDung)
-              VALUES (1, N'Bài giảng mặc định', '', 'published', @buoiHocId, @MaNguoiDung);
+              VALUES (@maKhoaHoc, N'Bài giảng mặc định', '', 'published', @buoiHocId, @MaNguoiDung);
               SELECT SCOPE_IDENTITY() AS MaBaiHoc;
             `);
           targetMaBaiHoc = insertBh.recordset[0].MaBaiHoc;

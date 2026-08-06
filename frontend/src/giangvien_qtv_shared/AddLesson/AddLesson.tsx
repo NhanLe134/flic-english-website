@@ -251,7 +251,7 @@ const AddLesson: React.FC = () => {
         NoiDung: moTa, // ← lưu Markdown
         FileUrl: fileUrl,
         ThuTu: 1,
-        MaKhoaHoc: 1,
+        MaKhoaHoc: null,
         MaGiangVien: user.MaNguoiDung || 1,
         MaBuoiHoc: (Number(buoiHocId) && Number(buoiHocId) !== 0) ? Number(buoiHocId) : (draftMaBuoiHoc || null),
         IsFree: isFree ? 1 : 0
