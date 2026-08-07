@@ -1829,15 +1829,42 @@
 }
 
 .markdown-editor-container-wrapper {
-  border: 1px solid #000000;
+  border: 1px solid #d8d8d8;
   border-radius: 8px;
   background-color: #ffffff;
   overflow: hidden;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .markdown-editor-container-wrapper:focus-within {
-  border-color: #000000;
-  box-shadow: 0 0 0 1px #000000;
+  border-color: #F95800;
+  box-shadow: 0 0 0 1px #F95800;
+}
+
+.image-label-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.image-upload-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.image-upload-trigger-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 

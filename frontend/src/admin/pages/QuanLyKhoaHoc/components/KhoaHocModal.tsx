@@ -203,7 +203,12 @@ export default function KhoaHocModal({
           </div>
 
           <div className="form-field-group">
-            <label>Ảnh khóa học <span className="required-star">*</span></label>
+            <div className="image-label-row">
+              <label>Ảnh khóa học <span className="required-star">*</span></label>
+              <label htmlFor="course-image-file-input" className="image-upload-trigger-btn">
+                Tải ảnh mới lên
+              </label>
+            </div>
             <div className="image-upload-wrapper-box">
               <input
                 type="file"
@@ -212,9 +217,6 @@ export default function KhoaHocModal({
                 id="course-image-file-input"
                 style={{ display: 'none' }}
               />
-              <label htmlFor="course-image-file-input" className="image-upload-trigger-btn">
-                Tải ảnh mới lên
-              </label>
 
               {cForm.image && (
                 <div className="uploaded-image-preview-card">

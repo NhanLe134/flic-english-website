@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./DanhSachBuoiHoc.css";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FiArrowLeft, FiFileText, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiTrash2, FiX } from "react-icons/fi";
 import { useDanhSachBuoiHoc } from "./useDanhSachBuoiHoc";
 
 const DanhSachBuoiHoc = () => {
@@ -245,7 +245,7 @@ const DanhSachBuoiHoc = () => {
             <div className="modal-top">
               <h3>Thêm buổi học vào lộ trình</h3>
               <button className="modal-close" onClick={() => setHienThiModalThem(false)}>
-                ×
+                <FiX size={20} />
               </button>
             </div>
             <p className="modal-sub">
