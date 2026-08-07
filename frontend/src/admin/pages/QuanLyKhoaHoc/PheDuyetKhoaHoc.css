@@ -1867,4 +1867,18 @@
   border-color: #94a3b8;
   color: #0f172a;
 }
+
+/* Day schedule row custom styles to synchronize typography sizes */
+.day-schedule-row-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.day-schedule-row-text {
+  font-size: 14px;
+  color: #64748b;
+}
+
+
 

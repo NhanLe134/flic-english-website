@@ -157,8 +157,8 @@ export default function SuaLopHocModal({
           {classEditForm.days.split(',').map(x => x.trim()).filter(Boolean).map(day => {
             const sched = classEditForm.daySchedules[day] || { startTime: '07:00', endTime: '08:30' };
             return (
-              <div key={day} className="day-schedule-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ minWidth: '70px', fontWeight: 'bold' }}>{day}:</div>
+              <div key={day} className="day-schedule-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
+                <div className="day-schedule-row-label" style={{ minWidth: '70px' }}>{day}:</div>
                 <div className="form-field-group" style={{ flex: 1, marginBottom: 0 }}>
                   <select
                     value={sched.startTime}
@@ -178,7 +178,7 @@ export default function SuaLopHocModal({
                     ))}
                   </select>
                 </div>
-                <div style={{ alignSelf: 'center' }}>đến</div>
+                <div className="day-schedule-row-text" style={{ alignSelf: 'center' }}>đến</div>
                 <div className="form-field-group" style={{ flex: 1, marginBottom: 0 }}>
                   <select
                     value={sched.endTime}
