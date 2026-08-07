@@ -71,9 +71,6 @@ export default function KhoaHocRow({
           <div className="course-title-flex-row">
             <span className="course-title-cell">{course.title}</span>
           </div>
-          <div className="course-desc-cell">
-            {course.desc.slice(0, 85)}{course.desc.length > 85 ? '...' : ''}
-          </div>
         </td>
         <td>{course.created}</td>
         <td>

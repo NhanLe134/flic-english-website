@@ -1,6 +1,6 @@
 import "./PheDuyetKhoaHoc.css";
 import React, { useState, useEffect, useRef } from "react";
-import { FiSearch, FiPlus } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import type { Course, LopHoc, Teacher } from "./kieuDuLieu";
 import { serializeSchedule } from "./hangSo";
 
@@ -434,29 +434,32 @@ export default function PheDuyetKhoaHoc() {
   const filteredCourses = courses.filter(c => c.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="approve-admin-page-container">
-      <div className="approve-admin-header-row">
+    <div className="manage-courses-page">
+      <div className="page-header-container">
         <div>
-          <h2>Quản lý Khóa học & Lớp học</h2>
-          <p className="subtitle-description-text">Phê duyệt, thêm mới và tinh chỉnh các khóa học, lớp học trên toàn hệ thống</p>
+          <h1>Quản lý khóa học</h1>
+          <p>Thêm mới, chỉnh sửa thông tin, xóa và quản lý các lớp học trực thuộc của các khóa học</p>
         </div>
-        <button className="add-new-course-btn" onClick={openAddCourse}>
-          <FiPlus size={16} /> Thêm khóa học
+        <button className="add-course-btn-primary" onClick={openAddCourse}>
+          + Thêm khóa học mới
         </button>
       </div>
 
-      <div className="table-search-filter-row">
-        <div className="search-bar-input-wrapper">
-          <FiSearch className="search-icon-inside" />
-          <input placeholder="Tìm kiếm tên khóa học..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
+      <div className="search-bar-wrapper">
+        <FiSearch className="search-icon" />
+        <input
+          type="text"
+          placeholder="Tìm tên khóa học hoặc trình độ..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
 
-      <div className="courses-list-table-card">
+      <div className="courses-table-container">
         {loading ? (
-          <div className="table-loading-spinner-state">Đang tải dữ liệu khóa học...</div>
+          <div className="loading-container">Đang tải dữ liệu khóa học...</div>
         ) : (
-          <table className="courses-admin-data-table">
+          <table className="courses-table">
             <thead>
               <tr>
                 <th>TÊN KHÓA HỌC</th>

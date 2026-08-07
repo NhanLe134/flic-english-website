@@ -54,7 +54,7 @@ export default function KhoaHocModal({
   if (!show) return null;
 
   return (
-    <div className="modal-backdrop-blur">
+    <div className="modal-backdrop-blur z-index-top">
       <div className="course-form-modal">
         <div className="modal-header-section">
           <h3>{editCourse ? 'Chỉnh sửa khóa học' : 'Thêm khóa học mới'}</h3>
@@ -112,7 +112,8 @@ export default function KhoaHocModal({
                 <div className="custom-level-add-input-row">
                   <input
                     type="text"
-                    placeholder="Nhập tên trình độ rồi ấn Thêm (VD: Cơ bản, TOEIC 450, ...)"
+                    className="level-input-small-inline"
+                    placeholder="Nhập tên trình độ mới (VD: IELTS 5.5, Beginner, ...)"
                     value={formNewLevelInput}
                     onChange={e => {
                       setFormNewLevelInput(e.target.value);
@@ -177,12 +178,13 @@ export default function KhoaHocModal({
           </div>
 
           <div className="form-field-group">
-            <label>Các kỹ năng đào tạo <span className="required-star">*</span></label>
-            <div className="skills-checkbox-grid">
+            <label>Kỹ năng <span className="required-star">*</span></label>
+            <div className="skills-checkbox-row">
               {['Listening', 'Reading', 'Speaking', 'Writing'].map(skill => (
-                <label key={skill} className="skill-check-item">
+                <label key={skill} className="skill-checkbox-label">
                   <input
                     type="checkbox"
+                    className="skill-checkbox-input"
                     checked={courseSkills.includes(skill)}
                     onChange={() => {
                       setCourseSkills(prev =>

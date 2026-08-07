@@ -47,16 +47,14 @@ export default function XoaXacNhanModal({
   if (deletingClass) {
     return (
       <div className="modal-backdrop-blur z-index-top">
-        <div className="delete-confirm-card">
-          <div className="delete-icon-warning">
-            <FiAlertTriangle size={32} />
-          </div>
+        <div className="delete-confirm-modal-box">
+          <FiAlertTriangle className="delete-modal-warning-icon" size={48} />
           <h3>Xác nhận xóa lớp học</h3>
-          <p>
+          <p className="delete-warning-text">
             Bạn có chắc chắn muốn xóa lớp học <strong>{deletingClass.name}</strong> không?
-            Hành động này không thể hoàn tác.
+            Nếu xóa lớp học này, tất cả những thông tin liên quan đến lớp (học viên ghi danh, buổi học, bài nộp) sẽ bị xóa hoàn toàn.
           </p>
-          <div className="delete-actions-row">
+          <div className="delete-modal-actions">
             <button className="delete-btn-cancel" onClick={onCancelDeleteClass}>Hủy</button>
             <button className="delete-btn-confirm" onClick={() => onConfirmDeleteClass(deletingClass.id)}>Xóa</button>
           </div>
@@ -69,16 +67,14 @@ export default function XoaXacNhanModal({
   if (deletingLevelInfo) {
     return (
       <div className="modal-backdrop-blur z-index-top">
-        <div className="delete-confirm-card">
-          <div className="delete-icon-warning">
-            <FiAlertTriangle size={32} />
-          </div>
+        <div className="delete-confirm-modal-box">
+          <FiAlertTriangle className="delete-modal-warning-icon" size={48} />
           <h3>Xác nhận xóa trình độ</h3>
-          <p>
+          <p className="delete-warning-text">
             Bạn có chắc chắn muốn xóa trình độ <strong>{deletingLevelInfo.levelName}</strong> của khóa học <strong>{deletingLevelInfo.course.title}</strong>?
             Hành động này sẽ xóa các lớp học liên quan trực tiếp đến trình độ này.
           </p>
-          <div className="delete-actions-row">
+          <div className="delete-modal-actions">
             <button className="delete-btn-cancel" onClick={onCancelDeleteLevel}>Hủy</button>
             <button className="delete-btn-confirm" onClick={() => onConfirmDeleteLevel(deletingLevelInfo.maLop)}>Xóa</button>
           </div>
@@ -91,24 +87,22 @@ export default function XoaXacNhanModal({
   if (deletingCourse) {
     return (
       <div className="modal-backdrop-blur z-index-top">
-        <div className="delete-confirm-card">
-          <div className="delete-icon-warning">
-            <FiAlertTriangle size={32} />
-          </div>
+        <div className="delete-confirm-modal-box">
+          <FiAlertTriangle className="delete-modal-warning-icon" size={48} />
           <h3>CẢNH BÁO XÓA KHÓA HỌC</h3>
-          <p>
+          <p className="delete-warning-text">
             Bạn đang yêu cầu xóa khóa học <strong>{deletingCourse.title}</strong>.
-            Hành động này sẽ <strong>XÓA TOÀN BỘ</strong> các trình độ học và các lớp học nằm trong khóa học này!
+            Hành động này sẽ xóa vĩnh viễn khóa học, tất cả các trình độ, lớp học, học viên, và bài học liên quan.
           </p>
-          <div className="delete-actions-row">
-            <button className="delete-btn-cancel" onClick={onCancelDeleteCourse}>Hủy bỏ</button>
+          <div className="delete-modal-actions">
+            <button className="delete-btn-cancel" onClick={onCancelDeleteCourse}>Hủy</button>
             <button
               className="delete-btn-confirm"
               disabled={countdown > 0}
-              onClick={() => onConfirmDeleteCourse(deletingCourse.id)}
               style={{ opacity: countdown > 0 ? 0.5 : 1, cursor: countdown > 0 ? 'not-allowed' : 'pointer' }}
+              onClick={() => onConfirmDeleteCourse(deletingCourse.id)}
             >
-              {countdown > 0 ? `Xác nhận xóa (${countdown}s)` : "Tôi đồng ý xóa"}
+              {countdown > 0 ? `Xóa (${countdown}s)` : "Xóa vĩnh viễn"}
             </button>
           </div>
         </div>

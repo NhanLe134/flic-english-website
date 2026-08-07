@@ -178,6 +178,13 @@
   font-weight: 600;
   color: #475569;
   font-size: 13.5px;
+  white-space: nowrap;
+}
+
+.courses-table th:nth-child(4),
+.courses-table td:nth-child(4) {
+  min-width: 90px;
+  white-space: nowrap;
 }
 
 /* TOGGLE SWITCH STYLE (IPHONE STYLE TOGGLE) */
@@ -1820,3 +1827,17 @@
   display: inline-block;
   text-decoration: none;
 }
+
+.markdown-editor-container-wrapper {
+  border: 1px solid #000000;
+  border-radius: 8px;
+  background-color: #ffffff;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.markdown-editor-container-wrapper:focus-within {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+}
+
